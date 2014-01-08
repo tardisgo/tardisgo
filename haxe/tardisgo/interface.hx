@@ -5,7 +5,7 @@
 
 package tardisgo;
 
-class Interface{ // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix go //TODO tidy names 
+class Interface { // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix go //TODO tidy names 
 	public var typ:Int; // the possibly interface type that has been cast to
 	public var val:Dynamic;
 
