@@ -1,8 +1,7 @@
 {
         "name" : "tardisgo",
-        "url" : "https://github.com/tardisgo/tardisgo",
-  		"classPath": "haxe/haxeruntime/tardisgo/",
-        "license" : "MIT",
+        "url" : "https://github.com/tardisgo/tardisgo/haxe/haxeruntime",
+  		"license" : "MIT",
     "description" : "Runtime classes for the TARDIS Go transpiler",
     "version" : "0.0.1",
         "releasenote" : "",
