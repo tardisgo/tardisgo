@@ -1,0 +1,10 @@
+{
+        "name" : "tardisgo",
+        "url" : "https://github.com/tardisgo/tardisgo/haxe/tardisgo",
+        "license" : "MIT",
+    "description" : "Runtime classes for the TARDIS Go transpiler",
+    "version" : "0.0.1",
+        "releasenote" : "",
+        "contributors" : ["elliott5"],
+    "dependencies" : { }
+}
