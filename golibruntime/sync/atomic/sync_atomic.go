@@ -2,13 +2,20 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-// Non-parallel basic replacement for the sync/atomic package
-//***********************************************************
-
 //Original:
 // Copyright 2011 The Go Authors.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
+// Runtime functions for the Go "sync/atomic" standard library package when used by TARDIS Go
+package atomic
+
+import (
+	"unsafe"
+)
+
+// Non-parallel basic replacement for the sync/atomic package
+//***********************************************************
 
 // +build !race
 
@@ -40,11 +47,6 @@
 // functions, are the atomic equivalents of "return *addr" and
 // "*addr = val".
 //
-package atomic
-
-import (
-	"unsafe"
-)
 
 // CompareAndSwapInt32 executes the compare-and-swap operation for an int32 value.
 func CompareAndSwapInt32(addr *int32, old, new int32) (swapped bool) {

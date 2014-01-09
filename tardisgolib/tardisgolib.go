@@ -2,7 +2,8 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-package tardisgolib // This package contains utility library functions for TARDIS Go
+// Utility library functions for TARDIS Go
+package tardisgolib
 
 // Insert the given Haxe code at this point.
 // BEWARE! It is very easy to write code that will break the system.

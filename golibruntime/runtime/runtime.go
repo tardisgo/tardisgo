@@ -2,12 +2,12 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-// THE GOLANG RUNTIME PACKAGE IS NOT CURRENTLY ALL USABLE
+// Runtime functions for the Go "runtime" standard library package when used by TARDIS Go
 package runtime
 
-import "github.com/tardisgo/tardisgo/tardisgolib"
+// THE GOLANG RUNTIME PACKAGE IS NOT CURRENTLY ALL USABLE
 
-//************************** RUNTIME REPLACEMENT CODE
+import "github.com/tardisgo/tardisgo/tardisgolib"
 
 func Gosched()          { tardisgolib.Gosched() }
 func NumGoroutine() int { return tardisgolib.NumGoroutine() }

@@ -1,8 +1,9 @@
-// Copyright 2014 Elliott Stoneham and The tardisgo Authors
+// Copyright 2014 Elliott Stoneham and The TARDIS Go Authors
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-package golibruntime // runtime finctions for the Go libraries in subdirectories
+// Runtime functions for the Go standard libraries
+package golibruntime
 
 import (
 	_ "github.com/tardisgo/tardisgo/golibruntime/bytes"
