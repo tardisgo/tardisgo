@@ -109,7 +109,7 @@ func writeFiles() {
 	l := TargetLang
 	// TODO move to the correct directory based on a command line argument
 	err := ioutil.WriteFile(
-		"tardis/go"+LanguageList[l].FileTypeSuffix(),
+		"tardis/Go"+LanguageList[l].FileTypeSuffix(), // Ubuntu requires the first letter of the haxe file to be uppercase
 		LanguageList[l].buffer.Bytes(), 0666)
 	if err != nil {
 		LogError("Unable to write output file, does the 'tardis' output directory exist in this location? (it is not created automatically in this early version of tardisgo as a safety feature)",
