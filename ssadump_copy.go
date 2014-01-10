@@ -132,6 +132,7 @@ func main() {
 		}
 	}
 
+	/*  TARDIS Go temporary removal due to Windows 7 related bug
 	var interpMode interp.Mode
 	for _, c := range *interpFlag {
 		switch c {
@@ -143,6 +144,7 @@ func main() {
 			log.Fatalf("Unknown -interp option: '%c'.", c)
 		}
 	}
+	*/
 
 	if len(args) == 0 {
 		fmt.Fprint(os.Stderr, usage)
