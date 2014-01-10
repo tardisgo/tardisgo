@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/tardisgo/tardisgo/pogo"
 	"runtime"
+	"strings"
 	"unsafe"
 )
 
@@ -88,7 +89,9 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 			pos += "else "
 		}
 		pos += fmt.Sprintf(`if(pos>%d) return prefix+"%s:"+Std.string(pos-%d);`,
-			pogo.PosHashFileList[p].BasePosHash, pogo.PosHashFileList[p].FileName, pogo.PosHashFileList[p].BasePosHash) + "\n"
+			pogo.PosHashFileList[p].BasePosHash,
+			strings.Replace(pogo.PosHashFileList[p].FileName, "\\", "\\\\", -1),
+			pogo.PosHashFileList[p].BasePosHash) + "\n"
 	}
 	pos += "else return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";}\n"
 
