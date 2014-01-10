@@ -23,7 +23,7 @@ import (
 	"code.google.com/p/go.tools/go/types"
 	"code.google.com/p/go.tools/importer"
 	"code.google.com/p/go.tools/ssa"
-	"code.google.com/p/go.tools/ssa/interp"
+	//"code.google.com/p/go.tools/ssa/interp" //TARDIS Go temporary removal due to Windows 7 related bug
 
 	_ "github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
 	"github.com/tardisgo/tardisgo/pogo"   // TARDIS Go addition
@@ -51,7 +51,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go modification TODO review words here
-const usage = `SSA builder, interpreter and TARDIS Go transpiler (version 0.0.1-unreleased).
+const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-unreleased : interpreter removed due to Win7 related bug).
 Usage: tardisgo [<flag> ...] <args> ...
 A shameless copy of the ssadump utility, but also writes a 'Go.hx' haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:
@@ -226,7 +226,7 @@ func main() {
 				impctx.Build.GOARCH, runtime.GOARCH)
 		}
 
-		interp.Interpret(main, interpMode, impctx.TypeChecker.Sizes, main.Object.Path(), args)
+		// interp.Interpret(main, interpMode, impctx.TypeChecker.Sizes, main.Object.Path(), args) //TARDIS Go temporary removal due to Windows 7 related bug
 	}
 
 	// TARDIS Go additions: copy run interpreter code above, but call pogo class
