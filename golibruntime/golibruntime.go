@@ -12,4 +12,5 @@ import (
 	_ "github.com/tardisgo/tardisgo/golibruntime/strings"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
+	_ "runtime"
 )

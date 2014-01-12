@@ -155,7 +155,7 @@ func emitFunc(fn *ssa.Function) {
 				case *ssa.Select, *ssa.Send, *ssa.Defer, *ssa.RunDefers, *ssa.Panic:
 					canPutInSubFn = false
 				case *ssa.UnOp:
-					if in.(*ssa.UnOp).Op == token.ARROW /*&& (!(in.(*ssa.UnOp).CommaOk))*/ {
+					if in.(*ssa.UnOp).Op == token.ARROW {
 						canPutInSubFn = false
 					}
 				}
