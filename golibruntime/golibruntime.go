@@ -12,5 +12,5 @@ import (
 	_ "github.com/tardisgo/tardisgo/golibruntime/strings"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
-	_ "runtime"
+	_ "runtime" // TODO currently fails with a MStats vs MemStatsType size mis-match on 32-bit Ubuntu, works on OSX
 )
