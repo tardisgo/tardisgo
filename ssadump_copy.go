@@ -53,9 +53,11 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 // TARDIS Go modification TODO review words here
 const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-unreleased : interpreter removed due to Win7 related bug).
 Usage: tardisgo [<flag> ...] <args> ...
-A shameless copy of the ssadump utility, but also writes a 'Go.hx' haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
+A shameless copy of the ssadump utility, but also writes a 'Go.hx' Haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:
 % tardisgo hello.go
+Then to run the tardis/Go.hx file generated, type the command line: "haxe -main tardis.Go --interp", or whatever Haxe compilation options you want to use. 
+(Note that to compile for PHP you currently need to add the haxe compilation option "--php-prefix tardisgo" to avoid name confilcts).
 `
 const ignore = `
 Use -help flag to display options.
