@@ -8,6 +8,7 @@ package golibruntime
 import (
 	_ "github.com/tardisgo/tardisgo/golibruntime/bytes"
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
+	_ "github.com/tardisgo/tardisgo/golibruntime/reflect"
 	_ "github.com/tardisgo/tardisgo/golibruntime/runtime"
 	_ "github.com/tardisgo/tardisgo/golibruntime/strings"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync"

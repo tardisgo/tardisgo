@@ -10,7 +10,7 @@
 // Runtime functions for the Go "sync" standard library package when used by TARDIS Go
 package sync
 
-// THIS PACKAGE ONLY PARTLY USABLE
+// THIS PACKAGE ONLY PARTLY USABLE, DOES NOT WORK FOR math/rand
 
 //import "unsafe"
 

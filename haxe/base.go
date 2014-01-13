@@ -412,6 +412,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 			return "new Closure(Go_" + l.LangName(pk, v.(*ssa.Function).Name()) + ".call,[])" //TODO will change for go instr
 		} else { // function has no implementation
 			// TODO maybe put a list of over-loaded functions here and only error if not found
+			// NOTE the reflect package comes through this path TODO fix!
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
 			return "new Closure(null,[])" // Should fail at runtime if it is used...
 		}
