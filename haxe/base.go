@@ -26,8 +26,8 @@ func init() {
 	var langVar langType
 	var langEntry pogo.LanguageEntry
 	langEntry.Language = langVar
-	langEntry.InstructionLimit = 512     // TESTING DEFENSIVELY LOW LIMIT, was: 2048     /* 4k works for cs, 2k required for java & cpp */
-	langEntry.SubFnInstructionLimit = 64 // TESTING DEFENSIVELY LOW LIMIT, was: 256 /* 256 required for php */
+	langEntry.InstructionLimit = 512      // TESTING DEFENSIVELY LOW LIMIT, was: 2048     /* 4k works for cs, 2k required for java & cpp */
+	langEntry.SubFnInstructionLimit = 512 // TESTING DEFENSIVELY HIGH LIMIT, was: 256 /* 256 required for php */
 	langEntry.PackageConstVarName = "tardisgoHaxePackage"
 	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"
 	langEntry.Goruntime = goruntime // a string containing the code for the core language runtime functions delivered in Go
