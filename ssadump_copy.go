@@ -51,7 +51,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go modification TODO review words here
-const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-unreleased : interpreter removed due to Win7 related bug).
+const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental-alpha : interpreter removed due to go issue 7100).
 Usage: tardisgo [<flag> ...] <args> ...
 A shameless copy of the ssadump utility, but also writes a 'Go.hx' Haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:

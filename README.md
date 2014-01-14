@@ -3,7 +3,7 @@ tardisgo
 
 The TARDIS Go->Haxe transpiler 
 
-THIS PROJECT IS EXPERIMENTAL - BEWARE! 
+THIS PROJECT IS EXPERIMENTAL AND IN ALPHA TESTING - BEWARE! 
 
 For project objectives and background see http://tardisgo.github.io/
 
@@ -27,4 +27,4 @@ If you transpile your own code using TARDIS Go, please report the bugs that you 
 
 Thank you for your interest in TARDIS Go. If you would like to get involved in helping the project to advance, I welcome pull requests. However, please contact me (elliott.stoneham@gmail.com) before writing any substantial amounts of code so that we can avoid any conflicts. 
 
-I plan to write substantially more documentation and project notes here, as time allows.
+I plan to write substantially more documentation and project notes here, as time allows...
