@@ -285,8 +285,13 @@ class Pointer {
 	}
 	public function ref():Dynamic { // this returns a reference to the pointed-at object, not for general use!
 		var ret:Dynamic = heapObj;
-		for(i in 0...offs.length) 
-				ret = ret[offs[i]];
+		for(i in 0...offs.length) {
+				if(ret==null) {
+					Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
+					return null;						
+				} else 
+					ret = ret[offs[i]];
+		}
 		return ret;	
 	}
 	public  function store(v:Dynamic){
@@ -301,14 +306,19 @@ class Pointer {
 		}
 	}
 	public function addr(off:Int):Pointer {
-		if(off<0 || off >= this.ref().length) Scheduler.panicFromHaxe("index out of range for valid pointer address");
+		if(off<0 || off >= this.len()) Scheduler.panicFromHaxe("index out of range for valid pointer address");
 		var ret:Pointer = new Pointer(this.heapObj);
 		ret.offs = this.offs.copy();
 		ret.offs[this.offs.length]=off;
 		return ret;
 	}
 	public function len():Int { // used by array bounds check (which ocurrs twice as belt-and-braces while we are in beta testing, see above) TODO optimise
-		return this.ref().length; 
+		var r = this.ref();
+		if (r==null) {
+			Scheduler.panicFromHaxe("attempt to use a nil pointer to access an array or struct");
+			return 0;
+		} else
+			return r.length; 
 	}
 	public static function copy(v:Pointer):Pointer {
 		var r:Pointer = new Pointer(v.heapObj); // no copy of data, just the reference

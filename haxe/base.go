@@ -26,8 +26,8 @@ func init() {
 	var langVar langType
 	var langEntry pogo.LanguageEntry
 	langEntry.Language = langVar
-	langEntry.InstructionLimit = 512      // TESTING DEFENSIVELY LOW LIMIT, was: 2048     /* 4k works for cs, 2k required for java & cpp */
-	langEntry.SubFnInstructionLimit = 512 // TESTING DEFENSIVELY HIGH LIMIT, was: 256 /* 256 required for php */
+	langEntry.InstructionLimit = 2048     /* 4k works for cs, 2k required for java & cpp */
+	langEntry.SubFnInstructionLimit = 256 /* 256 required for php */
 	langEntry.PackageConstVarName = "tardisgoHaxePackage"
 	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"
 	langEntry.Goruntime = goruntime // a string containing the code for the core language runtime functions delivered in Go
@@ -413,7 +413,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		} else { // function has no implementation
 			// TODO maybe put a list of over-loaded functions here and only error if not found
 			// NOTE the reflect package comes through this path TODO fix!
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
+			pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
 			return "new Closure(null,[])" // Should fail at runtime if it is used...
 		}
 	case *ssa.UnOp:
