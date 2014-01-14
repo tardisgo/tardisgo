@@ -19,7 +19,7 @@ TARDIS Go can be installed by typing:
 go get github.com/tardisgo/tardisgo
 ```
 
-To try the project out, please go to http://github.com/tardigo/tardisgo-samples and follow the instructions there. 
+To try the project out, please go to http://github.com/tardisgo/tardisgo-samples and follow the instructions there. 
 
 If you write your own code using TARDIS Go, please report the bugs that you find so that they can be fixed.
 
