@@ -5,7 +5,9 @@ The TARDIS Go->Haxe transpiler
 
 THIS PROJECT IS EXPERIMENTAL AND IN ALPHA TESTING - BEWARE! 
 
-For project objectives and background see http://tardisgo.github.io/
+For project objectives and background see: http://tardisgo.github.io/
+
+For help or general discussions please go to the [Google Group](https://groups.google.com/d/forum/tardisgo).
 
 Project status:
 - Summary: The transpiler is demonstrable, but currently generates slow and occasionally incorrect code. It will require a considerable amount of additional testing and further development to become usable in the real-world.
@@ -25,6 +27,6 @@ After installation, please go to http://github.com/tardisgo/tardisgo-samples and
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
-Thank you for your interest in TARDIS Go. If you would like to get involved in helping the project to advance, I welcome pull requests. However, please contact me (elliott.stoneham@gmail.com) before writing any substantial amounts of code so that we can avoid any conflicts. 
+Thank you for your interest in TARDIS Go. If you would like to get involved in helping the project to advance, I welcome pull requests. However, please contact me (elliott.stoneham@gmail.com) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code so that we can avoid any conflicts. 
 
 I plan to write substantially more documentation and project notes here, as time allows...
