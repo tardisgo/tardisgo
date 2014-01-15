@@ -10,7 +10,7 @@ For project objectives and background see: http://tardisgo.github.io/
 For help or general discussions please go to the [Google Group](https://groups.google.com/d/forum/tardisgo).
 
 Project status:
-- Summary: The transpiler is demonstrable, but currently generates slow and occasionally incorrect code. It will require a considerable amount of additional testing and further development to become usable in the real-world.
+- Summary: The transpiler is demonstrable, but currently generates large, slow and occasionally incorrect code. It will require a considerable amount of additional testing, optimizing and further development to become usable in the real-world.
 - All of the core Go language specification (http://golang.org/ref/spec) is implemented (except for the “System considerations” section of the specification regarding “Package unsafe” and “Size and alignment guarantees”). 
 - Some small elements of the Go standard library work, but the bulk has not been tested yet. Indeed some parts of the Go standard library may not even be appropriate for transpilation into Haxe.
 - A start has been made on integrating with Haxe libaries, but this is currently incomplete see: https://github.com/elliott5/gohaxelib
