@@ -15,7 +15,7 @@ Project status: EXPERIMENTAL & IN ALPHA TEST:
 - The parts of the specification that have not been implemented are the “System considerations” section regarding “Package unsafe” and “Size and alignment guarantees”. 
 - The transpiler is demonstrable, but currently generates large, slow and occasionally incorrect code. It will require a considerable amount of additional testing, optimizing and further development to become usable in the real-world.
 - Some parts of the Go standard library work, but the bulk has not been tested yet. Indeed some parts of the Go standard library may not even be appropriate for transpilation into Haxe.
-- A start has been made on integrating with Haxe libaries, but this is currently incomplete see: https://github.com/elliott5/gohaxelib
+- A start has been made on the automated integration with Haxe libaries, but this is currently incomplete see: https://github.com/elliott5/gohaxelib
 - The only platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
 - The "magnificant seven" Haxe targets tested are JavaScript, Java, Flash, C++, C#, PHP and Neko VM. 
 - Some core elements of the design are very likely change, so please do not rely on the current Haxe or Go APIs.
