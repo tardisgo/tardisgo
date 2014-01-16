@@ -18,7 +18,7 @@ Project status: EXPERIMENTAL & IN ALPHA TEST:
 - A start has been made on the automated integration with Haxe libaries, but this is currently incomplete see: https://github.com/elliott5/gohaxelib
 - The only platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
 - The "magnificant seven" Haxe targets tested are JavaScript, Java, Flash, C++, C#, PHP and Neko VM. 
-- Some core elements of the design are very likely change, so please do not rely on the current Haxe or Go APIs.
+- Some core elements of the design are very likely to change, so please do not rely on the current Haxe or Go APIs.
 
 For more background see the links from: http://tardisgo.github.io/
 
