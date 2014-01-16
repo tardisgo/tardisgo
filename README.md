@@ -3,20 +3,24 @@ tardisgo
 
 The TARDIS Go -> Haxe -> JavaScript/Flash/Java/C++/C#/PHP/Neko transpiler 
 
-THIS PROJECT IS EXPERIMENTAL AND IN ALPHA TESTING
+The objective of this project is to enable the same Go code to be re-deployed in  as many different execution environments as possible, thus saving you time and effort.
 
-For project objectives and background see: http://tardisgo.github.io/
+Planned use cases: 
+- Write a library in Go and call it from an existing Haxe/JavaScript/Flash/Java/C++/C#/PHP application.
+- Write multi-platform client-side applications (mostly) in Go using [OpenFL](http://openfl.org), [Lime](https://github.com/openfl/lime) or [Kha] (http://kha.ktxsoftware.com/).
 
-For help or general discussions please go to the [Google Group](https://groups.google.com/d/forum/tardisgo).
 
-Project status:
-- Summary: The transpiler is demonstrable, but currently generates large, slow and occasionally incorrect code. It will require a considerable amount of additional testing, optimizing and further development to become usable in the real-world.
-- All of the core Go language specification (http://golang.org/ref/spec) is implemented (except for the “System considerations” section of the specification regarding “Package unsafe” and “Size and alignment guarantees”). 
-- Some small elements of the Go standard library work, but the bulk has not been tested yet. Indeed some parts of the Go standard library may not even be appropriate for transpilation into Haxe.
+Project status: EXPERIMENTAL & IN ALPHA TEST:
+- Almost all of the core [Go language specification] (http://golang.org/ref/spec) is implemented, including single-threaded goroutines.
+- The parts of the specification that have not been implemented are the “System considerations” section regarding “Package unsafe” and “Size and alignment guarantees”. 
+- The transpiler is demonstrable, but currently generates large, slow and occasionally incorrect code. It will require a considerable amount of additional testing, optimizing and further development to become usable in the real-world.
+- Some parts of the Go standard library work, but the bulk has not been tested yet. Indeed some parts of the Go standard library may not even be appropriate for transpilation into Haxe.
 - A start has been made on integrating with Haxe libaries, but this is currently incomplete see: https://github.com/elliott5/gohaxelib
 - The only platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
 - The "magnificant seven" Haxe targets tested are JavaScript, Java, Flash, C++, C#, PHP and Neko VM. 
 - Some core elements of the design are very likely change, so please do not rely on the current Haxe or Go APIs.
+
+For more background see the links from: http://tardisgo.github.io/
 
 TARDIS Go can be installed very easily:
 ```
@@ -24,6 +28,7 @@ go get github.com/tardisgo/tardisgo
 ```
 
 After installation, please go to http://github.com/tardisgo/tardisgo-samples and follow the instructions there for how to run the transpiler. 
+For help or general discussions please go to the [Google Group](https://groups.google.com/d/forum/tardisgo). 
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
