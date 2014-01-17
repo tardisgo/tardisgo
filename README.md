@@ -45,8 +45,9 @@ go get github.com/tardisgo/tardisgo
 After installation, please go to http://github.com/tardisgo/tardisgo-samples and follow the instructions there for how to run the transpiler. 
 For help or general discussions please go to the [Google Group](https://groups.google.com/d/forum/tardisgo). 
 
+The documentation is sparse at present, if there is some aspect of the system that you want to know more about, please let [me](https://github.com/elliott5) know and I will prioritise that area.
+
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
-Thank you for your interest in TARDIS Go. If you would like to get involved in helping the project to advance, I welcome pull requests. However, please contact me (elliott.stoneham@gmail.com) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code so that we can avoid any conflicts.  It would also be great if you wanted to add another target language, or help with building the framework to make adding new target languages easier.
+If you would like to get involved in helping the project to advance, I welcome pull requests. However, please contact [me](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code so that we can avoid any conflicts. 
 
-I plan to write substantially more documentation and project notes here, as time allows...
