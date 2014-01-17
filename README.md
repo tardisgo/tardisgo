@@ -8,8 +8,20 @@ The objective of this project is to enable the same Go code to be re-deployed in
 It currently targets Haxe (because it generates 7 other languages), but is writen with the intention of targeting other languages too. The long-term vision is to provide a framework that makes it easy to add new transpilers from Go to new target langauages as part of this project.
 
 Planned current use cases: 
-- Write a library in Go and call it from an existing Haxe/JavaScript/Flash/Java/C++/C#/PHP application.
-- Write multi-platform client-side applications (mostly) in Go using [OpenFL](http://openfl.org), [Lime](https://github.com/openfl/lime) or [Kha] (http://kha.ktxsoftware.com/).
+- Write a library in Go and call it from  existing Haxe, JavaScript, ActionScript, Java, C++, C# or PHP applications.
+- Write a multi-platform client-side application mostly in Go, using [OpenFL](http://openfl.org), [Lime](https://github.com/openfl/lime) or [Kha] (http://kha.ktxsoftware.com/) to target a sub-set of: 
+Windows,
+Mac,
+Linux,
+iOS,
+Android,
+BlackBerry,
+Tizen,
+Emscripten,
+HTML5,
+webOS,
+Flash,
+Xbox and PlayStation.
 
 
 Project status: EXPERIMENTAL & IN ALPHA TEST:
