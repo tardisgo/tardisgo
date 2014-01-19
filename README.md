@@ -3,7 +3,7 @@
 #### Haxe -> JavaScript / ActionScript / Java / C++ / C# / PHP / Neko
 
 ## Objectives:
-The objective of this project is to enable the same Go code to be re-deployed in  as many different execution environments as possible, thus saving development time and effort. 
+The objective of this project is to enable the same [Go](http://golang.org) code to be re-deployed in  as many different execution environments as possible, thus saving development time and effort. 
 The long-term vision is to provide a framework that makes it easy to target many languages as part of this project.
 
 The first language targeted is [Haxe](http://haxe.org), because the Haxe compiler generates 7 other languages and is already well-proven for making multi-platform client-side applications, mostly games. 
@@ -28,7 +28,7 @@ Xbox and PlayStation.
 For more background see the links from: http://tardisgo.github.io/
 
 ## Project status: 
-#### WORKING, EXPERIMENTAL, INCOMPLETE, IN-TESTING, IN-DEVELOPMENT, UN-OPTIMIZED
+#### WORKING, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED
 
 > "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
 
