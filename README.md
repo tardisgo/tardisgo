@@ -27,9 +27,8 @@ For more background see the links from: http://tardisgo.github.io/
 
 ## Project status: 
 #### WORKING, EXPERIMENTAL, INCOMPLETE, IN-TESTING, UN-OPTIMIZED
-```
-"Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
-```
+
+> "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
 
 Almost all of the core [Go language specification] (http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. 
 
