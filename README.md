@@ -28,7 +28,8 @@ Xbox and PlayStation.
 For more background see the links from: http://tardisgo.github.io/
 
 ## Project status: 
-#### WORKING, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED
+### NOT BUILDING AS AT 19-JAN-14, DUE TO API CHANGE IN UNDERLYING GO.TOOLS  
+#### IT WAS: WORKING, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED
 
 > "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
 
@@ -43,11 +44,13 @@ The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubunt
 (TODO a development road-map and much more documentation)
 
 ## Installation and use:
-
+ 
 TARDIS Go can be installed very easily:
 ```
 go get github.com/tardisgo/tardisgo
 ```
+Not installing? Please e-mail [the author](https://github.com/elliott5)!
+
 From the directory containing your .go files, first create a "tardis" sub-directory (TODO review this requirement):
 ```
 mkdir tardis
@@ -75,7 +78,7 @@ The documentation is sparse at present, if there is some aspect of the system th
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
-If you would like to get involved in helping the project to advance, I welcome pull requests. However, please contact [me](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code so that we can avoid any conflicts. 
+If you would like to get involved in helping the project to advance, I welcome pull requests. However, please contact [the author](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code so that we can avoid any conflicts. 
 
 ## License:
 MIT license, please see the license file.

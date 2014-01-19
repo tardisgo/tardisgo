@@ -5,7 +5,7 @@
 package haxe
 
 import (
-	"code.google.com/p/go.tools/ssa"
+	"code.google.com/p/go.tools/go/ssa"
 )
 
 var builtinOverloadMap = map[string]string{

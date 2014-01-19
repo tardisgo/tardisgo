@@ -6,7 +6,7 @@ package pogo
 
 import (
 	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/ssa"
+	"code.google.com/p/go.tools/go/ssa"
 	"fmt"
 	"go/token"
 )

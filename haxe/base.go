@@ -5,8 +5,8 @@
 package haxe
 
 import (
+	"code.google.com/p/go.tools/go/ssa"
 	"code.google.com/p/go.tools/go/types"
-	"code.google.com/p/go.tools/ssa"
 	"fmt"
 	"github.com/tardisgo/tardisgo/pogo"
 	"go/token"

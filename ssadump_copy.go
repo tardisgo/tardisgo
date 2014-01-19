@@ -20,10 +20,10 @@ import (
 	"runtime"
 	"runtime/pprof"
 
+	"code.google.com/p/go.tools/go/importer"
+	"code.google.com/p/go.tools/go/ssa"
+	"code.google.com/p/go.tools/go/ssa/interp"
 	"code.google.com/p/go.tools/go/types"
-	"code.google.com/p/go.tools/importer"
-	"code.google.com/p/go.tools/ssa"
-	"code.google.com/p/go.tools/ssa/interp"
 
 	_ "github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
 	"github.com/tardisgo/tardisgo/pogo"   // TARDIS Go addition
