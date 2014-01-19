@@ -1,15 +1,17 @@
-# TARDIS Go transpiler
+# TARDIS Go -> Haxe transpiler
 
-#### Go -> Haxe -> JavaScript / ActionScript / Java / C++ / C# / PHP / Neko
+#### Haxe -> JavaScript / ActionScript / Java / C++ / C# / PHP / Neko
 
 ## Objectives:
 The objective of this project is to enable the same Go code to be re-deployed in  as many different execution environments as possible, thus saving development time and effort. 
-The long-term vision is to provide a framework that makes it easy to target new languages as part of this project.
+The long-term vision is to provide a framework that makes it easy to target many languages as part of this project.
 
 The first language targeted is [Haxe](http://haxe.org), because the Haxe compiler generates 7 other languages and is already well-proven for making multi-platform client-side applications, mostly games. 
+
 Planned current use cases: 
-- Write a library in Go and call it from  existing Haxe, JavaScript, ActionScript, Java, C++, C# or PHP applications.
-- Write a multi-platform client-side application in Go and Haxe, using [OpenFL](http://openfl.org) / [Lime](https://github.com/openfl/lime) or [Kha] (http://kha.ktxsoftware.com/) to target a sub-set of: 
+- For the Go community: write a library in Go and call it from  existing Haxe, JavaScript, ActionScript, Java, C++, C# or PHP applications. 
+- For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
+- Write a multi-platform client-side application in a mixture of Go and Haxe, using [OpenFL](http://openfl.org) / [Lime](https://github.com/openfl/lime) or [Kha] (http://kha.ktxsoftware.com/) to target a sub-set of: 
 Windows,
 Mac,
 Linux,
@@ -26,7 +28,7 @@ Xbox and PlayStation.
 For more background see the links from: http://tardisgo.github.io/
 
 ## Project status: 
-#### WORKING, EXPERIMENTAL, INCOMPLETE, IN-TESTING, UN-OPTIMIZED
+#### WORKING, EXPERIMENTAL, INCOMPLETE, IN-TESTING, IN-DEVELOPMENT, UN-OPTIMIZED
 
 > "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
 
