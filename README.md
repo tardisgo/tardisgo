@@ -1,6 +1,6 @@
 # TARDIS Go transpiler
 
-### Go -> Haxe -> JavaScript / ActionScript / Java / C++ / C# / PHP / Neko
+#### Go -> Haxe -> JavaScript / ActionScript / Java / C++ / C# / PHP / Neko
 
 ## Objectives:
 The objective of this project is to enable the same Go code to be re-deployed in  as many different execution environments as possible, thus saving development time and effort. 
@@ -26,7 +26,7 @@ Xbox and PlayStation.
 For more background see the links from: http://tardisgo.github.io/
 
 ## Project status: 
-### WORKING, EXPERIMENTAL, INCOMPLETE, IN-TESTING, UN-OPTIMIZED
+#### WORKING, EXPERIMENTAL, INCOMPLETE, IN-TESTING, UN-OPTIMIZED
 
 Almost all of the core [Go language specification] (http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. 
 
