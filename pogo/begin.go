@@ -14,6 +14,7 @@ import (
 
 	// TARDIS Go included runtime libraries, so that they get installed and the SSA code can go and load their binary form
 	_ "github.com/tardisgo/tardisgo/golibruntime"
+	_ "github.com/tardisgo/tardisgo/haxegoruntime"
 	_ "github.com/tardisgo/tardisgo/tardisgolib"
 )
 

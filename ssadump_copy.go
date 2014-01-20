@@ -27,7 +27,7 @@ import (
 
 	_ "github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
 	"github.com/tardisgo/tardisgo/pogo"   // TARDIS Go addition
-	"go/parser"                           // TARDIS Go addition
+	//"go/parser"                           // TARDIS Go addition
 )
 
 var buildFlag = flag.String("build", "", `Options controlling the SSA builder.
@@ -109,12 +109,11 @@ func main() {
 		WordSize: wordSize,
 	}
 
-	var debugMode bool
 	var mode ssa.BuilderMode
 	for _, c := range *buildFlag {
 		switch c {
 		case 'D':
-			debugMode = true
+			mode |= ssa.GlobalDebug
 		case 'P':
 			mode |= ssa.LogPackages | ssa.BuildSerially
 		case 'F':
@@ -172,6 +171,22 @@ func main() {
 		conf.Import("runtime")
 	}
 
+	// TARDIS GO additions to add the language specific go runtime code
+	conf.Import("github.com/tardisgo/tardisgo/haxe/haxegoruntime")
+	/* NOT CURRENTLY WORKING
+		goruntime, err := parser.ParseFile(imp.Fset, "langgoruntime.go", pogo.LanguageList[pogo.TargetLang].Goruntime, 0) // Parse the input file.
+	if err != nil {
+		fmt.Print(err) // parse error
+		return
+	}
+	goruntimePI := imp.CreatePackage("goruntime", goruntime) // Create single-file goruntime package and import its dependencies.
+	if goruntimePI.Err != nil {
+		log.Fatal(goruntimePI.Err)
+	}
+	prog.CreatePackage(goruntimePI)
+	*/
+	// end TARDIS GO additions
+
 	// Load, parse and type-check the whole program.
 	iprog, err := conf.Load()
 	if err != nil {
@@ -182,89 +197,60 @@ func main() {
 	prog := ssa.Create(iprog, mode)
 	prog.BuildAll()
 
-	// TARDIS GO additions to add the language specific go runtime code
-	/*
-			goruntime, err := parser.ParseFile(imp.Fset, "langgoruntime.go", pogo.LanguageList[pogo.TargetLang].Goruntime, 0) // Parse the input file.
-		if err != nil {
-			fmt.Print(err) // parse error
-			return
-		}
-		goruntimePI := imp.CreatePackage("goruntime", goruntime) // Create single-file goruntime package and import its dependencies.
-		if goruntimePI.Err != nil {
-			log.Fatal(goruntimePI.Err)
-		}
-		prog.CreatePackage(goruntimePI)
-	*/
-	// end TARDIS GO additions
-
-	if err := prog.CreatePackages(imp); err != nil {
-		log.Fatal(err)
-	}
-
-	if debugMode {
-		for _, pkg := range prog.AllPackages() {
-			pkg.SetDebugMode(true)
-		}
-	}
-	prog.BuildAll()
-
 	// Run the interpreter.
 	if *runFlag {
-		// If some package defines main, run that.
-		// Otherwise run all package's tests.
+		// If a package named "main" defines func main, run that.
+		// Otherwise run all packages' tests.
 		var main *ssa.Package
-		var pkgs []*ssa.Package
-		for _, info := range infos {
-			pkg := prog.Package(info.Pkg)
-			if pkg.Func("main") != nil {
+		pkgs := prog.AllPackages()
+		for _, pkg := range pkgs {
+			if pkg.Object.Name() == "main" && pkg.Func("main") != nil {
 				main = pkg
 				break
 			}
-			pkgs = append(pkgs, pkg)
 		}
-		if main == nil && pkgs != nil {
+		if main == nil && len(pkgs) > 0 {
+			// TODO(adonovan): only run tests if -test flag specified.
 			main = prog.CreateTestMainPackage(pkgs...)
 		}
 		if main == nil {
 			log.Fatal("No main package and no tests")
 		}
 
-		if runtime.GOARCH != impctx.Build.GOARCH {
+		if runtime.GOARCH != conf.Build.GOARCH {
 			log.Fatalf("Cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s).",
-				impctx.Build.GOARCH, runtime.GOARCH)
+				conf.Build.GOARCH, runtime.GOARCH)
 		}
 
-		interp.Interpret(main, interpMode, impctx.TypeChecker.Sizes, main.Object.Path(), args) //TARDIS Go temporary removal due to Windows 7 related bug
+		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 	}
 
 	// TARDIS Go additions: copy run interpreter code above, but call pogo class
 	if true {
-		// If some package defines main, run that.
-		// Otherwise run all package's tests.
+		// If a package named "main" defines func main, run that.
+		// Otherwise run all packages' tests.
 		var main *ssa.Package
-		var pkgs []*ssa.Package
-		for _, info := range infos {
-			pkg := prog.Package(info.Pkg)
-			if pkg.Func("main") != nil {
+		pkgs := prog.AllPackages()
+		for _, pkg := range pkgs {
+			if pkg.Object.Name() == "main" && pkg.Func("main") != nil {
 				main = pkg
 				break
 			}
-			pkgs = append(pkgs, pkg)
 		}
-		if main == nil && pkgs != nil {
+		if main == nil && len(pkgs) > 0 {
+			// TODO(adonovan): only run tests if -test flag specified.
 			main = prog.CreateTestMainPackage(pkgs...)
 		}
 		if main == nil {
 			log.Fatal("No main package and no tests")
 		}
 
-		if runtime.GOARCH != impctx.Build.GOARCH {
+		if runtime.GOARCH != conf.Build.GOARCH {
 			log.Fatalf("Cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s).",
-				impctx.Build.GOARCH, runtime.GOARCH)
+				conf.Build.GOARCH, runtime.GOARCH)
 		}
 
-		//interp.Interpret(main, interpMode, impctx.TypeChecker.Sizes, main.Object.Path(), args)
+		//interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 		pogo.EntryPoint(main) // TARDIS Go entry point, no return, does os.Exit at end
 	}
-
 }
