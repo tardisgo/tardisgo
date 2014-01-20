@@ -30,8 +30,7 @@ Xbox and PlayStation.
 For more background see the links from: http://tardisgo.github.io/
 
 ## Project status: 
-### NOT BUILDING AS AT 19-JAN-14, DUE TO API CHANGE IN UNDERLYING GO.TOOLS  
-#### IT WAS: WORKING, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED
+####  WORKING, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED
 
 > "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
 
