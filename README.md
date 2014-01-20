@@ -48,9 +48,9 @@ The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubunt
  
 TARDIS Go can be installed very easily:
 ```
-go get github.com/tardisgo/tardisgo
+go get -u github.com/tardisgo/tardisgo
 ```
-Not installing? Please e-mail [the author](https://github.com/elliott5)!
+The -u is important to make sure you have the latest version of the go.tools repository. Still not installing? Please e-mail [the author](https://github.com/elliott5)!
 
 From the directory containing your .go files, first create a "tardis" sub-directory (TODO review this requirement):
 ```
