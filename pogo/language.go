@@ -91,7 +91,7 @@ type LanguageEntry struct {
 	SubFnInstructionLimit int          // When we split up a function, how large can each sub-function be?
 	PackageConstVarName   string       // The special constant name to specify a Package/Module name in the target language.
 	HeaderConstVarName    string       // The special constant name for a target-specific header.
-	Goruntime             string       // The core implementation go runtime code for this target language.
+	Goruntime             string       // The location of the core implementation go runtime code for this target language.
 }
 
 var LanguageList = make([]LanguageEntry, 0, 10) // The languages that can be targeted. Hey, I hope we do get up to 10 target languages!!

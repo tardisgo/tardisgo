@@ -30,7 +30,7 @@ func init() {
 	langEntry.SubFnInstructionLimit = 256 /* 256 required for php */
 	langEntry.PackageConstVarName = "tardisgoHaxePackage"
 	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"
-	langEntry.Goruntime = goruntime // a string containing the code for the core language runtime functions delivered in Go
+	langEntry.Goruntime = "github.com/tardisgo/tardisgo/haxe/haxegoruntime" // a string containing the location of the core language runtime functions delivered in Go
 
 	langIdx = len(pogo.LanguageList)
 	pogo.LanguageList = append(pogo.LanguageList, langEntry)

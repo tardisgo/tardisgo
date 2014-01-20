@@ -171,21 +171,8 @@ func main() {
 		conf.Import("runtime")
 	}
 
-	// TARDIS GO additions to add the language specific go runtime code
-	conf.Import("github.com/tardisgo/tardisgo/haxe/haxegoruntime")
-	/* NOT CURRENTLY WORKING
-		goruntime, err := parser.ParseFile(imp.Fset, "langgoruntime.go", pogo.LanguageList[pogo.TargetLang].Goruntime, 0) // Parse the input file.
-	if err != nil {
-		fmt.Print(err) // parse error
-		return
-	}
-	goruntimePI := imp.CreatePackage("goruntime", goruntime) // Create single-file goruntime package and import its dependencies.
-	if goruntimePI.Err != nil {
-		log.Fatal(goruntimePI.Err)
-	}
-	prog.CreatePackage(goruntimePI)
-	*/
-	// end TARDIS GO additions
+	// TARDIS GO additional line to add the language specific go runtime code
+	conf.Import(pogo.LanguageList[pogo.TargetLang].Goruntime) // TODO add code to set pogo.TargetLang when more than one of them
 
 	// Load, parse and type-check the whole program.
 	iprog, err := conf.Load()
