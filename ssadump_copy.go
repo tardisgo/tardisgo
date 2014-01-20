@@ -20,7 +20,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	"code.google.com/p/go.tools/go/importer"
+	"code.google.com/p/go.tools/go/loader"
 	"code.google.com/p/go.tools/go/ssa"
 	"code.google.com/p/go.tools/go/ssa/interp"
 	"code.google.com/p/go.tools/go/types"
@@ -66,7 +66,7 @@ Examples:
 % ssadump -build=FPG hello.go         # quickly dump SSA form of a single package
 % ssadump -run -interp=T hello.go     # interpret a program, with tracing
 % ssadump -run unicode -- -test.v     # interpret the unicode package's tests, verbosely
-` + importer.InitialPackagesUsage +
+` + loader.FromArgsUsage +
 	`
 When -run is specified, ssadump will find the first package that
 defines a main function and run it in the interpreter.
@@ -93,18 +93,18 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	impctx := importer.Config{
+	conf := loader.Config{
 		Build:         &build.Default,
 		SourceImports: true,
 	}
 	// TODO(adonovan): make go/types choose its default Sizes from
 	// build.Default or a specified *build.Context.
 	var wordSize int64 = 8
-	switch impctx.Build.GOARCH {
+	switch conf.Build.GOARCH {
 	case "386", "arm":
 		wordSize = 4
 	}
-	impctx.TypeChecker.Sizes = &types.StdSizes{
+	conf.TypeChecker.Sizes = &types.StdSizes{
 		MaxAlign: 8,
 		WordSize: wordSize,
 	}
@@ -126,7 +126,7 @@ func main() {
 		case 'N':
 			mode |= ssa.NaiveForm
 		case 'G':
-			impctx.SourceImports = false
+			conf.SourceImports = false
 		case 'L':
 			mode |= ssa.BuildSerially
 		default:
@@ -161,34 +161,40 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	// Load, parse and type-check the program.
-	imp := importer.New(&impctx)
-	infos, args, err := imp.LoadInitialPackages(args)
+	// Use the initial packages from the command line.
+	args, err := conf.FromArgs(args)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// The interpreter needs the runtime package.
 	if *runFlag {
-		if _, err := imp.ImportPackage("runtime"); err != nil {
-			log.Fatalf("ImportPackage(runtime) failed: %s", err)
-		}
+		conf.Import("runtime")
+	}
+
+	// Load, parse and type-check the whole program.
+	iprog, err := conf.Load()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Create and build SSA-form program representation.
-	prog := ssa.NewProgram(imp.Fset, mode)
+	prog := ssa.Create(iprog, mode)
+	prog.BuildAll()
 
 	// TARDIS GO additions to add the language specific go runtime code
-	goruntime, err := parser.ParseFile(imp.Fset, "langgoruntime.go", pogo.LanguageList[pogo.TargetLang].Goruntime, 0) // Parse the input file.
-	if err != nil {
-		fmt.Print(err) // parse error
-		return
-	}
-	goruntimePI := imp.CreatePackage("goruntime", goruntime) // Create single-file goruntime package and import its dependencies.
-	if goruntimePI.Err != nil {
-		log.Fatal(goruntimePI.Err)
-	}
-	prog.CreatePackage(goruntimePI)
+	/*
+			goruntime, err := parser.ParseFile(imp.Fset, "langgoruntime.go", pogo.LanguageList[pogo.TargetLang].Goruntime, 0) // Parse the input file.
+		if err != nil {
+			fmt.Print(err) // parse error
+			return
+		}
+		goruntimePI := imp.CreatePackage("goruntime", goruntime) // Create single-file goruntime package and import its dependencies.
+		if goruntimePI.Err != nil {
+			log.Fatal(goruntimePI.Err)
+		}
+		prog.CreatePackage(goruntimePI)
+	*/
 	// end TARDIS GO additions
 
 	if err := prog.CreatePackages(imp); err != nil {
