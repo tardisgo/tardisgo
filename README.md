@@ -34,13 +34,14 @@ For more background see the links from: http://tardisgo.github.io/
 
 > "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
 
-Almost all of the core [Go language specification] (http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. 
+All of the core [Go language specification] (http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the packages "unsafe" and "reflect", which are mentioned in the core specification, are not currently supported. 
 
-Some parts of the Go standard library work, but the bulk has not been implemented or even tested yet. Indeed elements of the standard library may not even be appropriate for transpilation into Haxe. If in doubt, assume the standard package does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!"). Unsafe pointers are not currently supported and the reflection package is not yet implemented. 
 
-A start has been made on the automated integration with Haxe libraries, but this is currently incomplete see: https://github.com/elliott5/gohaxelib
+Some parts of the Go standard library work, but the bulk has not been implemented or even tested yet. Indeed elements of the standard library may not even be appropriate for transpilation into Haxe. If in doubt, assume the standard package does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!"). 
 
-The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
+A start has been made on the automated integration with Haxe libraries, but this is currently incomplete see: https://github.com/tardisgo/gohaxelib
+
+The code requires Go 1.2 and Haxe 3.0.1. The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
 
 (TODO a development road-map and much more documentation)
 
@@ -50,7 +51,9 @@ TARDIS Go can be installed very easily:
 ```
 go get -u github.com/tardisgo/tardisgo
 ```
-The -u is important to make sure you have the latest version of the go.tools repository. Still not installing? Please e-mail [the author](https://github.com/elliott5)!
+The -u is important to make sure you have the latest version of the go.tools repository. 
+
+Green "build:passing" icon at the top of this page and still not installing? Please e-mail [the author](https://github.com/elliott5)!
 
 From the directory containing your .go files, first create a "tardis" sub-directory (TODO review this requirement):
 ```
