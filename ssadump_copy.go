@@ -51,7 +51,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go modification TODO review words here
-const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental : SSA interpreter disabled due to Win7 go.tools error).
+const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental : SSA interpreter disabled due to Win7 go.tools error #7166).
 Usage: tardisgo [<flag> ...] <args> ...
 A shameless copy of the ssadump utility, but also writes a 'Go.hx' Haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:
@@ -133,7 +133,7 @@ func main() {
 		}
 	}
 
-	/* TARDIS Go disabled until go.tools/go/ssa/interp Win7 error is fixed
+	/* TARDIS Go disabled until go.tools/go/ssa/interp Win7 error #7166 is fixed
 	var interpMode interp.Mode
 	for _, c := range *interpFlag {
 		switch c {
@@ -211,7 +211,7 @@ func main() {
 				conf.Build.GOARCH, runtime.GOARCH)
 		}
 
-		// TARDIS Go disabled until go.tools/go/ssa/interp Win7 error is fixed
+		// TARDIS Go disabled until go.tools/go/ssa/interp Win7 error #7166 is fixed
 		// interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 	}
 
