@@ -22,7 +22,7 @@ import (
 
 	"code.google.com/p/go.tools/go/loader"
 	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/ssa/interp"
+	//"code.google.com/p/go.tools/go/ssa/interp" // TARDIS GO comment out - Win7 go.tools error
 	"code.google.com/p/go.tools/go/types"
 
 	_ "github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
@@ -51,7 +51,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go modification TODO review words here
-const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental-alpha).
+const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental : SSA interpreter disabled due to Win7 go.tools error).
 Usage: tardisgo [<flag> ...] <args> ...
 A shameless copy of the ssadump utility, but also writes a 'Go.hx' Haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:
@@ -133,6 +133,7 @@ func main() {
 		}
 	}
 
+	/* TARDIS Go disabled until go.tools/go/ssa/interp Win7 error is fixed
 	var interpMode interp.Mode
 	for _, c := range *interpFlag {
 		switch c {
@@ -144,6 +145,7 @@ func main() {
 			log.Fatalf("Unknown -interp option: '%c'.", c)
 		}
 	}
+	*/
 
 	if len(args) == 0 {
 		fmt.Fprint(os.Stderr, usage)
@@ -209,7 +211,8 @@ func main() {
 				conf.Build.GOARCH, runtime.GOARCH)
 		}
 
-		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
+		// TARDIS Go disabled until go.tools/go/ssa/interp Win7 error is fixed
+		// interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 	}
 
 	// TARDIS Go additions: copy run interpreter code above, but call pogo class
