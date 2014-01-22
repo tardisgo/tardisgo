@@ -37,13 +37,18 @@ For more background see the links from: http://tardisgo.github.io/
 All of the core [Go language specification] (http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the packages "unsafe" and "reflect", which are mentioned in the core specification, are not currently supported. 
 
 
-Some parts of the Go standard library work, but the bulk has not been implemented or even tested yet. Indeed elements of the standard library may not even be appropriate for transpilation into Haxe. If in doubt, assume the standard package does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!"). 
+Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If in doubt, assume the standard package does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!").  
 
 A start has been made on the automated integration with Haxe libraries, but this is currently incomplete see: https://github.com/tardisgo/gohaxelib
 
 The code requires Go 1.2 and Haxe 3.0.1. The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
 
-(TODO a development road-map and much more documentation)
+Development priorities:
+- Report benchmaring results and  improve currently poor execution speeds
+- For all Go standard libraries, report testing and implementaton status
+- Improve integration with Haxe code and libraries, automating as far as possible
+- Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications
+- Publish more explanation and documentation
 
 ## Installation and use:
  
