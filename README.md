@@ -48,6 +48,8 @@ Development priorities:
 - For all Go standard libraries, report testing and implementation status
 - Improve integration with Haxe code and libraries, automating as far as possible
 - Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications
+- Improve debug and profiling capabilities
+- Add command line flags to control options
 - Publish more explanation and documentation
 
 ## Installation and use:
