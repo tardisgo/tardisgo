@@ -44,8 +44,8 @@ A start has been made on the automated integration with Haxe libraries, but this
 The code requires Go 1.2 and Haxe 3.0.1. The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
 
 Development priorities:
-- Report benchmaring results and  improve currently poor execution speeds
-- For all Go standard libraries, report testing and implementaton status
+- Report benchmarking results and  improve currently poor execution speeds
+- For all Go standard libraries, report testing and implementation status
 - Improve integration with Haxe code and libraries, automating as far as possible
 - Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications
 - Publish more explanation and documentation
