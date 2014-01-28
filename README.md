@@ -58,15 +58,14 @@ TARDIS Go can be installed very easily:
 ```
 go get -u github.com/tardisgo/tardisgo
 ```
-The -u is important to make sure you have the latest version of the go.tools repository. 
+(The -u is important to make sure you have the latest version of the go.tools repository. If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [the author](https://github.com/elliott5)!)
 
-Green "build:passing" icon at the top of this page and still not installing? Please e-mail [the author](https://github.com/elliott5)!
-
-From the directory containing your .go files, first create a "tardis" sub-directory:
+From the directory containing your .go files, first create a "tardis" sub-directory 
+(examples in the [sample code](https://github.com/tardisgo/tardisgo-samples) should already have one):
 ```
 mkdir tardis
 ```
-Then to translate Go to Haxe, go to the directory containing your .go files and type the command line: 
+Then to translate Go to Haxe, from the directory containing your .go files and type the command line: 
 ```
 tardisgo filename.go filename2.go
 ``` 
@@ -78,7 +77,8 @@ Then to run the tardis/Go.hx file generated above, type the command line:
 ```
 haxe -main tardis.Go --interp
 ```
-... or whatever Haxe compilation options you want to use. Note that to compile for PHP you currently need to add the haxe compilation option "--php-prefix tardisgo" to avoid name conflicts.
+... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
+Note that to compile for PHP you currently need to add the haxe compilation option "--php-prefix tardisgo" to avoid name conflicts.
 
 ## Next steps:
 Please go to http://github.com/tardisgo/tardisgo-samples for example Go code modified to work with tardisgo.
