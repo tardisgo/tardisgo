@@ -27,7 +27,7 @@ webOS,
 Flash,
 Xbox and PlayStation.
 
-For more background see the links from: http://tardisgo.github.io/
+For more background and on-line examples see the links from: http://tardisgo.github.io/
 
 ## Project status: 
 ####  WORKING, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED
@@ -62,11 +62,11 @@ The -u is important to make sure you have the latest version of the go.tools rep
 
 Green "build:passing" icon at the top of this page and still not installing? Please e-mail [the author](https://github.com/elliott5)!
 
-From the directory containing your .go files, first create a "tardis" sub-directory (TODO review this requirement):
+From the directory containing your .go files, first create a "tardis" sub-directory:
 ```
 mkdir tardis
 ```
-Then to translate Go to Haxe, go to the directory containing your .go files (TODO review) and type the command line: 
+Then to translate Go to Haxe, go to the directory containing your .go files and type the command line: 
 ```
 tardisgo filename.go filename2.go
 ``` 
