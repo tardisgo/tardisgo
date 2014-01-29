@@ -7,8 +7,10 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-// TARDIS Go modified version of ssadump: a tool for displaying and interpreting the SSA form of Go programs.
-// TODO add own command line interface etc
+// TARDIS Go is a Go->Haxe transpiler.
+// However the tool is written with a "language" interface type separating the generic from the language specific parts of the code, which will allow other languages to be targeted in future.
+// To see example code working in your browser please visit http://tardisgo.github.io .
+// For simplicity, the current command line tool is simply a modified version of ssadump: a tool for displaying and interpreting the SSA form of Go programs.
 package main
 
 import (
