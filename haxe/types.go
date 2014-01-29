@@ -386,7 +386,7 @@ func (l langType) EmitTypeInfo() string {
 		ret += `case ` + fmt.Sprintf("%d", v) + `: switch(t){` + "\n"
 		for T := range pteKeys {
 			t := pte.At(pteKeys[T])
-			if v != t && types.IsAssignableTo(pteKeys[V], pteKeys[T]) {
+			if v != t && types.AssignableTo(pteKeys[V], pteKeys[T]) {
 				ret += `case ` + fmt.Sprintf("%d", t) + `: return true;` + "\n"
 			}
 		}
@@ -401,7 +401,7 @@ func (l langType) EmitTypeInfo() string {
 		ret += `case ` + fmt.Sprintf("%d", v) + `: switch(t){` + "\n"
 		for T := range pteKeys {
 			t := pte.At(pteKeys[T])
-			if v != t && types.IsIdentical(pteKeys[V], pteKeys[T]) {
+			if v != t && types.Identical(pteKeys[V], pteKeys[T]) {
 				ret += `case ` + fmt.Sprintf("%d", t) + `: return true;` + "\n"
 			}
 		}

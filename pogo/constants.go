@@ -23,7 +23,7 @@ func emitNamedConstants() {
 				pName := mem.(*ssa.NamedConst).Object().Pkg().Name()
 				switch lit.Value.Kind() { // non language specific validation
 				case exact.Bool, exact.String, exact.Float, exact.Int, exact.Complex: //OK
-					isPublic := mem.Object().IsExported()
+					isPublic := mem.Object().Exported()
 					if isPublic { // constants will be inserted inline, these declarations of public constants are for exteral use in target language
 						l := TargetLang
 						_, _, isOverloaded := LanguageList[l].PackageOverloaded(pName)
