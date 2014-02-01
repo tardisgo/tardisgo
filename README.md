@@ -68,9 +68,9 @@ From the directory containing your .go files, first create a "tardis" sub-direct
 ```
 mkdir tardis
 ```
-Then to translate Go to Haxe, from the directory containing your .go files and type the command line: 
+Then to translate Go to Haxe, from the directory containing your .go files type the command line: 
 ```
-tardisgo filename.go filename2.go
+tardisgo yourfilename.go 
 ``` 
 A single Go.hx file will be created in the tardis subdirectory.
 
