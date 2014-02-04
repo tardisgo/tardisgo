@@ -667,7 +667,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			register += "="
 		}
 		switch fnToCall { // TODO handle other built-in functions?
-		case "len", "cap": // add len(map) - requires counting the itterator
+		case "len", "cap":
 			switch args[0].Type().Underlying().(type) {
 			case *types.Chan, *types.Slice:
 				if fnToCall == "len" {
@@ -677,7 +677,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				}
 			case *types.Array: // assume len
 				return register + l.IndirectValue(args[0], errorInfo /*, false*/) + ".length;"
-			case *types.Map: // assume len
+			case *types.Map: // assume len(map) - requires counting the itterator
 				return register + l.IndirectValue(args[0], errorInfo) + "==null?0:{var _l:Int=0;" + // TODO remove two uses of same variable
 					"var _it=" + l.IndirectValue(args[0], errorInfo) + ".iterator();" +
 					"while(_it.hasNext()) {_l++; _it.next();};" +
@@ -691,7 +691,10 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				return register + `null;`
 			}
 		case "print", "println": // NOTE ugly and target-specific output!
-			ret += "trace(" + fmt.Sprintf("Go.CPos(%d),", pogo.LatestValidPosHash)
+			ret += "trace(" + fmt.Sprintf("Go.CPos(%d)", pogo.LatestValidPosHash)
+			if len(args) > 0 { // if there are more arguments to pass, add a comma
+				ret += ","
+			}
 		case "delete":
 			if l.LangType(args[1].Type().Underlying(), false, errorInfo) == "GOint64" {
 				//useInt64 = true
