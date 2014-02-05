@@ -171,6 +171,7 @@ func main() {
 	// The interpreter needs the runtime package.
 	if *runFlag {
 		conf.Import("runtime")
+		conf.Import("github.com/tardisgo/tardisgo/golibruntime/runtime") // This required for TARDIS go to run runtime
 	}
 
 	// TARDIS GO additional line to add the language specific go runtime code
