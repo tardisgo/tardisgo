@@ -92,8 +92,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}	
 	public static inline function toUint32(v:Int):Int { 
 		#if js
-			// return v | 0; // this is the emscripten technique to force values to int, it is shorter, but does it always work for uint32?
-			return v & untyped __js__("0xffffffff"); // the obvious solution
+			return v >>> untyped __js__("0"); // using GopherJS method (with workround to stop it being optimized away by Haxe)
 		#elseif php
        		return v & untyped __php__("0xffffffff");
 		#else
@@ -119,12 +118,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}	
 	public static function toInt32(v:Int):Int {
 		#if js 
-			var int32_mostNeg:Int = -2147483648;
-			var r:Int = v & untyped __js__("0x7FFFFFFF");
-			if ((v & untyped __js__("0x80000000")) != 0){ // it should be -ve
-				return int32_mostNeg+r;				
-			}
-			return r;
+			return v >> untyped __js__("0"); // using GopherJS method (with workround to stop it being optimized away by Haxe)
 		#elseif php
 			//see: http://stackoverflow.com/questions/300840/force-php-integer-overflow
      		v = (v & untyped __php__("0xFFFFFFFF"));

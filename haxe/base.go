@@ -471,19 +471,15 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 			return "Force.toInt8(" + v + ")"
 		case types.Int16:
 			return "Force.toInt16(" + v + ")"
-		case types.Int32:
+		case types.Int32, types.Int: // NOTE type int is always int32
 			return "Force.toInt32(" + v + ")"
 		case types.Int64:
 			return "Force.toInt64(" + v + ")"
-		case types.Int, types.Uint:
-			// "v|0" is the method used by Emscripten to force numeric values to int, TODO: review if required here
-			//return "((" + v + ")|0)"
-			return v
 		case types.Uint8:
 			return "Force.toUint8(" + v + ")"
 		case types.Uint16:
 			return "Force.toUint16(" + v + ")"
-		case types.Uint32:
+		case types.Uint32, types.Uint: // NOTE type uint is always uint32
 			return "Force.toUint32(" + v + ")"
 		case types.Uint64:
 			return "Force.toUint64(" + v + ")"
