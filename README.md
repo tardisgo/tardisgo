@@ -90,13 +90,13 @@ PHP specific issues:
 ## Next steps:
 Please go to http://github.com/tardisgo/tardisgo-samples for example Go code modified to work with tardisgo.
 
-For help or general discussions please go to the [Google Group](https://groups.google.com/d/forum/tardisgo). 
+For public help or discussion please go to the [Google Group](https://groups.google.com/d/forum/tardisgo); or feel free to e-mail [Elliott](https://github.com/elliott5) direct to discuss any issues if you prefer.
 
 The documentation is sparse at present, if there is some aspect of the system that you want to know more about, please let [Elliott](https://github.com/elliott5) know and he will prioritise that area.
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
-If you would like to get involved in helping the project to advance, the project welcomes pull requests. However, please contact [Elliott](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code to avoid any conflicts. 
+If you would like to get involved in helping the project to advance, that would be wonderful. However, please contact [Elliott](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code to avoid any conflicts. 
 
 ## License:
 MIT license, please see the license file.
