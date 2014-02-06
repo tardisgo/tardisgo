@@ -1114,22 +1114,21 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 			return reg + "=" + valueCode + ";"
 		}
 	} else { // assume it is a Map
-		lt_map := l.LangType(Map.(ssa.Value).Type().Underlying(), false, errorInfo)
-		returnValue := "({var _v:" + lt_map + "=" + l.IndirectValue(Map, errorInfo) + ";_v;}).get(" + keyString + ")"
+		li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
+		if strings.HasPrefix(li, "new ") {
+			li = "null" // no need for a full object declaration in this context
+		}
+		returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")"
 		lt_ele := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
 		switch lt_ele {
 		case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
 			returnValue = "cast(" + returnValue + "," + lt_ele + ")"
 		}
+		ele_exists := l.IndirectValue(Map, errorInfo) + ".exists(" + keyString + ")"
 		if commaOk {
-			li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
-			if strings.HasPrefix(li, "new ") {
-				li = "null" // no need for a full object declaration in this context
-			}
-			return reg + "=({var _v:" + lt_map + "=" + l.IndirectValue(Map, errorInfo) + ";_v;}).exists(" + keyString + ")" +
-				"?{r0:" + returnValue + ",r1:true}:{r0:" + li + ",r1:false};"
+			return reg + "=" + ele_exists + "?{r0:" + returnValue + ",r1:true}:{r0:" + li + ",r1:false};"
 		} else {
-			return reg + "=" + returnValue + ";"
+			return reg + "=" + ele_exists + "?" + returnValue + ":" + li + ";"
 		}
 	}
 }
