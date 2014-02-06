@@ -42,7 +42,7 @@ class Deep {
 			} 
 			return result;
 		}
-		else if(Std.is( v, Map )) { // **** this code section written new - TODO: test
+		else if(Std.is( v, Map )) { // **** this code section written new - TODO: test further, could be a bug as Go maps are always pointers...
 			var result = Type.createInstance(Type.getClass(v), []);
 			untyped {
 				var keys : Iterator<Dynamic> = v.keys();
@@ -52,17 +52,6 @@ class Deep {
 			} 
 			return result;
 		} //*** end new code
-		else if(Std.is( v, List )) { // list
-			//List would be copied just fine without this special case, but I want to avoid going recursive
-			var result = Type.createInstance(Type.getClass(v), []);
-			untyped {
-				var iter : Iterator<Dynamic> = v.iterator();
-				for( ii in iter ) {
-					result.add(ii);
-				}
-			} 
-			return result; 
-		}
 		else if(Type.getClass(v) == null) { // anonymous object 
 			var obj : Dynamic = {}; 
 			for( ff in Reflect.fields(v) ) { 
@@ -77,9 +66,7 @@ class Deep {
 			}
 			return obj; 
 		} 
-		// return null;  //**** commented out to remove an unreachable code error 
 	}
- 
 }
 
 class Force { // TODO maybe this should not be a separate haxe class, as no non-Go code needs access to it
