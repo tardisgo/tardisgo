@@ -81,9 +81,11 @@ Then to run the tardis/Go.hx file generated above, type the command line:
 haxe -main tardis.Go --interp
 ```
 ... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
+See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
 
 PHP specific issues:
-Pleae note that to compile for PHP you currently need to add the haxe compilation option "--php-prefix tgo" to avoid name conflicts and that very long PHP class/file names cause problems on some plaforms.
+* to compile for PHP you currently need to add the haxe compilation option "--php-prefix tgo" to avoid name conflicts
+* very long PHP class/file names may cause name resolution problems on some platforms
 
 ## Next steps:
 Please go to http://github.com/tardisgo/tardisgo-samples for example Go code modified to work with tardisgo.
