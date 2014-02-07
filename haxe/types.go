@@ -152,7 +152,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 		case *types.Pointer:
 			if retInitVal {
 				// NOTE pointer declarations create endless recursion for self-referencing structures unless initialized with null
-				return "new Pointer(null)" //rather than: + l.LangType(t.(*types.Pointer).Elem(), retInitVal, errorInfo) + ")"
+				return "null" //rather than: + l.LangType(t.(*types.Pointer).Elem(), retInitVal, errorInfo) + ")"
 			} else {
 				return "Pointer"
 			}
