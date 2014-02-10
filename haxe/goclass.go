@@ -132,10 +132,20 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 				pogo.LogWarning(position, "Haxe", fmt.Errorf("Integer constant value > 32 bits, rendered as 64-bit : %v", lit.Value))
 				return "GOint64", fmt.Sprintf("GOint64.make(0x%x,0x%x)", uint32(h), uint32(l))
 			}
-			if l < 0 {
-				return "Int", fmt.Sprintf("(%d)", l)
-			} else {
-				return "Int", fmt.Sprintf("%d", l)
+			switch lit.Type().Underlying().(*types.Basic).Kind() {
+			case types.Uint, types.Uint32, types.Uint16, types.Uint8:
+				if l == -1 {
+					return "Int",
+						" #if js untyped __js__(\"0xffffffff\") #elseif php untyped __php__(\"0xffffffff\") #else (-1) #end "
+				} else {
+					return "Int", fmt.Sprintf(" (%d) ", l)
+				}
+			default:
+				if l < 0 {
+					return "Int", fmt.Sprintf("(%d)", l)
+				} else {
+					return "Int", fmt.Sprintf("%d", l)
+				}
 			}
 		}
 	case exact.Unknown: // not sure we should ever get here!

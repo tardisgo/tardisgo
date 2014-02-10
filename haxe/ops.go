@@ -184,8 +184,13 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 				if v2LangType == "GOint64" {
 					v2string = "GOint64.toInt(" + v2string + ")"
 				}
-				ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
-					"GOint64.ushr("+v1string+","+v2string+")", errorInfo) // GOint64.shr does sign extension
+				if isSignedStr == "true" {
+					ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
+						"GOint64.shr("+v1string+","+v2string+")", errorInfo) // GOint64.shr does sign extension
+				} else {
+					ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
+						"GOint64.ushr("+v1string+","+v2string+")", errorInfo) // GOint64.ushr does not do sign extension
+				}
 			case "-":
 				ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
 					"GOint64.sub("+v1string+","+v2string+")", errorInfo)
@@ -224,6 +229,12 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 				if v2LangType == "GOint64" {
 					v2string = "GOint64.toInt(" + v2string + ")"
 				}
+				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
+				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned bit shift
+					if op == ">>" {
+						op = ">>>" // logical right shift if unsigned
+					}
+				}
 				ret = "(" + v1string + op + v2string + ")"
 			case "/":
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
@@ -231,9 +242,9 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 					ret = "Force.intDiv(" + v1string + "," + v2string + ",1)" // 1 byte special processing
 				case types.Int16:
 					ret = "Force.intDiv(" + v1string + "," + v2string + ",2)" // 2 byte special processing
-				case types.Int32:
+				case types.UntypedInt, types.Int, types.Int32: // treat all unknown int types as int 32
 					ret = "Force.intDiv(" + v1string + "," + v2string + ",4)" // 4 byte special processing
-				case types.UntypedInt, types.Int, types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr:
+				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned division
 					ret = "Force.intDiv(" + v1string + "," + v2string + ",0)" // spec does not require special processing
 				case types.UntypedFloat, types.Float32, types.Float64:
 					ret = "Force.floatDiv(" + v1string + "," + v2string + ")"
@@ -247,9 +258,9 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 					ret = "Force.intMod(" + v1string + "," + v2string + ", 1)"
 				case types.Int16:
 					ret = "Force.intMod(" + v1string + "," + v2string + ", 2)"
-				case types.Int32:
+				case types.UntypedInt, types.Int, types.Int32: // treat all unknown int types as int 32
 					ret = "Force.intMod(" + v1string + "," + v2string + ", 4)"
-				case types.UntypedInt, types.Int, types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr:
+				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned mod
 					ret = "Force.intMod(" + v1string + "," + v2string + ", 0)"
 				case types.UntypedFloat, types.Float32, types.Float64:
 					ret = "Force.floatMod(" + v1string + "," + v2string + ")"

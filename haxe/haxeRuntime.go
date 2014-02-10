@@ -174,7 +174,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
  			case 4:
 				if(x== -2147483648) r=1; // special case in the Go spec
 			default:
-				// noOp
+				// noOp - 0 => unsigned
 			}
 		}
 		return r;
@@ -183,13 +183,21 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static function intDiv(x:Int,y:Int,sv:Int):Int {
 		y = checkIntDiv(x,y,sv);
 		if(y==1) return x; // x div 1 is x
-		var f:Float=  x / y;
-		return f>=0?Math.floor(f):Math.ceil(f);
+		if((sv>0)||((x>0)&&(y>0))){ // signed division will work (even though it may be unsigned)
+			var f:Float=  x / y;
+			return f>=0?Math.floor(f):Math.ceil(f);
+		} else { // unsigned division 
+			return GOint64.toInt(GOint64.div(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
+		}
 	}
 	public static function intMod(x:Int,y:Int,sv:Int):Int {
 		y = checkIntDiv(x,y,sv);
 		if(y==1) return 0; // x mod 1 is 0
-		return x % y;
+		if((sv>0)||((x>0)&&(y>0))){ // signed mod will work (even though it may be unsigned)
+			return x % y;
+		} else { // unsigned mod (do it in 64 bits to ensure unsigned)
+			return GOint64.toInt(GOint64.mod(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
+		}
 	}
 	public static function floatDiv(x:Float,y:Float):Float {
 		if(y==0.0)
@@ -759,6 +767,9 @@ public static inline function or(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
 }
 public static inline function shl(x:HaxeInt64abs,y:Int):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.shl(x,y));
+}
+public static inline function shr(x:HaxeInt64abs,y:Int):HaxeInt64abs {
+	return new HaxeInt64abs(HaxeInt64Typedef.shr(x,y));
 }
 public static inline function ushr(x:HaxeInt64abs,y:Int):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.ushr(x,y));
