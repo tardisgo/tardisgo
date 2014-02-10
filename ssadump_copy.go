@@ -99,6 +99,7 @@ func main() {
 		Build:         &build.Default,
 		SourceImports: true,
 	}
+
 	// TODO(adonovan): make go/types choose its default Sizes from
 	// build.Default or a specified *build.Context.
 	var wordSize int64 = 8
@@ -106,6 +107,9 @@ func main() {
 	case "386", "arm":
 		wordSize = 4
 	}
+
+	wordSize = 4 // TARDIS Go addition to force default int size to 32 bits
+
 	conf.TypeChecker.Sizes = &types.StdSizes{
 		MaxAlign: 8,
 		WordSize: wordSize,
@@ -235,10 +239,10 @@ func main() {
 			log.Fatal("No main package and no tests")
 		}
 
-		if runtime.GOARCH != conf.Build.GOARCH {
-			log.Fatalf("Cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s).",
-				conf.Build.GOARCH, runtime.GOARCH)
-		}
+		//if runtime.GOARCH != conf.Build.GOARCH {
+		//	log.Fatalf("Cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s).",
+		//		conf.Build.GOARCH, runtime.GOARCH)
+		//}
 
 		//interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 		pogo.EntryPoint(main) // TARDIS Go entry point, no return, does os.Exit at end
