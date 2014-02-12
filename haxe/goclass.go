@@ -134,9 +134,11 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 			}
 			switch lit.Type().Underlying().(*types.Basic).Kind() {
 			case types.Uint, types.Uint32, types.Uint16, types.Uint8:
-				if l == -1 {
-					return "Int",
-						" #if js untyped __js__(\"0xffffffff\") #elseif php untyped __php__(\"0xffffffff\") #else (-1) #end "
+				if l < 0 {
+					q := uint64(l) & 0xFFFFFFFF
+					return "Int", fmt.Sprintf(
+						" #if js untyped __js__(\"0x%x\") #elseif php untyped __php__(\"0x%x\") #else 0x%x #end ",
+						q, q, q)
 				} else {
 					return "Int", fmt.Sprintf(" (%d) ", l)
 				}

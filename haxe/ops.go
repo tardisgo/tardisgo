@@ -235,7 +235,7 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 						op = ">>>" // logical right shift if unsigned
 					}
 				}
-				ret = "(" + v1string + op + v2string + ")"
+				ret = "({var _v1:Int=" + v1string + "; var _v2:Int=" + v2string + "; _v2==0?_v1:_v1" + op + "_v2;})" //NoOp if v2==0
 			case "/":
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 				case types.Int8:
