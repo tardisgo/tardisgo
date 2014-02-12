@@ -609,12 +609,17 @@ public static inline function neq(x:Complex,y:Complex):Bool { // "!="
 }
 }
 
+/* TODO re-optimize to use cs and java base i64 types once all working
 #if ( cs || java )
 	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
 #else
+*/
 	typedef HaxeInt64Typedef = Int64;  // use the copied and modified version of the standard library class below
 	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
+
+/* TODO re-optimize to use cs and java base i64 types once all working
 #end
+*/
 
 // this abstract type to enable correct handling for Go of HaxeInt64Typedef
 abstract HaxeInt64abs(HaxeInt64Typedef) 
@@ -623,11 +628,17 @@ from HaxeInt64Typedef to HaxeInt64Typedef
 inline function new(v:HaxeInt64Typedef) this=v;
 
 public static inline function toInt(v:HaxeInt64abs):Int {
+
+/* TODO re-optimize to use cs and java base i64 types once all working
 	#if java 
 		return HaxeInt64Typedef.toInt(v); // NOTE: java version just returns low 32 bits
 	#else
+*/
 		return HaxeInt64Typedef.getLow(v); // NOTE: does not throw an error if value overflows Int
+
+/* TODO re-optimize to use cs and java base i64 types once all working
 	#end
+*/
 }
 public static inline function ofInt(v:Int):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.ofInt(v));
@@ -765,13 +776,14 @@ public static function div(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt6
 			} else { // only x is -ve
 				var pt1:HaxeInt64Typedef = HaxeInt64Typedef.make(0x7FFFFFFF,0xFFFFFFFF); // the largest part of the numerator
 				var pt2:HaxeInt64Typedef = HaxeInt64Typedef.and(x,pt1); // the smaller part of the numerator
-				var rem:HaxeInt64Typedef = HaxeInt64Typedef.ofInt(1); // the left-over bit
+				var rem:HaxeInt64Typedef = HaxeInt64Typedef.make(0,1); // the left-over bit
 				rem = HaxeInt64Typedef.add(rem,HaxeInt64Typedef.mod(pt1,y));
 				rem = HaxeInt64Typedef.add(rem,HaxeInt64Typedef.mod(pt2,y));
-				if( HaxeInt64Typedef.compare(rem,y) >= 0 )  // the remainder is >= divisor  
+				if( HaxeInt64Typedef.ucompare(rem,y) >= 0 ) { // the remainder is >= divisor  
 					rem = HaxeInt64Typedef.ofInt(1);
-				else
+				} else {
 					rem = HaxeInt64Typedef.ofInt(0);
+				}
 				pt1 = HaxeInt64Typedef.div(pt1,y);	
 				pt2 = HaxeInt64Typedef.div(pt2,y);			
 				return new HaxeInt64abs(HaxeInt64Typedef.add(pt1,HaxeInt64Typedef.add(pt2,rem)));	
@@ -784,7 +796,7 @@ public static function div(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt6
 public static function mod(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt64abs {
 	y=checkDiv(x,y,isSigned);
 	if(HaxeInt64Typedef.compare(y,HaxeInt64Typedef.ofInt(1))==0) return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));
-	return new HaxeInt64abs(HaxeInt64Typedef.mod(x,checkDiv(x,y,isSigned)));
+	return new HaxeInt64abs(HaxeInt64Typedef.mod(x,y));
 }
 public static inline function mul(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.mul(x,y));
@@ -848,6 +860,8 @@ public static function ucompare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
 }
 }
 
+
+/* TODO re-optimize to use cs and java base i64 types once all working
 #if ( java || cs )
 // this class required to allow load/save of this type via pointer class in Java, as lib fn casts Dynamic to Int64 via Int
 // also required in c# to avoid integer overflow errors, probably because of a related problem
@@ -862,7 +876,6 @@ private inline function new(v:HaxeInt64abs) {
 public inline function toString():String {
 	return HaxeInt64abs.toStr(i64);
 }
-
 public static inline function make(h:Int,l:Int):GOint64 {
 	return new GOint64(HaxeInt64abs.make(h,l));
 }
@@ -937,8 +950,11 @@ public static inline function ucompare(x:GOint64,y:GOint64):Int {
 }
 }
 #else
+*/
 	typedef GOint64 = HaxeInt64abs;
+/* TODO re-optimize to use cs and java base i64 types once all working
 #end
+*/
 
 //**************** rewrite of std Haxe library function haxe.Int64 for PHP integer overflow an other errors
 /*
