@@ -805,7 +805,10 @@ public static inline function or(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.or(x,y));
 }
 public static inline function shl(x:HaxeInt64abs,y:Int):HaxeInt64abs {
-	return new HaxeInt64abs(HaxeInt64Typedef.shl(x,y));
+	if(y==64) // this amount of shl is not handled correcty by the underlying code
+		return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));	
+	else
+		return new HaxeInt64abs(HaxeInt64Typedef.shl(x,y));
 }
 public static inline function shr(x:HaxeInt64abs,y:Int):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.shr(x,y));
