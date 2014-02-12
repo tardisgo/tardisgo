@@ -40,6 +40,11 @@ var fnOverloadMap = map[string]string{
 	"math_Ldexp":  "Go_math_ldexp.call",
 	"math_Hypot":  "Go_math_hypot.call",
 	"math_Atan2":  "Go_math_atan2.call",
+	//emulated in golibruntime/math
+	"math_Float32bits":     "Go_math_glrFloat32bits.call",
+	"math_Float32frombits": "Go_math_glrFloat32frombits.call",
+	"math_Float64bits":     "Go_math_glrFloat64bits.call",
+	"math_Float64frombits": "Go_math_glrFloat64frombits.call",
 }
 
 var fnToVarOverloadMap = map[string]string{
