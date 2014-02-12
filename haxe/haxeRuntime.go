@@ -613,7 +613,7 @@ public static inline function neq(x:Complex,y:Complex):Bool { // "!="
 	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
 #else
 	typedef HaxeInt64Typedef = Int64;  // use the copied and modified version of the standard library class below
-	// TODO revert to haxe.Int64 when the version below (or better) finally reaches the released libray
+	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
 #end
 
 // this abstract type to enable correct handling for Go of HaxeInt64Typedef
@@ -752,7 +752,34 @@ private static function checkDiv(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):Ha
 public static function div(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt64abs {
 	y=checkDiv(x,y,isSigned);
 	if(HaxeInt64Typedef.compare(y,HaxeInt64Typedef.ofInt(1))==0) return new HaxeInt64abs(x);
-	return new HaxeInt64abs(HaxeInt64Typedef.div(x,y));
+	if(isSigned || (!HaxeInt64Typedef.isNeg(x) && !HaxeInt64Typedef.isNeg(y)))
+		return new HaxeInt64abs(HaxeInt64Typedef.div(x,y));
+	else {
+		if(	HaxeInt64Typedef.isNeg(x) ) {
+			if( HaxeInt64Typedef.isNeg(y) ){ // both x and y are "-ve""
+				if( HaxeInt64Typedef.compare(x,y) < 0 ) { // x is more "-ve" than y, so the smaller uint   
+					return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));						
+				} else {
+					return new HaxeInt64abs(HaxeInt64Typedef.ofInt(1));	
+				}
+			} else { // only x is -ve
+				var pt1:HaxeInt64Typedef = HaxeInt64Typedef.make(0x7FFFFFFF,0xFFFFFFFF); // the largest part of the numerator
+				var pt2:HaxeInt64Typedef = HaxeInt64Typedef.and(x,pt1); // the smaller part of the numerator
+				var rem:HaxeInt64Typedef = HaxeInt64Typedef.ofInt(1); // the left-over bit
+				rem = HaxeInt64Typedef.add(rem,HaxeInt64Typedef.mod(pt1,y));
+				rem = HaxeInt64Typedef.add(rem,HaxeInt64Typedef.mod(pt2,y));
+				if( HaxeInt64Typedef.compare(rem,y) >= 0 )  // the remainder is >= divisor  
+					rem = HaxeInt64Typedef.ofInt(1);
+				else
+					rem = HaxeInt64Typedef.ofInt(0);
+				pt1 = HaxeInt64Typedef.div(pt1,y);	
+				pt2 = HaxeInt64Typedef.div(pt2,y);			
+				return new HaxeInt64abs(HaxeInt64Typedef.add(pt1,HaxeInt64Typedef.add(pt2,rem)));	
+			}
+		}else{ // logically, y is "-ve"" but x is "+ve" so y>x , so any divide will yeild 0
+				return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));	
+		}
+	}
 }
 public static function mod(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt64abs {
 	y=checkDiv(x,y,isSigned);
@@ -771,7 +798,13 @@ public static inline function shl(x:HaxeInt64abs,y:Int):HaxeInt64abs {
 public static inline function shr(x:HaxeInt64abs,y:Int):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.shr(x,y));
 }
-public static inline function ushr(x:HaxeInt64abs,y:Int):HaxeInt64abs {
+public static function ushr(x:HaxeInt64abs,y:Int):HaxeInt64abs { // note, not inline
+	#if php
+	if(y==32){ // error with php on 32 bit right shift for uint64, so do 2x16
+		var ret:HaxeInt64Typedef = HaxeInt64Typedef.ushr(x,16);
+		return new HaxeInt64abs(HaxeInt64Typedef.ushr(ret,16));
+	}
+	#end
 	return new HaxeInt64abs(HaxeInt64Typedef.ushr(x,y));
 }
 public static inline function sub(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
@@ -886,6 +919,9 @@ public static inline function shl(x:GOint64,y:Int):GOint64 {
 }
 public static inline function ushr(x:GOint64,y:Int):GOint64 {
 	return new GOint64(HaxeInt64abs.ushr(x.i64,y));
+}
+public static inline function shr(x:GOint64,y:Int):GOint64 {
+	return new GOint64(HaxeInt64abs.shr(x.i64,y));
 }
 public static inline function sub(x:GOint64,y:GOint64):GOint64 {
 	return new GOint64(HaxeInt64abs.sub(x.i64,y.i64));

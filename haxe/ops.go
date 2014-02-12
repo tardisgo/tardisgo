@@ -245,7 +245,7 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 				case types.UntypedInt, types.Int, types.Int32: // treat all unknown int types as int 32
 					ret = "Force.intDiv(" + v1string + "," + v2string + ",4)" // 4 byte special processing
 				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned division
-					ret = "Force.intDiv(" + v1string + "," + v2string + ",0)" // spec does not require special processing
+					ret = "Force.intDiv(" + v1string + "," + v2string + ",0)" // spec does not require special processing, but is unsigned
 				case types.UntypedFloat, types.Float32, types.Float64:
 					ret = "Force.floatDiv(" + v1string + "," + v2string + ")"
 				default:
