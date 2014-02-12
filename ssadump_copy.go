@@ -44,6 +44,8 @@ L	build distinct packages seria[L]ly instead of in parallel.
 N	build [N]aive SSA form: don't replace local loads/stores with registers.
 `)
 
+var testFlag = flag.Bool("test", false, "Loads test code (*_test.go) for imported packages.")
+
 var runFlag = flag.Bool("run", false, "Invokes the SSA interpreter on the program.")
 
 var interpFlag = flag.String("interp", "", `Options controlling the SSA test interpreter.
@@ -92,6 +94,13 @@ func init() {
 }
 
 func main() {
+	if err := doMain(); err != nil {
+		fmt.Fprintf(os.Stderr, "TARDISgo: %s.\n", err) // TARDISgo alteration
+		os.Exit(1)
+	}
+}
+
+func doMain() error {
 	flag.Parse()
 	args := flag.Args()
 
@@ -160,16 +169,16 @@ func main() {
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
 
 	// Use the initial packages from the command line.
-	args, err := conf.FromArgs(args)
+	args, err := conf.FromArgs(args, *testFlag)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// The interpreter needs the runtime package.
@@ -184,7 +193,7 @@ func main() {
 	// Load, parse and type-check the whole program.
 	iprog, err := conf.Load()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Create and build SSA-form program representation.
@@ -193,58 +202,75 @@ func main() {
 
 	// Run the interpreter.
 	if *runFlag {
-		// If a package named "main" defines func main, run that.
-		// Otherwise run all packages' tests.
 		var main *ssa.Package
 		pkgs := prog.AllPackages()
-		for _, pkg := range pkgs {
-			if pkg.Object.Name() == "main" && pkg.Func("main") != nil {
-				main = pkg
-				break
+		if *testFlag {
+			// If -test, run all packages' tests.
+			if len(pkgs) > 0 {
+				main = prog.CreateTestMainPackage(pkgs...)
+			}
+			if main == nil {
+				return fmt.Errorf("no tests")
+			}
+		} else {
+			// Otherwise, run main.main.
+			for _, pkg := range pkgs {
+				if pkg.Object.Name() == "main" {
+					main = pkg
+					if main.Func("main") == nil {
+						return fmt.Errorf("no func main() in main package")
+					}
+					break
+				}
+			}
+			if main == nil {
+				return fmt.Errorf("no main package")
 			}
 		}
-		if main == nil && len(pkgs) > 0 {
-			// TODO(adonovan): only run tests if -test flag specified.
-			main = prog.CreateTestMainPackage(pkgs...)
-		}
-		if main == nil {
-			log.Fatal("No main package and no tests")
+
+		if runtime.GOARCH != build.Default.GOARCH {
+			return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
+				build.Default.GOARCH, runtime.GOARCH)
 		}
 
-		if runtime.GOARCH != conf.Build.GOARCH {
-			log.Fatalf("Cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s).",
-				conf.Build.GOARCH, runtime.GOARCH)
-		}
-
-		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 	}
 
 	// TARDIS Go additions: copy run interpreter code above, but call pogo class
 	if true {
-		// If a package named "main" defines func main, run that.
-		// Otherwise run all packages' tests.
 		var main *ssa.Package
 		pkgs := prog.AllPackages()
-		for _, pkg := range pkgs {
-			if pkg.Object.Name() == "main" && pkg.Func("main") != nil {
-				main = pkg
-				break
+		if *testFlag {
+			// If -test, run all packages' tests.
+			if len(pkgs) > 0 {
+				main = prog.CreateTestMainPackage(pkgs...)
+			}
+			if main == nil {
+				return fmt.Errorf("no tests")
+			}
+		} else {
+			// Otherwise, run main.main.
+			for _, pkg := range pkgs {
+				if pkg.Object.Name() == "main" {
+					main = pkg
+					if main.Func("main") == nil {
+						return fmt.Errorf("no func main() in main package")
+					}
+					break
+				}
+			}
+			if main == nil {
+				return fmt.Errorf("no main package")
 			}
 		}
-		if main == nil && len(pkgs) > 0 {
-			// TODO(adonovan): only run tests if -test flag specified.
-			main = prog.CreateTestMainPackage(pkgs...)
-		}
-		if main == nil {
-			log.Fatal("No main package and no tests")
-		}
+		/*
+			if runtime.GOARCH != build.Default.GOARCH {
+				return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
+					build.Default.GOARCH, runtime.GOARCH)
+			}
 
-		//if runtime.GOARCH != conf.Build.GOARCH {
-		//	log.Fatalf("Cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s).",
-		//		conf.Build.GOARCH, runtime.GOARCH)
-		//}
-
-		//interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
+			interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
+		*/
 		pogo.EntryPoint(main) // TARDIS Go entry point, no return, does os.Exit at end
 	}
+	return nil
 }

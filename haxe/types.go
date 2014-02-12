@@ -439,8 +439,9 @@ func (l langType) EmitTypeInfo() string {
 		t := pte.At(tta[T])
 		if t != nil { // it is used?
 			ret += `case ` + fmt.Sprintf("%d", t) + `: switch(m){` + "\n"
-			for m := 0; m < tta[T].MethodSet().Len(); m++ {
-				funcObj, ok := tta[T].MethodSet().At(m).Obj().(*types.Func)
+			ms := types.NewMethodSet(tta[T])
+			for m := 0; m < ms.Len(); m++ {
+				funcObj, ok := ms.At(m).Obj().(*types.Func)
 				pkgName := "unknown"
 				if ok && funcObj.Pkg() != nil {
 					line := ""
@@ -452,7 +453,7 @@ func (l langType) EmitTypeInfo() string {
 						// *** also with calling parameters which are different for a Haxe API
 					} else {
 						line = `case "` + funcObj.Name() + `": return `
-						fnToCall := l.LangName(tta[T].MethodSet().At(m).Recv().String(),
+						fnToCall := l.LangName(ms.At(m).Recv().String(),
 							funcObj.Name())
 						ovPkg, _, isOv := l.PackageOverloaded(funcObj.Pkg().Name())
 						if isOv {
@@ -463,10 +464,10 @@ func (l langType) EmitTypeInfo() string {
 					ret += line
 				}
 				ret += fmt.Sprintf("// %v %v %v %v\n",
-					tta[T].MethodSet().At(m).Obj().Name(),
-					tta[T].MethodSet().At(m).Kind(),
-					tta[T].MethodSet().At(m).Index(),
-					tta[T].MethodSet().At(m).Indirect())
+					ms.At(m).Obj().Name(),
+					ms.At(m).Kind(),
+					ms.At(m).Index(),
+					ms.At(m).Indirect())
 			}
 			ret += "default:}\n"
 		}
