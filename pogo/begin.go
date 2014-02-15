@@ -22,7 +22,7 @@ import (
 var rootProgram *ssa.Program // pointer to the root datastructure TODO make this state non-global
 var mainPackage *ssa.Package // pointer to the "main" package TODO make this state non-global
 
-// The entry point for the pogo package, called from ssadump.
+// EntryPoint provides the entry point for the pogo package, called from ssadump_copy.
 // It finishes with an os.Exit() so 0 for success.
 func EntryPoint(mainPkg *ssa.Package) {
 	mainPackage = mainPkg
@@ -34,7 +34,7 @@ func EntryPoint(mainPkg *ssa.Package) {
 	emitTypeInfo()
 	emitFileEnd()
 	if hadErrors && stopOnError {
-		LogError("", "pogo", fmt.Errorf("No output files generated"))
+		LogError("", "pogo", fmt.Errorf("no output files generated"))
 		os.Exit(2) // should signal failure to shell
 	} else {
 		writeFiles()
@@ -56,8 +56,9 @@ const pogoHeader = "tardisgoHeader"
 // special constant name used in TARDIS Go to say where the runtime for the go standard libraries is located
 const pogoLibRuntimePath = "tardisgoLibRuntimePath"
 
-var LibRuntimePath string = "github.com/tardisgo/tardisgo/golibruntime" // This value is required to stop the init function in runtime replacement functions being generated.
+// LibRuntimePath is required to stop the init function in runtime replacement functions being generated.
 // NOTE default value can be overwritten if required using the name in pogoLibRuntimePath see above in the code
+var LibRuntimePath = "github.com/tardisgo/tardisgo/golibruntime"
 
 // emit the standard file header for target language
 func emitFileStart() {
@@ -102,7 +103,7 @@ func emitFileStart() {
 						hxPkg = hp
 					default:
 						LogError(CodePosition(lit.Pos()), "pogo",
-							fmt.Errorf("Special targetPackage constant not a string"))
+							fmt.Errorf("special targetPackage constant not a string"))
 					}
 				case pogoLibRuntimePath:
 					lit := mem.(*ssa.NamedConst).Value
@@ -115,7 +116,7 @@ func emitFileStart() {
 						LibRuntimePath = lrp
 					default:
 						LogError(CodePosition(lit.Pos()), "pogo",
-							fmt.Errorf("Special targetPackage constant not a string"))
+							fmt.Errorf("special targetPackage constant not a string"))
 					}
 				}
 			}

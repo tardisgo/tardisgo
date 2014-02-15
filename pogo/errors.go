@@ -12,11 +12,11 @@ import (
 
 // TODO remove all global scope
 
-var hadErrors bool = false
+var hadErrors = false
 
-var stopOnError bool = true // TODO make this soft and default true
+var stopOnError = true // TODO make this soft and default true
 
-var warnings []string = make([]string, 0) // Warnings are collected up and added to the end of the output code.
+var warnings = make([]string, 0) // Warnings are collected up and added to the end of the output code.
 
 var messagesGiven = make(map[string]bool) // This map de-dups error messages
 
@@ -31,18 +31,18 @@ func logMessage(level, loc, lang string, err error) {
 	}
 }
 
-// A warning does not stop the compiler from claiming success.
+// LogWarning but a warning does not stop the compiler from claiming success.
 func LogWarning(loc, lang string, err error) {
 	warnings = append(warnings, fmt.Sprintf("Warning: %s (%s) %v", loc, lang, err))
 }
 
-// An error will stop the compilation process.
+// LogError and potentially stop the compilation process.
 func LogError(loc, lang string, err error) {
 	logMessage("Error", loc, lang, err)
 	hadErrors = true
 }
 
-// Utility to provide a string version of token.Pos.
+// CodePosition is a utility to provide a string version of token.Pos.
 // this string should be used for documentation & debug only.
 func CodePosition(pos token.Pos) string {
 
@@ -53,18 +53,21 @@ func CodePosition(pos token.Pos) string {
 	return p
 }
 
-type PosHash int // A hash of the code position, set -ve if a nearby PosHash is used.
+// A PosHash is a hash of the code position, set -ve if a nearby PosHash is used.
+type PosHash int
 
-const NoPosHash = 0 // Code position hash constant to represent none, lines number from 1, so 0 is invalid.
+// NoPosHash is a code position hash constant to represent none, lines number from 1, so 0 is invalid.
+const NoPosHash = PosHash(0)
 
-// Struct to store the code position information for each file in order to generate PosHash values.
+// PosHashFileStruct stores the code position information for each file in order to generate PosHash values.
 type PosHashFileStruct struct {
 	FileName    string // The name of the file.
 	LineCount   int    // The number of lines in that file.
 	BasePosHash int    // The base posHash value for this file.
 }
 
-var PosHashFileList []PosHashFileStruct = make([]PosHashFileStruct, 0) // The list of input go files with their posHash information
+// PosHashFileList holds the list of input go files with their posHash information
+var PosHashFileList = make([]PosHashFileStruct, 0)
 
 // Create the PosHashFileList to enable poshash values to be emitted
 func setupPosHash() {
@@ -79,11 +82,11 @@ func setupPosHash() {
 	}
 }
 
-// The latest valid PosHash value seen, for use when an invalid one requires a "near" reference.
+// LatestValidPosHash holds the latest valid PosHash value seen, for use when an invalid one requires a "near" reference.
 // TODO like all other global values in the pogo module, this should not be a global state.
-var LatestValidPosHash PosHash = NoPosHash
+var LatestValidPosHash = NoPosHash
 
-// This function keeps track of references put into the code for later extraction in a runtime debug function.
+// MakePosHash keeps track of references put into the code for later extraction in a runtime debug function.
 // It returns the PosHash integer to be used for exception handling that was passed in.
 func MakePosHash(pos token.Pos) PosHash {
 	if pos.IsValid() {
@@ -94,12 +97,11 @@ func MakePosHash(pos token.Pos) PosHash {
 				return LatestValidPosHash
 			}
 		}
-		panic(fmt.Errorf("MakePosHash() Cant find file: %s", fname))
+		panic(fmt.Errorf("pogo.MakePosHash() Cant find file: %s", fname))
 	} else {
 		if LatestValidPosHash == NoPosHash {
 			return NoPosHash
-		} else {
-			return -LatestValidPosHash // -ve value => nearby reference
 		}
+		return -LatestValidPosHash // -ve value => nearby reference
 	}
 }

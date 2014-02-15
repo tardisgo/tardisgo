@@ -11,13 +11,13 @@ import (
 	"reflect"
 )
 
-// The name of an ssa.Value, a utility function in case it needs to be altered.
+// RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
 func RegisterName(val ssa.Value) string {
 	//NOTE the SSA code says that name() should not be relied on, so this code may need to alter
 	return "_" + val.Name()
 }
 
-var previousErrorInfo string = "" // used to give some indication of the error's location, even if it is not given
+var previousErrorInfo string // used to give some indication of the error's location, even if it is not given
 
 // Handle an individual instruction.
 func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFlag bool) {
@@ -300,7 +300,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 					// this error handling is defensive, as the Go SSA code catches this error
 					index := instruction.(*ssa.Index).Index.(*ssa.Const).Int64()
 					if (index < 0) || (index >= int64(aLen)) {
-						LogError(errorInfo, "pogo", fmt.Errorf("Index [%d] out of range: 0 to %d", index, aLen-1))
+						LogError(errorInfo, "pogo", fmt.Errorf("index [%d] out of range: 0 to %d", index, aLen-1))
 					}
 					doRangeCheck = false
 				}
@@ -334,7 +334,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 				if indexIsConst {
 					index := instruction.(*ssa.IndexAddr).Index.(*ssa.Const).Int64()
 					if (index < 0) || (index >= int64(aLen)) {
-						LogError(errorInfo, "pogo", fmt.Errorf("Index [%d] out of range: 0 to %d", index, aLen-1))
+						LogError(errorInfo, "pogo", fmt.Errorf("index [%d] out of range: 0 to %d", index, aLen-1))
 					}
 					doRangeCheck = false
 				}

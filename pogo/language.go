@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 )
 
-// The purpose of this interface is to enable multiple target languages for TARDIS Go.
+// The Language interface enables multiple target languages for TARDIS Go.
 type Language interface {
 	DeclareTempVar(ssa.Value) string
 	LanguageName() string
@@ -83,7 +83,7 @@ type Language interface {
 	Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string
 }
 
-// The static infomation about each of the languages, expect this list to extend as more languages are added.
+// LanguageEntry holds the static infomation about each of the languages, expect this list to extend as more languages are added.
 type LanguageEntry struct {
 	Language                           // All of the interface functions.
 	buffer                bytes.Buffer // Where the output is collected.
@@ -94,8 +94,11 @@ type LanguageEntry struct {
 	Goruntime             string       // The location of the core implementation go runtime code for this target language.
 }
 
-var LanguageList = make([]LanguageEntry, 0, 10) // The languages that can be targeted. Hey, I hope we do get up to 10 target languages!!
-var TargetLang = 0                              // The language currently being targeted, default is the first on the list, initially haxe.
+// LanguageList holds the languages that can be targeted. Hey, I hope we do get up to 10 target languages!!
+var LanguageList = make([]LanguageEntry, 0, 10)
+
+// TargetLang holds the language currently being targeted, default is the first on the list, initially haxe.
+var TargetLang = 0
 
 // Utility comment emitter function.
 func emitComment(cmt string) {
@@ -117,7 +120,7 @@ func writeFiles() {
 	}
 }
 
-// Clean the Go names to replace characters outside (_,0-9,a-z,A-Z) with a decimal value surrounded by underlines, with special handling of '.' and '*'.
+// MakeId cleans-up Go names to replace characters outside (_,0-9,a-z,A-Z) with a decimal value surrounded by underlines, with special handling of '.' and '*'.
 func MakeId(s string) (r string) {
 	var b []rune
 	b = []rune(s)

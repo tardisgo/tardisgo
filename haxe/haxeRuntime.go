@@ -12,7 +12,7 @@ package haxe
 // However, there are references to Go->Haxe generated classes, like "Go", that would need to be managed somehow.
 // TODO consider merging and possibly renaming the Deep and Force classes as they both hold general utility code
 
-var haxeruntime string = `
+var haxeruntime = `
 
 class Deep { 
 	//**** This class adapted from https://gist.github.com/Asmageddon/4013485 @author Asmageddon
@@ -470,10 +470,14 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 		the operation will fail iff the operand is nil. (Contrast with ChangeInterface, which performs no nil-check.)
 	*/
 	public static function assert(assTyp:Int,ifce:Interface):Dynamic{
-		if(ifce==null) 
+		if(ifce==null) {
 			Scheduler.panicFromHaxe( "Interface.assert null Interface");
-		if(!(TypeInfo.isAssignableTo(ifce.typ,assTyp)||TypeInfo.isIdentical(assTyp,ifce.typ))) // TODO review need for isIdentical 
+			return null;
+		}
+		if(!(TypeInfo.isAssignableTo(ifce.typ,assTyp)||TypeInfo.isIdentical(assTyp,ifce.typ))) { // TODO review need for isIdentical 
 			Scheduler.panicFromHaxe( "type assert failed: expected "+TypeInfo.getName(assTyp)+", got "+TypeInfo.getName(ifce.typ) );
+			return null;
+		}
 		if(TypeInfo.isConcrete(assTyp))	
 			return Deep.copy(ifce.val);
 		else	

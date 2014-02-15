@@ -21,92 +21,79 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			case types.Bool, types.UntypedBool:
 				if retInitVal {
 					return "false"
-				} else {
-					return "Bool"
 				}
+				return "Bool"
 			case types.String, types.UntypedString:
 				if retInitVal {
 					return `""`
-				} else {
-					return "String"
 				}
+				return "String"
 			case types.Float64, types.Float32, types.UntypedFloat:
 				if retInitVal {
 					return "0.0"
-				} else {
-					return "Float"
 				}
+				return "Float"
 			case types.Complex64, types.Complex128, types.UntypedComplex:
 				if retInitVal {
 					return "new Complex(0.0,0.0)"
-				} else {
-					return "Complex"
 				}
+				return "Complex"
 			case types.Int, types.Int8, types.Int16, types.Int32, types.UntypedRune,
 				types.Uint8, types.Uint16, types.Uint, types.Uint32: // NOTE: untyped integers default to Int without a warning
 				if retInitVal {
 					return "0"
-				} else {
-					return "Int"
 				}
+				return "Int"
 			case types.Int64, types.Uint64:
 				if retInitVal {
 					return "GOint64.make(0,0)"
-				} else {
-					return "GOint64"
 				}
+				return "GOint64"
 			case types.UntypedInt: // TODO: investigate further the situations in which this warning is generated
-				pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("LangType() types.UntypedInt is ambiguous"))
+				pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.LangType() types.UntypedInt is ambiguous"))
 				return "UNTYPED_INT" // NOTE: if this value were ever to be used, it would cause a Haxe compilation error
 			case types.UnsafePointer:
 				if retInitVal {
-					return "new UnsafePointer(null)"
-				} else {
-					return "UnsafePointer"
+					return "new UnsafePointer(null)" // TODO is this correct? or should it be null
 				}
+				return "UnsafePointer"
 			case types.Uintptr: // Uintptr sometimes used as an integer type, sometimes as a container for another type
 				if retInitVal {
 					return "null"
-				} else {
-					return "Dynamic"
 				}
+				return "Dynamic"
 			default:
-				pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("LangType() unrecognised basic type, Dynamic assumed"))
+				pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.LangType() unrecognised basic type, Dynamic assumed"))
 				if retInitVal {
 					return "null"
-				} else {
-					return "Dynamic"
 				}
+				return "Dynamic"
 			}
 		case *types.Interface:
 			if retInitVal {
 				return `null`
-			} else {
-				return "Interface"
 			}
+			return "Interface"
 		case *types.Named:
 			return l.LangType(t.(*types.Named).Underlying(), retInitVal, errorInfo)
 		case *types.Chan:
 			if retInitVal {
 				return "new Channel<" + l.LangType(t.(*types.Chan).Elem(), false, errorInfo) + ">(1)"
-			} else {
-				return "Channel<" + l.LangType(t.(*types.Chan).Elem(), false, errorInfo) + ">"
 			}
+			return "Channel<" + l.LangType(t.(*types.Chan).Elem(), false, errorInfo) + ">"
 		case *types.Map:
 			if retInitVal {
 				return "new Map<" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + "," +
 					l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">()"
-			} else {
-				return "Map<" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + "," +
-					l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">"
 			}
+			return "Map<" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + "," +
+				l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">"
 		case *types.Slice:
 			if retInitVal {
 				return "new Slice(new Pointer(new Array<" + l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
 					">()),0,0" + ")"
-			} else {
-				return "Slice"
 			}
+			return "Slice"
 		case *types.Array: // TODO consider using Vector rather than Array, if faster and can be made to work
 			if retInitVal {
 				return "{var _v=new Array<" +
@@ -114,9 +101,8 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 					fmt.Sprintf(">();for(_vi in 0...%d){_v[_vi]=%s;}; _v;}",
 						t.(*types.Array).Len(), l.LangType(t.(*types.Array).Elem(), true, errorInfo))
 
-			} else {
-				return "Array<" + l.LangType(t.(*types.Array).Elem(), false, errorInfo) + ">"
 			}
+			return "Array<" + l.LangType(t.(*types.Array).Elem(), false, errorInfo) + ">"
 		case *types.Struct: // TODO as this is fixed-length, should it be a Vector, like types.Array ?
 			// TODO consider if it is possible to change from Array<Dynamic> to individual named elements - requires considerable work to do this
 			if retInitVal {
@@ -128,9 +114,8 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 					ret += l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), true, errorInfo)
 				}
 				return ret + "]; _v;}"
-			} else {
-				return "Array<Dynamic>"
 			}
+			return "Array<Dynamic>"
 		case *types.Tuple: // what is returned by a call and some other instructions, not in the Go language spec!
 			tup := t.(*types.Tuple)
 			switch tup.Len() {
@@ -153,29 +138,24 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			if retInitVal {
 				// NOTE pointer declarations create endless recursion for self-referencing structures unless initialized with null
 				return "null" //rather than: + l.LangType(t.(*types.Pointer).Elem(), retInitVal, errorInfo) + ")"
-			} else {
-				return "Pointer"
 			}
-
+			return "Pointer"
 		case *types.Signature:
 			if retInitVal {
 				return "null"
-			} else {
-				ret := "Closure"
-				return ret
 			}
+			ret := "Closure"
+			return ret
 		default:
 			rTyp := reflect.TypeOf(t).String()
 			if rTyp == "*ssa.opaqueType" { // NOTE the type for map itterators, not in the Go language spec!
 				if retInitVal { // use dynamic type, brief tests seem OK, but may not always work on static hosts
 					return "null"
-				} else {
-					return "Dynamic"
 				}
-			} else {
-				pogo.LogError(errorInfo, "Haxe",
-					fmt.Errorf("LangType() internal error, unhandled non-basic type: %s", rTyp))
+				return "Dynamic"
 			}
+			pogo.LogError(errorInfo, "Haxe",
+				fmt.Errorf("haxe.LangType() internal error, unhandled non-basic type: %s", rTyp))
 		}
 	}
 	return "UNKNOWN_LANGTYPE" // this should generate a Haxe compiler error
@@ -200,7 +180,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			case types.Byte: // []byte
 				return register + "=Force.toRawString(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Convert() - Unexpected slice type to convert to String"))
+				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected slice type to convert to String"))
 				return ""
 			}
 		case "Int": // make a string from a single rune
@@ -214,12 +194,12 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Dynamic":
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + ",String);"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Convert() - Unexpected type to convert to String: %s", srcTyp))
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected type to convert to String: %s", srcTyp))
 			return ""
 		}
 	case "Slice": // []rune or []byte
 		if srcTyp != "String" {
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Convert() - Unexpected type to convert to %s ([]rune or []byte): %s",
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected type to convert to %s ([]rune or []byte): %s",
 				langType, srcTyp))
 			return ""
 		}
@@ -234,7 +214,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case types.Byte:
 			return register + "=Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Convert() - Unexpected slice elementto convert to %s ([]rune/[]byte): %s",
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected slice elementto convert to %s ([]rune/[]byte): %s",
 				langType, srcTyp))
 			return ""
 		}
@@ -256,9 +236,8 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Float":
 			if destType.Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
 				return register + "=GOint64.ofUFloat(" + l.IndirectValue(v, errorInfo) + ");"
-			} else {
-				return register + "=GOint64.ofFloat(" + l.IndirectValue(v, errorInfo) + ");"
 			}
+			return register + "=GOint64.ofFloat(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Dynamic": // uintptr
 			return register + "=" + l.IndirectValue(v, errorInfo) + ";" // let Haxe work out how to do the cast
 		default:
@@ -269,28 +248,25 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "GOint64":
 			if v.(ssa.Value).Type().Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
 				return register + "=GOint64.toUFloat(" + l.IndirectValue(v, errorInfo) + ");"
-			} else {
-				return register + "=GOint64.toFloat(" + l.IndirectValue(v, errorInfo) + ");"
 			}
+			return register + "=GOint64.toFloat(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Int":
 			if v.(ssa.Value).Type().Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
 				return register + "=GOint64.toUFloat(GOint64.make(0," + l.IndirectValue(v, errorInfo) + "));"
-			} else {
-				return register + "=" + l.IndirectValue(v, errorInfo) + ";" // just the default conversion to float required
 			}
+			return register + "=" + l.IndirectValue(v, errorInfo) + ";" // just the default conversion to float required
 		default:
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 		}
 	case "UnsafePointer":
-		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("Attempt to convert a value to be an Unsafe Pointer, which is unsupported"))
+		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("attempt to convert a value to be an Unsafe Pointer, which is unsupported"))
 		return register + "=new UnsafePointer(" + l.IndirectValue(v, errorInfo) + ");" // this will generate a runtime exception if called
 	default:
 		if strings.HasPrefix(srcTyp, "Array<") {
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Convert() - No way to convert to %s from %s ", langType, srcTyp))
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - No way to convert to %s from %s ", langType, srcTyp))
 			return ""
-		} else {
-			return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 		}
+		return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 	}
 }
 
@@ -353,9 +329,8 @@ func (l langType) TypeAssert(register string, v ssa.Value, AssertedType types.Ty
 	}
 	if CommaOk {
 		return register + `=Interface.assertOk(` + pogo.LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
-	} else {
-		return register + `=Interface.assert(` + pogo.LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
 	}
+	return register + `=Interface.assert(` + pogo.LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
 }
 
 func (l langType) EmitTypeInfo() string {

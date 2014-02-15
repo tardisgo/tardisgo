@@ -351,7 +351,7 @@ func emitCall(isBuiltin, isGo, isDefer bool, register string, callInfo ssa.CallC
 		switch fnToCall {
 		case "len", "cap", "append", "real", "imag", "complex": //  "copy" may have the results unused
 			if register == "" {
-				LogError(errorInfo, "pogo", fmt.Errorf("The result from a built-in function is not used"))
+				LogError(errorInfo, "pogo", fmt.Errorf("the result from a built-in function is not used"))
 			} else {
 			}
 		default:
@@ -359,7 +359,7 @@ func emitCall(isBuiltin, isGo, isDefer bool, register string, callInfo ssa.CallC
 	} else {
 		if callInfo.Signature().Results().Len() > 0 {
 			if register == "" {
-				LogWarning(errorInfo, "pogo", fmt.Errorf("The result from a function call is not used")) //TODO is this needed?
+				LogWarning(errorInfo, "pogo", fmt.Errorf("the result from a function call is not used")) //TODO is this needed?
 			} else {
 			}
 		}
@@ -369,7 +369,7 @@ func emitCall(isBuiltin, isGo, isDefer bool, register string, callInfo ssa.CallC
 	fmt.Fprintln(&LanguageList[l].buffer, text+LanguageList[l].Comment(comment))
 }
 
-// Utility function to avoid publishing rootProgram from this package.
+// FuncValue is a utility function to avoid publishing rootProgram from this package.
 func FuncValue(obj *types.Func) ssa.Value {
 	return rootProgram.FuncValue(obj)
 }

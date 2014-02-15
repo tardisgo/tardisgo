@@ -7,7 +7,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Runtime functions for the Go "sync/atomic" standard library package when used by TARDIS Go
+// Package atomic contains runtime functions for the Go "sync/atomic" standard library package when used by TARDIS Go
 package atomic
 
 import (

@@ -30,7 +30,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Implementation and documentation of math functions overloaded by TARDIS Go->Haxe transpiler
+// Package math provides implementation and documentation of math functions overloaded by TARDIS Go->Haxe transpiler
 package math
 
 import "math"

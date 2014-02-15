@@ -7,7 +7,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Runtime functions for the Go "bytes" standard library package when used by TARDIS Go
+// Package bytes contains runtime functions for the Go "bytes" standard library package when used by TARDIS Go
 package bytes
 
 //****go:noescape
@@ -30,9 +30,8 @@ func Equal(a, b []byte) bool {
 	if a == nil {
 		if b == nil {
 			return true
-		} else {
-			return len(b) == 0
 		}
+		return len(b) == 0
 	}
 	if b == nil {
 		return len(a) == 0
@@ -57,20 +56,17 @@ func Compare(a, b []byte) int {
 	if a == nil {
 		if b == nil {
 			return 0
-		} else {
-			if len(b) == 0 {
-				return 0
-			} else {
-				return 1
-			}
 		}
+		if len(b) == 0 {
+			return 0
+		}
+		return 1
 	}
 	if b == nil {
 		if len(a) == 0 {
 			return 0
-		} else {
-			return 1
 		}
+		return 1
 	}
 	i := 0
 	for (i < len(a)) && (i < len(b)) {

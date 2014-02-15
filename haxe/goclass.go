@@ -114,7 +114,7 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 		case *types.Slice:
 			return "Slice", "Force.toUTF8slice(this._goroutine," + lit.Value.String() + ")"
 		default:
-			pogo.LogError(position, "Haxe", fmt.Errorf("Const() internal error, unknown string type"))
+			pogo.LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown string type"))
 		}
 	case exact.Float:
 		return "Float", pogo.Float64Val(lit.Value, position)
@@ -129,7 +129,7 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.Float64Val(lit.Value, position))
 		default:
 			if h != 0 && h != -1 {
-				pogo.LogWarning(position, "Haxe", fmt.Errorf("Integer constant value > 32 bits, rendered as 64-bit : %v", lit.Value))
+				pogo.LogWarning(position, "Haxe", fmt.Errorf("integer constant value > 32 bits, rendered as 64-bit : %v", lit.Value))
 				return "GOint64", fmt.Sprintf("GOint64.make(0x%x,0x%x)", uint32(h), uint32(l))
 			}
 			switch lit.Type().Underlying().(*types.Basic).Kind() {
@@ -139,15 +139,13 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 					return "Int", fmt.Sprintf(
 						" #if js untyped __js__(\"0x%x\") #elseif php untyped __php__(\"0x%x\") #else 0x%x #end ",
 						q, q, q)
-				} else {
-					return "Int", fmt.Sprintf(" (%d) ", l)
 				}
+				return "Int", fmt.Sprintf(" (%d) ", l)
 			default:
 				if l < 0 {
 					return "Int", fmt.Sprintf("(%d)", l)
-				} else {
-					return "Int", fmt.Sprintf("%d", l)
 				}
+				return "Int", fmt.Sprintf("%d", l)
 			}
 		}
 	case exact.Unknown: // not sure we should ever get here!
@@ -157,7 +155,7 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 		imagV, _ := exact.Float64Val(exact.Imag(lit.Value))
 		return "Complex", fmt.Sprintf("new Complex(%g,%g)", realV, imagV)
 	default:
-		pogo.LogError(position, "Haxe", fmt.Errorf("Const() internal error, unknown constant type: %v", lit.Value.Kind()))
+		pogo.LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown constant type: %v", lit.Value.Kind()))
 	}
 	return "", ""
 }

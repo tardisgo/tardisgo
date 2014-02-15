@@ -395,7 +395,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 				return `_bds[` + fmt.Sprintf("%d", b) + `]`
 			}
 		}
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Value(): *ssa.Capture name not found: %s", v.(*ssa.Capture).Name()))
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Capture name not found: %s", v.(*ssa.Capture).Name()))
 		return `_bds["_b` + "ERROR: Captured bound variable name not found" + `"]` // TODO proper error
 	case *ssa.Function:
 		pk := "unknown"
@@ -410,12 +410,12 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		}
 		if len(v.(*ssa.Function).Blocks) > 0 { //the function actually exists
 			return "new Closure(Go_" + l.LangName(pk, v.(*ssa.Function).Name()) + ".call,[])" //TODO will change for go instr
-		} else { // function has no implementation
-			// TODO maybe put a list of over-loaded functions here and only error if not found
-			// NOTE the reflect package comes through this path TODO fix!
-			pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
-			return "new Closure(null,[])" // Should fail at runtime if it is used...
 		}
+		// function has no implementation
+		// TODO maybe put a list of over-loaded functions here and only error if not found
+		// NOTE the reflect package comes through this path TODO fix!
+		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
+		return "new Closure(null,[])" // Should fail at runtime if it is used...
 	case *ssa.UnOp:
 		return pogo.RegisterName(val)
 	case *ssa.BinOp:
@@ -431,10 +431,10 @@ func (l langType) FieldAddr(register string, v interface{}, errorInfo string) st
 		return fmt.Sprintf(`%s=%s.addr(%d);`, register,
 			l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo),
 			v.(*ssa.FieldAddr).Field)
-	} else {
-		return ""
 	}
+	return ""
 }
+
 func (l langType) IndexAddr(register string, v interface{}, errorInfo string) string {
 	if register == "" {
 		return "" // we can't make an address if there is nowhere to put it...
@@ -454,7 +454,7 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
 			idxString)
 	default:
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("IndirectValue():IndexAddr unknown operand type"))
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
 		return ""
 	}
 }
@@ -484,7 +484,7 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 		case types.Uint64:
 			return "Force.toUint64(" + v + ")"
 		case types.UntypedInt, types.UntypedRune:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("intTypeCoersion(): unhandled types.UntypedInt or types.UntypedRune"))
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion(): unhandled types.UntypedInt or types.UntypedRune"))
 			return ""
 		case types.Uintptr: // held as the Dynamic type in Haxe
 			return "" + v + "" // TODO review correct thing to do here
@@ -551,7 +551,7 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 	if isSelect {
 		sel := v.(*ssa.Select)
 		if register == "" {
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Select statement has no register"))
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has no register"))
 			return ""
 		}
 		ret += register + "=" + l.LangType(v.(ssa.Value).Type(), true, errorInfo) + ";\n" //initialize
@@ -568,7 +568,7 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 				ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
 				ret += fmt.Sprintf("_states[%d]=%s.hasContents();\n", s, ch)
 			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Select statement has invalid ChanDir"))
+				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
 				return ""
 			}
 		}
@@ -591,7 +591,7 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 				rxIdx++
 				ret += register + ".r1= _v.r1; }\n"
 			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Select statement has invalid ChanDir"))
+				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
 				return ""
 			}
 		}
@@ -668,9 +668,9 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			case *types.Chan, *types.Slice:
 				if fnToCall == "len" {
 					return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:_v.len();});"
-				} else { // cap
-					return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:_v.cap();});"
 				}
+				// cap
+				return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:_v.cap();});"
 			case *types.Array: // assume len
 				return register + l.IndirectValue(args[0], errorInfo /*, false*/) + ".length;"
 			case *types.Map: // assume len(map) - requires counting the itterator
@@ -682,7 +682,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				return register + "Force.toUTF8length(this._goroutine," + l.IndirectValue(args[0], errorInfo /*, false*/) + ");"
 			default: // TODO handle other types?
 				// TODO error on string?
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Call() - unhandled len/cap type: %s",
+				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Call() - unhandled len/cap type: %s",
 					reflect.TypeOf(args[0].Type().Underlying())))
 				return register + `null;`
 			}
@@ -715,7 +715,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		case "complex":
 			return register + "new Complex(" + l.IndirectValue(args[0], errorInfo) + "," + l.IndirectValue(args[1], errorInfo) + ");"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Call() - Unhandled builtin function: %s", fnToCall))
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Call() - Unhandled builtin function: %s", fnToCall))
 			ret = "MISSING_BUILTIN("
 		}
 	} else {
@@ -820,7 +820,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 					}
 					fallthrough
 				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("Call to function %s unknown Haxe API first letter %v of %v",
+					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("call to function %s unknown Haxe API first letter %v of %v",
 						fnToCall, bits[0][0:1], bits))
 				}
 				bits[0] = bits[0][1:] // discard the magic letter from the front of the function name
@@ -866,22 +866,20 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 					nextReturnAddress-- //decrement to set new return address for next call generation
 					if register == "" {
 						return ""
-					} else {
-						return register + "=" + olv + ";"
 					}
+					return register + "=" + olv + ";"
+				}
+				olf, ok := fnOverloadMap[fnToCall]
+				if ok { // replace one go function with another
+					targetFunc = olf
 				} else {
-					olf, ok := fnOverloadMap[fnToCall]
-					if ok { // replace one go function with another
+					olf, ok := builtinOverloadMap[fnToCall]
+					if ok { // replace a go function with a haxe one
 						targetFunc = olf
+						nextReturnAddress-- //decrement to set new return address for next call generation
+						isBuiltin = true    // pretend we are in a builtin function to avoid passing 1st param as bindings or waiting for completion
 					} else {
-						olf, ok := builtinOverloadMap[fnToCall]
-						if ok { // replace a go function with a haxe one
-							targetFunc = olf
-							nextReturnAddress-- //decrement to set new return address for next call generation
-							isBuiltin = true    // pretend we are in a builtin function to avoid passing 1st param as bindings or waiting for completion
-						} else {
-							// TODO at this point the package-level overloading could occur, but I cannot make it reliable, so code removed
-						}
+						// TODO at this point the package-level overloading could occur, but I cannot make it reliable, so code removed
 					}
 				}
 			}
@@ -951,9 +949,8 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			//TODO ensure correct conversions for interface{} <-> Dynamic when isHaxeAPI
 			//**************************
 			return hashIf + register + "=" + ret + ";" + hashEnd
-		} else {
-			return hashIf + ret + ";" + hashEnd
 		}
+		return hashIf + ret + ";" + hashEnd
 	}
 	if isGo {
 		return ret + "; "
@@ -990,9 +987,8 @@ func doCall(register, callCode string) string {
 func (l langType) Alloc(reg string, v interface{}, errorInfo string) string {
 	if reg == "" {
 		return "" // if the register is not used, don't emit the code!
-	} else {
-		return reg + "=new Pointer(" + l.LangType(v.(types.Type).Underlying().(*types.Pointer).Elem().Underlying(), true, errorInfo) + ");"
 	}
+	return reg + "=new Pointer(" + l.LangType(v.(types.Type).Underlying().(*types.Pointer).Elem().Underlying(), true, errorInfo) + ");"
 }
 
 func (l langType) MakeChan(reg string, v interface{}, errorInfo string) string {
@@ -1048,7 +1044,7 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 			`).subSlice(` + lvString + `,` + hvString + `)` + `);`
 	default:
 		pogo.LogError(errorInfo, "Haxe",
-			fmt.Errorf("Slice() - unhandled type: %v", reflect.TypeOf(x.(ssa.Value).Type().Underlying())))
+			fmt.Errorf("haxe.Slice() - unhandled type: %v", reflect.TypeOf(x.(ssa.Value).Type().Underlying())))
 		return ""
 	}
 }
@@ -1067,9 +1063,8 @@ func (l langType) codeField(v interface{}, fNum int, fName, errorInfo string, is
 func (l langType) Field(register string, v interface{}, fNum int, fName, errorInfo string, isFunctionName bool) string {
 	if register != "" {
 		return register + "=" + l.codeField(v, fNum, fName, errorInfo, isFunctionName) + ";"
-	} else {
-		return ""
 	}
+	return ""
 }
 
 // TODO error on 64-bit indexes
@@ -1082,9 +1077,9 @@ func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) str
 			lStr = "length"
 		}
 		return fmt.Sprintf("if((%s<0)||(%s>=%s.%s)) Scheduler.ioor();", iStr, iStr, xStr, lStr)
-	} else { // length is known at compile time => an array
-		return fmt.Sprintf("if((%s<0)||(%s>=%d)) Scheduler.ioor();", iStr, iStr, length)
 	}
+	// length is known at compile time => an array
+	return fmt.Sprintf("if((%s<0)||(%s>=%d)) Scheduler.ioor();", iStr, iStr, length)
 }
 
 func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
@@ -1110,28 +1105,27 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 		if commaOk {
 			return reg + "=(" + keyString + "<0)||(" + keyString + ">=" + sliceCode + ".len() ?" +
 				"{r0:0,r1:false}:{r0:" + valueCode + ",r1:true};"
-		} else {
-			return reg + "=" + valueCode + ";"
 		}
-	} else { // assume it is a Map
-		li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
-		if strings.HasPrefix(li, "new ") {
-			li = "null" // no need for a full object declaration in this context
-		}
-		returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")"
-		lt_ele := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
-		switch lt_ele {
-		case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
-			returnValue = "cast(" + returnValue + "," + lt_ele + ")"
-		}
-		ele_exists := l.IndirectValue(Map, errorInfo) + ".exists(" + keyString + ")"
-		if commaOk {
-			return reg + "=" + ele_exists + "?{r0:" + returnValue + ",r1:true}:{r0:" + li + ",r1:false};"
-		} else {
-			return reg + "=" + ele_exists + "?" + returnValue + ":" + li + ";"
-		}
+		return reg + "=" + valueCode + ";"
 	}
+	// assume it is a Map
+	li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
+	if strings.HasPrefix(li, "new ") {
+		li = "null" // no need for a full object declaration in this context
+	}
+	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")"
+	ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
+	switch ltEle {
+	case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
+		returnValue = "cast(" + returnValue + "," + ltEle + ")"
+	}
+	eleExists := l.IndirectValue(Map, errorInfo) + ".exists(" + keyString + ")"
+	if commaOk {
+		return reg + "=" + eleExists + "?{r0:" + returnValue + ",r1:true}:{r0:" + li + ",r1:false};"
+	}
+	return reg + "=" + eleExists + "?" + returnValue + ":" + li + ";"
 }
+
 func (l langType) Extract(reg string, tuple interface{}, index int, errorInfo string) string {
 	return reg + "=" + l.IndirectValue(tuple, errorInfo) + ".r" + fmt.Sprintf("%d", index) + ";"
 }
@@ -1160,13 +1154,13 @@ func (l langType) Next(register string, v interface{}, isString bool, errorInfo 
 			".v.subSlice(_thisK,-1));" +
 			l.IndirectValue(v, errorInfo) + ".k+=_dr.r1;" +
 			"{r0:true,r1:cast(_thisK,Int),r2:cast(_dr.r0,Int)};}};"
-	} else { // otherwise it is a map itterator
-		return register + "={var _hn:Bool=" + l.IndirectValue(v, errorInfo) + ".k.hasNext();\n" +
-			"if(_hn){var _nxt=" + l.IndirectValue(v, errorInfo) + ".k.next();\n" +
-			"{r0:true,r1:_nxt,r2:" + l.IndirectValue(v, errorInfo) + ".f(" +
-			l.IndirectValue(v, errorInfo) + ".m,_nxt)};\n" +
-			"}else{{r0:false,r1:null,r2:" + l.IndirectValue(v, errorInfo) + ".z};\n}};"
 	}
+	// otherwise it is a map itterator
+	return register + "={var _hn:Bool=" + l.IndirectValue(v, errorInfo) + ".k.hasNext();\n" +
+		"if(_hn){var _nxt=" + l.IndirectValue(v, errorInfo) + ".k.next();\n" +
+		"{r0:true,r1:_nxt,r2:" + l.IndirectValue(v, errorInfo) + ".f(" +
+		l.IndirectValue(v, errorInfo) + ".m,_nxt)};\n" +
+		"}else{{r0:false,r1:null,r2:" + l.IndirectValue(v, errorInfo) + ".z};\n}};"
 }
 
 func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) string {

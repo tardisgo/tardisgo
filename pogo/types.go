@@ -11,7 +11,7 @@ import (
 	"reflect"
 )
 
-// This function exists to screen out any types that the system does not handle correctly.
+// IsValidInPogo exists to screen out any types that the system does not handle correctly.
 // Currently it should say everything is valid. TODO review if still required in this form.
 func IsValidInPogo(et types.Type, posStr string) bool {
 	switch et.(type) {
@@ -26,9 +26,8 @@ func IsValidInPogo(et types.Type, posStr string) bool {
 		default:
 			if et.(*types.Basic).String() == "invalid type" { // the type of unused map value itterators!
 				return true
-			} else {
-				LogError(posStr, "pogo", fmt.Errorf("basic type %s is not supported", et.(*types.Basic).String()))
 			}
+			LogError(posStr, "pogo", fmt.Errorf("basic type %s is not supported", et.(*types.Basic).String()))
 		}
 	case *types.Interface, *types.Slice, *types.Struct, *types.Tuple, *types.Map, *types.Pointer, *types.Array,
 		*types.Named, *types.Signature, *types.Chan:
@@ -37,17 +36,19 @@ func IsValidInPogo(et types.Type, posStr string) bool {
 		rTyp := reflect.TypeOf(et).String()
 		if rTyp == "*ssa.opaqueType" { // the type of map itterators!
 			return true
-		} else {
-			LogError(posStr, "pogo", fmt.Errorf("type %s is not supported", rTyp))
 		}
+		LogError(posStr, "pogo", fmt.Errorf("type %s is not supported", rTyp))
 	}
 	return false
 }
 
-var TypesEncountered typemap.M // Keep track of the types we encounter using the excellent go.tools/go/types/typesmap package.
-var NextTypeID = 0             // This variable used to give each type we come across its own ID.
+// TypesEncountered keeps track of the types we encounter using the excellent go.tools/go/types/typesmap package.
+var TypesEncountered typemap.M
 
-// As the code generator encounters new types it logs them here, returning a string of the ID for insertion into the code.
+// NextTypeID is used to give each type we come across its own ID.
+var NextTypeID = 0
+
+// LogTypeUse : As the code generator encounters new types it logs them here, returning a string of the ID for insertion into the code.
 func LogTypeUse(t types.Type) string {
 	r := TypesEncountered.At(t)
 	if r != nil {
@@ -59,7 +60,7 @@ func LogTypeUse(t types.Type) string {
 	return fmt.Sprintf("%d", r)
 }
 
-// Utility function to avoid exposing rootProgram
+// TypesWithMethodSets ia a utility function to avoid exposing rootProgram
 func TypesWithMethodSets() []types.Type {
 	return rootProgram.TypesWithMethodSets()
 }

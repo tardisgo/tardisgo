@@ -22,7 +22,7 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 
 	switch op {
 	case "<-":
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): impossible to reach <- code!"))
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): impossible to reach <- code"))
 		return ""
 	case "*":
 		lt = l.LangType(v.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying(), false, errorInfo)
@@ -78,9 +78,8 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 func (l langType) UnOp(register, op string, v interface{}, CommaOK bool, errorInfo string) string {
 	if op == "<-" { // wait for a channel to be ready
 		return l.Select(false, register, v, CommaOK, errorInfo)
-	} else {
-		return register + "=" + l.codeUnOp(op, v, CommaOK, errorInfo) + ";"
 	}
+	return register + "=" + l.codeUnOp(op, v, CommaOK, errorInfo) + ";"
 }
 
 func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) string {

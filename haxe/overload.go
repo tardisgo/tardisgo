@@ -55,7 +55,12 @@ var fnToVarOverloadMap = map[string]string{
 
 func (l langType) PackageOverloaded(pkg string) (overloadPkgGo, overloadPkgHaxe string, isOverloaded bool) {
 	// TODO at this point the package-level overloading could occur, but I cannot make it reliable, so code removed
-	return "", "", false // DUMMY return for now
+	switch pkg {
+	case "runtime":
+		return "runtime", "runtime", false // dummy no-overload return for now
+	default:
+		return "", "", false // DUMMY return for now
+	}
 }
 
 func (l langType) FuncName(fnx *ssa.Function) string {

@@ -40,7 +40,7 @@ func emitNamedConstants() {
 	}
 }
 
-// Utility function returns a string constant value from an exact.Value.
+// Float64Val is a utility function returns a string constant value from an exact.Value.
 func Float64Val(eVal exact.Value, posStr string) string {
 	fVal, isExact := exact.Float64Val(eVal)
 	if !isExact {
@@ -48,12 +48,11 @@ func Float64Val(eVal exact.Value, posStr string) string {
 	}
 	if fVal < 0.0 {
 		return fmt.Sprintf("(%g)", fVal)
-	} else {
-		return fmt.Sprintf("%g", fVal)
 	}
+	return fmt.Sprintf("%g", fVal)
 }
 
-// Utility function returns an int64 constant value from an exact.Value, split into high and low int32.
+// IntVal is a utility function returns an int64 constant value from an exact.Value, split into high and low int32.
 func IntVal(eVal exact.Value, posStr string) (high, low int32) {
 	iVal, isExact := exact.Int64Val(eVal)
 	if !isExact {
