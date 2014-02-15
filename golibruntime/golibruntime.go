@@ -10,13 +10,13 @@ package golibruntime
 import (
 	_ "github.com/tardisgo/tardisgo/golibruntime/bytes"
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
-	//_ "github.com/tardisgo/tardisgo/golibruntime/os" // OSX only
+	_ "github.com/tardisgo/tardisgo/golibruntime/os"
 	_ "github.com/tardisgo/tardisgo/golibruntime/reflect"
 	_ "github.com/tardisgo/tardisgo/golibruntime/runtime"
 	_ "github.com/tardisgo/tardisgo/golibruntime/strings"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
-	//_ "github.com/tardisgo/tardisgo/golibruntime/syscall" // OSX only
-	//_ "github.com/tardisgo/tardisgo/golibruntime/time" // OSX only
+	_ "github.com/tardisgo/tardisgo/golibruntime/syscall"
+	_ "github.com/tardisgo/tardisgo/golibruntime/time"
 	_ "runtime" // TODO currently fails with a MStats vs MemStatsType size mis-match on 32-bit Ubuntu/Win7, works on OSX
 )
