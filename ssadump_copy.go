@@ -118,6 +118,8 @@ func doMain() error {
 	}
 
 	wordSize = 4 // TARDIS Go addition to force default int size to 32 bits
+	//conf.Build.GOARCH = "tardisgo" // TARDIS Go addition to ensure no architecure-specific code will compile
+	//conf.Build.GOOS = "tardisgo"   // TARDIS Go addition to ensure no OS-specific code will compile
 
 	conf.TypeChecker.Sizes = &types.StdSizes{
 		MaxAlign: 8,
@@ -228,11 +230,14 @@ func doMain() error {
 			}
 		}
 
-		if runtime.GOARCH != build.Default.GOARCH {
-			return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
-				build.Default.GOARCH, runtime.GOARCH)
-		}
-
+		// TARDIS Go removal as we alter the GOARCH to stop architecture-specific code
+		/*
+			if runtime.GOARCH != build.Default.GOARCH {
+				return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
+					build.Default.GOARCH, runtime.GOARCH)
+			}
+		*/
+		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 	}
 
 	// TARDIS Go additions: copy run interpreter code above, but call pogo class
