@@ -6,7 +6,7 @@ package pogo
 
 import (
 	"code.google.com/p/go.tools/go/types"
-	"code.google.com/p/go.tools/go/types/typemap"
+	"code.google.com/p/go.tools/go/types/typeutil"
 	"fmt"
 	"reflect"
 )
@@ -43,7 +43,7 @@ func IsValidInPogo(et types.Type, posStr string) bool {
 }
 
 // TypesEncountered keeps track of the types we encounter using the excellent go.tools/go/types/typesmap package.
-var TypesEncountered typemap.M
+var TypesEncountered typeutil.Map
 
 // NextTypeID is used to give each type we come across its own ID.
 var NextTypeID = 0
