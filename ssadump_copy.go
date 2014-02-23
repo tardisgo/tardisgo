@@ -30,6 +30,7 @@ import (
 	_ "github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
 	"github.com/tardisgo/tardisgo/pogo"   // TARDIS Go addition
 	//"go/parser"                           // TARDIS Go addition
+	//"go/token"                            // TARDIS Go addition
 )
 
 var buildFlag = flag.String("build", "", `Options controlling the SSA builder.
@@ -177,6 +178,20 @@ func doMain() error {
 		defer pprof.StopCPUProfile()
 	}
 
+	// TARDIS Go TEST
+	// Really need to find a way to replace entire packages, this experiment did not work...
+	/*
+		conf.Fset = token.NewFileSet()
+		f, err := parser.ParseFile(conf.Fset, conf.Build.GOPATH+"/src/github.com/tardisgo/tardisgo/golibruntime/runtime/runtime.go", nil, 0)
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		conf.CreateFromFiles("", f)
+		fmt.Printf("DEBUG %s %s\n", f.Name.Name, "") //, f.Name.Obj.Name)
+	*/
+	// end TARDIS Go TEST
+
 	// Use the initial packages from the command line.
 	args, err := conf.FromArgs(args, *testFlag)
 	if err != nil {
@@ -230,13 +245,12 @@ func doMain() error {
 			}
 		}
 
-		// TARDIS Go removal as we alter the GOARCH to stop architecture-specific code
-		/*
-			if runtime.GOARCH != build.Default.GOARCH {
-				return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
-					build.Default.GOARCH, runtime.GOARCH)
-			}
-		*/
+		// NOTE TARDIS Go removal of this test required if we alter the GOARCH to stop architecture-specific code
+		if runtime.GOARCH != build.Default.GOARCH {
+			return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
+				build.Default.GOARCH, runtime.GOARCH)
+		}
+
 		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 	}
 

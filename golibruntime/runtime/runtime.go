@@ -18,6 +18,9 @@ func NumGoroutine() int { return tardisgolib.NumGoroutine() }
 
 //	EVERYTHING BELOW NOT YET IMPLEMENTED
 
+// TEST TEST this is a kludge
+//var sizeof_C_MStats int
+
 // Goexit unimplemented
 func Goexit() { panic("runtime.Goexit() not yet implemented") }
 
