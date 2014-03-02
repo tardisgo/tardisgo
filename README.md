@@ -40,7 +40,39 @@ All of the core [Go language specification] (http://golang.org/ref/spec) is impl
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a function call or a channel operation, so loops without calls or channel operations will never give up control. The empty function tardisgolib.Gosched() provides a way to give up control without including the full Go runtime.  
 
-Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If in doubt, assume the standard package does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!").  
+Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If the standard package is not mentioned in the notes below, please assume it does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!").  
+
+Some common runtime functions are available in [tardisgolib](https://github.com/tardisgo/tardisgo/tree/master/tardisgolib):
+```
+import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go
+```
+
+Some standard Go library packages do not call any runtime C or assembler functions and will probably work OK (though their tests still need to be rewritten and run to validate their correctness), these include:
+- errors
+- unicode
+- unicode/utf8 
+- unicode/utf16
+- sort
+- container/heap
+- container/list
+- container/ring
+
+Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" package. These limited runtime functions have been emulated for the following packages (though their tests still need to be rewritten and run to validate their correctness). To use these packages, their corresponding runtime functions need to be included as follows:
+```
+include ( 
+	"bytes" 
+	_ "github.com/tardisgo/tardisgo/golibruntime/bytes"
+	"strings"
+	_ "github.com/tardisgo/tardisgo/golibruntime/strings"
+	"sync"
+	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
+	"sync/atomic""
+	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
+	"math"
+	_ "github.com/tardisgo/tardisgo/golibruntime/math"
+)
+```
+At present, standard library packages which rely on the Go "runtime" package are not implemented (although some OSX test code is in the golibruntime tree).
 
 A start has been made on the automated integration with Haxe libraries, but this is currently incomplete see: https://github.com/tardisgo/gohaxelib
 
