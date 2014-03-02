@@ -57,16 +57,16 @@ Some standard Go library packages do not call any runtime C or assembler functio
 - container/list
 - container/ring
 
-Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" package. These limited runtime functions have been emulated for the following packages (though their tests still need to be rewritten and run to validate their correctness). To use these packages, their corresponding runtime functions need to be included as follows:
+Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for the following packages (though their tests still need to be rewritten and run to validate their correctness). To use these packages, their corresponding runtime functions need to be included as follows:
 ```
 include ( 
 	"bytes" 
 	_ "github.com/tardisgo/tardisgo/golibruntime/bytes"
 	
-	"strings"
+	"strings"  // but see issue #19 re JS and Flash
 	_ "github.com/tardisgo/tardisgo/golibruntime/strings"
 	
-	"sync"
+	"sync" // partial: only WaitGroup is known to work 
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
 	
 	"sync/atomic""
@@ -77,7 +77,7 @@ include (
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
 )
 ```
-At present, standard library packages which rely on the Go "runtime" package are not implemented (although some OSX test code is in the golibruntime tree).
+At present, standard library packages which rely on the Go "runtime" or "os" packages are not implemented (although some OSX test code is in the golibruntime tree).
 
 A start has been made on the automated integration with Haxe libraries, but this is currently incomplete see: https://github.com/tardisgo/gohaxelib
 
@@ -100,7 +100,7 @@ TARDIS Go can be installed very easily:
 ```
 go get -u github.com/tardisgo/tardisgo
 ```
-(The -u is important to make sure you have the latest version of the go.tools repository. If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [Elliott](https://github.com/elliott5)!)
+The -u is important to make sure you have the latest version of the go.tools repository. If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [Elliott](https://github.com/elliott5)!
 
 From the directory containing your .go files, first create a "tardis" sub-directory 
 (examples in the [sample code](https://github.com/tardisgo/tardisgo-samples) should already have one):
