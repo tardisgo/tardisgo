@@ -62,13 +62,18 @@ Other standard libray packages make limited use of runtime C or assembler functi
 include ( 
 	"bytes" 
 	_ "github.com/tardisgo/tardisgo/golibruntime/bytes"
+	
 	"strings"
 	_ "github.com/tardisgo/tardisgo/golibruntime/strings"
+	
 	"sync"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
+	
 	"sync/atomic""
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
+	
 	"math"
+	"strconv"  // uses the math package
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
 )
 ```
@@ -95,7 +100,7 @@ TARDIS Go can be installed very easily:
 ```
 go get -u github.com/tardisgo/tardisgo
 ```
-(The -u is important to make sure you have the latest version of the go.tools repository. If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [the author](https://github.com/elliott5)!)
+(The -u is important to make sure you have the latest version of the go.tools repository. If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [Elliott](https://github.com/elliott5)!)
 
 From the directory containing your .go files, first create a "tardis" sub-directory 
 (examples in the [sample code](https://github.com/tardisgo/tardisgo-samples) should already have one):
