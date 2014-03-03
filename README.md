@@ -42,11 +42,6 @@ Goroutines are implemented as co-operatively scheduled co-routines. Other gorout
 
 Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If the standard package is not mentioned in the notes below, please assume it does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!").  
 
-Some common runtime functions are available in [tardisgolib](https://github.com/tardisgo/tardisgo/tree/master/tardisgolib):
-```
-import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go
-```
-
 Some standard Go library packages do not call any runtime C or assembler functions and will probably work OK (though their tests still need to be rewritten and run to validate their correctness), these include:
 - errors
 - unicode
@@ -77,22 +72,16 @@ include (
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
 )
 ```
-At present, standard library packages which rely on the Go "runtime" or "os" packages are not implemented (although some OSX test code is in the golibruntime tree).
+At present, standard library packages which rely on the Go "runtime", "os", "reflect" or "unsafe" packages are not implemented (although some OSX test code is in the golibruntime tree).
 
 A start has been made on the automated integration with Haxe libraries, but this is currently incomplete see: https://github.com/tardisgo/gohaxelib
 
-The code requires Go 1.2 and Haxe 3.0.1. The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
+TARDIS Go specific runtime functions are available in [tardisgolib](https://github.com/tardisgo/tardisgo/tree/master/tardisgolib):
+```
+import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go
+```
 
-Development priorities:
-- For all Go standard libraries, report testing and implementation status
-- Improve integration with Haxe code and libraries, automating as far as possible
-- Improve currently poor execution speeds and update benchmarking results
-- Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications
-- Improve debug and profiling capabilities
-- Add command line flags to control options
-- Publish more explanation and documentation
-- Move more of the runtime into Go (rather than Haxe) to make it more portable 
-- Implement other target languages
+The code requires Go 1.2 and Haxe 3.0.1. The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. 
 
 ## Installation and use:
  
@@ -135,7 +124,21 @@ The documentation is sparse at present, if there is some aspect of the system th
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
+## Future plans:
+
+Development priorities:
+- For all Go standard libraries, report testing and implementation status
+- Improve integration with Haxe code and libraries, automating as far as possible
+- Improve currently poor execution speeds and update benchmarking results
+- Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications
+- Improve debug and profiling capabilities
+- Add command line flags to control options
+- Publish more explanation and documentation
+- Move more of the runtime into Go (rather than Haxe) to make it more portable 
+- Implement other target languages
+
 If you would like to get involved in helping the project to advance, that would be wonderful. However, please contact [Elliott](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code to avoid any conflicts. 
 
 ## License:
+
 MIT license, please see the license file.
