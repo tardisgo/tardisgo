@@ -25,7 +25,7 @@ func NumGoroutine() int { return tardisgolib.NumGoroutine() }
 func Goexit() { panic("runtime.Goexit() not yet implemented") }
 
 // FuncForPC not implemented
-func FuncForPC(pc uintptr) *uintptr { panic("runtime.FuncForPC() not yet implemented"); return nil }
+func FuncForPC(pc uintptr) (uip *uintptr) { panic("runtime.FuncForPC() not yet implemented") }
 
 // SetFinalizer NoOp
 func SetFinalizer(x, f interface{}) {
@@ -34,24 +34,20 @@ func SetFinalizer(x, f interface{}) {
 }
 
 // implemented in symtab.c in GC runtime package
-func funcline_go(*uintptr /* should be *runtime.Func*/, uintptr) (string, int) {
+func funcline_go(*uintptr /* should be *runtime.Func*/, uintptr) (s string, i int) {
 	panic("runtime.funcline_go() not yet implemented")
-	return "", 0
 }
-func funcname_go(*uintptr /* should be *runtime.Func*/) string {
+func funcname_go(*uintptr /* should be *runtime.Func*/) (s string) {
 	panic("runtime.funcname_go() not yet implemented")
-	return ""
 }
-func funcentry_go(*uintptr /* should be *runtime.Func*/) uintptr {
+func funcentry_go(*uintptr /* should be *runtime.Func*/) (uip uintptr) {
 	panic("runtime.funcentry_go() not yet implemented")
-	return 0
 }
 
 ////
 
-func cstringToGo(uintptr) string {
+func cstringToGo(uintptr) (s string) {
 	panic("runtime.cstringToGo() not yet implemented")
-	return ""
 }
 
 func getgoroot() string {
@@ -67,7 +63,6 @@ func getgoroot() string {
 // call.  The boolean ok is false if it was not possible to recover the information.
 func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
 	panic("runtime.Caller() not yet implemented")
-	return 0, "", 0, false
 }
 
 // Callers fills the slice pc with the program counters of function invocations
@@ -75,7 +70,6 @@ func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
 // to skip before recording in pc, with 0 identifying the frame for Callers itself and
 // 1 identifying the caller of Callers.
 // It returns the number of entries written to pc.
-func Callers(skip int, pc []uintptr) int {
+func Callers(skip int, pc []uintptr) (i int) {
 	panic("runtime.Callers() not yet implemented")
-	return 0
 }

@@ -22,7 +22,6 @@ type runtimeTimer struct {
 func startTimer(*runtimeTimer) {
 	panic("time.startTimer() NOT IMPLEMENTED")
 }
-func stopTimer(*runtimeTimer) bool {
+func stopTimer(*runtimeTimer) (b bool) {
 	panic("time.stopTimer() NOT IMPLEMENTED")
-	return false
 }

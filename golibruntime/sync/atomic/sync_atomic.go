@@ -17,7 +17,7 @@ import (
 // Non-parallel basic replacement for the sync/atomic package
 //***********************************************************
 
-// +build !race
+// *********** ignore: +build !race
 
 // Package atomic provides low-level atomic memory primitives
 // useful for implementing synchronization algorithms.

@@ -65,23 +65,20 @@ func methodFuncStub() {
 }
 
 // implemented in ../pkg/runtime
-func chancap(ch iword) int {
+func chancap(ch iword) (cap int) {
 	panic("reflect.chancap() NOT IMPLEMENTED")
-	return 0
 }
 func chanclose(ch iword) {
 	panic("reflect.chanclose() NOT IMPLEMENTED")
 }
-func chanlen(ch iword) int {
+func chanlen(ch iword) (len int) {
 	panic("reflect.chanlen() NOT IMPLEMENTED")
-	return 0
 }
 func chanrecv(t *rtype, ch iword, nb bool) (val iword, selected, received bool) {
 	panic("reflect.chanrecv() NOT IMPLEMENTED")
 }
-func chansend(t *rtype, ch iword, val iword, nb bool) bool {
+func chansend(t *rtype, ch iword, val iword, nb bool) (b bool) {
 	panic("reflect.chansend() NOT IMPLEMENTED")
-	return false
 }
 
 func makechan(typ *rtype, size uint64) (ch iword) {
@@ -105,9 +102,8 @@ func mapiterkey(it *byte) (key iword, ok bool) {
 func mapiternext(it *byte) {
 	panic("reflect.mapiternext() NOT IMPLEMENTED")
 }
-func maplen(m iword) int {
+func maplen(m iword) (len int) {
 	panic("reflect.maplen() NOT IMPLEMENTED")
-	return 0
 }
 
 func call(fn, arg unsafe.Pointer, n uint32) {
@@ -119,19 +115,16 @@ func ifaceE2I(t *rtype, src interface{}, dst unsafe.Pointer) {
 }
 
 // implemented in runtime
-func ismapkey(*rtype) bool {
+func ismapkey(*rtype) (b bool) {
 	panic("reflect.ismapkey() NOT IMPLEMENTED")
-	return false
 }
 
 // implemented in package runtime
-func unsafe_New(*rtype) unsafe.Pointer {
+func unsafe_New(*rtype) (up unsafe.Pointer) {
 	panic("reflect.unsafe_New() NOT IMPLEMENTED")
-	return nil
 }
-func unsafe_NewArray(*rtype, int) unsafe.Pointer {
+func unsafe_NewArray(*rtype, int) (up unsafe.Pointer) {
 	panic("reflect.unsafe_NewArray() NOT IMPLEMENTED")
-	return nil
 }
 
 // typelinks is implemented in package runtime.
@@ -141,9 +134,8 @@ func unsafe_NewArray(*rtype, int) unsafe.Pointer {
 // there can be more than one with a given string.
 // Only types we might want to look up are included:
 // channels, maps, slices, and arrays.
-func typelinks() []*rtype {
+func typelinks() (tl []*rtype) {
 	panic("reflect.typelinks() NOT IMPLEMENTED")
-	return nil
 }
 
 // A runtimeSelect is a single case passed to rselect.
