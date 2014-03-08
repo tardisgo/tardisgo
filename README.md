@@ -85,11 +85,17 @@ The code requires Go 1.2 and Haxe 3.0.1. The only development platforms tested a
 
 ## Installation and use:
  
-TARDIS Go can be installed very easily:
+Dependencies:
 ```
-go get -u github.com/tardisgo/tardisgo
+go get code.google.com/p/go.tools
 ```
-The -u is important to make sure you have the latest version of the go.tools repository. If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [Elliott](https://github.com/elliott5)!
+
+TARDIS Go:
+```
+go get github.com/tardisgo/tardisgo
+```
+
+If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [Elliott](https://github.com/elliott5)!
 
 From the directory containing your .go files, first create a "tardis" sub-directory 
 (examples in the [sample code](https://github.com/tardisgo/tardisgo-samples) should already have one):

@@ -31,6 +31,7 @@ import (
 	"github.com/tardisgo/tardisgo/pogo"   // TARDIS Go addition
 	//"go/parser"                           // TARDIS Go addition
 	//"go/token"                            // TARDIS Go addition
+	//"github.com/davecheney/profile" // TARDIS Go addition
 )
 
 var buildFlag = flag.String("build", "", `Options controlling the SSA builder.
@@ -95,14 +96,37 @@ func init() {
 }
 
 func main() {
+	/*
+		cfg1 := profile.Config{
+			MemProfile:     true,
+			ProfilePath:    ".",  // store profiles in current directory
+			NoShutdownHook: true, // do not hook SIGINT
+		}
+		p1 := profile.Start(&cfg1)
+		cfg2 := profile.Config{
+			CPUProfile:     true,
+			ProfilePath:    ".",  // store profiles in current directory
+			NoShutdownHook: true, // do not hook SIGINT
+		}
+		p2 := profile.Start(&cfg2)
+	*/
 	if err := doMain(); err != nil {
 		fmt.Fprintf(os.Stderr, "TARDISgo: %s.\n", err) // TARDISgo alteration
+		/*
+			p1.Stop()
+			p2.Stop()
+		*/
 		os.Exit(1)
 	}
+	/*
+		p1.Stop()
+		p2.Stop()
+	*/
 	os.Exit(0)
 }
 
 func doMain() error {
+
 	flag.Parse()
 	args := flag.Args()
 
