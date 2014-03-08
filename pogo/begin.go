@@ -9,7 +9,6 @@ import (
 	"code.google.com/p/go.tools/go/ssa"
 	"fmt"
 	"go/token"
-	"os"
 	"strconv"
 
 	// TARDIS Go included runtime libraries, so that they get installed and the SSA code can go and load their binary form
@@ -23,8 +22,7 @@ var rootProgram *ssa.Program // pointer to the root datastructure TODO make this
 var mainPackage *ssa.Package // pointer to the "main" package TODO make this state non-global
 
 // EntryPoint provides the entry point for the pogo package, called from ssadump_copy.
-// It finishes with an os.Exit() so 0 for success.
-func EntryPoint(mainPkg *ssa.Package) {
+func EntryPoint(mainPkg *ssa.Package) error {
 	mainPackage = mainPkg
 	rootProgram = mainPkg.Prog
 	setupPosHash()
@@ -34,12 +32,12 @@ func EntryPoint(mainPkg *ssa.Package) {
 	emitTypeInfo()
 	emitFileEnd()
 	if hadErrors && stopOnError {
-		LogError("", "pogo", fmt.Errorf("no output files generated"))
-		os.Exit(2) // should signal failure to shell
-	} else {
-		writeFiles()
-		os.Exit(0) // should signal success to shell
+		err := fmt.Errorf("no output files generated")
+		LogError("", "pogo", err)
+		return err
 	}
+	writeFiles()
+	return nil
 }
 
 // The main Go class contains those elements that don't fit in functions

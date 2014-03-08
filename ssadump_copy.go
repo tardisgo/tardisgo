@@ -99,6 +99,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "TARDISgo: %s.\n", err) // TARDISgo alteration
 		os.Exit(1)
 	}
+	os.Exit(0)
 }
 
 func doMain() error {
@@ -165,7 +166,7 @@ func doMain() error {
 
 	if len(args) == 0 {
 		fmt.Fprint(os.Stderr, usage)
-		os.Exit(1)
+		return fmt.Errorf(usage)
 	}
 
 	// Profiling support.
@@ -289,7 +290,7 @@ func doMain() error {
 
 			interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 		*/
-		pogo.EntryPoint(main) // TARDIS Go entry point, no return, does os.Exit at end
+		return pogo.EntryPoint(main) // TARDIS Go entry point, returns an error
 	}
 	return nil
 }
