@@ -80,6 +80,7 @@ type Language interface {
 	EmitTypeInfo() string
 	EmitInvoke(register string, isGo bool, isDefer bool, callCommon interface{}, errorInfo string) string
 	PackageOverloaded(pkg string) (overloadPkgGo, overloadPkg string, isOverloaded bool)
+	FunctionOverloaded(pkg, fun string) bool
 	Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string
 }
 

@@ -66,6 +66,7 @@ func emitFunctions() {
 		//	fmt.Println("DEBUG RelString=", f.RelString(nil), "===", pn, "===", pnCount)
 		//}
 		if !pov && // the package is not overloaded and
+			!LanguageList[TargetLang].FunctionOverloaded(pn, f.Name()) &&
 			!strings.HasPrefix(pn, "_") && // the package is not in the target language, signaled by a leading underscore and
 			!(f.Name() == "init" &&
 				strings.HasPrefix(f.RelString(nil), LibRuntimePath) &&
@@ -99,6 +100,7 @@ func emitFunc(fn *ssa.Function) {
 		fmt.Printf("DEBUG Switches: %s = %+v\n", fn, sw)
 	}
 	*/
+
 	subFnList := make([]subFnInstrs, 0)
 	canOptMap := make(map[string]bool) // TODO review use of this mechanism
 

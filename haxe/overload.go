@@ -6,6 +6,7 @@ package haxe
 
 import (
 	"code.google.com/p/go.tools/go/ssa"
+	//"fmt"
 )
 
 var builtinOverloadMap = map[string]string{
@@ -61,6 +62,20 @@ func (l langType) PackageOverloaded(pkg string) (overloadPkgGo, overloadPkgHaxe 
 	default:
 		return "", "", false // DUMMY return for now
 	}
+}
+
+func (l langType) FunctionOverloaded(pkg, fun string) bool {
+	//fmt.Printf("DEBUG fn ov :%s:%s:\n", pkg, fun)
+	_, ok := fnOverloadMap[pkg+"_"+fun]
+	if ok {
+		return true
+	}
+	_, ok = fnToVarOverloadMap[pkg+"_"+fun]
+	if ok {
+		return true
+	}
+	_, ok = builtinOverloadMap[pkg+"_"+fun]
+	return ok
 }
 
 func (l langType) FuncName(fnx *ssa.Function) string {
