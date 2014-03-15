@@ -1,5 +1,7 @@
 // THIS IS NOT PRETTY, IT IS A WORK-IN-PROGRESS
 
+// NOTE : No Output = success
+
 // TODO separate this jumble of tests into a set of smaller ones
 
 // This package should only test the core language functionality, all standard package tests moved elsewhere
@@ -1496,7 +1498,7 @@ func testUintDiv64() {
 }
 
 func main() {
-	println("Start test running in: " + tardisgolib.Platform())
+	//println("Start test running in: " + tardisgolib.Platform())
 	testManyGoroutines()
 	testChanSelect()
 	tourfib()
@@ -1541,7 +1543,7 @@ func main() {
 	} else {
 		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 2)
 	}
-	println("End test running in: " + tardisgolib.Platform())
-	println("再见！Previous two chinese characters should say goodbye! (testing unicode output)")
-	println()
+	//println("End test running in: " + tardisgolib.Platform())
+	//println("再见！Previous two chinese characters should say goodbye! (testing unicode output)")
+	//println()
 }

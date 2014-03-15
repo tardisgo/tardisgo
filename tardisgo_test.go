@@ -2,7 +2,7 @@ package main
 
 import (
 	"os"
-	//"os/exec"
+	"os/exec"
 	"testing"
 )
 
@@ -15,11 +15,14 @@ func Test1(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	/*
-		out, err := exec.Command("haxe", "-main=tardis.Go", "--interp").Output()
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log("The Haxe output is:\n%s\n", out)
-	*/
+
+	out, err := exec.Command("haxe", "-main", "tardis.Go", "--interp").CombinedOutput()
+	if err != nil {
+		t.Error(err)
+	}
+	//fmt.Printf("The Haxe output is: %d :\n%s\n", len(out), out)
+
+	if len(out) > 0 {
+		t.Errorf(string(out))
+	}
 }
