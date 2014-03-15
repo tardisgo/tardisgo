@@ -103,9 +103,12 @@ func main() {
 }
 
 func doMain() error {
-
 	flag.Parse()
 	args := flag.Args()
+	return doTestable(args)
+}
+
+func doTestable(args []string) error {
 
 	conf := loader.Config{
 		Build:         &build.Default,
