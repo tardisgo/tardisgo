@@ -81,7 +81,7 @@ TARDIS Go specific runtime functions are available in [tardisgolib](https://gith
 import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go
 ```
 
-The code requires Go 1.2 and Haxe 3.0.1. The only development platforms tested are OSX 10.9.1, Ubuntu 13.10 32-bit, Ubuntu 12.04 64-bit and Windows 7 32-bit. Haxe 3.1.1 is completely working on OSX, but compilation to the C# target fails on other platforms.
+The code is developed on OS X Mavericks‎, using Go 1.2.1 and Haxe 3.1.1. The target platforms tested are Ubuntu 13.10 32-bit & 64-bit, and Windows 7 32-bit. The 64-bit platforms work fine, but compilation to the C# target fails on Win-7; and PHP is flakey, espeecially the 32-bit version (but you probably knew that).
 
 ## Installation and use:
  
