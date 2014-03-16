@@ -56,7 +56,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go addition
-var allFlag = flag.Bool("all", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
+var allFlag = flag.Bool("testall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
 
 // TARDIS Go modification TODO review words here
 const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental).
@@ -331,7 +331,7 @@ func doTestable(args []string) error {
 				},
 				[][]string{
 					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardisgo.swf"},
-					[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"`},
+					[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
 					[]string{"open", "tardisgo.swf"},
 				},
 				[][]string{
@@ -350,12 +350,29 @@ func doTestable(args []string) error {
 				go func(i int, cl [][]string) {
 					res := ""
 					for j, c := range cl {
-						out, err := exec.Command(c[0], c[1:]...).CombinedOutput()
-						if err != nil {
-							out = append(out, []byte(err.Error())...)
-						}
-						if j > 0 { // ignore the output from the compile phase
-							res += string(out)
+						exe := c[0]
+						if exe == "echo" {
+							res += c[1]
+						} else {
+							_, err := exec.LookPath(exe)
+							if err != nil {
+								switch exe {
+								case "node":
+									exe = "nodejs" // for Ubuntu
+								default:
+									res += "TARDISgo error - executable not found: " + exe + "\n"
+									exe = "" // nothing to execute
+								}
+							}
+							if exe != "" {
+								out, err := exec.Command(exe, c[1:]...).CombinedOutput()
+								if err != nil {
+									out = append(out, []byte(err.Error())...)
+								}
+								if j > 0 { // ignore the output from the compile phase
+									res += string(out)
+								}
+							}
 						}
 					}
 					results <- res
