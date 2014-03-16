@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"testing"
 )
 
-func Test1(t *testing.T) {
+func TestCore(t *testing.T) {
+	n := runtime.NumCPU()
+	fmt.Printf("DEBUG NumCPU=%d\n", n)
+
 	err := os.Chdir("tests/core")
 	if err != nil {
 		t.Error(err)

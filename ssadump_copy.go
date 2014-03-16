@@ -27,10 +27,10 @@ import (
 	"code.google.com/p/go.tools/go/ssa/interp"
 	"code.google.com/p/go.tools/go/types"
 
+	// TARDIS Go additions
+	"os/exec"
 	_ "github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
-	"github.com/tardisgo/tardisgo/pogo"   // TARDIS Go addition
-	//"go/parser"                           // TARDIS Go addition
-	//"go/token"                            // TARDIS Go addition
+	"github.com/tardisgo/tardisgo/pogo"
 )
 
 var buildFlag = flag.String("build", "", `Options controlling the SSA builder.
@@ -55,6 +55,9 @@ R	disable [R]ecover() from panic; show interpreter crash instead.
 T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
+// TARDIS Go addition
+var allFlag = flag.Bool("all", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
+
 // TARDIS Go modification TODO review words here
 const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental).
 Usage: tardisgo [<flag> ...] <args> ...
@@ -63,6 +66,7 @@ Example:
 % tardisgo hello.go
 Then to run the tardis/Go.hx file generated, type the command line: "haxe -main tardis.Go --interp", or whatever Haxe compilation options you want to use. 
 (Note that to compile for PHP you currently need to add the haxe compilation option "--php-prefix tardisgo" to avoid name confilcts).
+use -help to display options
 `
 const ignore = `
 Use -help flag to display options.
@@ -96,7 +100,7 @@ func init() {
 
 func main() {
 	if err := doMain(); err != nil {
-		fmt.Fprintf(os.Stderr, "TARDISgo: %s.\n", err) // TARDISgo alteration
+		fmt.Fprintf(os.Stderr, "TARDISgo: %s", err) // TARDISgo alteration
 		os.Exit(1)
 	}
 	os.Exit(0)
@@ -169,8 +173,8 @@ func doTestable(args []string) error {
 	}
 
 	if len(args) == 0 {
-		fmt.Fprint(os.Stderr, usage)
-		return fmt.Errorf(usage)
+		//fmt.Fprint(os.Stderr, usage)
+		return fmt.Errorf("%v", usage)
 	}
 
 	// Profiling support.
@@ -294,7 +298,73 @@ func doTestable(args []string) error {
 
 			interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 		*/
-		return pogo.EntryPoint(main) // TARDIS Go entry point, returns an error
+		err = pogo.EntryPoint(main) // TARDIS Go entry point, returns an error
+		if err != nil {
+			return err
+		}
+		if *allFlag {
+			targets := [][][]string{
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "cpp"},
+					[]string{"echo", `"CPP:"`},
+					[]string{"./cpp/Go"},
+				},
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-java", "java"},
+					[]string{"echo", `"Java:"`},
+					[]string{"java", "-jar", "java/Go.jar"},
+				},
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cs", "cs"},
+					[]string{"echo", `"CS:"`},
+					[]string{"mono", "./cs/bin/Go.exe"},
+				},
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardisgo.n"},
+					[]string{"echo", `"Neko:"`},
+					[]string{"neko", "tardisgo.n"},
+				},
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardisgo.js"},
+					[]string{"echo", `"Node/JS:"`},
+					[]string{"node", "tardisgo.js"},
+				},
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardisgo.swf"},
+					[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"`},
+					[]string{"open", "tardisgo.swf"},
+				},
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "php", "--php-prefix", "tgo"},
+					[]string{"echo", `"PHP:"`},
+					[]string{"php", "php/index.php"},
+				},
+				[][]string{
+					[]string{"echo", `"Output from this line is ignored"`},
+					[]string{"echo", `"Neko (haxe --interp):"`},
+					[]string{"haxe", "-main", "tardis.Go", "--interp"},
+				},
+			}
+			results := make(chan string, len(targets))
+			for id, cmd := range targets {
+				go func(i int, cl [][]string) {
+					res := ""
+					for j, c := range cl {
+						out, err := exec.Command(c[0], c[1:]...).CombinedOutput()
+						if err != nil {
+							out = append(out, []byte(err.Error())...)
+						}
+						if j > 0 { // ignore the output from the compile phase
+							res += string(out)
+						}
+					}
+					results <- res
+				}(id, cmd)
+			}
+			for t := 0; t < len(targets); t++ {
+				fmt.Println(<-results)
+			}
+		}
 	}
 	return nil
 }
