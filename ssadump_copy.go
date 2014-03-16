@@ -340,7 +340,7 @@ func doTestable(args []string) error {
 					[]string{"php", "php/index.php"},
 				},
 				[][]string{
-					[]string{"echo", `"Output from this line is ignored"`},
+					[]string{"echo", ``}, // Output from this line is ignored
 					[]string{"echo", `"Neko (haxe --interp):"`},
 					[]string{"haxe", "-main", "tardis.Go", "--interp"},
 				},
