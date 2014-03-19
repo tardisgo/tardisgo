@@ -6,10 +6,12 @@ package pogo
 
 import (
 	"bytes"
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"fmt"
 	"io/ioutil"
+	"os"
+
+	"code.google.com/p/go.tools/go/ssa"
+	"code.google.com/p/go.tools/go/types"
 )
 
 // The Language interface enables multiple target languages for TARDIS Go.
@@ -112,12 +114,16 @@ func emitComment(cmt string) {
 func writeFiles() {
 	l := TargetLang
 	// TODO move to the correct directory based on a command line argument
+	if err := os.Mkdir("tardis", os.ModePerm); err != nil {
+		if !os.IsExist(err) { // no problem if it already exists
+			LogError("Unable to create tardis output directory", "pogo", err)
+		}
+	}
 	err := ioutil.WriteFile(
 		"tardis/Go"+LanguageList[l].FileTypeSuffix(), // Ubuntu requires the first letter of the haxe file to be uppercase
 		LanguageList[l].buffer.Bytes(), 0666)
 	if err != nil {
-		LogError("Unable to write output file, does the 'tardis' output directory exist in this location? (it is not created automatically in this early version of tardisgo as a safety feature)",
-			"pogo", err)
+		LogError("Unable to write output file", "pogo", err)
 	}
 }
 

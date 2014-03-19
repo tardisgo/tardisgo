@@ -97,12 +97,7 @@ go get github.com/tardisgo/tardisgo
 
 If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [Elliott](https://github.com/elliott5)!
 
-From the directory containing your .go files, first create a "tardis" sub-directory 
-(examples in the [sample code](https://github.com/tardisgo/tardisgo-samples) should already have one):
-```
-mkdir tardis
-```
-Then to translate Go to Haxe, from the directory containing your .go files type the command line: 
+To translate Go to Haxe, from the directory containing your .go files type the command line: 
 ```
 tardisgo yourfilename.go 
 ``` 
