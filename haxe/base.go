@@ -5,13 +5,14 @@
 package haxe
 
 import (
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"fmt"
-	"github.com/tardisgo/tardisgo/pogo"
 	"go/token"
 	"reflect"
 	"strings"
+
+	"code.google.com/p/go.tools/go/ssa"
+	"code.google.com/p/go.tools/go/types"
+	"github.com/tardisgo/tardisgo/pogo"
 )
 
 func emitTrace(s string) string {
@@ -98,17 +99,17 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 
 	//Create the stack frame variables
 	for p := range fn.Params {
-		ret += "var " + "p_" + pogo.MakeId(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position) + ";\n"
+		ret += "var " + "p_" + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position) + ";\n"
 	}
 	ret += "public function new(gr:Int,"
 	ret += "_bds:Array<Dynamic>" //bindings
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeId(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
 	}
 	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
 	for p := range fn.Params {
-		ret += "this.p_" + pogo.MakeId(fn.Params[p].Name()) + "=p_" + pogo.MakeId(fn.Params[p].Name()) + ";\n"
+		ret += "this.p_" + pogo.MakeID(fn.Params[p].Name()) + "=p_" + pogo.MakeID(fn.Params[p].Name()) + ";\n"
 	}
 	ret += emitTrace(`New:` + l.LangName(packageName, objectName))
 	ret += "Scheduler.push(gr,this);\n}\n"
@@ -196,7 +197,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		if p != 0 {
 			ret += ", "
 		}
-		ret += "p_" + pogo.MakeId(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
 	}
 	ret += ") : "
 	switch fn.Signature.Results().Len() {
@@ -220,7 +221,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "(0,[]" // NOTE calls from Haxe hijack goroutine 0, so the main go goroutine will be suspended for the duration
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeId(fn.Params[p].Name())
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
 	}
 	ret += ").run(); \nwhile(_sf._incomplete) Scheduler.runAll();\n" // TODO alter for multi-threading if ever implemented
 	if fn.Signature.Results().Len() > 0 {
@@ -234,7 +235,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		//if p != 0 {
 		ret += ", "
 		//}
-		ret += "p_" + pogo.MakeId(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
 	}
 	ret += ") : "
 	switch fn.Signature.Results().Len() {
@@ -257,7 +258,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "(_gr,[]" //  use the given Goroutine
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeId(fn.Params[p].Name())
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
 	}
 	ret += ").run(); \nwhile(_sf._incomplete) Scheduler.run1(_gr);\n" // NOTE no "panic()" or "go" code in runtime Go
 	if fn.Signature.Results().Len() > 0 {
@@ -270,7 +271,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "_bds:Array<Dynamic>"                         //bindings
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeId(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
 	}
 	ret += ") : Go_" + l.LangName(packageName, objectName)
 	ret += "\n{" + ""
@@ -278,7 +279,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "new Go_" + l.LangName(packageName, objectName) + "(gr,_bds"
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeId(fn.Params[p].Name())
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
 	}
 	ret += ");\n"
 	ret += "}\n"
@@ -366,7 +367,7 @@ func (l langType) LangName(p, o string) string {
 	if isOv {
 		p = ovPkg
 	}
-	return pogo.MakeId(p) + "_" + pogo.MakeId(o) //+ "_" + makeHash(pogo.MakeId(o))
+	return pogo.MakeID(p) + "_" + pogo.MakeID(o) //+ "_" + makeHash(pogo.MakeID(o))
 }
 
 // Returns the textual version of Value, possibly emmitting an error
@@ -388,7 +389,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		_, c := l.Const(*ci, errorInfo)
 		return c
 	case *ssa.Parameter:
-		return "p_" + pogo.MakeId(v.(*ssa.Parameter).Name())
+		return "p_" + pogo.MakeID(v.(*ssa.Parameter).Name())
 	case *ssa.Capture:
 		for b := range v.(*ssa.Capture).Parent().FreeVars {
 			if v.(*ssa.Capture) == v.(*ssa.Capture).Parent().FreeVars[b] { // comparing the name gives the wrong result

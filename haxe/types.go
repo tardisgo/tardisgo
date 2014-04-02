@@ -5,12 +5,13 @@
 package haxe
 
 import (
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"fmt"
-	"github.com/tardisgo/tardisgo/pogo"
 	"reflect"
 	"strings"
+
+	"code.google.com/p/go.tools/go/ssa"
+	"code.google.com/p/go.tools/go/types"
+	"github.com/tardisgo/tardisgo/pogo"
 )
 
 func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) string {
@@ -129,7 +130,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 					if ele != 0 {
 						ret += ","
 					}
-					ret += pogo.MakeId("r"+fmt.Sprintf("%d", ele)) +
+					ret += pogo.MakeID("r"+fmt.Sprintf("%d", ele)) +
 						":" + l.LangType(tup.At(ele).Type().Underlying(), retInitVal, errorInfo)
 				}
 				return ret + "}"

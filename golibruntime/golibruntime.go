@@ -8,7 +8,9 @@
 package golibruntime
 
 import (
-	_ "github.com/tardisgo/tardisgo/golibruntime/bytes"
+	_ "runtime" // TODO currently fails with a MStats vs MemStatsType size mis-match on 32-bit Ubuntu/Win7, works on OSX
+
+	_ "github.com/tardisgo/tardisgo/golibruntime/bytes" // blank imports are used here because it allows the haxe name-spaces to overlap, TODO find a better method long-term
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
 	_ "github.com/tardisgo/tardisgo/golibruntime/os"
 	_ "github.com/tardisgo/tardisgo/golibruntime/reflect"
@@ -18,5 +20,4 @@ import (
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
 	_ "github.com/tardisgo/tardisgo/golibruntime/syscall"
 	_ "github.com/tardisgo/tardisgo/golibruntime/time"
-	_ "runtime" // TODO currently fails with a MStats vs MemStatsType size mis-match on 32-bit Ubuntu/Win7, works on OSX
 )

@@ -5,10 +5,11 @@
 package pogo
 
 import (
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"fmt"
 	"reflect"
+
+	"code.google.com/p/go.tools/go/ssa"
+	"code.google.com/p/go.tools/go/types"
 )
 
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
@@ -358,7 +359,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 			emitComment(comment)
 		} else { // TODO review if Haxe stops using Array<Dynamic> for struct
 			st := instruction.(*ssa.Field).X.Type().Underlying().(*types.Struct)
-			fName := MakeId(st.Field(instruction.(*ssa.Field).Field).Name())
+			fName := MakeID(st.Field(instruction.(*ssa.Field).Field).Name())
 			l := TargetLang
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].Field(register, instruction.(*ssa.Field).X,
