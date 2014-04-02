@@ -183,7 +183,10 @@ func doTestable(args []string) error {
 		if err != nil {
 			return err
 		}
-		pprof.StartCPUProfile(f)
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			return err
+		}
 		defer pprof.StopCPUProfile()
 	}
 
