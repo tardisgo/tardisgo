@@ -127,7 +127,7 @@ func writeFiles() {
 	}
 }
 
-// MakeId cleans-up Go names to replace characters outside (_,0-9,a-z,A-Z) with a decimal value surrounded by underlines, with special handling of '.' and '*'.
+// MakeID cleans-up Go names to replace characters outside (_,0-9,a-z,A-Z) with a decimal value surrounded by underlines, with special handling of '.' and '*'.
 func MakeID(s string) (r string) {
 	var b []rune
 	b = []rune(s)
