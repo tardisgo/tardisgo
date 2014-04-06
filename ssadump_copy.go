@@ -306,80 +306,9 @@ func doTestable(args []string) error {
 			return err
 		}
 		if *allFlag {
-			targets := [][][]string{
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "cpp"},
-					[]string{"echo", `"CPP:"`},
-					[]string{"./cpp/Go"},
-				},
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-java", "java"},
-					[]string{"echo", `"Java:"`},
-					[]string{"java", "-jar", "java/Go.jar"},
-				},
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cs", "cs"},
-					[]string{"echo", `"CS:"`},
-					[]string{"mono", "./cs/bin/Go.exe"},
-				},
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardisgo.n"},
-					[]string{"echo", `"Neko:"`},
-					[]string{"neko", "tardisgo.n"},
-				},
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardisgo.js"},
-					[]string{"echo", `"Node/JS:"`},
-					[]string{"node", "tardisgo.js"},
-				},
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardisgo.swf"},
-					[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
-					[]string{"open", "tardisgo.swf"},
-				},
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "php", "--php-prefix", "tgo"},
-					[]string{"echo", `"PHP:"`},
-					[]string{"php", "php/index.php"},
-				},
-				[][]string{
-					[]string{"echo", ``}, // Output from this line is ignored
-					[]string{"echo", `"Neko (haxe --interp):"`},
-					[]string{"haxe", "-main", "tardis.Go", "--interp"},
-				},
-			}
 			results := make(chan string, len(targets))
 			for id, cmd := range targets {
-				go func(i int, cl [][]string) {
-					res := ""
-					for j, c := range cl {
-						exe := c[0]
-						if exe == "echo" {
-							res += c[1]
-						} else {
-							_, err := exec.LookPath(exe)
-							if err != nil {
-								switch exe {
-								case "node":
-									exe = "nodejs" // for Ubuntu
-								default:
-									res += "TARDISgo error - executable not found: " + exe + "\n"
-									exe = "" // nothing to execute
-								}
-							}
-							if exe != "" {
-								out, err := exec.Command(exe, c[1:]...).CombinedOutput()
-								if err != nil {
-									out = append(out, []byte(err.Error())...)
-								}
-								if j > 0 { // ignore the output from the compile phase
-									res += string(out)
-								}
-							}
-						}
-					}
-					results <- res
-				}(id, cmd)
+				go doTarget(id, cmd, results)
 			}
 			for t := 0; t < len(targets); t++ {
 				fmt.Println(<-results)
@@ -387,4 +316,78 @@ func doTestable(args []string) error {
 		}
 	}
 	return nil
+}
+
+var targets = [][][]string{
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "cpp"},
+		[]string{"echo", `"CPP:"`},
+		[]string{"./cpp/Go"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-java", "java"},
+		[]string{"echo", `"Java:"`},
+		[]string{"java", "-jar", "java/Go.jar"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cs", "cs"},
+		[]string{"echo", `"CS:"`},
+		[]string{"mono", "./cs/bin/Go.exe"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardisgo.n"},
+		[]string{"echo", `"Neko:"`},
+		[]string{"neko", "tardisgo.n"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardisgo.js"},
+		[]string{"echo", `"Node/JS:"`},
+		[]string{"node", "tardisgo.js"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardisgo.swf"},
+		[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
+		[]string{"open", "tardisgo.swf"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "php", "--php-prefix", "tgo"},
+		[]string{"echo", `"PHP:"`},
+		[]string{"php", "php/index.php"},
+	},
+	[][]string{
+		[]string{"echo", ``}, // Output from this line is ignored
+		[]string{"echo", `"Neko (haxe --interp):"`},
+		[]string{"haxe", "-main", "tardis.Go", "--interp"},
+	},
+}
+
+func doTarget(i int, cl [][]string, results chan string) {
+	res := ""
+	for j, c := range cl {
+		exe := c[0]
+		if exe == "echo" {
+			res += c[1] + "\n"
+		} else {
+			_, err := exec.LookPath(exe)
+			if err != nil {
+				switch exe {
+				case "node":
+					exe = "nodejs" // for Ubuntu
+				default:
+					res += "TARDISgo error - executable not found: " + exe + "\n"
+					exe = "" // nothing to execute
+				}
+			}
+			if exe != "" {
+				out, err := exec.Command(exe, c[1:]...).CombinedOutput()
+				if err != nil {
+					out = append(out, []byte(err.Error())...)
+				}
+				if j > 0 { // ignore the output from the compile phase
+					res += string(out)
+				}
+			}
+		}
+	}
+	results <- res
 }
