@@ -306,11 +306,11 @@ func doTestable(args []string) error {
 			return err
 		}
 		if *allFlag {
-			results := make(chan string, len(targets))
+			results := make(chan string)
 			for id, cmd := range targets {
 				go doTarget(id, cmd, results)
 			}
-			for t := 0; t < len(targets); t++ {
+			for _ = range targets {
 				fmt.Println(<-results)
 			}
 		}
