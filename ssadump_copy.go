@@ -307,8 +307,8 @@ func doTestable(args []string) error {
 		}
 		if *allFlag {
 			results := make(chan string)
-			for id, cmd := range targets {
-				go doTarget(id, cmd, results)
+			for _, cmd := range targets {
+				go doTarget(cmd, results)
 			}
 			for _ = range targets {
 				fmt.Println(<-results)
@@ -361,7 +361,7 @@ var targets = [][][]string{
 	},
 }
 
-func doTarget(i int, cl [][]string, results chan string) {
+func doTarget(cl [][]string, results chan string) {
 	res := ""
 	for j, c := range cl {
 		exe := c[0]

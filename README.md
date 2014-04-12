@@ -31,7 +31,7 @@ Xbox and PlayStation.
 
 For more background and on-line examples see the links from: http://tardisgo.github.io/
 
-## Project status: 
+## Project status: a working proof of concept
 ####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED
 
 > "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
