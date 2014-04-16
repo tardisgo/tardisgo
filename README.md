@@ -15,7 +15,7 @@ The first language targeted is [Haxe](http://haxe.org), because the Haxe compile
 Planned current use cases: 
 - For the Go community: write a library in Go and call it from  existing Haxe, JavaScript, ActionScript, Java, C++, C# or PHP applications. 
 - For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
-- Write a multi-platform client-side application in a mixture of Go and Haxe, using [OpenFL](http://openfl.org) / [Lime](https://github.com/openfl/lime) or [Kha] (http://kha.ktxsoftware.com/) to target a sub-set of: 
+- Write a multi-platform client-side application in a mixture of Go and Haxe, using [OpenFL](http://openfl.org) / [Lime](https://github.com/openfl/lime) or [Kha](http://kha.ktxsoftware.com/) to target a sub-set of: 
 Windows,
 Mac,
 Linux,
@@ -36,7 +36,7 @@ For more background and on-line examples see the links from: http://tardisgo.git
 
 > "Premature optimization is the root of all evil (or at least most of it) in programming." - Donald Knuth
 
-All of the core [Go language specification] (http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the packages "unsafe" and "reflect", which are mentioned in the core specification, are not currently supported. 
+All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the packages "unsafe" and "reflect", which are mentioned in the core specification, are not currently supported. 
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a function call or a channel operation, so loops without calls or channel operations will never give up control. The empty function tardisgolib.Gosched() provides a way to give up control without including the full Go runtime.  
 
