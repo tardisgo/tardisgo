@@ -132,7 +132,9 @@ If you transpile your own code using TARDIS Go, please report the bugs that you 
 
 ## Future plans:
 
-Development priorities:
+The focus of short-term development is to get the Haxe implementation production ready, rather than targeting other languages yet. The planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for much faster execution times by not using the Haxe "Dynamic" type to store values on the heap.
+
+Longer term development priorities:
 - For all Go standard libraries, report testing and implementation status
 - Improve integration with Haxe code and libraries, automating as far as possible
 - Improve currently poor execution speeds and update benchmarking results
