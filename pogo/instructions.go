@@ -134,15 +134,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.Return:
 		emitPhiFlag = false
-		r := ""
-		switch len(operands) {
-		case 0:
-			r = LanguageList[l].Ret0()
-		case 1:
-			r = LanguageList[l].Ret1(*operands[0], errorInfo)
-		default:
-			r = LanguageList[l].RetN(operands, errorInfo)
-		}
+		r := LanguageList[l].Ret(operands, errorInfo)
 		fmt.Fprintln(&LanguageList[l].buffer, r+LanguageList[l].Comment(comment))
 
 	case *ssa.Panic:

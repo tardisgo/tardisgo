@@ -50,9 +50,7 @@ type Language interface {
 	UnOp(register, op string, v interface{}, commaOK bool, errorInfo string) string
 	Store(v1, v2 interface{}, errorInfo string) string
 	Send(v1, v2 interface{}, errorInfo string) string
-	Ret0() string
-	Ret1(v1 interface{}, errorInfo string) string
-	RetN(values []*ssa.Value, errorInfo string) string
+	Ret(values []*ssa.Value, errorInfo string) string
 	RegEq(r string) string
 	Call(register string, cc ssa.CallCommon, args []ssa.Value, isBuiltin, isGo, isDefer bool, fnToCall, errorInfo string) string
 	Convert(register, langType string, destType types.Type, v interface{}, errorInfo string) string

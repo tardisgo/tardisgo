@@ -332,7 +332,7 @@ func (l langType) RunEnd(fn *ssa.Function) string {
 	// TODO reoptimize if blocks >0 and no calls that create synthetic block entries
 	ret := ""
 	if len(fn.Blocks) == 1 && !hadReturn {
-		ret += l.Ret0() // required because sometimes the SSA code is not generated for this
+		ret += l.Ret(nil, "") // required because sometimes the SSA code is not generated for this
 	}
 	return ret + `default: Scheduler.bbi();}}}`
 }
@@ -620,28 +620,27 @@ const returnCode = `this._incomplete=false;
 Scheduler.pop(this._goroutine);
 return this;`
 
-func (l langType) Ret0() string {
+func (l langType) Ret(values []*ssa.Value, errorInfo string) string {
 	hadReturn = true
-	return emitTrace("Ret0") + returnCode
-}
-func (l langType) Ret1(v1 interface{}, errorInfo string) string {
-	hadReturn = true
-	return emitTrace("Ret1") + "_res= " + l.IndirectValue(v1, errorInfo) + ";\n" + returnCode
-}
-func (l langType) RetN(values []*ssa.Value, errorInfo string) string {
-	hadReturn = true
-	ret := emitTrace("RetN") + "_res= {"
-	for r := range values {
-		if r != 0 {
-			ret += ","
+	switch len(values) {
+	case 0:
+		return emitTrace("Ret0") + returnCode
+	case 1:
+		return emitTrace("Ret1") + "_res= " + l.IndirectValue(*values[0], errorInfo) + ";\n" + returnCode
+	default:
+		ret := emitTrace("RetN") + "_res= {"
+		for r := range values {
+			if r != 0 {
+				ret += ","
+			}
+			if l.LangType((*values[r]).Type().Underlying(), false, errorInfo) == "GOint64" {
+				ret += fmt.Sprintf("r%d:", r) + l.IndirectValue(*values[r], errorInfo)
+			} else {
+				ret += fmt.Sprintf("r%d:", r) + l.IndirectValue(*values[r], errorInfo)
+			}
 		}
-		if l.LangType((*values[r]).Type().Underlying(), false, errorInfo) == "GOint64" {
-			ret += fmt.Sprintf("r%d:", r) + l.IndirectValue(*values[r], errorInfo)
-		} else {
-			ret += fmt.Sprintf("r%d:", r) + l.IndirectValue(*values[r], errorInfo)
-		}
+		return ret + "};\n" + returnCode
 	}
-	return ret + "};\n" + returnCode
 }
 
 func (l langType) Panic(v1 interface{}, errorInfo string) string {
