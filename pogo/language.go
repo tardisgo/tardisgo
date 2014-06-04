@@ -43,9 +43,7 @@ type Language interface {
 	BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) string
 	Jump(int) string
 	If(v interface{}, trueNext, falseNext int, errorInfo string) string
-	PhiStart(register, regTyp, regInit string) string
-	PhiEntry(register string, phiVal int, v interface{}, errorInfo string) string
-	PhiEnd(defaultValue string) string
+	Phi(register string, phiEntries []int, valEntries []interface{}, defaultValue, errorInfo string) string
 	LangType(types.Type, bool, string) string
 	Value(v interface{}, errorInfo string) string
 	BinOp(register, op string, v1, v2 interface{}, errorInfo string) string

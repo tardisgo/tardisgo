@@ -349,17 +349,13 @@ func (l langType) If(v interface{}, trueNext, falseNext int, errorInfo string) s
 	return fmt.Sprintf("_Next=%s ? %d : %d;", l.IndirectValue(v, errorInfo), trueNext, falseNext)
 }
 
-func (l langType) PhiStart(register, regTyp, regInit string) string {
-	return register + "=("
-}
-
-func (l langType) PhiEntry(register string, phiVal int, v interface{}, errorInfo string) string {
-	val := l.IndirectValue(v, errorInfo)
-	return fmt.Sprintf("(_Phi==%d)?%s:", phiVal, val)
-}
-
-func (l langType) PhiEnd(defaultValue string) string {
-	return defaultValue + ");"
+func (l langType) Phi(register string, phiEntries []int, valEntries []interface{}, defaultValue, errorInfo string) string {
+	ret := register + "=("
+	for e := range phiEntries {
+		val := l.IndirectValue(valEntries[e], errorInfo)
+		ret += fmt.Sprintf("(_Phi==%d)?%s:", phiEntries[e], val)
+	}
+	return ret + defaultValue + ");"
 }
 
 func (l langType) LangName(p, o string) string {
