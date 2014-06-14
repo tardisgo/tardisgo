@@ -12,9 +12,7 @@ The long-term vision is to provide a framework that makes it easy to target many
 
 The first language targeted is [Haxe](http://haxe.org), because the Haxe compiler generates 7 other languages and is already well-proven for making multi-platform client-side applications, mostly games. 
 
-Planned current use cases: 
-- For the Go community: write a library in Go and call it from  existing Haxe, JavaScript, ActionScript, Java, C++, C# or PHP applications. 
-- For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
+Desired eventual use cases: 
 - Write a multi-platform client-side application in a mixture of Go and Haxe, using [OpenFL](http://openfl.org) / [Lime](https://github.com/openfl/lime) or [Kha](http://kha.ktxsoftware.com/) to target a sub-set of: 
 Windows,
 Mac,
@@ -28,6 +26,8 @@ HTML5,
 webOS,
 Flash,
 Xbox and PlayStation.
+- For the Go community: write a library in Go and call it from  existing Haxe, JavaScript, ActionScript, Java, C++, C# or PHP applications. 
+- For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
 
 For more background and on-line examples see the links from: http://tardisgo.github.io/
 
@@ -128,9 +128,11 @@ PHP specific issues:
 ## Next steps:
 Please go to http://github.com/tardisgo/tardisgo-samples for example Go code modified to work with tardisgo.
 
+For a small technical FAQ, please see the [Wiki page](https://github.com/tardisgo/tardisgo/wiki). 
+
 For public help or discussion please go to the [Google Group](https://groups.google.com/d/forum/tardisgo); or feel free to e-mail [Elliott](https://github.com/elliott5) direct to discuss any issues if you prefer.
 
-The documentation is sparse at present, if there is some aspect of the system that you want to know more about, please let [Elliott](https://github.com/elliott5) know and he will prioritise that area.
+The documentation is sparse at present, if there is some aspect of the system that you want to know more about, please let [Elliott](https://github.com/elliott5) know and he will prioritise that area to add to the wiki.
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
