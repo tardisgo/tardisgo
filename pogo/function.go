@@ -5,13 +5,14 @@
 package pogo
 
 import (
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/ssa/ssautil"
-	"code.google.com/p/go.tools/go/types"
 	"fmt"
 	"go/token"
 	"strings"
 	"unicode"
+
+	"code.google.com/p/go.tools/go/ssa"
+	"code.google.com/p/go.tools/go/ssa/ssautil"
+	"code.google.com/p/go.tools/go/types"
 )
 
 // For every function, maybe emit the code...

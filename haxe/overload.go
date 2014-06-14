@@ -5,6 +5,8 @@
 package haxe
 
 import (
+	"go/ast"
+
 	"code.google.com/p/go.tools/go/ssa"
 	//"fmt"
 )
@@ -84,9 +86,9 @@ func (l langType) FuncName(fnx *ssa.Function) string {
 		pn = fnx.Signature.Recv().Type().String() // NOTE no use of underlying here
 	} else {
 		pn = "unknown"
-		fn := fnx
-		if fn.Enclosing != nil {
-			fn = fn.Enclosing
+		fn := ssa.EnclosingFunction(fnx.Package(), []ast.Node{fnx.Syntax()})
+		if fn == nil {
+			fn = fnx
 		}
 		if fn.Pkg != nil {
 			if fn.Pkg.Object != nil {

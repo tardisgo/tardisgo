@@ -1,2 +1,9 @@
 .DS_Store
+tests/*/*.js
+tests/*/*.n
+tests/*/java/*
+tests/*/cs/*
+tests/*/cpp/*
+tests/*/php/*
+tests/*/*.swf
 tests/*/tardis/Go.hx

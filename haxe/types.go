@@ -40,7 +40,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				}
 				return "Complex"
 			case types.Int, types.Int8, types.Int16, types.Int32, types.UntypedRune,
-				types.Uint8, types.Uint16, types.Uint, types.Uint32: // NOTE: untyped integers default to Int without a warning
+				types.Uint8, types.Uint16, types.Uint, types.Uint32: // NOTE: untyped runes default to Int without a warning
 				if retInitVal {
 					return "0"
 				}
@@ -91,32 +91,31 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">"
 		case *types.Slice:
 			if retInitVal {
-				return "new Slice(new Pointer(new Array<" + l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
+				return "new Slice(new Pointer<" + l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
+					">(new Array<" + l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
 					">()),0,0" + ")"
 			}
 			return "Slice"
 		case *types.Array: // TODO consider using Vector rather than Array, if faster and can be made to work
 			if retInitVal {
-				return "{var _v=new Array<" +
-					l.LangType(t.(*types.Array).Elem(), false, errorInfo) +
-					fmt.Sprintf(">();for(_vi in 0...%d){_v[_vi]=%s;}; _v;}",
-						t.(*types.Array).Len(), l.LangType(t.(*types.Array).Elem(), true, errorInfo))
-
+				return fmt.Sprintf("new Make<%s>().array(%s,%d)",
+					l.LangType(t.(*types.Array).Elem(), false, errorInfo),
+					l.LangType(t.(*types.Array).Elem(), true, errorInfo),
+					t.(*types.Array).Len())
 			}
 			return "Array<" + l.LangType(t.(*types.Array).Elem(), false, errorInfo) + ">"
-		case *types.Struct: // TODO as this is fixed-length, should it be a Vector, like types.Array ?
-			// TODO consider if it is possible to change from Array<Dynamic> to individual named elements - requires considerable work to do this
-			if retInitVal {
-				ret := "{var _v=new Array<Dynamic>();_v=["
-				for ele := 0; ele < t.(*types.Struct).NumFields(); ele++ {
-					if ele != 0 {
-						ret += ","
-					}
-					ret += l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), true, errorInfo)
+		case *types.Struct:
+			ret := "{"
+			for ele := 0; ele < t.(*types.Struct).NumFields(); ele++ {
+				if ele != 0 {
+					ret += ","
 				}
-				return ret + "]; _v;}"
+				ret += `f_` + t.(*types.Struct).Field(ele).Name() + `: `
+				ret += fmt.Sprintf("%s", // "new BoxedVar<%s>(%s)",
+					//l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), false, errorInfo),
+					l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), retInitVal, errorInfo))
 			}
-			return "Array<Dynamic>"
+			return ret + "}"
 		case *types.Tuple: // what is returned by a call and some other instructions, not in the Go language spec!
 			tup := t.(*types.Tuple)
 			switch tup.Len() {
@@ -140,7 +139,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				// NOTE pointer declarations create endless recursion for self-referencing structures unless initialized with null
 				return "null" //rather than: + l.LangType(t.(*types.Pointer).Elem(), retInitVal, errorInfo) + ")"
 			}
-			return "Pointer"
+			return "PointerIF"
 		case *types.Signature:
 			if retInitVal {
 				return "null"

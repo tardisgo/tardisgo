@@ -1497,6 +1497,47 @@ func testUintDiv64() {
 	}
 }
 
+type foo struct {
+	a int
+}
+
+func bar() *foo {
+	//println("bar() called")
+	return &foo{42}
+}
+
+type foo2 struct {
+	a struct {
+		b int
+	}
+}
+
+func testPtr() {
+	q := &bar().a
+	//println("pointer created")
+	*q = 40
+	TEQ(tardisgolib.CPos(), *q, 40) // should be 40
+
+	// type foo as above
+	f := foo{6}
+	r := &f // this isn't creating a pointer
+	f = foo{4}
+	TEQ(tardisgolib.CPos(), r.a, 4) // should be 4
+
+	f2 := foo2{}
+	p2 := &f2.a
+	q2 := &p2.b // referring to the `p` variable instead of its pointer value at the time; &(*p).b (should be equivalent) is handled correctly though
+	p2 = nil
+	TEQ(tardisgolib.CPos(), *q2, 0) // should be 0
+
+	var f3 struct{ a [3]int }
+	f3.a = [3]int{6, 6, 6}
+	s3 := f3.a[:]
+	f3.a = [3]int{4, 4, 4}
+	TEQ(tardisgolib.CPos(), s3[1], 4) // should be 4
+
+}
+
 func main() {
 	//println("Start test running in: " + tardisgolib.Platform())
 	testManyGoroutines()
@@ -1534,6 +1575,7 @@ func main() {
 	testUintDiv32()
 	testUintDiv64()
 	testDefer()
+	testPtr()
 	aGrWG.Wait()
 	TEQint32(tardisgolib.CPos()+" testManyGoroutines() sync/atomic counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {

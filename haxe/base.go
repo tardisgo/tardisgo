@@ -102,7 +102,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += "var " + "p_" + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position) + ";\n"
 	}
 	ret += "public function new(gr:Int,"
-	ret += "_bds:Array<Dynamic>" //bindings
+	ret += "_bds:Dynamic" //bindings
 	for p := range fn.Params {
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
@@ -218,7 +218,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += " {\n"
 	ret += "if(!Go.doneInit) Go.init();\n" // very defensive TODO remove this once everyone understands that Go.init() must be called first
 	ret += "var _sf=new Go_" + l.LangName(packageName, objectName)
-	ret += "(0,[]" // NOTE calls from Haxe hijack goroutine 0, so the main go goroutine will be suspended for the duration
+	ret += "(0,null" // NOTE calls from Haxe hijack goroutine 0, so the main go goroutine will be suspended for the duration
 	for p := range fn.Params {
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
@@ -255,7 +255,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	}
 	ret += " {\n" /// we have already done Go.init() if we are calling from the runtime
 	ret += "var _sf=new Go_" + l.LangName(packageName, objectName)
-	ret += "(_gr,[]" //  use the given Goroutine
+	ret += "(_gr,null" //  use the given Goroutine
 	for p := range fn.Params {
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
@@ -268,7 +268,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 
 	// call
 	ret += "public static inline function call( gr:Int," //this just creates the stack frame, NOTE does not run anything because also used for defer
-	ret += "_bds:Array<Dynamic>"                         //bindings
+	ret += "_bds:Dynamic"                                //bindings
 	for p := range fn.Params {
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
@@ -314,9 +314,12 @@ func (l langType) SetPosHash() string {
 func (l langType) BlockStart(block []*ssa.BasicBlock, num int) string {
 	// TODO optimise is only 1 block AND no calls
 	//if len(block) > 1 { // no need for a case statement if only one block
-	return fmt.Sprintf("case %d:", num) + l.Comment(block[num].Comment) + "\n" +
-		emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), num)) +
-		"this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", num) + ");"
+	ret := fmt.Sprintf("case %d:", num) + l.Comment(block[num].Comment) + "\n" +
+		emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), num))
+	if pogo.DebugFlag {
+		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", num) + ");"
+	}
+	return ret
 	//}
 	//return ""
 }
@@ -386,14 +389,16 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		return c
 	case *ssa.Parameter:
 		return "p_" + pogo.MakeID(v.(*ssa.Parameter).Name())
-	case *ssa.Capture:
-		for b := range v.(*ssa.Capture).Parent().FreeVars {
-			if v.(*ssa.Capture) == v.(*ssa.Capture).Parent().FreeVars[b] { // comparing the name gives the wrong result
-				return `_bds[` + fmt.Sprintf("%d", b) + `]`
-			}
-		}
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Capture name not found: %s", v.(*ssa.Capture).Name()))
-		return `_bds["_b` + "ERROR: Captured bound variable name not found" + `"]` // TODO proper error
+	//case *ssa.Capture:
+	//	for b := range v.(*ssa.Capture).Parent().FreeVars {
+	//		if v.(*ssa.Capture) == v.(*ssa.Capture).Parent().FreeVars[b] { // comparing the name gives the wrong result
+	//			return `_bds[` + fmt.Sprintf("%d", b) + `]`
+	//		}
+	//	}
+	//	pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Capture name not found: %s", v.(*ssa.Capture).Name()))
+	//	return `_bds["_b` + "ERROR: Captured bound variable name not found" + `"]` // TODO proper error
+	case *ssa.FreeVar:
+		return `_bds.` + v.(*ssa.FreeVar).Name()
 	case *ssa.Function:
 		pk := "unknown"
 		if v.(*ssa.Function).Signature.Recv() != nil { // it's a method
@@ -406,13 +411,13 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 			}
 		}
 		if len(v.(*ssa.Function).Blocks) > 0 { //the function actually exists
-			return "new Closure(Go_" + l.LangName(pk, v.(*ssa.Function).Name()) + ".call,[])" //TODO will change for go instr
+			return "new Closure(Go_" + l.LangName(pk, v.(*ssa.Function).Name()) + ".call,null)" //TODO will change for go instr
 		}
 		// function has no implementation
 		// TODO maybe put a list of over-loaded functions here and only error if not found
 		// NOTE the reflect package comes through this path TODO fix!
 		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
-		return "new Closure(null,[])" // Should fail at runtime if it is used...
+		return "new Closure(null,null)" // Should fail at runtime if it is used...
 	case *ssa.UnOp:
 		return pogo.RegisterName(val)
 	case *ssa.BinOp:
@@ -425,9 +430,9 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 }
 func (l langType) FieldAddr(register string, v interface{}, errorInfo string) string {
 	if register != "" {
-		return fmt.Sprintf(`%s=%s.addr(%d);`, register,
+		return fmt.Sprintf(`%s=%s.fieldAddr("f_%s");`, register,
 			l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo),
-			v.(*ssa.FieldAddr).Field)
+			v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field).Name())
 	}
 	return ""
 }
@@ -447,7 +452,8 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
 			idxString)
 	case *types.Array: // need to create a pointer before using it
-		return fmt.Sprintf(`%s={var _v=new Pointer(%s); _v.addr(%s);};`, register,
+		return fmt.Sprintf(`%s={var _v=new Pointer<%s>(%s); _v.addr(%s);};`, register,
+			l.LangType(v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying(), false, errorInfo),
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
 			idxString)
 	default:
@@ -501,7 +507,9 @@ func (l langType) Send(v1, v2 interface{}, errorInfo string) string {
 	ret := fmt.Sprintf("_Next=%d;\n", nextReturnAddress)
 	ret += "return this;\n"
 	ret += fmt.Sprintf("case %d:\n", nextReturnAddress)
-	ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	if pogo.DebugFlag {
+		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	}
 	ret += emitTrace(fmt.Sprintf("Block:%d", nextReturnAddress))
 	// TODO panic if the chanel is null
 	ret += "if(!" + l.IndirectValue(v1, errorInfo) + ".hasSpace())return this;\n" // go round the loop again and wait if not OK
@@ -515,7 +523,9 @@ func emitReturnHere() string {
 	ret += fmt.Sprintf("_Next=%d;\n", nextReturnAddress)
 	ret += "return this;\n"
 	ret += fmt.Sprintf("case %d:\n", nextReturnAddress)
-	ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	if pogo.DebugFlag {
+		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	}
 	ret += emitTrace(fmt.Sprintf("Block:%d", nextReturnAddress))
 	return ret
 }
@@ -710,6 +720,13 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			return register + "" + l.IndirectValue(args[0], errorInfo) + ".imag;"
 		case "complex":
 			return register + "new Complex(" + l.IndirectValue(args[0], errorInfo) + "," + l.IndirectValue(args[1], errorInfo) + ");"
+		case "ssa:wrapnilchk":
+			return register + "Scheduler.wrapnilchk(" + l.IndirectValue(args[0], errorInfo) + ");"
+			//fnToCall += " register:" + register + "\n"
+			//for a, arg := range args {
+			//	fnToCall += fmt.Sprintf("args[%d]:%v=%s\n", a, arg, l.IndirectValue(arg, errorInfo))
+			//}
+			fallthrough
 		default:
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Call() - Unhandled builtin function: %s", fnToCall))
 			ret = "MISSING_BUILTIN("
@@ -971,7 +988,9 @@ func doCall(register, callCode string) string {
 	ret += fmt.Sprintf("_Next = %d;\n", nextReturnAddress) // where to come back to
 	ret += "return this;\n"
 	ret += fmt.Sprintf("case %d:\n", nextReturnAddress) // emit code to come back to
-	ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	if pogo.DebugFlag {
+		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	}
 	ret += emitTrace(fmt.Sprintf("Block:%d", nextReturnAddress))
 	if register != "" { // if register, set return value
 		ret += register + "=" + fmt.Sprintf("_SF%d.res();\n", -nextReturnAddress)
@@ -984,7 +1003,22 @@ func (l langType) Alloc(reg string, v interface{}, errorInfo string) string {
 	if reg == "" {
 		return "" // if the register is not used, don't emit the code!
 	}
-	return reg + "=new Pointer(" + l.LangType(v.(types.Type).Underlying().(*types.Pointer).Elem().Underlying(), true, errorInfo) + ");"
+	typ := v.(types.Type).Underlying().(*types.Pointer).Elem().Underlying()
+	ele := l.LangType(typ, false, errorInfo)
+	ptrTyp := "PointerBasic"
+	switch typ.(type) {
+	case *types.Array:
+		ele = l.LangType(typ.(*types.Array).Elem().Underlying(), false, errorInfo)
+		ptrTyp = "Pointer"
+	case *types.Slice:
+		ele = "Slice"
+		ptrTyp = "Pointer"
+	case *types.Struct:
+		ele = "Dynamic"
+		ptrTyp = "Pointer"
+	}
+	return reg + "=new " + ptrTyp + "<" + ele +
+		">(" + l.LangType(typ, true, errorInfo) + ");"
 }
 
 func (l langType) MakeChan(reg string, v interface{}, errorInfo string) string {
@@ -994,9 +1028,9 @@ func (l langType) MakeChan(reg string, v interface{}, errorInfo string) string {
 }
 
 func newSliceCode(typeElem, initElem, capacity, length, errorInfo string) string {
-	arrayCode := "{var _v:Array<" + typeElem + ">=new Array<" + typeElem + ">();" +
-		"for(_i in 0..." + capacity + ") _v[_i]=" + initElem + "; _v;}"
-	return "new Slice(new Pointer(" + arrayCode + "),0," + length + `)`
+	//arrayCode := "{var _v:Array<" + typeElem + ">=new Array<" + typeElem + ">();" +
+	//	"for(_i in 0..." + capacity + ") _v[_i]=" + initElem + "; _v;}"
+	return "new Slice(new Pointer<" + typeElem + ">(new Make<" + typeElem + ">().array(" + initElem + "," + capacity + ")),0," + length + `)`
 }
 
 func (l langType) MakeSlice(reg string, v interface{}, errorInfo string) string {
@@ -1052,7 +1086,12 @@ func (l langType) Index(register string, v1, v2 interface{}, errorInfo string) s
 
 //TODO review parameters required
 func (l langType) codeField(v interface{}, fNum int, fName, errorInfo string, isFunctionName bool) string {
-	return l.IndirectValue(v, errorInfo) + fmt.Sprintf("[%d]", fNum)
+	iv := l.IndirectValue(v, errorInfo)
+	r := fmt.Sprintf("%s.f_%s", iv, fName)
+	//if pogo.DebugFlag {
+	//	r = "{if(" + iv + "==null) { Scheduler.ioor(); null; } else " + r + ";}"
+	//}
+	return r
 }
 
 //TODO review parameters required
@@ -1112,7 +1151,7 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")"
 	ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
 	switch ltEle {
-	case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
+	case "GOint64", "Int", "Float", "Bool", "String", "PointerIF", "Slice":
 		returnValue = "cast(" + returnValue + "," + ltEle + ")"
 	}
 	eleExists := l.IndirectValue(Map, errorInfo) + ".exists(" + keyString + ")"
@@ -1161,14 +1200,15 @@ func (l langType) Next(register string, v interface{}, isString bool, errorInfo 
 
 func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) string {
 	// use a closure type
-	ret := reg + "= new Closure(" + l.IndirectValue(v.(*ssa.MakeClosure).Fn, errorInfo) + ",["
+	ret := reg + "= new Closure(" + l.IndirectValue(v.(*ssa.MakeClosure).Fn, errorInfo) + ",{"
 	for b := range v.(*ssa.MakeClosure).Bindings {
 		if b != 0 {
 			ret += ","
 		}
+		ret += `"` + v.(*ssa.MakeClosure).Fn.(*ssa.Function).FreeVars[b].Name() + `": `
 		ret += l.IndirectValue(v.(*ssa.MakeClosure).Bindings[b], errorInfo)
 	}
-	return ret + "]);"
+	return ret + "});"
 
 	//it does not work to try just returning the function, and let the invloking call do the binding
 	//as in: return reg + "=" + l.IndirectValue(v.(*ssa.MakeClosure).Fn, errorInfo) + ";"

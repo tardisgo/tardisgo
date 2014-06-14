@@ -5,11 +5,12 @@
 package pogo
 
 import (
-	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/go/ssa"
 	"fmt"
 	"go/token"
 	"strconv"
+
+	"code.google.com/p/go.tools/go/exact"
+	"code.google.com/p/go.tools/go/ssa"
 
 	// TARDIS Go included runtime libraries, so that they get installed and the SSA code can go and load their binary form
 	_ "github.com/tardisgo/tardisgo/golibruntime"
@@ -20,6 +21,8 @@ import (
 // global variables to save having to pass them about
 var rootProgram *ssa.Program // pointer to the root datastructure TODO make this state non-global
 var mainPackage *ssa.Package // pointer to the "main" package TODO make this state non-global
+
+var DebugFlag bool // used to signal if we are emitting debug information
 
 // EntryPoint provides the entry point for the pogo package, called from ssadump_copy.
 func EntryPoint(mainPkg *ssa.Package) error {

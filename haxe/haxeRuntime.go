@@ -27,8 +27,9 @@ class Deep {
 		else if (Std.is(v, String)) { // string
 			return v;
 		}
-		else if (Std.is(v, Pointer)) { // Pointer *** new code
-			return Pointer.copy(v);
+		else if ( Std.is(v, Pointer) || Std.is(v, PointerBasic) ) { // Pointer *** new code
+			return v.copy(); 
+			// ****** WIP speed-up ideas - replicate this entry for BoxedVar types 
 		}
 		else if (Std.is(v, Closure)) { // Closure *** new code
 			return v;
@@ -184,7 +185,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		y = checkIntDiv(x,y,sv);
 		if(y==1) return x; // x div 1 is x
 		if((sv>0)||((x>0)&&(y>0))){ // signed division will work (even though it may be unsigned)
-			var f:Float=  x / y;
+			var f:Float=  cast(x,Float) / cast(y,Float);
 			return f>=0?Math.floor(f):Math.ceil(f);
 		} else { // unsigned division 
 			return GOint64.toInt(GOint64.div(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
@@ -227,7 +228,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				else
 					a[i]=cast(t,Int) & mask;
 		}
-		var sl:Slice = new Slice(new Pointer(a),0,-1);
+		var sl:Slice = new Slice(new Pointer<Int>(a),0,-1);
 		if ( "字".length==3 ) return sl; // already UTF8 encoded
 		var v1:Slice=Go_haxegoruntime_UTF16toRunes.callFromRT(gr,sl);
 		return Go_haxegoruntime_RunesToUTF8.callFromRT(gr,v1);
@@ -245,133 +246,315 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		}
 		return ret;
 	}
+	
+	
 }
 
+class Make<T> {
+	public inline function new(){}
+	public function array(iVal:T,sz:Int):Array<T> {
+		var v:Array<T>=new Array<T>();
+		for(vi in 0...sz)
+			v[vi]=iVal; 
+		return v;
+	}
+}
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 
 @:keep
-class UnsafePointer extends Pointer {  // Unsafe Pointers are not yet supported, but Go library code requires that they can be created
+class UnsafePointer  {  // Unsafe Pointers are not yet supported, but Go library code requires that they can be created
 	public function new(x:Dynamic){
-		super(x);
+	}
+}
+
+interface PointerIF {
+	public function load():Dynamic;
+	public function store(v:Dynamic):Void;
+	public function addr(off:Int):PointerIF;
+	public function fieldAddr(fld:String):PointerIF;
+	public function len():Int;
+	public function copy():PointerIF;
+}
+/******************** WIP speed-up ideas ************
+@:keep 
+class BoxedVar<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
+	private var heapObj:T; // the actual object holding the value
+
+	public inline function new(from:T){
+		heapObj = from;
+	}
+	public inline function load():T { 
+		return heapObj;
+	}
+	public #if !cs inline #end function store(v: #if (flash || java) Dynamic #else T #end ):Void {  
+		// inline issue for C# because of problem with Map 
+		heapObj=v;
+	}
+	public function addr(off:Int):PointerBV<T> {
+		Scheduler.panicFromHaxe("cannot index a non-array boxed variable");
+		return this;
+	}
+	public function fieldAddr(f:String):PointerBV<T> {
+		return new PointerBV(Reflect.getProperty(heapObj,f)); // structs in BVs must contain BVs 
+	}
+	public inline function len():Int { 
+		return 1;
+	}
+	public inline function copy():PointerBasic<T> {
+		return Deep.copy(this);
+	}
+}
+@:keep 
+class BoxedArray<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
+	private var heapObj:Array<T>; // the actual object holding the value
+
+	public inline function new(from:T){
+		heapObj = from;
+	}
+	public inline function load():T { 
+		return heapObj;
+	}
+	public inline function store(v:T):Void {  
+		heapObj=v;
+	}
+	public function addr(off:Int):PointerBV<T> {
+		return new PointerBV(heapObj[off]); // arrays in BVs must contain BVs 
+	}
+	public function fieldAddr(f:String):PointerBV<T> {
+		Scheduler.panicFromHaxe("cannt address the field of an array of boxed variables");
+		return this;
+	}
+	public inline function len():Int { 
+		heapObj.length; 
+	}
+	public inline function copy():PointerBasic<T> {
+		return Deep.copy(this);
+	}
+}
+@:keep 
+class PointerBV<T> implements PointerIF { // for pointing at boxed variables 
+	private var bv:PointerIF; // reference to the actual bv object holding the value
+
+	public inline function new(from:PointerIF){
+		bv = from;
+	}
+	public inline function load():T { 
+		return bv.load();
+	}
+	public inline function store(v:T):Void {  
+		bv.store(v);
+	}
+	public inline function addr(off:Int):PointerBV<T> {
+		return bv.addr(off);
+	}
+	public inline function fieldAddr(f:String):PointerBV<T> {
+		return bv.fieldAddr(f);
+	}
+	public inline function len():Int { 
+		return bv.len();
+	}
+	public inline function copy():PointerBV<T> {
+		return this;
+	}
+}
+******************** end WIP *******************/
+
+@:keep 
+class PointerBasic<T> implements PointerIF { // optimized pointer type for simple non-array/non-struct items 
+	private var heapObj:T; // the actual object holding the value
+
+	public inline function new(from:T){
+		heapObj = from;
+	}
+	public inline function load():T { 
+		return heapObj;
+	}
+	public #if !cs inline #end function store(v: #if (flash || java) Dynamic #else T #end ):Void {  
+		// inline issue for C# because of problem with Map 
+		heapObj=v;
+	}
+	public function addr(off:Int):PointerBasic<T> {
+		Scheduler.panicFromHaxe("cannot index a simple variable");
+		return this;
+	}
+	public function fieldAddr(f:String):PointerBasic<T> {
+		Scheduler.panicFromHaxe("cannot get the address of a field in a simple variable");
+		return this;
+	}
+	public inline function len():Int { 
+		return 1;
+	}
+	public inline function copy():PointerBasic<T> {
+		return this;
 	}
 }
 
 @:keep
-class Pointer {
+class Pointer<T> implements PointerIF { // for complex general Haxe structures, slow! heavy use of Dynamic typing and reflection
 	private var heapObj:Dynamic; // the actual object holding the value
-	private var offs:Array<Int>; // the offsets into the object, if any
+	private var offs:Array<Dynamic>; // the offsets into the object, if any 
 
 	public function new(from:Dynamic){
 		heapObj = from;
-		offs = new Array<Int>();
+		offs = new Array<Dynamic>();
 	}
-	public inline function load():Dynamic { 
-		// this was intended to return a copy of the object, rather than a reference to it, as in:
-		// return Deep.copy(this.ref()); 
-		// but seems to work without problem, and significantly more quickly, without this safeguard
-		return this.ref(); // TODO review
-	}
-	public function ref():Dynamic { // this returns a reference to the pointed-at object, not for general use!
+	public function load():Dynamic { // this returns a reference to the pointed-at object, not for general use!
 		var ret:Dynamic = heapObj;
 		for(i in 0...offs.length) {
 				if(ret==null) {
 					Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
 					return null;						
 				} else 
-					ret = ret[offs[i]];
+					if(Std.is(offs[i],String)) {
+						try ret = Reflect.getProperty(ret,offs[i])						
+						catch (ret:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer reading from field:"+offs.toString());						
+					} else {
+						try	ret = ret[offs[i]]
+						catch (ret:Dynamic)	Scheduler.panicFromHaxe("failed attempt to dereference pointer reading from index:"+offs.toString());						
+					}
 		}
-		return ret;	
-	}
-	public  function store(v:Dynamic){
-		if(offs==null) offs=[]; // C# seems to need this for HaxeInt64Typedef values
-		switch ( offs.length ) {
-		case 0: heapObj=v;
-		case 1: heapObj[offs[0]]=v;
-		default:
-			var a:Dynamic = heapObj;
-			for(i in 0...offs.length-1) a = a[offs[i]];
-			a[offs[offs.length-1]] = v;
-		}
-	}
-	public function addr(off:Int):Pointer {
-		if(off<0 || off >= this.len()) Scheduler.panicFromHaxe("index out of range for valid pointer address");
-		var ret:Pointer = new Pointer(this.heapObj);
-		ret.offs = this.offs.copy();
-		ret.offs[this.offs.length]=off;
 		return ret;
 	}
-	public function len():Int { // used by array bounds check (which ocurrs twice as belt-and-braces while we are in beta testing, see above) TODO optimise
-		var r = this.ref();
-		if (r==null) {
-			Scheduler.panicFromHaxe("attempt to use a nil pointer to access an array or struct");
-			return 0;
-		} else
-			return r.length; 
+	public function store(v:Dynamic):Void {
+		//if(offs==null) offs=[]; // C# seems to need this for HaxeInt64Typedef values
+		if(offs.length==0)
+			heapObj = v;
+		else {
+			var a:Dynamic = heapObj;
+			for(i in 0...offs.length-1)
+				if(a==null) {
+					Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
+					return;						
+				} else 
+					if(Std.is(offs[i],String)) {
+							try a = Reflect.getProperty(a,offs[i])
+							catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to field:"+offs.toString());						
+						} else {
+							try a = a[offs[i]]
+							catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());						
+						}
+
+			if(Std.is(offs[offs.length-1],String)) {
+				try Reflect.setProperty(a,offs[offs.length-1],v)
+				catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to field:"+offs.toString());						
+			} else {
+				try a[offs[offs.length-1]] = v
+				catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());						
+			}
+		}
 	}
-	public static function copy(v:Pointer):Pointer {
-		var r:Pointer = new Pointer(v.heapObj); // no copy of data, just the reference
-		r.offs = v.offs.copy();
-		return r;
+	public function addr(off:Int):Pointer<T> {
+		// do array bounds check, rather than it being in the emitted code
+		if(off<0) {
+			Scheduler.panicFromHaxe("attempt to use a negative index to access an array or slice");
+			return this; 
+		} else {
+			var r:Dynamic = this.load();
+			var l:Int=1;
+			//if(Std.is(r,Slice))
+			//	l = r.len();
+			//else 
+				l = r.length; // this should work on other haxe types besides Array
+			if(off>=l) {
+				Scheduler.ioor();
+				return this;
+			} 			
+		}
+		var ret:Pointer<T> = new Pointer<T>(this.heapObj);
+		ret.offs = this.offs.copy();
+		ret.offs[this.offs.length]=off;		
+		return ret;
+	}
+	public function fieldAddr(f:String):Pointer<T> {
+		var ret:Pointer<T> = new Pointer<T>(this.heapObj);
+		ret.offs = this.offs.copy();
+		ret.offs[this.offs.length]=f;		
+		return ret;
+	}
+   	public var length(dynamic,never) : Int;
+	public inline function get_length():Int {return this.len();}
+	public function len():Int { // used by array bounds check 
+		//if (this==null) {
+		//	Scheduler.panicFromHaxe("attempt to use a nil pointer to access an array or struct");
+		//	return 0;
+		//} else {
+			var r:Dynamic = this.load();
+			//if(Std.is(r,Slice))
+			//	return r.len(); 
+			//else
+				return r.length;
+		//} 
+	}
+	public inline function copy():Pointer<T> {
+		return this;
 	}
 }
 
+@:forward( subSlice, getAt, setAt, len, cap, addr, toString, length )
+abstract Slice(SliceNonAbs) {
+	inline public function new(fromArray:PointerIF, low:Int, high:Int) {this = new SliceNonAbs(fromArray, low, high); }
+	@:arrayAccess public inline function arrayRead(key:Int):Dynamic { return this.getAt(key); }
+	@:arrayAccess public inline function arrayWrite(k:Int, v:Dynamic):Dynamic { this.setAt(k, v); return v; }
+}
+
 @:keep
-class Slice {
-	private var baseArray:Pointer;
+class SliceNonAbs {
+	private var baseArray:PointerIF;
 	private var start:Int;
 	private var end:Int;
+	public var length:Int; // could make this a function access, but it never changes and is used a lot
 	
-	public function new(fromArray:Pointer, low:Int, high:Int) {
+	public function new(fromArray:PointerIF, low:Int, high:Int) {
 		baseArray = fromArray;
 		if(baseArray==null) {
 			start = 0;
 			end = 0;
 		} else {
-			if(high==-1) high = baseArray.ref().length; //default upper bound is the capacity of the underlying array
+			if(high==-1) high = baseArray.len(); //default upper bound is the capacity of the underlying array
 			if( low<0 ) Scheduler.panicFromHaxe( "new Slice() low bound -ve"); 
-			if( high > baseArray.ref().length ) Scheduler.panicFromHaxe("new Slice() high bound exceeds underlying array length"); 
+			if( high > baseArray.len() ) Scheduler.panicFromHaxe("new Slice() high bound exceeds underlying array length"); 
 			if( low>high ) Scheduler.panicFromHaxe("new Slice() low bound exceeds high bound"); 
 			start = low;
 			end = high;
 		}
-		//length = end-start;
+		length = end-start;
 	} 
 	public function subSlice(low:Int, high:Int):Slice {
 		if(high==-1) high = this.len(); //default upper bound is the length of the current slice
 		return new Slice(baseArray,low+start,high+start);
 	}
-	public function getAt(dynIdx:Dynamic):Dynamic {
-		var idx:Int=Force.toInt(dynIdx);
+	public function getAt(idx:Int):Dynamic {
+		//var idx:Int=Force.toInt(dynIdx);
 		if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for getAt()");
-		if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
-		return baseArray.load()[idx+start];
+		//if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
+		return baseArray.addr(idx+start).load();
 	}
-	public function setAt(dynIdx:Dynamic,v:Dynamic) {
-		var idx:Int=Force.toInt(dynIdx);
+	public function setAt(idx:Int,v:Dynamic) {
+		//var idx:Int=Force.toInt(dynIdx);
 		if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for setAt()");
-		if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
-		baseArray.ref()[idx+start]=v; // this code relies on the object reference passing back
+		//if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
+		baseArray.addr(idx+start).store(v); // this code relies on the object reference passing back
 	}
 	public inline function len():Int{
-		return end-start;
+		return length;
 	}
 	public function cap():Int {
 		if(baseArray==null) return 0;
-		return cast(baseArray.ref().length,Int)-start;
+		return cast(baseArray.len(),Int)-start;
 	}
-	public function addr(dynIdx:Dynamic):Pointer {
-		var idx:Int=Force.toInt(dynIdx);
+	public function addr(idx:Int):PointerIF {
+		//var idx:Int=Force.toInt(dynIdx);
 		if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for addr()");
-		if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
+		//if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
 		return baseArray.addr(idx+start);
 	}
 	public function toString():String {
 		var ret:String = "Slice{"+start+","+end+",[";
 		if(baseArray!=null) 
-			for(i in 0...baseArray.ref().length) {
+			for(i in 0...baseArray.len()) {
 				if(i!=0) ret += ",";
-				ret+=baseArray.ref()[i];
+				ret+=baseArray.addr(i).load();
 			}
 		return ret+"]}";
 	}
@@ -380,9 +563,9 @@ class Slice {
 @:keep
 class Closure { // "closure" is a keyword in PHP but solved using compiler flag  --php-prefix go  //TODO tidy names
 	public var fn:Dynamic; 
-	public var bds:Array<Dynamic>;
+	public var bds:Dynamic; // actually an anon struct
 
-	public function new(f:Dynamic,b:Array<Dynamic>) {
+	public function new(f:Dynamic,b:Dynamic) {
 		if(Std.is(f,Closure))	{
 			if(!Reflect.isFunction(f.fn)) Scheduler.panicFromHaxe( "invalid function reference passed to make Closure(): "+f.fn);
 			fn=f.fn; 
@@ -394,18 +577,18 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 		bds=b;
 	}
 	public function toString():String {
-		var ret:String = "Closure{"+fn+",[";
-		for(i in 0...bds.length) {
-			if(i!=0) ret += ",";
-			ret+= bds[i];
-		}
-		return ret+"]}";
+		var ret:String = "Closure{"+fn+",";
+		//for(i in 0...bds.length) {
+		//	if(i!=0) ret += ",";
+		//	ret+= bds[i];
+		//}
+		return ret+bds.toString()+"}";
 	}
 	public function methVal(t:Dynamic,v:Dynamic):Dynamic{
 		var tmp:Dynamic = Deep.copy(t);
 		return Reflect.callMethod(null, fn, [[],tmp,v]);
 	}
-	public function callFn(params:Array<Dynamic>):Dynamic {
+	public function callFn(params:Dynamic):Dynamic {
 		if(fn==null) Scheduler.panicFromHaxe("attempt to call null function reference in Closure()");
 		if(!Reflect.isFunction(fn)) Scheduler.panicFromHaxe("invalid function reference in Closure(): "+fn);
 		return Reflect.callMethod(null, fn, params);
@@ -1255,7 +1438,7 @@ public var _latestBlock:Int=0;
 public var _functionPH:Int;
 public var _functionName:String;
 public var _goroutine(default,null):Int;
-public var _bds:Array<Dynamic>; // bindings for closures
+public var _bds:Dynamic; // bindings for closures
 public var _deferStack:List<StackFrame>;
 
 public function new(gr:Int,ph:Int,name:String){
@@ -1266,13 +1449,13 @@ public function new(gr:Int,ph:Int,name:String){
 	// TODO optionally profile function entry here
 }
 
-public inline function setLatest(ph:Int,blk:Int){
+public function setLatest(ph:Int,blk:Int){ // this can be done inline, but generates too much code
 	this.setPH(ph);
 	_latestBlock=blk;
 	// TODO optionally profile block entry here
 }
 
-public inline function setPH(ph:Int){
+public function setPH(ph:Int){
 	_latestPH=ph;
 	// TODO optionally profile instruction line entry here	
 }
@@ -1302,7 +1485,7 @@ public var _latestBlock:Int;
 public var _functionPH:Int;
 public var _functionName:String;
 public var _goroutine(default,null):Int;
-public var _bds:Array<Dynamic>; // bindings for closures
+public var _bds:Dynamic; // bindings for closures as a anonymous struct
 public var _deferStack:List<StackFrame>;
 function run():StackFrame; // function state machine (set up by each Go function Haxe class)
 function res():Dynamic; // function result (set up by each Go function Haxe class)
@@ -1464,6 +1647,7 @@ public static function panicFromHaxe(err:String) {
 		panic(0,new Interface(TypeInfo.getId("string"),"Runtime panic, unknown goroutine, "+err+" "));
 	else
 		panic(currentGR,new Interface(TypeInfo.getId("string"),"Runtime panic, "+err+" "));
+	throw panicStackDump;
 }
 public static function bbi() {
 	panicFromHaxe("bad block ID (internal phi error)");
@@ -1473,6 +1657,11 @@ public static function ioor() {
 }
 public static inline function NumGoroutine():Int {
 	return grStacks.length;
+}
+public static function wrapnilchk(p:PointerIF):PointerIF {
+	if(p==null)
+		panicFromHaxe("unexpected nil pointer (ssa:wrapnilchk)");
+	return p;
 }
 }
 

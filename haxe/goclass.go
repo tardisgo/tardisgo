@@ -5,14 +5,15 @@
 package haxe
 
 import (
-	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"fmt"
-	"github.com/tardisgo/tardisgo/pogo"
 	"runtime"
 	"strings"
 	"unsafe"
+
+	"code.google.com/p/go.tools/go/exact"
+	"code.google.com/p/go.tools/go/ssa"
+	"code.google.com/p/go.tools/go/types"
+	"github.com/tardisgo/tardisgo/pogo"
 )
 
 // Start the main Go class in haxe
@@ -170,12 +171,29 @@ func (l langType) NamedConst(packageName, objectName string, lit ssa.Const, posi
 func (l langType) Global(packageName, objectName string, glob ssa.Global, position string, isPublic bool) string {
 	pub := "public "                                                      // all globals have to be public in Haxe terms
 	gTyp := glob.Type().Underlying().(*types.Pointer).Elem().Underlying() // globals are always pointers to an underlying element
-	init := "new Pointer(null)"                                           // default is nothing in the global variable
+	ptrTyp := "PointerBasic"
+	ltDesc := "Dynamic" // these values suitable for *types.Struct
+	ltInit := "null"
 	switch gTyp.(type) {
-	case *types.Basic, *types.Struct, *types.Array, *types.Pointer:
-		init = "new Pointer(" + l.LangType(gTyp, true, position) + ")" // initialize basic types only
+	case *types.Basic, *types.Pointer, *types.Interface, *types.Chan, *types.Map, *types.Signature:
+		ptrTyp = "PointerBasic"
+		ltDesc = l.LangType(gTyp, false, position)
+		ltInit = l.LangType(gTyp, true, position)
+	case *types.Array:
+		ptrTyp = "Pointer"
+		ltDesc = "Array<" + l.LangType(gTyp.(*types.Array).Elem().Underlying(), false, position) + ">"
+		ltInit = l.LangType(gTyp, true, position)
+	case *types.Slice:
+		ptrTyp = "Pointer"
+		ltDesc = "Slice" // was: l.LangType(gTyp.(*types.Slice).Elem().Underlying(), false, position)
+		ltInit = l.LangType(gTyp, true, position)
+	case *types.Struct:
+		ptrTyp = "Pointer"
+		ltDesc = "Dynamic" // TODO improve!
+		ltInit = l.LangType(gTyp, true, position)
 	}
+	init := "new " + ptrTyp + "<" + ltDesc + ">(" + ltInit + ")" // initialize basic types only
 	return fmt.Sprintf("%sstatic %s %s",
-		pub, haxeVar(l.LangName(packageName, objectName), "Pointer" /*typ*/, init, position, "Global()"),
+		pub, haxeVar(l.LangName(packageName, objectName), ptrTyp+"<"+ltDesc+">", init, position, "Global()"),
 		l.Comment(position))
 }

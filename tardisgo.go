@@ -29,6 +29,7 @@ import (
 
 	// TARDIS Go additions
 	"os/exec"
+
 	_ "github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
 	"github.com/tardisgo/tardisgo/pogo"
 )
@@ -57,6 +58,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 
 // TARDIS Go addition
 var allFlag = flag.Bool("testall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
+var debugFlag = flag.Bool("debug", false, "Instrument the code to give more meaningful information during a stack dump")
 
 // TARDIS Go modification TODO review words here
 const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental).
@@ -301,6 +303,7 @@ func doTestable(args []string) error {
 
 			interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 		*/
+		pogo.DebugFlag = *debugFlag
 		err = pogo.EntryPoint(main) // TARDIS Go entry point, returns an error
 		if err != nil {
 			return err
@@ -322,27 +325,27 @@ var targets = [][][]string{
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "cpp"},
 		[]string{"echo", `"CPP:"`},
-		[]string{"./cpp/Go"},
+		[]string{"time", "./cpp/Go"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-java", "java"},
 		[]string{"echo", `"Java:"`},
-		[]string{"java", "-jar", "java/Go.jar"},
+		[]string{"time", "java", "-jar", "java/Go.jar"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cs", "cs"},
 		[]string{"echo", `"CS:"`},
-		[]string{"mono", "./cs/bin/Go.exe"},
+		[]string{"time", "mono", "./cs/bin/Go.exe"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardisgo.n"},
 		[]string{"echo", `"Neko:"`},
-		[]string{"neko", "tardisgo.n"},
+		[]string{"time", "neko", "tardisgo.n"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardisgo.js"},
 		[]string{"echo", `"Node/JS:"`},
-		[]string{"node", "tardisgo.js"},
+		[]string{"time", "node", "tardisgo.js"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardisgo.swf"},
@@ -352,12 +355,12 @@ var targets = [][][]string{
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "php", "--php-prefix", "tgo"},
 		[]string{"echo", `"PHP:"`},
-		[]string{"php", "php/index.php"},
+		[]string{"time", "php", "php/index.php"},
 	},
 	[][]string{
 		[]string{"echo", ``}, // Output from this line is ignored
 		[]string{"echo", `"Neko (haxe --interp):"`},
-		[]string{"haxe", "-main", "tardis.Go", "--interp"},
+		[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
 	},
 }
 

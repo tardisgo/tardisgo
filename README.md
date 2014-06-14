@@ -68,7 +68,7 @@ include (
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
 	
 	"math"
-	"strconv"  // uses the math package
+	"strconv"  // uses the math package, but has issues
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
 )
 ```
@@ -81,7 +81,9 @@ TARDIS Go specific runtime functions are available in [tardisgolib](https://gith
 import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go
 ```
 
-The code is developed on OS X Mavericks‎, using Go 1.2.1 and Haxe 3.1.1. The target platforms tested are Ubuntu 13.10 32-bit & 64-bit, and Windows 7 32-bit. The 64-bit platforms work fine, but compilation to the C# target fails on Win-7; and PHP is flakey, espeecially the 32-bit version (but you probably knew that).
+The code is developed and tested on OS X Mavericks‎, using Go 1.2.1 and Haxe 3.1.3. The CI tests run on 64-but Ubuntu. 
+
+No other platforms are currently regression tested, although the project has been run on Ubuntu 32-bit and Windows 7 32-bit. Compilation to the C# target fails on Win-7 and PHP is flakey (but you probably knew that).
 
 ## Installation and use:
  
@@ -92,7 +94,7 @@ go get code.google.com/p/go.tools
 
 TARDIS Go:
 ```
-go get github.com/tardisgo/tardisgo
+go get -u github.com/tardisgo/tardisgo
 ```
 
 If tardisgo is not installing and there is a green "build:passing" icon at the top of this page, please e-mail [Elliott](https://github.com/elliott5)!
@@ -112,10 +114,12 @@ haxe -main tardis.Go --interp
 ... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
 
-To run cross-target command-line tests as quickly as possible, the "-testall" flag  concurrently runs the Haxe compiler and executes the resulting code for all supported targets (with compiler output suppressed and results appearing in the order they complete):
+To run cross-target command-line tests as quickly as possible, the "-testall" flag  concurrently runs the Haxe compiler and executes the resulting code for all supported targets (with compiler output suppressed and results appearing in the order they complete, with an execution time):
 ```
 tardisgo -testall myprogram.go
 ```
+
+If you experience a panic, and want more information in the stack dump, add the "-debug" tardisgo compilation flag to instrument the code further.
 
 PHP specific issues:
 * to compile for PHP you currently need to add the haxe compilation option "--php-prefix tgo" to avoid name conflicts
@@ -132,7 +136,9 @@ If you transpile your own code using TARDIS Go, please report the bugs that you 
 
 ## Future plans:
 
-The focus of short-term development is to get the Haxe implementation production ready, rather than targeting other languages yet. The planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for much faster execution times by not using the Haxe "Dynamic" type to store values on the heap.
+The focus of short-term development is to get the Haxe implementation production ready. In particular, smooth interaction with external Haxe code is required to make the project useful for real work. 
+
+In speed terms, the planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for much faster execution times by not using the Haxe "Dynamic" type to store values on the heap and pointers to them.
 
 Longer term development priorities:
 - For all Go standard libraries, report testing and implementation status
@@ -143,7 +149,7 @@ Longer term development priorities:
 - Add command line flags to control options
 - Publish more explanation and documentation
 - Move more of the runtime into Go (rather than Haxe) to make it more portable 
-- Implement other target languages
+- Implement other target languages...
 
 If you would like to get involved in helping the project to advance, that would be wonderful. However, please contact [Elliott](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code to avoid any conflicts. 
 

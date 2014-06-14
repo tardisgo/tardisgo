@@ -5,9 +5,10 @@
 package haxe
 
 import (
+	"fmt"
+
 	"code.google.com/p/go.tools/go/ssa"
 	"code.google.com/p/go.tools/go/types"
-	"fmt"
 	"github.com/tardisgo/tardisgo/pogo"
 )
 
@@ -17,6 +18,7 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 	if lt == "GOint64" {
 		useInt64 = true
 	}
+
 	// neko target platform requires special handling because in makes whole-number Float into Int without asking
 	// see: https://github.com/HaxeFoundation/haxe/issues/1282 which was marked as closed, but not fixed as at 2013.9.6
 
@@ -28,11 +30,12 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 		lt = l.LangType(v.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying(), false, errorInfo)
 		iVal := "" + l.IndirectValue(v, errorInfo) + "" // need to cast it to pointer, when using -dce full and closures
 		switch lt {
-		case "Pointer":
-			return "({var _v:Pointer=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
 		case "Int":
 			return "(" + iVal + ".load()|0)" // force to Int for js, compiled platforms should optimize this away
 		default:
+			//if strings.HasPrefix(lt, "Pointer") {
+			//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
+			//}
 			return iVal + ".load()"
 		}
 	case "-":
@@ -63,11 +66,12 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 			}
 			switch op {
 			case "^":
-				op = "~" // Haxe has a different operator for bit-wise complement
-				fallthrough
+				// Haxe has a different operator for bit-wise complement
+				return l.intTypeCoersion(v.(ssa.Value).Type().Underlying(),
+					"(~"+valStr+")", errorInfo)
 			case "-": //both negation and bit-complement can overflow
 				return l.intTypeCoersion(v.(ssa.Value).Type().Underlying(),
-					"("+op+valStr+")", errorInfo)
+					"(-"+valStr+")", errorInfo)
 			default: //no overflow issues
 				return "(" + op + valStr + ")"
 			}
