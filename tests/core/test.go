@@ -1579,11 +1579,11 @@ func main() {
 	aGrWG.Wait()
 	TEQint32(tardisgolib.CPos()+" testManyGoroutines() sync/atomic counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {
-		TEQ(tardisgolib.CPos(), int(tardisgolib.HAXE("42;")), int(42))
-		TEQ(tardisgolib.CPos(), string(tardisgolib.HAXE("'test';")), "test")
+		TEQ(tardisgolib.CPos(), tardisgolib.HAXE("int", "42;").(int), int(42))
+		TEQ(tardisgolib.CPos(), tardisgolib.HAXE("string", "'test';").(string), "test")
 		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 1)
 	} else {
-		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 2)
+		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 0)
 	}
 	//println("End test running in: " + tardisgolib.Platform())
 	//println("再见！Previous two chinese characters should say goodbye! (testing unicode output)")

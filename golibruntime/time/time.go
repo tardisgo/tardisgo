@@ -5,8 +5,8 @@ import "github.com/tardisgo/tardisgo/tardisgolib"
 
 // Provided by package runtime.
 func now() (sec int64, nsec int32) {
-	return int64(tardisgolib.HAXE("GOint64.ofFloat(Date.now().getTime()/1000.0);")),
-		int32(tardisgolib.HAXE("cast(Date.now().getTime()%1000.0,Int)*1000000;"))
+	return tardisgolib.HAXE("int64", "GOint64.ofFloat(Date.now().getTime()/1000.0);").(int64),
+		tardisgolib.HAXE("int32", "cast(Date.now().getTime()%1000.0,Int)*1000000;").(int32)
 }
 
 // Interface to timers implemented in package runtime.

@@ -315,7 +315,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		if register == "" {
 			emitComment(comment)
 		} else {
-			//doRangeCheck := true
+			doRangeCheck := true
 			aLen := 0
 			switch instruction.(*ssa.IndexAddr).X.Type().(type) {
 			case *types.Array:
@@ -333,14 +333,14 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 					if (index < 0) || (index >= int64(aLen)) {
 						LogError(errorInfo, "pogo", fmt.Errorf("index [%d] out of range: 0 to %d", index, aLen-1))
 					}
-					//doRangeCheck = false
+					doRangeCheck = false
 				}
 			}
-			//if doRangeCheck { // now inside Addr function to reduce emitted code size
-			//fmt.Fprintln(&LanguageList[l].buffer,
-			//	LanguageList[l].RangeCheck(instruction.(*ssa.IndexAddr).X, instruction.(*ssa.IndexAddr).Index, aLen, errorInfo)+
-			//		LanguageList[l].Comment(comment+" [POINTER]"))
-			//}
+			if doRangeCheck { // now inside Addr function to reduce emitted code size
+				fmt.Fprintln(&LanguageList[l].buffer,
+					LanguageList[l].RangeCheck(instruction.(*ssa.IndexAddr).X, instruction.(*ssa.IndexAddr).Index, aLen, errorInfo)+
+						LanguageList[l].Comment(comment+" [POINTER]"))
+			}
 			fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].IndexAddr(register, instruction, errorInfo),
 				LanguageList[l].Comment(comment+" [POINTER]"))
 

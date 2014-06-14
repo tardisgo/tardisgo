@@ -7,9 +7,15 @@ package tardisgolib
 
 // HAXE inserts the given constant Haxe code at this point.
 // BEWARE! It is very easy to write code that will break the system.
-// code string must be a constant containing a well-formed Haxe statement, probably terminated with a ";"
-// ret is a Haxe Dynamic value mapped into Go as a uintptr
-func HAXE(code string) (ret uintptr) { return }
+// resTyp = a string giving the Go name of the type of the data to be returned as an interface. "" if nothing is returned.
+// code = must be a constant string containing a well-formed Haxe statement, probably terminated with a ";".
+// args = whatever aguments are passed (as interfaces), typical haxe code to access the value of an argument is "_a[3].val"
+// See NumGoroutine() function below for a simple example of use. Or try the Go code:
+//   tardisgolib.HAXE("", "trace('HAXE trace:',_a[0].val,_a[1].val,_a[2].val,_a[3].val);", 11, 22, 33, 44)
+func HAXE(resTyp, code string, args ...interface{}) interface{} {
+	println(resTyp, code, args)
+	return len(args)
+}
 
 // Host returns the Host language (i.e. "go" or "haxe"), the return value is overridden to give correct host language name
 func Host() string { return "go" }
@@ -39,4 +45,6 @@ func StringsUTF16() bool { return Zilen() == 1 }
 func Gosched() {} // an empty function here works fine to enable other goroutines to be scheduled
 
 // NumGoroutine returns the number of active goroutines (may be more than the number runable).
-func NumGoroutine() int { return int(HAXE("Scheduler.NumGoroutine();")) }
+func NumGoroutine() int {
+	return HAXE("int", `Scheduler.NumGoroutine();`).(int)
+}

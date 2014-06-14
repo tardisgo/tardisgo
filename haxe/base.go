@@ -742,7 +742,17 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			if register != "" {
 				register += "="
 			}
-			return register + strings.Trim(l.IndirectValue(args[0], errorInfo), `"`) // NOTE user must supply own ";" if required
+			// NOTE user must supply own ";" if required
+			ret := register + "{var _a=" + l.IndirectValue(args[2], errorInfo) + "; "
+			typ := l.IndirectValue(args[0], errorInfo)
+			if typ != `""` {
+				ret += "new Interface(TypeInfo.getId(" + typ + "),{"
+			}
+			ret += strings.Trim(l.IndirectValue(args[1], errorInfo), `"`)
+			if typ != `""` {
+				ret += "});"
+			}
+			return ret + " }"
 		case "tardisgolib_Host":
 			nextReturnAddress-- //decrement to set new return address for next call generation
 			return register + `="` + l.LanguageName() + `";`
@@ -1111,10 +1121,10 @@ func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) str
 		if strings.HasPrefix(l.LangType(x.(ssa.Value).Type().Underlying(), false, errorInfo), "Array") {
 			lStr = "length"
 		}
-		return fmt.Sprintf("if((%s<0)||(%s>=%s.%s)) Scheduler.ioor();", iStr, iStr, xStr, lStr)
+		return fmt.Sprintf("Scheduler.wraprangechk(%s,%s.%s);", iStr, xStr, lStr)
 	}
 	// length is known at compile time => an array
-	return fmt.Sprintf("if((%s<0)||(%s>=%d)) Scheduler.ioor();", iStr, iStr, length)
+	return fmt.Sprintf("Scheduler.wraprangechk(%s,%d);", iStr, length)
 }
 
 func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {

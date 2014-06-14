@@ -445,22 +445,22 @@ class Pointer<T> implements PointerIF { // for complex general Haxe structures, 
 		}
 	}
 	public function addr(off:Int):Pointer<T> {
-		// do array bounds check, rather than it being in the emitted code
-		if(off<0) {
-			Scheduler.panicFromHaxe("attempt to use a negative index to access an array or slice");
-			return this; 
-		} else {
-			var r:Dynamic = this.load();
-			var l:Int=1;
-			//if(Std.is(r,Slice))
-			//	l = r.len();
-			//else 
-				l = r.length; // this should work on other haxe types besides Array
-			if(off>=l) {
-				Scheduler.ioor();
-				return this;
-			} 			
-		}
+		// could do array bounds check here, rather than it being in the emitted code, but not future-proof for new pointer types
+		//if(off<0) {
+		//	Scheduler.panicFromHaxe("attempt to use a negative index to access an array or slice");
+		//	return this; 
+		//} else {
+		//	var r:Dynamic = this.load();
+		//	var l:Int=1;
+		//	//if(Std.is(r,Slice))
+		//	//	l = r.len();
+		//	//else 
+		//		l = r.length; // this should work on other haxe types besides Array
+		//	if(off>=l) {
+		//		Scheduler.ioor();
+		//		return this;
+		//	} 			
+		//}
 		var ret:Pointer<T> = new Pointer<T>(this.heapObj);
 		ret.offs = this.offs.copy();
 		ret.offs[this.offs.length]=off;		
@@ -601,11 +601,11 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 
 	public function new(t:Int,v:Dynamic){
 		typ=t;
-		val=Deep.copy(v); 
+		val=v; //Deep.copy(v); // TODO torture test that this no-deep-copy version is correct, as we want a reference to the data 
 	}
 	public function toString():String {
 		if(val==null)
-			return "Interface{null:"+TypeInfo.getName(typ)+"}";
+			return "Interface{nil:"+TypeInfo.getName(typ)+"}";
 		else
 			return "Interface{"+val+":"+TypeInfo.getName(typ)+"}";
 	}
@@ -1597,6 +1597,9 @@ public static function push(gr:Int,sf:StackFrame){
 		throw "Scheduler.push() invalid goroutine";
 	grStacks[gr].push(sf);
 }
+public static inline function NumGoroutine():Int {
+	return grStacks.length;
+}
 
 public static function stackDump():String {
 	var ret:String = "";
@@ -1655,8 +1658,8 @@ public static function bbi() {
 public static function ioor() {
 	panicFromHaxe("index out of range");
 }
-public static inline function NumGoroutine():Int {
-	return grStacks.length;
+public static inline function wraprangechk(val:Int,sz:Int) {
+	if((val<0)||(val>=sz)) ioor();
 }
 public static function wrapnilchk(p:PointerIF):PointerIF {
 	if(p==null)
