@@ -15,6 +15,38 @@ import (
 	"github.com/tardisgo/tardisgo/pogo"
 )
 
+var haxeStdSizes = types.StdSizes{
+	WordSize: 4, // word size in bytes - must be >= 4 (32bits)
+	MaxAlign: 8, // maximum alignment in bytes - must be >= 1
+}
+
+func fieldOffset(str *types.Struct, fldNum int) int64 {
+	fieldList := make([]*types.Var, str.NumFields())
+	for f := 0; f < str.NumFields(); f++ {
+		fieldList[f] = str.Field(f)
+	}
+	return haxeStdSizes.Offsetsof(fieldList)[fldNum]
+}
+
+func arrayOffsetCalc(ele types.Type) string {
+	ent := types.NewVar(0, nil, "___temp", ele)
+	fieldList := []*types.Var{ent, ent}
+	off := haxeStdSizes.Offsetsof(fieldList)[1] // to allow for word alignment
+	if off == 1 {
+		return ""
+	}
+	for ls := uint(1); ls < 31; ls++ {
+		target := int64(1 << ls)
+		if off == target {
+			return fmt.Sprintf("<<%d", ls)
+		}
+		if off < target {
+			break // no point in looking any further
+		}
+	}
+	return fmt.Sprintf("*%d", off)
+}
+
 func emitTrace(s string) string {
 	return "" // `trace(this._functionName,this._latestBlock,"TRACE ` + s + ` "` /* + ` "+Scheduler.stackDump()` */ + ");\n"
 }
@@ -430,9 +462,11 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 }
 func (l langType) FieldAddr(register string, v interface{}, errorInfo string) string {
 	if register != "" {
-		return fmt.Sprintf(`%s=%s.fieldAddr("f_%s");`, register,
+		fld := v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field)
+		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
+		return fmt.Sprintf(`%s=%s.fieldAddr("%s" /* %d */);`, register,
 			l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo),
-			v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field).Name())
+			fixKeyWds(fld.Name()), off)
 	}
 	return ""
 }
@@ -447,15 +481,22 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 		idxString = idxString + ".toInt()"
 	}
 	switch v.(*ssa.IndexAddr).X.Type().Underlying().(type) {
-	case *types.Pointer, *types.Slice:
-		return fmt.Sprintf(`%s=%s.addr(%s);`, register,
+	case *types.Pointer:
+		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
+		return fmt.Sprintf(`%s=%s.addr(%s /* %s */);`, register,
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
-			idxString)
+			idxString, arrayOffsetCalc(ele))
+	case *types.Slice:
+		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice).Elem().Underlying()
+		return fmt.Sprintf(`%s=%s.addr(%s /* %s */);`, register,
+			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
+			idxString, arrayOffsetCalc(ele))
 	case *types.Array: // need to create a pointer before using it
-		return fmt.Sprintf(`%s={var _v=new Pointer<%s>(%s); _v.addr(%s);};`, register,
+		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying()
+		return fmt.Sprintf(`%s={var _v=new Pointer<%s>(%s); _v.addr(%s /* %s */ );};`, register,
 			l.LangType(v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying(), false, errorInfo),
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
-			idxString)
+			idxString, arrayOffsetCalc(ele))
 	default:
 		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
 		return ""
@@ -500,7 +541,8 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 }
 
 func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
-	return l.IndirectValue(v1, errorInfo) + ".store(" + l.IndirectValue(v2, errorInfo) + ");"
+	return l.IndirectValue(v1, errorInfo) + ".store(" + l.IndirectValue(v2, errorInfo) + ");" +
+		" /* " + v2.(ssa.Value).Type().Underlying().String() + " */ "
 }
 
 func (l langType) Send(v1, v2 interface{}, errorInfo string) string {
@@ -737,22 +779,6 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		//
 		// pogo specific function rewriting
 		//
-		case "tardisgolib_HAXE": // insert raw haxe code into the ouput file!! BEWARE
-			nextReturnAddress-- //decrement to set new return address for next call generation
-			if register != "" {
-				register += "="
-			}
-			// NOTE user must supply own ";" if required
-			ret := register + "{var _a=" + l.IndirectValue(args[2], errorInfo) + "; "
-			typ := l.IndirectValue(args[0], errorInfo)
-			if typ != `""` {
-				ret += "new Interface(TypeInfo.getId(" + typ + "),{"
-			}
-			ret += strings.Trim(l.IndirectValue(args[1], errorInfo), `"`)
-			if typ != `""` {
-				ret += "});"
-			}
-			return ret + " }"
 		case "tardisgolib_Host":
 			nextReturnAddress-- //decrement to set new return address for next call generation
 			return register + `="` + l.LanguageName() + `";`
@@ -774,6 +800,16 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			return register + "=(" + l.IndirectValue(args[0], errorInfo) + ">=0?Math.POSITIVE_INFINITY:Math.NEGATIVE_INFINITY);"
 
 		default:
+			//
+			// haxe interface pseudo-function re-writing
+			//
+			if strings.HasPrefix(fnToCall, "hx_") {
+				nextReturnAddress-- //decrement to set new return address for next call generation
+				if register != "" {
+					register += "="
+				}
+				return register + l.hxPseudoFuncs(fnToCall, args, errorInfo)
+			}
 
 			if cc.Method != nil {
 				pn = cc.Method.Pkg().Name()
@@ -1091,17 +1127,21 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 
 //TODO test that index values are not 64 bit
 func (l langType) Index(register string, v1, v2 interface{}, errorInfo string) string {
-	return register + "=" + l.IndirectValue(v1, errorInfo) + "[" + l.IndirectValue(v2, errorInfo) + "];" // assign value
+	return register + "=" + l.IndirectValue(v1, errorInfo) + "[" + l.IndirectValue(v2, errorInfo) +
+		fmt.Sprintf("/* %s */",
+			arrayOffsetCalc(v1.(ssa.Value).Type().Underlying().(*types.Array).Elem().Underlying())) +
+		"];" // assign value
 }
 
 //TODO review parameters required
 func (l langType) codeField(v interface{}, fNum int, fName, errorInfo string, isFunctionName bool) string {
 	iv := l.IndirectValue(v, errorInfo)
-	r := fmt.Sprintf("%s.f_%s", iv, fName)
+	r := fmt.Sprintf("%s.%s", iv, fixKeyWds(fName))
+	str := v.(ssa.Value).Type().Underlying().(*types.Struct)
 	//if pogo.DebugFlag {
 	//	r = "{if(" + iv + "==null) { Scheduler.ioor(); null; } else " + r + ";}"
 	//}
-	return r
+	return r + fmt.Sprintf(" /* %d */ ", fieldOffset(str, fNum))
 }
 
 //TODO review parameters required
@@ -1273,7 +1313,7 @@ func (l langType) SubFnCall(id int) string {
 }
 
 func (l langType) DeclareTempVar(v ssa.Value) string {
-	typ := l.LangType(v.Type().Underlying(), false, "temp var declaration")
+	typ := l.LangType(v.Type(), false, "temp var declaration")
 	if typ == "" {
 		return ""
 	}

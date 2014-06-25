@@ -1,12 +1,16 @@
 // Package time is not implemented in TARDIS Go, this is not-fully-working TEST code, for OSX only
 package time
 
-import "github.com/tardisgo/tardisgo/tardisgolib"
+import "github.com/tardisgo/tardisgo/tardisgolib/hx"
+
+func init() { // protect working code from DCE
+	//now() // NOT WORKING
+}
 
 // Provided by package runtime.
 func now() (sec int64, nsec int32) {
-	return tardisgolib.HAXE("int64", "GOint64.ofFloat(Date.now().getTime()/1000.0);").(int64),
-		tardisgolib.HAXE("int32", "cast(Date.now().getTime()%1000.0,Int)*1000000;").(int32)
+	return hx.CodeIface("int64", "GOint64.ofFloat(Date.now().getTime()/1000.0);").(int64),
+		hx.CodeIface("int32", "cast(Date.now().getTime()%1000.0,Int)*1000000;").(int32)
 }
 
 // Interface to timers implemented in package runtime.

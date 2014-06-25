@@ -167,3 +167,35 @@ func StoreUintptr(addr *uintptr, val uintptr) { *addr = val }
 
 // StorePointer atomically stores val into *addr.
 func StorePointer(addr *unsafe.Pointer, val unsafe.Pointer) { *addr = val }
+
+// this only for the SSA compiler, will not be code generated
+func init() {
+	if false {
+		CompareAndSwapInt32(nil, 0, 0)
+		CompareAndSwapInt64(nil, 0, 0)
+		CompareAndSwapUint32(nil, 0, 0)
+		CompareAndSwapUint64(nil, 0, 0)
+		CompareAndSwapUintptr(nil, 0, 0)
+		CompareAndSwapPointer(nil, nil, nil)
+
+		AddInt32(nil, 0)
+		AddUint32(nil, 0)
+		AddInt64(nil, 0)
+		AddUint64(nil, 0)
+		AddUintptr(nil, 0)
+
+		LoadInt32(nil)
+		LoadInt64(nil)
+		LoadUint32(nil)
+		LoadUint64(nil)
+		LoadUintptr(nil)
+		LoadPointer(nil)
+
+		StoreInt32(nil, 0)
+		StoreInt64(nil, 0)
+		StoreUint32(nil, 0)
+		StoreUint64(nil, 0)
+		StoreUintptr(nil, 0)
+		StorePointer(nil, nil)
+	}
+}

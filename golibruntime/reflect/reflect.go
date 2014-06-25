@@ -7,6 +7,10 @@ package reflect
 
 import "unsafe"
 
+func init() {
+	// TODO, calls to stop DCE will be required here when/if this is implemented
+}
+
 // An iword is the word that would be stored in an
 // interface to represent a given value v.  Specifically, if v is
 // bigger than a pointer, its word is a pointer to v's data.

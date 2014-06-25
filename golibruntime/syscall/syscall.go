@@ -1,6 +1,10 @@
 // Package syscall is not implemented for TARDIS Go, this code is a non-functioning TEST, only for OSX
 package syscall
 
+func init() {
+	// NOTHING HERE WORKS!
+}
+
 const glrEBADARCH = 0x56
 
 // Syscall unimplemented

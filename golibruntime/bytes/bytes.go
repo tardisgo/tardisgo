@@ -10,6 +10,12 @@
 // Package bytes contains runtime functions for the Go "bytes" standard library package when used by TARDIS Go
 package bytes
 
+func init() { // to stop the functions being removed by dead-code-elimination
+	IndexByte([]byte{}, 0)
+	Equal([]byte{}, []byte{})
+	Compare([]byte{}, []byte{})
+}
+
 //****go:noescape
 
 // IndexByte returns the index of the first instance of c in s, or -1 if c is not present in s.

@@ -11,13 +11,30 @@ import (
 	"unicode"
 
 	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/ssa/ssautil"
 	"code.google.com/p/go.tools/go/types"
+
+	ssaopt "github.com/tardisgo/tardisgo/ssaopt"
 )
 
 // For every function, maybe emit the code...
 func emitFunctions() {
-	fnMap := ssautil.AllFunctions(rootProgram)
+	//fnMap := ssautil.AllFunctions(rootProgram)
+	dceList := []*ssa.Package{mainPackage, rootProgram.ImportedPackage(LanguageList[TargetLang].Goruntime)}
+	math := rootProgram.ImportedPackage("math") /* can't be DCE'd, TODO need to make a soft list for this */
+	if math != nil {
+		dceList = append(dceList, math)
+	}
+	fnMap, _ /* grMap */ := ssaopt.VisitedFunctions(rootProgram, dceList)
+
+	/*
+		fmt.Println("DEBUG funcs not requiring goroutines:")
+		for df, db := range grMap {
+			if !db {
+				fmt.Println(df)
+			}
+		}
+	*/
+
 	for f := range fnMap {
 		pn := "unknown" // Defensive, as some synthetic or other edge-case functions may not have a valid package name
 		rx := f.Signature.Recv()
@@ -69,8 +86,8 @@ func emitFunctions() {
 		if !pov && // the package is not overloaded and
 			!LanguageList[TargetLang].FunctionOverloaded(pn, f.Name()) &&
 			!strings.HasPrefix(pn, "_") && // the package is not in the target language, signaled by a leading underscore and
-			!(f.Name() == "init" &&
-				strings.HasPrefix(f.RelString(nil), LibRuntimePath) &&
+			!(strings.HasPrefix(f.Name(), "init") &&
+				strings.Contains(f.RelString(nil), LibRuntimePath) &&
 				pnCount > 1) { // not (an init function and in the libruntimepath and more than 1 package has this name)
 			emitFunc(f)
 		} else {

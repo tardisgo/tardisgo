@@ -12,6 +12,7 @@ import (
 	//"math/big" // does not currently complile - infinite loop
 	//"bytes"
 	"github.com/tardisgo/tardisgo/tardisgolib"
+	"github.com/tardisgo/tardisgo/tardisgolib/hx"
 	//"runtime"
 	//"strconv"
 	//"strings"
@@ -1579,8 +1580,8 @@ func main() {
 	aGrWG.Wait()
 	TEQint32(tardisgolib.CPos()+" testManyGoroutines() sync/atomic counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {
-		TEQ(tardisgolib.CPos(), tardisgolib.HAXE("int", "42;").(int), int(42))
-		TEQ(tardisgolib.CPos(), tardisgolib.HAXE("string", "'test';").(string), "test")
+		TEQ(tardisgolib.CPos(), hx.CodeInt("42;"), int(42))
+		TEQ(tardisgolib.CPos(), hx.CodeString("'test';"), "test")
 		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 1)
 	} else {
 		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 0)

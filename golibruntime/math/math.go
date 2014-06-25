@@ -33,7 +33,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Package math provides implementation and documentation of math functions overloaded by TARDIS Go->Haxe transpiler
 package math
 
-import "math"
+import mth "math"
+
+func init() { // to stop code being removed by dead-code-elimination
+	glrFloat32bits(0)
+	glrFloat32frombits(0)
+	glrFloat64bits(0)
+	glrFloat64frombits(0)
+}
 
 // Code below adapted from https://github.com/gopherjs/gopherjs/blob/master/bitcasts/bitcasts.go
 
@@ -78,7 +85,7 @@ func glrFloat32bits(f float32) uint32 {
 		f *= 2
 	}
 
-	r := math.Mod(float64(f), 2)
+	r := mth.Mod(float64(f), 2)
 	if (r > 0.5 && r < 1) || r >= 1.5 { // round to nearest even
 		f++
 	}
@@ -113,7 +120,7 @@ func glrFloat32frombits(b uint32) float32 {
 		e = 1
 	}
 
-	return float32(math.Ldexp(float64(m), int(e)-127-23)) * s
+	return float32(mth.Ldexp(float64(m), int(e)-127-23)) * s
 }
 
 // Float64bits returns the IEEE 754 binary representation of f.
@@ -184,7 +191,7 @@ func glrFloat64frombits(b uint64) float64 {
 		e = 1
 	}
 
-	return math.Ldexp(float64(m), int(e)-1023-52) * s
+	return mth.Ldexp(float64(m), int(e)-1023-52) * s
 }
 
 // end adapted code

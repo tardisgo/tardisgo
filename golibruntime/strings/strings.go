@@ -10,6 +10,10 @@
 // Package strings contains a runtime function for the Go "strings" standard library package when used by TARDIS Go
 package strings
 
+func init() { // here to stop the function being subject to dead code elimination
+	IndexByte("", 0)
+}
+
 // IndexByte returns the index of the first instance of c in s, or -1 if c is not present in s.
 func IndexByte(s string, c byte) int {
 	sb := []byte(s)

@@ -10,6 +10,12 @@ package runtime
 
 import "github.com/tardisgo/tardisgo/tardisgolib"
 
+func init() { // make calls in here to protect against Dead Code Elimination
+	// NOTE: only working code included here for now
+	Gosched()
+	NumGoroutine()
+}
+
 // Gosched implements runtime.Goshed
 func Gosched() { tardisgolib.Gosched() }
 

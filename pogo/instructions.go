@@ -52,11 +52,11 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 			comment += " [REGISTER VALUE UN-USED]"
 			register = ""
 		case 1: // only 1 other use of the register
-		// TODO register optimisation currently disabled, consider reimplimentation
-		//	user := (*instruction.(ssa.Value).Referrers())[0]
-		//	if user.Block() == instruction.(ssa.Instruction).Block() {
-		//		comment += " [REGISTER MAY BE OPTIMIZABLE]"
-		//	}
+			// TODO register optimisation currently disabled, consider reimplimentation
+			user := (*instruction.(ssa.Value).Referrers())[0]
+			if user.Block() == instruction.(ssa.Instruction).Block() {
+				comment += " [REGISTER MAY BE OPTIMIZABLE]"
+			}
 		default: //multiple usage of the register
 		}
 		if len(register) > 0 {

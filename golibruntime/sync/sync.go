@@ -12,6 +12,18 @@ package sync
 
 // THIS PACKAGE ONLY PARTLY USABLE, DOES NOT WORK FOR math/rand
 
+// this init function is for the SSA compiler, ignored by the code generator
+func init() {
+	var x uint32
+	runtime_Semrelease(&x)
+	runtime_Semacquire(&x)
+	if false {
+		var y syncSema
+		runtime_Syncsemacquire(&y)
+		runtime_Syncsemrelease(&y, 0)
+	}
+}
+
 //import "unsafe"
 
 // defined in package runtime

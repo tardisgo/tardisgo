@@ -76,6 +76,15 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			}
 			return "Interface"
 		case *types.Named:
+			/* WIP testing
+			typName := strings.Split(t.(*types.Named).String(), ".")[1]
+			if strings.HasPrefix(typName, "HAXE_") {
+				if retInitVal {
+					return "null"
+				}
+				return strings.Join(strings.Split(strings.TrimPrefix(typName, "HAXE_"), "_"), ".")
+			}
+			*/
 			return l.LangType(t.(*types.Named).Underlying(), retInitVal, errorInfo)
 		case *types.Chan:
 			if retInitVal {
@@ -110,7 +119,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				if ele != 0 {
 					ret += ","
 				}
-				ret += `f_` + t.(*types.Struct).Field(ele).Name() + `: `
+				ret += fixKeyWds(t.(*types.Struct).Field(ele).Name()) + `: `
 				ret += fmt.Sprintf("%s", // "new BoxedVar<%s>(%s)",
 					//l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), false, errorInfo),
 					l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), retInitVal, errorInfo))
@@ -450,4 +459,13 @@ func (l langType) EmitTypeInfo() string {
 	ret += "default:}\n Scheduler.panicFromHaxe( " + `"no method found!"` + "); return null;}\n" // TODO improve error
 
 	return ret + "}"
+}
+
+func fixKeyWds(w string) string {
+	switch w {
+	case "new":
+		return w + "_"
+	default:
+		return w
+	}
 }

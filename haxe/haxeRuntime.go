@@ -262,6 +262,8 @@ class Make<T> {
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 
+// Pointer code
+
 @:keep
 class UnsafePointer  {  // Unsafe Pointers are not yet supported, but Go library code requires that they can be created
 	public function new(x:Dynamic){
@@ -276,89 +278,7 @@ interface PointerIF {
 	public function len():Int;
 	public function copy():PointerIF;
 }
-/******************** WIP speed-up ideas ************
-@:keep 
-class BoxedVar<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
-	private var heapObj:T; // the actual object holding the value
 
-	public inline function new(from:T){
-		heapObj = from;
-	}
-	public inline function load():T { 
-		return heapObj;
-	}
-	public #if !cs inline #end function store(v: #if (flash || java) Dynamic #else T #end ):Void {  
-		// inline issue for C# because of problem with Map 
-		heapObj=v;
-	}
-	public function addr(off:Int):PointerBV<T> {
-		Scheduler.panicFromHaxe("cannot index a non-array boxed variable");
-		return this;
-	}
-	public function fieldAddr(f:String):PointerBV<T> {
-		return new PointerBV(Reflect.getProperty(heapObj,f)); // structs in BVs must contain BVs 
-	}
-	public inline function len():Int { 
-		return 1;
-	}
-	public inline function copy():PointerBasic<T> {
-		return Deep.copy(this);
-	}
-}
-@:keep 
-class BoxedArray<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
-	private var heapObj:Array<T>; // the actual object holding the value
-
-	public inline function new(from:T){
-		heapObj = from;
-	}
-	public inline function load():T { 
-		return heapObj;
-	}
-	public inline function store(v:T):Void {  
-		heapObj=v;
-	}
-	public function addr(off:Int):PointerBV<T> {
-		return new PointerBV(heapObj[off]); // arrays in BVs must contain BVs 
-	}
-	public function fieldAddr(f:String):PointerBV<T> {
-		Scheduler.panicFromHaxe("cannt address the field of an array of boxed variables");
-		return this;
-	}
-	public inline function len():Int { 
-		heapObj.length; 
-	}
-	public inline function copy():PointerBasic<T> {
-		return Deep.copy(this);
-	}
-}
-@:keep 
-class PointerBV<T> implements PointerIF { // for pointing at boxed variables 
-	private var bv:PointerIF; // reference to the actual bv object holding the value
-
-	public inline function new(from:PointerIF){
-		bv = from;
-	}
-	public inline function load():T { 
-		return bv.load();
-	}
-	public inline function store(v:T):Void {  
-		bv.store(v);
-	}
-	public inline function addr(off:Int):PointerBV<T> {
-		return bv.addr(off);
-	}
-	public inline function fieldAddr(f:String):PointerBV<T> {
-		return bv.fieldAddr(f);
-	}
-	public inline function len():Int { 
-		return bv.len();
-	}
-	public inline function copy():PointerBV<T> {
-		return this;
-	}
-}
-******************** end WIP *******************/
 
 @:keep 
 class PointerBasic<T> implements PointerIF { // optimized pointer type for simple non-array/non-struct items 
@@ -399,13 +319,13 @@ class Pointer<T> implements PointerIF { // for complex general Haxe structures, 
 		heapObj = from;
 		offs = new Array<Dynamic>();
 	}
-	public function load():Dynamic { // this returns a reference to the pointed-at object, not for general use!
+	public function load():Dynamic { // this returns the thing pointed at
 		var ret:Dynamic = heapObj;
 		for(i in 0...offs.length) {
-				if(ret==null) {
-					Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
-					return null;						
-				} else 
+				//if(ret==null) {
+				//	Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
+				//	return null;						
+				//} else 
 					if(Std.is(offs[i],String)) {
 						try ret = Reflect.getProperty(ret,offs[i])						
 						catch (ret:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer reading from field:"+offs.toString());						
@@ -423,10 +343,10 @@ class Pointer<T> implements PointerIF { // for complex general Haxe structures, 
 		else {
 			var a:Dynamic = heapObj;
 			for(i in 0...offs.length-1)
-				if(a==null) {
-					Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
-					return;						
-				} else 
+				//if(a==null) {
+				//	Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
+				//	return;						
+				//} else 
 					if(Std.is(offs[i],String)) {
 							try a = Reflect.getProperty(a,offs[i])
 							catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to field:"+offs.toString());						
@@ -1050,97 +970,6 @@ public static function ucompare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
 }
 }
 
-
-/* TODO re-optimize to use cs and java base i64 types once all working
-#if ( java || cs )
-// this class required to allow load/save of this type via pointer class in Java, as lib fn casts Dynamic to Int64 via Int
-// also required in c# to avoid integer overflow errors, probably because of a related problem
-// TODO consider ways to optimize
-
-class GOint64  { 
-private var i64:HaxeInt64abs;
-
-private inline function new(v:HaxeInt64abs) {
-	i64=v;
-}
-public inline function toString():String {
-	return HaxeInt64abs.toStr(i64);
-}
-public static inline function make(h:Int,l:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.make(h,l));
-}
-public static inline function toInt(v:GOint64):Int {
-	return HaxeInt64abs.toInt(v.i64);
-}
-public static inline function toFloat(v:GOint64):Float{
-	return HaxeInt64abs.toFloat(v.i64);
-}
-public static inline function toUFloat(v:GOint64):Float{
-	return HaxeInt64abs.toUFloat(v.i64);
-}
-public static inline function toStr(v:GOint64):String {
-	return HaxeInt64abs.toStr(v.i64);
-}
-public static inline function ofInt(v:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.ofInt(v));
-}
-public static inline function ofFloat(v:Float):GOint64 {
-	return new GOint64(HaxeInt64abs.ofFloat(v));
-}
-public static inline function ofUFloat(v:Float):GOint64 {
-	return new GOint64(HaxeInt64abs.ofUFloat(v));
-}
-public static inline function neg(v:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.neg(v.i64));
-}
-public static inline function isZero(v:GOint64):Bool {
-	return HaxeInt64abs.isZero(v.i64);
-}
-public static inline function isNeg(v:GOint64):Bool {
-	return HaxeInt64abs.isNeg(v.i64);
-}
-public static inline function add(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.add(x.i64,y.i64));
-}
-public static inline function and(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.and(x.i64,y.i64));
-}
-public static inline function div(x:GOint64,y:GOint64,isSigned:Bool):GOint64 {
-	return new GOint64(HaxeInt64abs.div(x.i64,y.i64,isSigned));
-}
-public static inline function mod(x:GOint64,y:GOint64,isSigned:Bool):GOint64 {
-	return new GOint64(HaxeInt64abs.mod(x.i64,y.i64,isSigned));
-}
-public static inline function mul(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.mul(x.i64,y.i64));
-}
-public static inline function or(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.or(x.i64,y.i64));
-}
-public static inline function shl(x:GOint64,y:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.shl(x.i64,y));
-}
-public static inline function ushr(x:GOint64,y:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.ushr(x.i64,y));
-}
-public static inline function shr(x:GOint64,y:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.shr(x.i64,y));
-}
-public static inline function sub(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.sub(x.i64,y.i64));
-}
-public static inline function xor(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.xor(x.i64,y.i64));
-}
-public static inline function compare(x:GOint64,y:GOint64):Int {
-	return HaxeInt64abs.compare(x.i64,y.i64);
-}
-public static inline function ucompare(x:GOint64,y:GOint64):Int {
-	return HaxeInt64abs.ucompare(x.i64,y.i64);
-}
-}
-#else
-*/
 	typedef GOint64 = HaxeInt64abs;
 /* TODO re-optimize to use cs and java base i64 types once all working
 #end
@@ -1670,3 +1499,236 @@ public static function wrapnilchk(p:PointerIF):PointerIF {
 
 
 `
+
+// WIP: move to a single type of Go object
+/*****************************
+@:keep
+class HeapObj { // this implementation will improve with typed array access
+	private var dynVec:haxe.ds.Vector<Dynamic>; // a very sparse array, 1 address per byte
+
+	public function new(sz:Int){ // eventually size will be used to define the numeric typed array
+		dynVec = new haxe.ds.Vector<Dynamic>(sz);
+	}
+	public function subObj(from:Int,size:Int):HeapObj { // TODO SubObj class that is effectively a pointer?
+		var so:HeapObj = new HeapObj(size);
+		for(m in 0...size){
+			so.dynVec[m]=this.dynVec[from+m];
+		}
+		return so;
+	}
+	@:arrayAccess public inline function getDyn(loc:Int): Dynamic {
+		return dynVec[loc];
+	}
+	@:arrayAccess public inline function setDyn(loc:Int,val:Dynamic):Void {
+		dynVec[loc]=val;
+	}
+}
+
+@:keep
+class HeapObjPtr implements PointerIF {
+	private var objRef:HeapObj;
+	private var offset:Int;
+	public function new(from:HeapObj,off:Int) {
+		objRef=from;
+		offset=off;
+	}
+	public inline function load():Dynamic {
+		return objRef.getDyn(offset); // TODO this is not correct if the thing to load should be an Object
+	}
+	public function store(v:Dynamic):Void{
+		// TODO
+	}
+	public function addr(off:Int):PointerIF{
+		// TODO
+		return null;
+	}
+	public function fieldAddr(fld:String):PointerIF{
+		// TODO
+		return null;
+	}
+	public function len():Int{
+		// TODO
+		return 0;
+	}
+	public function copy():PointerIF{
+		// TODO
+		return null;
+	}
+}
+**********************************/
+// END HeapObj WIP
+
+/******************** WIP speed-up ideas ************
+@:keep
+class BoxedVar<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
+	private var heapObj:T; // the actual object holding the value
+
+	public inline function new(from:T){
+		heapObj = from;
+	}
+	public inline function load():T {
+		return heapObj;
+	}
+	public #if !cs inline #end function store(v: #if (flash || java) Dynamic #else T #end ):Void {
+		// inline issue for C# because of problem with Map
+		heapObj=v;
+	}
+	public function addr(off:Int):PointerBV<T> {
+		Scheduler.panicFromHaxe("cannot index a non-array boxed variable");
+		return this;
+	}
+	public function fieldAddr(f:String):PointerBV<T> {
+		return new PointerBV(Reflect.getProperty(heapObj,f)); // structs in BVs must contain BVs
+	}
+	public inline function len():Int {
+		return 1;
+	}
+	public inline function copy():PointerBasic<T> {
+		return Deep.copy(this);
+	}
+}
+@:keep
+class BoxedArray<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
+	private var heapObj:Array<T>; // the actual object holding the value
+
+	public inline function new(from:T){
+		heapObj = from;
+	}
+	public inline function load():T {
+		return heapObj;
+	}
+	public inline function store(v:T):Void {
+		heapObj=v;
+	}
+	public function addr(off:Int):PointerBV<T> {
+		return new PointerBV(heapObj[off]); // arrays in BVs must contain BVs
+	}
+	public function fieldAddr(f:String):PointerBV<T> {
+		Scheduler.panicFromHaxe("cannt address the field of an array of boxed variables");
+		return this;
+	}
+	public inline function len():Int {
+		heapObj.length;
+	}
+	public inline function copy():PointerBasic<T> {
+		return Deep.copy(this);
+	}
+}
+@:keep
+class PointerBV<T> implements PointerIF { // for pointing at boxed variables
+	private var bv:PointerIF; // reference to the actual bv object holding the value
+
+	public inline function new(from:PointerIF){
+		bv = from;
+	}
+	public inline function load():T {
+		return bv.load();
+	}
+	public inline function store(v:T):Void {
+		bv.store(v);
+	}
+	public inline function addr(off:Int):PointerBV<T> {
+		return bv.addr(off);
+	}
+	public inline function fieldAddr(f:String):PointerBV<T> {
+		return bv.fieldAddr(f);
+	}
+	public inline function len():Int {
+		return bv.len();
+	}
+	public inline function copy():PointerBV<T> {
+		return this;
+	}
+}
+******************** end WIP *******************/
+
+/* TODO re-optimize to use cs and java base i64 types once all working
+#if ( java || cs )
+// this class required to allow load/save of this type via pointer class in Java, as lib fn casts Dynamic to Int64 via Int
+// also required in c# to avoid integer overflow errors, probably because of a related problem
+// TODO consider ways to optimize
+
+class GOint64  {
+private var i64:HaxeInt64abs;
+
+private inline function new(v:HaxeInt64abs) {
+	i64=v;
+}
+public inline function toString():String {
+	return HaxeInt64abs.toStr(i64);
+}
+public static inline function make(h:Int,l:Int):GOint64 {
+	return new GOint64(HaxeInt64abs.make(h,l));
+}
+public static inline function toInt(v:GOint64):Int {
+	return HaxeInt64abs.toInt(v.i64);
+}
+public static inline function toFloat(v:GOint64):Float{
+	return HaxeInt64abs.toFloat(v.i64);
+}
+public static inline function toUFloat(v:GOint64):Float{
+	return HaxeInt64abs.toUFloat(v.i64);
+}
+public static inline function toStr(v:GOint64):String {
+	return HaxeInt64abs.toStr(v.i64);
+}
+public static inline function ofInt(v:Int):GOint64 {
+	return new GOint64(HaxeInt64abs.ofInt(v));
+}
+public static inline function ofFloat(v:Float):GOint64 {
+	return new GOint64(HaxeInt64abs.ofFloat(v));
+}
+public static inline function ofUFloat(v:Float):GOint64 {
+	return new GOint64(HaxeInt64abs.ofUFloat(v));
+}
+public static inline function neg(v:GOint64):GOint64 {
+	return new GOint64(HaxeInt64abs.neg(v.i64));
+}
+public static inline function isZero(v:GOint64):Bool {
+	return HaxeInt64abs.isZero(v.i64);
+}
+public static inline function isNeg(v:GOint64):Bool {
+	return HaxeInt64abs.isNeg(v.i64);
+}
+public static inline function add(x:GOint64,y:GOint64):GOint64 {
+	return new GOint64(HaxeInt64abs.add(x.i64,y.i64));
+}
+public static inline function and(x:GOint64,y:GOint64):GOint64 {
+	return new GOint64(HaxeInt64abs.and(x.i64,y.i64));
+}
+public static inline function div(x:GOint64,y:GOint64,isSigned:Bool):GOint64 {
+	return new GOint64(HaxeInt64abs.div(x.i64,y.i64,isSigned));
+}
+public static inline function mod(x:GOint64,y:GOint64,isSigned:Bool):GOint64 {
+	return new GOint64(HaxeInt64abs.mod(x.i64,y.i64,isSigned));
+}
+public static inline function mul(x:GOint64,y:GOint64):GOint64 {
+	return new GOint64(HaxeInt64abs.mul(x.i64,y.i64));
+}
+public static inline function or(x:GOint64,y:GOint64):GOint64 {
+	return new GOint64(HaxeInt64abs.or(x.i64,y.i64));
+}
+public static inline function shl(x:GOint64,y:Int):GOint64 {
+	return new GOint64(HaxeInt64abs.shl(x.i64,y));
+}
+public static inline function ushr(x:GOint64,y:Int):GOint64 {
+	return new GOint64(HaxeInt64abs.ushr(x.i64,y));
+}
+public static inline function shr(x:GOint64,y:Int):GOint64 {
+	return new GOint64(HaxeInt64abs.shr(x.i64,y));
+}
+public static inline function sub(x:GOint64,y:GOint64):GOint64 {
+	return new GOint64(HaxeInt64abs.sub(x.i64,y.i64));
+}
+public static inline function xor(x:GOint64,y:GOint64):GOint64 {
+	return new GOint64(HaxeInt64abs.xor(x.i64,y.i64));
+}
+public static inline function compare(x:GOint64,y:GOint64):Int {
+	return HaxeInt64abs.compare(x.i64,y.i64);
+}
+public static inline function ucompare(x:GOint64,y:GOint64):Int {
+	return HaxeInt64abs.ucompare(x.i64,y.i64);
+}
+}
+#else
+*/
