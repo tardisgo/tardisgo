@@ -16,16 +16,20 @@ import (
 	ssaopt "github.com/tardisgo/tardisgo/ssaopt"
 )
 
+var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the functions use goroutines/channels
+
 // For every function, maybe emit the code...
 func emitFunctions() {
 	//fnMap := ssautil.AllFunctions(rootProgram)
 	dceList := []*ssa.Package{mainPackage, rootProgram.ImportedPackage(LanguageList[TargetLang].Goruntime)}
-	math := rootProgram.ImportedPackage("math") /* can't be DCE'd, TODO need to make a soft list for this */
-	if math != nil {
-		dceList = append(dceList, math)
+	dceExceptions := []string{"math"} // can't be DCE'd
+	for _, ex := range dceExceptions {
+		exip := rootProgram.ImportedPackage(ex)
+		if exip != nil {
+			dceList = append(dceList, exip)
+		}
 	}
-	fnMap, _ /* grMap */ := ssaopt.VisitedFunctions(rootProgram, dceList)
-
+	fnMap, grMap = ssaopt.VisitedFunctions(rootProgram, dceList)
 	/*
 		fmt.Println("DEBUG funcs not requiring goroutines:")
 		for df, db := range grMap {
@@ -34,7 +38,6 @@ func emitFunctions() {
 			}
 		}
 	*/
-
 	for f := range fnMap {
 		pn := "unknown" // Defensive, as some synthetic or other edge-case functions may not have a valid package name
 		rx := f.Signature.Recv()
@@ -119,7 +122,7 @@ func emitFunc(fn *ssa.Function) {
 	}
 	*/
 
-	subFnList := make([]subFnInstrs, 0)
+	var subFnList []subFnInstrs        // where the sub-functions are
 	canOptMap := make(map[string]bool) // TODO review use of this mechanism
 
 	//println("DEBUG processing function: ", fn.Name())
@@ -236,11 +239,11 @@ func emitFunc(fn *ssa.Function) {
 			}
 		}
 
-		emitFuncStart(fn, trackPhi, canOptMap)
+		emitFuncStart(fn, trackPhi, canOptMap, mustSplitCode)
 		thisSubFn := 0
 		for b := range fn.Blocks {
-			emitBlockStart(fn.Blocks, b)
 			emitPhi := trackPhi
+			emitBlockStart(fn.Blocks, b, emitPhi)
 			inSubFn := false
 			for i := range fn.Blocks[b].Instrs {
 				if thisSubFn >= 0 && thisSubFn < len(subFnList) { // not at the end of the list
@@ -259,7 +262,11 @@ func emitFunc(fn *ssa.Function) {
 						if i == subFnList[thisSubFn].start {
 							inSubFn = true
 							l := TargetLang
-							fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnCall(thisSubFn))
+							if mustSplitCode {
+								fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnCall(thisSubFn))
+							} else {
+								emitSubFn(fn, subFnList, thisSubFn, mustSplitCode, canOptMap)
+							}
 						}
 					}
 				}
@@ -280,30 +287,36 @@ func emitFunc(fn *ssa.Function) {
 			emitBlockEnd(fn.Blocks, b, emitPhi && trackPhi)
 		}
 		emitRunEnd(fn)
-		for sf := range subFnList {
-			l := TargetLang
-			fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnStart(sf, mustSplitCode))
-			for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
-				instrVal, hasVal := fn.Blocks[subFnList[sf].block].Instrs[i].(ssa.Value)
-				if hasVal {
-					if canOptMap[instrVal.Name()] == true {
-						l := TargetLang
-						fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].DeclareTempVar(instrVal))
-					}
-				}
+		if mustSplitCode {
+			for sf := range subFnList {
+				emitSubFn(fn, subFnList, sf, mustSplitCode, canOptMap)
 			}
-			for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
-				emitInstruction(fn.Blocks[subFnList[sf].block].Instrs[i],
-					fn.Blocks[subFnList[sf].block].Instrs[i].Operands(make([]*ssa.Value, 0)))
-			}
-			fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf))
 		}
 		emitFuncEnd(fn)
 	}
 }
 
+func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode bool, canOptMap map[string]bool) {
+	l := TargetLang
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnStart(sf, mustSplitCode))
+	for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
+		instrVal, hasVal := fn.Blocks[subFnList[sf].block].Instrs[i].(ssa.Value)
+		if hasVal {
+			if canOptMap[instrVal.Name()] == true {
+				l := TargetLang
+				fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].DeclareTempVar(instrVal))
+			}
+		}
+	}
+	for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
+		emitInstruction(fn.Blocks[subFnList[sf].block].Instrs[i],
+			fn.Blocks[subFnList[sf].block].Instrs[i].Operands(make([]*ssa.Value, 0)))
+	}
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf))
+}
+
 // Emit the start of a function.
-func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool) {
+func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool, mustSplitCode bool) {
 	posStr := CodePosition(fn.Pos())
 	pName := "unknown" // TODO review why this code appears to duplicate that at the start of emitFunctions()
 	if fn.Pkg != nil {
@@ -318,7 +331,7 @@ func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool) {
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer,
-		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, canOptMap))
+		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap))
 }
 
 // Emit the end of a function.
@@ -335,9 +348,9 @@ func emitRunEnd(fn *ssa.Function) {
 
 // Emit the start of the code to handle a particular SSA code block,
 // for Haxe this handles a particular _Next value (in phi or -ve if synthetic because of call or channel Rx/Tx).
-func emitBlockStart(block []*ssa.BasicBlock, num int) {
+func emitBlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) {
 	l := TargetLang
-	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].BlockStart(block, num))
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].BlockStart(block, num, emitPhi))
 }
 
 // Emit the end of the SSA code block
@@ -347,11 +360,13 @@ func emitBlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) {
 }
 
 // Emit the code for a call to a function or builtin, which could be deferred.
-func emitCall(isBuiltin, isGo, isDefer bool, register string, callInfo ssa.CallCommon, errorInfo, comment string) {
+func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo ssa.CallCommon, errorInfo, comment string) {
+	// usesGr gives the default position
 	l := TargetLang
 	fnToCall := ""
 	if isBuiltin {
 		fnToCall = callInfo.Value.(*ssa.Builtin).Name()
+		usesGr = false
 	} else if callInfo.StaticCallee() != nil {
 		pName := "unknown"
 		if callInfo.Signature().Recv() != nil {
@@ -363,7 +378,8 @@ func emitCall(isBuiltin, isGo, isDefer bool, register string, callInfo ssa.CallC
 			}
 		}
 		fnToCall = LanguageList[l].LangName(pName, callInfo.StaticCallee().Name())
-	} else { // Dynamic call
+		usesGr = grMap[callInfo.StaticCallee()]
+	} else { // Dynamic call (take the default on usesGr)
 		fnToCall = LanguageList[l].Value(callInfo.Value, errorInfo)
 	}
 
@@ -372,7 +388,6 @@ func emitCall(isBuiltin, isGo, isDefer bool, register string, callInfo ssa.CallC
 		case "len", "cap", "append", "real", "imag", "complex": //  "copy" may have the results unused
 			if register == "" {
 				LogError(errorInfo, "pogo", fmt.Errorf("the result from a built-in function is not used"))
-			} else {
 			}
 		default:
 		}
@@ -380,12 +395,11 @@ func emitCall(isBuiltin, isGo, isDefer bool, register string, callInfo ssa.CallC
 		if callInfo.Signature().Results().Len() > 0 {
 			if register == "" {
 				LogWarning(errorInfo, "pogo", fmt.Errorf("the result from a function call is not used")) //TODO is this needed?
-			} else {
 			}
 		}
 	}
 	// target language code must do builtin emulation
-	text := LanguageList[l].Call(register, callInfo, callInfo.Args, isBuiltin, isGo, isDefer, fnToCall, errorInfo)
+	text := LanguageList[l].Call(register, callInfo, callInfo.Args, isBuiltin, isGo, isDefer, usesGr, fnToCall, errorInfo)
 	fmt.Fprintln(&LanguageList[l].buffer, text+LanguageList[l].Comment(comment))
 }
 

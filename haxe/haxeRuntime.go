@@ -27,9 +27,8 @@ class Deep {
 		else if (Std.is(v, String)) { // string
 			return v;
 		}
-		else if ( Std.is(v, Pointer) || Std.is(v, PointerBasic) ) { // Pointer *** new code
+		else if ( Std.is(v, Pointer) || Std.is(v, Object) ) { // Pointer & Object *** new code
 			return v.copy(); 
-			// ****** WIP speed-up ideas - replicate this entry for BoxedVar types 
 		}
 		else if (Std.is(v, Closure)) { // Closure *** new code
 			return v;
@@ -90,21 +89,21 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static inline function toUint64(v:GOint64):GOint64 {
 		return v;
 	}	
-	public static function toInt8(v:Int):Int {
+	public static inline function toInt8(v:Int):Int {
 		var r:Int = v & 0xFF;
 		if ((r & 0x80) != 0){ // it should be -ve
 			return -1 - 0xFF + r;
 		}
 		return r;
 	}	
-	public static function toInt16(v:Int):Int {
+	public static inline function toInt16(v:Int):Int {
 		var r:Int = v & 0xFFFF;
 		if ((r & 0x8000) != 0){ // it should be -ve
 			return -1 - 0xFFFF + r;
 		}
 		return r;
 	}	
-	public static function toInt32(v:Int):Int {
+	public static inline function toInt32(v:Int):Int {
 		#if js 
 			return v >> untyped __js__("0"); // using GopherJS method (with workround to stop it being optimized away by Haxe)
 		#elseif php
@@ -214,44 +213,50 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static function toUTF8length(gr:Int,s:String):Int {
 		return "字".length==3 ? s.length : toUTF8slice(gr,s).len(); // no need to unpack the string if already UTF8
 	}
-	// return the UTF8 version of a UTF16 string in a Slice
+	// return the UTF8 version of a potentiallly UTF16 string in a Slice
 	public static function toUTF8slice(gr:Int,s:String):Slice {
-		var a:Array<Int> = new Array();
-		var mask:Int=0xff; // TODO review if this masking is required, here defensively
-		if ( "字".length==1 ) { // needs to be translated from UTF16
-			mask=0xffff;
-		}				
+		var a:Array<Int> = new Array<Int>();
 		for(i in 0...s.length){
 				var t:Null<Int>=s.charCodeAt(i) ;
 				if(t==null) 
 					Scheduler.panicFromHaxe("Haxe runtime Force.toUTF8slice() unexpected null encountered");
 				else
-					a[i]=cast(t,Int) & mask;
+					a[i]=Std.int(t) ;
 		}
-		var sl:Slice = new Slice(new Pointer<Int>(a),0,-1);
-		if ( "字".length==3 ) return sl; // already UTF8 encoded
-		var v1:Slice=Go_haxegoruntime_UTF16toRunes.callFromRT(gr,sl);
-		return Go_haxegoruntime_RunesToUTF8.callFromRT(gr,v1);
+		if ( "字".length==3 ) { // already UTF8 encoded
+			var sl:Slice = new Slice(new Pointer(new Object(a.length)),0,-1,a.length,1);
+			for(i in 0...a.length)
+				sl.itemAddr(i).store_uint8(a[i]);
+			return sl;
+		}else{
+			var sl:Slice = new Slice(new Pointer(new Object(a.length<<1)),0,-1,a.length,2);
+			for(i in 0...a.length)
+				sl.itemAddr(i).store_uint16(a[i]);
+			var v1:Slice=Go_haxegoruntime_UTF16toRunes.callFromRT(gr,sl);
+			return Go_haxegoruntime_RunesToUTF8.callFromRT(gr,v1);
+		}
 	}
 	public static function toRawString(gr:Int,sl:Slice):String {
 		var ret:String="";
-		var mask:Int=0xff; // TODO review if this masking is required, here defensively
 		if ( "字".length==1 ) { // needs to be translated to UTF16
 			var v1:Slice=Go_haxegoruntime_UTF8toRunes.callFromRT(gr,sl);
 			sl=Go_haxegoruntime_RunesToUTF16.callFromRT(gr,v1);
-			mask=0xffff;
+			for(i in 0...sl.len()) {
+				ret += String.fromCharCode( sl.itemAddr(i).load_uint16() );
+			}
+			return ret;
 		}
 		for(i in 0...sl.len()) {
-			ret += String.fromCharCode( sl.getAt(i) & mask );
+			ret += String.fromCharCode( sl.itemAddr(i).load_uint8() );
 		}
 		return ret;
 	}
 	
 	
 }
-
+/*
 class Make<T> {
-	public inline function new(){}
+	public inline function new(objSz:Int){}
 	public function array(iVal:T,sz:Int):Array<T> {
 		var v:Array<T>=new Array<T>();
 		for(vi in 0...sz)
@@ -259,10 +264,411 @@ class Make<T> {
 		return v;
 	}
 }
+*/
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
+// Object code
+// a single type of Go object
+@:keep
+class Object { // this implementation will improve with typed array access
+	// Simple! 1 address per byte, non-Int types are always on 4-byte
+	
+	#if (js && dataview)
+		private var dVec4:haxe.ds.Vector<Dynamic>; // on 4-byte boundaries 
+		private var arrayBuffer:js.html.ArrayBuffer;
+		private var dView:js.html.DataView;
+	#else
+		private var dVec4:haxe.ds.Vector<Dynamic>; 
+		private var iVec:haxe.ds.Vector<Int>; 
+	#end
+	private var length:Int;
 
-// Pointer code
+	public inline function new(byteSize:Int){ // size is in bytes
+		#if (js && dataview)
+			dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); 
+			arrayBuffer = new js.html.ArrayBuffer(byteSize);
+			if(byteSize>0)
+				dView = new js.html.DataView(arrayBuffer,0,byteSize); // complains if size is 0, TODO review
+		#else
+			dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); 
+			iVec = new haxe.ds.Vector<Int>(byteSize);
+		#end
+		length = byteSize;
+	}
+	public function isEqual(off:Int,target:Object,tgtOff:Int):Bool { // TODO check if correct, used by interface{} value comparison
+		trace("isEqual");
+		if((this.length-off)!=(target.length-tgtOff)) return false;
+		for(i in 0...(this.length-off)) {
+			if(this.get(i+off)!=target.get(i+tgtOff))
+				return false;
+			if(this.get_uint8(i+off)!=target.get_uint8(i+tgtOff))
+				return false;
+		}
+		return true;
+	}
+	private static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
+		#if (js && dataview)
+			if((size&3==0)&&(srcPos&3==0)&&(destPos&3==0)) {
+				var i:Int=0;
+				var s:Int=srcPos;
+				var d:Int=destPos;
+				while(i<size){
+					dest.set_uint32(d,src.get_uint32(s)); 
+					dest.set(d,src.get(s));
+					i+=4;
+					s+=4;
+					d+=4;
+				}
+			}
+			else{
+				var s:Int=srcPos;
+				var d:Int=destPos;
+				for(i in 0...size) {
+					dest.set_uint8(d,src.get_uint8(s));
+					if((s&3)==0){ 
+						dest.set(d,src.get(s));
+					}
+					s+=1;
+					d+=1;
+				}
+			}
+		#else
+			haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
+			haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
+		#end
+	}
+	public inline function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
+		var so:Object = new Object(size);
+		objBlit(this,from, so, 0, size); 
+		return so;
+	}
+	public function set_object(size:Int, to:Int, from:Object):Void {
+		#if php
+			if(!Std.is(from,Object)) { 
+				//Scheduler.panicFromHaxe("Object.set_object() from parameter is not an Object - Value: "+Std.string(from)+" Type: "+Type.typeof(from));
+				return; // treat as null object (seen examples have been integer 0)
+			}
+		#end
+		objBlit(from,0,this,to,size);
+	}
+	public inline function copy():Object{
+		return this.get_object(length,0);
+	}
+	public inline function get(i:Int):Dynamic {
+			return dVec4[i>>2];
+	}
+	public inline function get_bool(i:Int):Bool { 
+		#if (js && dataview)
+			return dView.getUint8(i)==0?false:true;
+		#else
+			var r:Int=iVec[i]; 
+			#if (js || php || neko ) 
+				return r==null?false:(r==0?false:true); 
+			#else 
+				return r==0?false:true; 
+			#end
+		#end
+	}
+	public inline function get_int8(i:Int):Int { 
+		#if (js && dataview)
+			return dView.getInt8(i);
+		#else
+			var r:Int=iVec[i]; 
+			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#end
+	}
+	public inline function get_int16(i:Int):Int { 
+		#if (js && dataview)
+			return dView.getInt16(i);
+		#else
+			var r:Int=iVec[i]; 
+			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#end
+	}
+	public inline function get_int32(i:Int):Int {
+		#if (js && dataview)
+			return dView.getInt32(i);
+		#else
+			var r:Int=iVec[i]; 
+			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#end
+	}
+	public inline function get_int64(i:Int):GOint64 {
+		// TODO optimize for dataview
+		var r:GOint64=get(i); 
+		return r==null?GOint64.ofInt(0):r;			
+	} 
+	public inline function get_uint8(i:Int):Int { 
+		#if (js && dataview)
+			return dView.getUint8(i);
+		#else
+			var r:Int=iVec[i]; 
+			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#end
+	}
+	public inline function get_uint16(i:Int):Int {
+		#if (js && dataview)
+			return dView.getUint16(i);
+		#else
+			var r:Int=iVec[i]; 
+			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#end
+	}
+	public inline function get_uint32(i:Int):Int {
+		#if (js && dataview)
+			return dView.getUint32(i);
+		#else
+			var r:Int=iVec[i]; 
+			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#end
+	}
+	public inline function get_uint64(i:Int):GOint64 { 
+		// TODO optimize for dataview
+		var r:GOint64=get(i); 
+		return r==null?GOint64.ofInt(0):r;			
+	} 
+	public inline function get_uintptr(i:Int):Dynamic { // uintptr holds Haxe objects
+		return get(i); 
+	} 
+	public inline function get_float32(i:Int):Float { 
+		#if (js && dataview)
+			return dView.getFloat32(i);
+		#else
+			var r:Float=get(i); 
+			#if (js || php || neko ) 
+				return r==null?0.0:r; 
+			#else 
+				return r; 
+			#end
+		#end
+	}
+	public inline function get_float64(i:Int):Float { 
+		#if (js && dataview)
+			return dView.getFloat64(i);
+		#else
+			var r:Float=get(i); 
+			#if (js || php || neko ) 
+				return r==null?0.0:r; 
+			#else 
+				return r;
+			#end 
+		#end
+	}
+	public inline function get_complex64(i:Int):Complex {
+		// TODO optimize for dataview
+		var r:Complex=get(i); 
+		return r==null?new Complex(0.0,0.0):r;			
+	}
+	public inline function get_complex128(i:Int):Complex { 
+		// TODO optimize for dataview
+		var r:Complex=get(i); 
+		return r==null?new Complex(0.0,0.0):r;			
+	}
+	public inline function get_string(i:Int):String { 
+		var r:String=get(i); 
+		#if (js || php || neko ) return r==null?"":r; #else return r; #end
+	}
+	public inline function set(i:Int,v:Dynamic):Void { 
+		dVec4[i>>2]=v;
+	}
+	public inline function set_bool(i:Int,v:Bool):Void { 
+		#if (js && dataview)
+			dView.setUint8(i,v?1:0);
+		#else
+			iVec[i]=v?1:0; 
+		#end
+	} 
+	public inline function set_int8(i:Int,v:Int):Void { 
+		#if (js && dataview)
+			dView.setInt8(i,v);
+		#else
+			iVec[i]=v; 
+		#end
+	}
+	public inline function set_int16(i:Int,v:Int):Void { 
+		#if (js && dataview)
+			dView.setInt16(i,v);
+		#else
+			iVec[i]=v; 
+		#end
+	}
+	public inline function set_int32(i:Int,v:Int):Void { 
+		#if (js && dataview)
+			dView.setInt32(i,v);
+		#else
+			iVec[i]=v; 
+		#end
+	}
+	public inline function set_int64(i:Int,v:GOint64):Void { 
+		set(i,v); 
+	} 
+	public inline function set_uint8(i:Int,v:Int):Void { 
+		#if (js && dataview)
+			dView.setUint8(i,v);
+		#else
+			iVec[i]=v; 
+		#end
+	}
+	public inline function set_uint16(i:Int,v:Int):Void { 
+		#if (js && dataview)
+			dView.setUint16(i,v);
+		#else
+			iVec[i]=v; 
+		#end
+	}
+	public inline function set_uint32(i:Int,v:Int):Void { 
+		#if (js && dataview)
+			dView.setUint32(i,v);
+		#else
+			iVec[i]=v; 
+		#end
+	}
+	public inline function set_uint64(i:Int,v:GOint64):Void { 
+		set(i,v); 
+	} 
+	public inline function set_uintptr(i:Int,v:Dynamic):Void { 
+		set(i,v); 
+	}
+	public inline function set_float32(i:Int,v:Float):Void {
+		#if (js && dataview)
+			dView.setFloat32(i,v);
+		#else
+			set(i,v); 
+		#end	
+	}
+	public inline function set_float64(i:Int,v:Float):Void {
+	 	#if (js && dataview)
+			dView.setFloat64(i,v);
+		#else
+			set(i,v); 
+		#end	
+	}
+	
+	public inline function set_complex64(i:Int,v:Complex):Void { 
+		set(i,v); 
+	} 
+	public inline function set_complex128(i:Int,v:Complex):Void { 
+		set(i,v); 
+	} 
+	public inline function set_string(i:Int,v:String):Void { 
+		set(i,v); 
+	}
+	private inline static function str(v:Dynamic):String{
+		return v==null?"":Std.string(v);
+	}
+	public inline function toString(addr:Int=0,count:Int=-1):String{
+		if(count==-1) count=this.length;
+		var ret:String =  "{";
+		for(i in 0...count){
+			if(i>0) ret = ret + ",";
+			if((addr)&3==0) ret += str(get(addr));
+			ret = ret+"<"+Std.string(get_uint8(addr))+">";
+			addr = addr+1;
+		}
+		return ret+"}";
+	}
+}
+@:keep
+class Pointer { 
+	private var obj:Object; // reference to the object holding the value
+	private var off:Int; // the offset into the object, if any 
+
+	public inline function new(from:Object){
+		obj = from; 
+		off = 0;
+	}
+	public inline function addr(byteOffset:Int):Pointer {
+		var ret:Pointer = new Pointer(this.obj);
+		ret.off = this.off+byteOffset;
+		return ret;
+	}
+	public inline function fieldAddr(byteOffset:Int):Pointer {
+		return this.addr(byteOffset);
+	}
+	public inline function copy():Pointer {
+		return this;
+	}
+	public inline function isEqual(other:Pointer):Bool{
+		return obj.isEqual(this.off,other.obj,other.off);
+	}
+	public inline function load_object(sz:Int):Object { 
+		return obj.get_object(sz,off);
+	}
+	public inline function load():Dynamic {
+		return obj.get(off);
+	}
+	public inline function load_bool():Bool { 
+		return obj.get_bool(off);
+	}
+	public inline function load_int8():Int { 
+		return obj.get_int8(off);
+	}
+	public inline function load_int16():Int { 
+		return obj.get_int16(off);
+	}
+	public inline function load_int32():Int {
+		return obj.get_int32(off);
+	}
+	public inline function load_int64():GOint64 { 
+		return obj.get_int64(off);
+	} 
+	public inline function load_uint8():Int { 
+		return obj.get_uint8(off);
+	}
+	public inline function load_uint16():Int {
+		return obj.get_uint16(off);
+	}
+	public inline function load_uint32():Int {
+		return obj.get_uint32(off);
+	}
+	public inline function load_uint64():GOint64 { 
+		return obj.get_uint64(off);
+	} 
+	public inline function load_uintptr():Dynamic { 
+		return obj.get_uintptr(off);
+	} 
+	public inline function load_float32():Float { 
+		return obj.get_float32(off);
+	}
+	public inline function load_float64():Float { 
+		return obj.get_float64(off);
+	}
+	public inline function load_complex64():Complex {
+		return obj.get_complex64(off);
+	}
+	public inline function load_complex128():Complex { 
+		return obj.get_complex128(off);
+	}
+	public inline function load_string():String { 
+		return obj.get_string(off);
+	}
+	public function store_object(sz:Int,v:Object):Void {
+		obj.set_object(sz,off,v);
+	}
+	public function store(v:Dynamic):Void {
+		obj.set(off,v);
+	}
+	public inline function store_bool(v:Bool):Void { obj.set_bool(off,v); }
+	public inline function store_int8(v:Int):Void { obj.set_int8(off,v); }
+	public inline function store_int16(v:Int):Void { obj.set_int16(off,v); }
+	public inline function store_int32(v:Int):Void { obj.set_int32(off,v); }
+	public inline function store_int64(v:GOint64):Void { obj.set_int64(off,v); }  
+	public inline function store_uint8(v:Int):Void { obj.set_uint8(off,v); }
+	public inline function store_uint16(v:Int):Void { obj.set_uint16(off,v); }
+	public inline function store_uint32(v:Int):Void { obj.set_uint32(off,v); }
+	public inline function store_uint64(v:GOint64):Void { obj.set_uint64(off,v); } 
+	public inline function store_uintptr(v:Dynamic):Void { obj.set_uintptr(off,v); }
+	public inline function store_float32(v:Float):Void { obj.set_float32(off,v); }
+	public inline function store_float64(v:Float):Void { obj.set_float64(off,v); }
+	public inline function store_complex64(v:Complex):Void { obj.set_complex64(off,v); }
+	public inline function store_complex128(v:Complex):Void { obj.set_complex128(off,v); }
+	public inline function store_string(v:String):Void { obj.set_string(off,v); }
+	public inline function toString(sz:Int):String {
+		return obj.toString(off,sz);
+	}
+}
+
+// Unsafe Pointer code
 
 @:keep
 class UnsafePointer  {  // Unsafe Pointers are not yet supported, but Go library code requires that they can be created
@@ -270,170 +676,27 @@ class UnsafePointer  {  // Unsafe Pointers are not yet supported, but Go library
 	}
 }
 
-interface PointerIF {
-	public function load():Dynamic;
-	public function store(v:Dynamic):Void;
-	public function addr(off:Int):PointerIF;
-	public function fieldAddr(fld:String):PointerIF;
-	public function len():Int;
-	public function copy():PointerIF;
-}
-
-
-@:keep 
-class PointerBasic<T> implements PointerIF { // optimized pointer type for simple non-array/non-struct items 
-	private var heapObj:T; // the actual object holding the value
-
-	public inline function new(from:T){
-		heapObj = from;
-	}
-	public inline function load():T { 
-		return heapObj;
-	}
-	public #if !cs inline #end function store(v: #if (flash || java) Dynamic #else T #end ):Void {  
-		// inline issue for C# because of problem with Map 
-		heapObj=v;
-	}
-	public function addr(off:Int):PointerBasic<T> {
-		Scheduler.panicFromHaxe("cannot index a simple variable");
-		return this;
-	}
-	public function fieldAddr(f:String):PointerBasic<T> {
-		Scheduler.panicFromHaxe("cannot get the address of a field in a simple variable");
-		return this;
-	}
-	public inline function len():Int { 
-		return 1;
-	}
-	public inline function copy():PointerBasic<T> {
-		return this;
-	}
-}
-
 @:keep
-class Pointer<T> implements PointerIF { // for complex general Haxe structures, slow! heavy use of Dynamic typing and reflection
-	private var heapObj:Dynamic; // the actual object holding the value
-	private var offs:Array<Dynamic>; // the offsets into the object, if any 
-
-	public function new(from:Dynamic){
-		heapObj = from;
-		offs = new Array<Dynamic>();
-	}
-	public function load():Dynamic { // this returns the thing pointed at
-		var ret:Dynamic = heapObj;
-		for(i in 0...offs.length) {
-				//if(ret==null) {
-				//	Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
-				//	return null;						
-				//} else 
-					if(Std.is(offs[i],String)) {
-						try ret = Reflect.getProperty(ret,offs[i])						
-						catch (ret:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer reading from field:"+offs.toString());						
-					} else {
-						try	ret = ret[offs[i]]
-						catch (ret:Dynamic)	Scheduler.panicFromHaxe("failed attempt to dereference pointer reading from index:"+offs.toString());						
-					}
-		}
-		return ret;
-	}
-	public function store(v:Dynamic):Void {
-		//if(offs==null) offs=[]; // C# seems to need this for HaxeInt64Typedef values
-		if(offs.length==0)
-			heapObj = v;
-		else {
-			var a:Dynamic = heapObj;
-			for(i in 0...offs.length-1)
-				//if(a==null) {
-				//	Scheduler.panicFromHaxe("attempt to dereference a nil pointer");
-				//	return;						
-				//} else 
-					if(Std.is(offs[i],String)) {
-							try a = Reflect.getProperty(a,offs[i])
-							catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to field:"+offs.toString());						
-						} else {
-							try a = a[offs[i]]
-							catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());						
-						}
-
-			if(Std.is(offs[offs.length-1],String)) {
-				try Reflect.setProperty(a,offs[offs.length-1],v)
-				catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to field:"+offs.toString());						
-			} else {
-				try a[offs[offs.length-1]] = v
-				catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());						
-			}
-		}
-	}
-	public function addr(off:Int):Pointer<T> {
-		// could do array bounds check here, rather than it being in the emitted code, but not future-proof for new pointer types
-		//if(off<0) {
-		//	Scheduler.panicFromHaxe("attempt to use a negative index to access an array or slice");
-		//	return this; 
-		//} else {
-		//	var r:Dynamic = this.load();
-		//	var l:Int=1;
-		//	//if(Std.is(r,Slice))
-		//	//	l = r.len();
-		//	//else 
-		//		l = r.length; // this should work on other haxe types besides Array
-		//	if(off>=l) {
-		//		Scheduler.ioor();
-		//		return this;
-		//	} 			
-		//}
-		var ret:Pointer<T> = new Pointer<T>(this.heapObj);
-		ret.offs = this.offs.copy();
-		ret.offs[this.offs.length]=off;		
-		return ret;
-	}
-	public function fieldAddr(f:String):Pointer<T> {
-		var ret:Pointer<T> = new Pointer<T>(this.heapObj);
-		ret.offs = this.offs.copy();
-		ret.offs[this.offs.length]=f;		
-		return ret;
-	}
-   	public var length(dynamic,never) : Int;
-	public inline function get_length():Int {return this.len();}
-	public function len():Int { // used by array bounds check 
-		//if (this==null) {
-		//	Scheduler.panicFromHaxe("attempt to use a nil pointer to access an array or struct");
-		//	return 0;
-		//} else {
-			var r:Dynamic = this.load();
-			//if(Std.is(r,Slice))
-			//	return r.len(); 
-			//else
-				return r.length;
-		//} 
-	}
-	public inline function copy():Pointer<T> {
-		return this;
-	}
-}
-
-@:forward( subSlice, getAt, setAt, len, cap, addr, toString, length )
-abstract Slice(SliceNonAbs) {
-	inline public function new(fromArray:PointerIF, low:Int, high:Int) {this = new SliceNonAbs(fromArray, low, high); }
-	@:arrayAccess public inline function arrayRead(key:Int):Dynamic { return this.getAt(key); }
-	@:arrayAccess public inline function arrayWrite(k:Int, v:Dynamic):Dynamic { this.setAt(k, v); return v; }
-}
-
-@:keep
-class SliceNonAbs {
-	private var baseArray:PointerIF;
+class Slice {
+	private var baseArray:Pointer;
+	public var itemSize:Int; // for the size of each item in bytes 
 	private var start:Int;
 	private var end:Int;
+	private var capacity:Int;
 	public var length:Int; // could make this a function access, but it never changes and is used a lot
 	
-	public function new(fromArray:PointerIF, low:Int, high:Int) {
+	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) {
 		baseArray = fromArray;
+		itemSize = isz;
 		if(baseArray==null) {
 			start = 0;
 			end = 0;
+			capacity = 0;
 		} else {
-			if(high==-1) high = baseArray.len(); //default upper bound is the capacity of the underlying array
 			if( low<0 ) Scheduler.panicFromHaxe( "new Slice() low bound -ve"); 
-			if( high > baseArray.len() ) Scheduler.panicFromHaxe("new Slice() high bound exceeds underlying array length"); 
+			capacity = ularraysz - low; // the capacity of what remains of the array
+			if(high==-1) high = ularraysz; //default upper bound is the capacity of the underlying array
+			if( high > ularraysz ) Scheduler.panicFromHaxe("new Slice() high bound exceeds underlying array length"); 
 			if( low>high ) Scheduler.panicFromHaxe("new Slice() low bound exceeds high bound"); 
 			start = low;
 			end = high;
@@ -441,40 +704,60 @@ class SliceNonAbs {
 		length = end-start;
 	} 
 	public function subSlice(low:Int, high:Int):Slice {
-		if(high==-1) high = this.len(); //default upper bound is the length of the current slice
-		return new Slice(baseArray,low+start,high+start);
+		if(high==-1) high = length; //default upper bound is the length of the current slice
+		return new Slice(baseArray,low+start,high+start,capacity+low+start,itemSize);
 	}
-	public function getAt(idx:Int):Dynamic {
-		//var idx:Int=Force.toInt(dynIdx);
-		if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for getAt()");
-		//if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
-		return baseArray.addr(idx+start).load();
+	public function append(newEnt:Slice):Slice{
+		// ignore capacity filling optimization for now TODO
+		var newObj:Object = new Object((length+newEnt.len())*itemSize);
+		for(i in 0...length) 
+			newObj.set_object(itemSize,i*itemSize,this.itemAddr(i).load_object(itemSize));
+		for(i in 0...newEnt.len())
+			newObj.set_object(itemSize,length*itemSize+i*itemSize,newEnt.itemAddr(i).load_object(itemSize));
+		return new Slice(new Pointer(newObj),0,length+newEnt.len(),length+newEnt.len(),itemSize);
 	}
-	public function setAt(idx:Int,v:Dynamic) {
-		//var idx:Int=Force.toInt(dynIdx);
-		if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for setAt()");
-		//if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
-		baseArray.addr(idx+start).store(v); // this code relies on the object reference passing back
+	public function copy(source:Slice):Int{
+		var copySize:Int=this.len();
+		if(source.len()<this.len()) 
+			copySize=source.len(); 
+		if(this.baseArray==source.baseArray){ // copy within the same slice
+			if(this.start<=source.start){
+				for(i in 0...copySize)
+					this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
+			}else{
+				for(i in copySize...0)
+					this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
+			}
+		}else{
+			for(i in 0...copySize)
+				this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
+		}
+		return copySize;
 	}
-	public inline function len():Int{
+	//public inline function getAt(idx:Int):Dynamic {
+	//	//if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for getAt()");
+	//	return baseArray.addr(idx+start).load();
+	//}
+	//public inline function setAt(idx:Int,v:Dynamic) {
+	//	//if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for setAt()");
+	//	baseArray.addr(idx+start).store(v); // this code relies on the object reference passing back
+	//}
+	public inline function len():Int {
 		return length;
 	}
-	public function cap():Int {
-		if(baseArray==null) return 0;
-		return cast(baseArray.len(),Int)-start;
+	public inline function cap():Int {
+		return capacity-start;
 	}
-	public function addr(idx:Int):PointerIF {
-		//var idx:Int=Force.toInt(dynIdx);
-		if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for addr()");
-		//if (baseArray==null) Scheduler.panicFromHaxe("Slice base array is null");
-		return baseArray.addr(idx+start);
+	public inline function itemAddr(idx:Int):Pointer {
+		//if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for addr()");
+		return baseArray.addr((idx+start)*itemSize);
 	}
 	public function toString():String {
 		var ret:String = "Slice{"+start+","+end+",[";
 		if(baseArray!=null) 
-			for(i in 0...baseArray.len()) {
+			for(i in 0...(start+capacity) ) {
 				if(i!=0) ret += ",";
-				ret+=baseArray.addr(i).load();
+				ret+=baseArray.addr(i*itemSize).toString(itemSize); // only works for basic types
 			}
 		return ret+"]}";
 	}
@@ -561,7 +844,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 				return true; // simple equality
 			else // could still be equal underneath a pointer    //TODO is another special case required for Slice?
 				if(Std.is(a.val,Pointer) && Std.is(b.val,Pointer))
-					return a.val.load() == b.val.load();
+					return a.val.isEqual(b.val);
 				else
 					return false;	
 	}			
@@ -716,17 +999,13 @@ public static inline function neq(x:Complex,y:Complex):Bool { // "!="
 }
 }
 
-/* TODO re-optimize to use cs and java base i64 types once all working
-#if ( cs || java )
-	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
-#else
-*/
+// optimize to use cs and java base i64 types 
+//#if ( cpp || cs || java )
+//	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
+//#else
 	typedef HaxeInt64Typedef = Int64;  // use the copied and modified version of the standard library class below
-	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
-
-/* TODO re-optimize to use cs and java base i64 types once all working
-#end
-*/
+//	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
+//#end
 
 // this abstract type to enable correct handling for Go of HaxeInt64Typedef
 abstract HaxeInt64abs(HaxeInt64Typedef) 
@@ -1004,7 +1283,6 @@ special functions now correct for these faults for Int64.
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-
 class Int64 { 
 
 	var high : Int;
@@ -1254,7 +1532,6 @@ class Int64 {
 	}
 
 }
-
 //**************** END REWRITE of haxe.Int64 for php and to correct errors
 
 
@@ -1490,9 +1767,11 @@ public static function ioor() {
 public static inline function wraprangechk(val:Int,sz:Int) {
 	if((val<0)||(val>=sz)) ioor();
 }
-public static function wrapnilchk(p:PointerIF):PointerIF {
-	if(p==null)
-		panicFromHaxe("unexpected nil pointer (ssa:wrapnilchk)");
+static function unp() {
+		panicFromHaxe("unexpected nil pointer (ssa:wrapnilchk)");	
+}
+public static inline function wrapnilchk(p:Pointer):Pointer {
+	if(p==null) unp();
 	return p;
 }
 }
@@ -1500,147 +1779,117 @@ public static function wrapnilchk(p:PointerIF):PointerIF {
 
 `
 
-// WIP: move to a single type of Go object
-/*****************************
-@:keep
-class HeapObj { // this implementation will improve with typed array access
-	private var dynVec:haxe.ds.Vector<Dynamic>; // a very sparse array, 1 address per byte
+/***************************** TODO consider re-using this code to point to general Haxe types ****
 
-	public function new(sz:Int){ // eventually size will be used to define the numeric typed array
-		dynVec = new haxe.ds.Vector<Dynamic>(sz);
+@:keep
+class Pointer { // slow! heavy use of Dynamic typing and reflection
+	private var heapObj:Dynamic; // the actual object holding the value
+	private var offs:Array<Int>; // the offsets into the object, if any
+
+	public function new(from:Dynamic){
+		heapObj = from; // new Object(from);
+		offs = new Array<Int>();
 	}
-	public function subObj(from:Int,size:Int):HeapObj { // TODO SubObj class that is effectively a pointer?
-		var so:HeapObj = new HeapObj(size);
-		for(m in 0...size){
-			so.dynVec[m]=this.dynVec[from+m];
+	public function load():Dynamic { // this returns the thing pointed at
+		var ret:Dynamic = heapObj;
+		for(i in 0...offs.length) {
+			try	ret = ret[offs[i]]
+			catch (ret:Dynamic)	Scheduler.panicFromHaxe("failed attempt to dereference pointer reading from index:"+offs.toString());
 		}
-		return so;
+		return ret;
 	}
-	@:arrayAccess public inline function getDyn(loc:Int): Dynamic {
-		return dynVec[loc];
+	public function store(v:Dynamic):Void {
+		if(offs.length==0)
+			heapObj = v;
+		else {
+			var a:Dynamic = heapObj;
+			for(i in 0...offs.length-1) {
+				try a = a[offs[i]]
+				catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());
+			}
+			try a[offs[offs.length-1]] = v
+			catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());
+		}
 	}
-	@:arrayAccess public inline function setDyn(loc:Int,val:Dynamic):Void {
-		dynVec[loc]=val;
+	public function addr(off:Int):Pointer {
+		var ret:Pointer = new Pointer(this.heapObj);
+		ret.offs = this.offs.copy();
+		ret.offs[this.offs.length]=off;
+		return ret;
 	}
-}
-
-@:keep
-class HeapObjPtr implements PointerIF {
-	private var objRef:HeapObj;
-	private var offset:Int;
-	public function new(from:HeapObj,off:Int) {
-		objRef=from;
-		offset=off;
+	public function fieldAddr(f:Int):Pointer {
+		var ret:Pointer = new Pointer(this.heapObj);
+		ret.offs = this.offs.copy();
+		ret.offs[this.offs.length]=f;
+		return ret;
 	}
-	public inline function load():Dynamic {
-		return objRef.getDyn(offset); // TODO this is not correct if the thing to load should be an Object
-	}
-	public function store(v:Dynamic):Void{
-		// TODO
-	}
-	public function addr(off:Int):PointerIF{
-		// TODO
-		return null;
-	}
-	public function fieldAddr(fld:String):PointerIF{
-		// TODO
-		return null;
-	}
-	public function len():Int{
-		// TODO
-		return 0;
-	}
-	public function copy():PointerIF{
-		// TODO
-		return null;
-	}
-}
-**********************************/
-// END HeapObj WIP
-
-/******************** WIP speed-up ideas ************
-@:keep
-class BoxedVar<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
-	private var heapObj:T; // the actual object holding the value
-
-	public inline function new(from:T){
-		heapObj = from;
-	}
-	public inline function load():T {
-		return heapObj;
-	}
-	public #if !cs inline #end function store(v: #if (flash || java) Dynamic #else T #end ):Void {
-		// inline issue for C# because of problem with Map
-		heapObj=v;
-	}
-	public function addr(off:Int):PointerBV<T> {
-		Scheduler.panicFromHaxe("cannot index a non-array boxed variable");
+	public inline function copy():Pointer {
 		return this;
 	}
-	public function fieldAddr(f:String):PointerBV<T> {
-		return new PointerBV(Reflect.getProperty(heapObj,f)); // structs in BVs must contain BVs
+	public inline function load_object(size:Int):Dynamic{
+		return this.load();
 	}
-	public inline function len():Int {
-		return 1;
+	public inline function load_bool():Bool {
+		return this.load();
 	}
-	public inline function copy():PointerBasic<T> {
-		return Deep.copy(this);
+	public inline function load_int8():Int {
+		return this.load();
 	}
+	public inline function load_int16():Int {
+		return this.load();
+	}
+	public inline function load_int32():Int {
+		return this.load();
+	}
+	public inline function load_int64():GOint64 {
+		return this.load();
+	}
+	public inline function load_uint8():Int {
+		return this.load();
+	}
+	public inline function load_uint16():Int {
+		return this.load();
+	}
+	public inline function load_uint32():Int {
+		return this.load();
+	}
+	public inline function load_uint64():GOint64 {
+		return this.load();
+	}
+	public inline function load_uintptr():Dynamic { return this.load(); }
+	public inline function load_float32():Float {
+		return this.load();
+	}
+	public inline function load_float64():Float {
+		return this.load();
+	}
+	public inline function load_complex64():Complex {
+		return this.load();
+	}
+	public inline function load_complex128():Complex {
+		return this.load();
+	}
+	public inline function load_string():String {
+		return this.load();
+	}
+	public inline function store_object(sz:Int,v:Dynamic):Void { this.store(v); }
+	public inline function store_bool(v:Bool):Void { this.store(v); }
+	public inline function store_int8(v:Int):Void { this.store(v); }
+	public inline function store_int16(v:Int):Void { this.store(v); }
+	public inline function store_int32(v:Int):Void { this.store(v); }
+	public inline function store_int64(v:GOint64):Void { this.store(v); }
+	public inline function store_uint8(v:Int):Void { this.store(v); }
+	public inline function store_uint16(v:Int):Void { this.store(v); }
+	public inline function store_uint32(v:Int):Void { this.store(v); }
+	public inline function store_uint64(v:GOint64):Void { this.store(v); }
+	public inline function store_uintptr(v:Dynamic):Void { this.store(v); }
+	public inline function store_float32(v:Float):Void { this.store(v); }
+	public inline function store_float64(v:Float):Void { this.store(v); }
+	public inline function store_complex64(v:Complex):Void { this.store(v); }
+	public inline function store_complex128(v:Complex):Void { this.store(v); }
+	public inline function store_string(v:String):Void { this.store(v); }
 }
-@:keep
-class BoxedArray<T> implements PointerIF { // for holding boxed variables in memory, so that their address can be taken
-	private var heapObj:Array<T>; // the actual object holding the value
-
-	public inline function new(from:T){
-		heapObj = from;
-	}
-	public inline function load():T {
-		return heapObj;
-	}
-	public inline function store(v:T):Void {
-		heapObj=v;
-	}
-	public function addr(off:Int):PointerBV<T> {
-		return new PointerBV(heapObj[off]); // arrays in BVs must contain BVs
-	}
-	public function fieldAddr(f:String):PointerBV<T> {
-		Scheduler.panicFromHaxe("cannt address the field of an array of boxed variables");
-		return this;
-	}
-	public inline function len():Int {
-		heapObj.length;
-	}
-	public inline function copy():PointerBasic<T> {
-		return Deep.copy(this);
-	}
-}
-@:keep
-class PointerBV<T> implements PointerIF { // for pointing at boxed variables
-	private var bv:PointerIF; // reference to the actual bv object holding the value
-
-	public inline function new(from:PointerIF){
-		bv = from;
-	}
-	public inline function load():T {
-		return bv.load();
-	}
-	public inline function store(v:T):Void {
-		bv.store(v);
-	}
-	public inline function addr(off:Int):PointerBV<T> {
-		return bv.addr(off);
-	}
-	public inline function fieldAddr(f:String):PointerBV<T> {
-		return bv.fieldAddr(f);
-	}
-	public inline function len():Int {
-		return bv.len();
-	}
-	public inline function copy():PointerBV<T> {
-		return this;
-	}
-}
-******************** end WIP *******************/
+*** END pointer for general Haxe types *********************/
 
 /* TODO re-optimize to use cs and java base i64 types once all working
 #if ( java || cs )

@@ -13,12 +13,13 @@ func TestCore(t *testing.T) {
 		t.Error(err)
 	}
 
+	*debugFlag = true
 	err = doTestable([]string{"test.go"})
 	if err != nil {
 		t.Error(err)
 	}
 
-	out, err := exec.Command("haxe", "-main", "tardis.Go", "--interp").CombinedOutput()
+	out, err := exec.Command("haxe", "-main", "tardis.Go", "--no-inline", "--interp").CombinedOutput()
 	if err != nil {
 		t.Error(err)
 	}

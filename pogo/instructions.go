@@ -95,42 +95,56 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	case *ssa.Call:
 		if instruction.(*ssa.Call).Call.IsInvoke() {
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, false, false, instruction.(*ssa.Call).Call, errorInfo)+
+				LanguageList[l].EmitInvoke(register, false, false, grMap[instruction.(*ssa.Call).Parent()], instruction.(*ssa.Call).Call, errorInfo)+
 					LanguageList[l].Comment(comment))
 		} else {
 			switch instruction.(*ssa.Call).Call.Value.(type) {
 			case *ssa.Builtin:
-				emitCall(true, false, false, register, instruction.(*ssa.Call).Call, errorInfo, comment)
+				emitCall(true, false, false, grMap[instruction.(*ssa.Call).Parent()],
+					register, instruction.(*ssa.Call).Call, errorInfo, comment)
 			default:
-				emitCall(false, false, false, register, instruction.(*ssa.Call).Call, errorInfo, comment)
+				emitCall(false, false, false, grMap[instruction.(*ssa.Call).Parent()],
+					register, instruction.(*ssa.Call).Call, errorInfo, comment)
 			}
 		}
 
 	case *ssa.Go:
 		if instruction.(*ssa.Go).Call.IsInvoke() {
+			if grMap[instruction.(*ssa.Go).Parent()] != true {
+				panic("attempt to Go a method, from a function does not use goroutines at " + errorInfo)
+			}
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, true, false, instruction.(*ssa.Go).Call, errorInfo)+
+				LanguageList[l].EmitInvoke(register, true, false, true, instruction.(*ssa.Go).Call, errorInfo)+
 					LanguageList[l].Comment(comment))
 		} else {
 			switch instruction.(*ssa.Go).Call.Value.(type) {
 			case *ssa.Builtin: // no builtin functions can be go'ed
 				LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be go'ed"))
 			default:
-				emitCall(false, true, false, register, instruction.(*ssa.Go).Call, errorInfo, comment)
+				if grMap[instruction.(*ssa.Go).Parent()] != true {
+					panic("attempt to Go a function, from a function does not use goroutines at " + errorInfo)
+				}
+				emitCall(false, true, false, true,
+					register, instruction.(*ssa.Go).Call, errorInfo, comment)
 			}
 		}
 
 	case *ssa.Defer:
 		if instruction.(*ssa.Defer).Call.IsInvoke() {
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, true, true, instruction.(*ssa.Defer).Call, errorInfo)+
+				LanguageList[l].EmitInvoke(register, true, true, grMap[instruction.(*ssa.Defer).Parent()],
+					instruction.(*ssa.Defer).Call, errorInfo)+
 					LanguageList[l].Comment(comment))
 		} else {
 			switch instruction.(*ssa.Defer).Call.Value.(type) {
 			case *ssa.Builtin: // no builtin functions can be defer'ed - TODO: the spec does allow this in some circumstances
 				LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be defer'ed"))
 			default:
-				emitCall(false, false, true, register, instruction.(*ssa.Defer).Call, errorInfo, comment)
+				//if grMap[instruction.(*ssa.Defer).Parent()] != true {
+				//	panic("attempt to use defer from a function does not use goroutines at " + errorInfo)
+				//}
+				emitCall(false, false, true, grMap[instruction.(*ssa.Defer).Parent()],
+					register, instruction.(*ssa.Defer).Call, errorInfo, comment)
 			}
 		}
 
@@ -141,7 +155,9 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.Panic:
 		emitPhiFlag = false
-		fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].Panic(*operands[0], errorInfo)+LanguageList[l].Comment(comment))
+		fmt.Fprintln(&LanguageList[l].buffer,
+			LanguageList[l].Panic(*operands[0], errorInfo,
+				grMap[instruction.(*ssa.Panic).Parent()])+LanguageList[l].Comment(comment))
 
 	case *ssa.UnOp:
 		if register == "" && instruction.(*ssa.UnOp).Op.String() != "<-" {
@@ -199,7 +215,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.RunDefers:
 		fmt.Fprintln(&LanguageList[l].buffer,
-			LanguageList[l].RunDefers()+
+			LanguageList[l].RunDefers(grMap[instruction.(*ssa.RunDefers).Parent()])+
 				LanguageList[l].Comment(comment))
 
 	case *ssa.Alloc:

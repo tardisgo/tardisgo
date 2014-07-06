@@ -10,6 +10,8 @@
 // Package sync contains runtime functions for the Go "sync" standard library package when used by TARDIS Go
 package sync
 
+import "github.com/tardisgo/tardisgo/tardisgolib"
+
 // THIS PACKAGE ONLY PARTLY USABLE, DOES NOT WORK FOR math/rand
 
 // this init function is for the SSA compiler, ignored by the code generator
@@ -61,7 +63,8 @@ func runtime_Syncsemrelease(s *syncSema, n uint32) {
 
 // Ensure that sync and runtime agree on size of syncSema.
 func runtime_Syncsemcheck(size uintptr) {
-	/*NoOp*/
+	// in order to sechedule other activeiy at this point we need to use a channel
+	tardisgolib.Gosched()
 }
 
 // INIT FUNCTIONS IN THESE RUNTIME LIBRARIES ARE NOT USED

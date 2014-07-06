@@ -76,15 +76,6 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			}
 			return "Interface"
 		case *types.Named:
-			/* WIP testing
-			typName := strings.Split(t.(*types.Named).String(), ".")[1]
-			if strings.HasPrefix(typName, "HAXE_") {
-				if retInitVal {
-					return "null"
-				}
-				return strings.Join(strings.Split(strings.TrimPrefix(typName, "HAXE_"), "_"), ".")
-			}
-			*/
 			return l.LangType(t.(*types.Named).Underlying(), retInitVal, errorInfo)
 		case *types.Chan:
 			if retInitVal {
@@ -100,31 +91,40 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">"
 		case *types.Slice:
 			if retInitVal {
-				return "new Slice(new Pointer<" + l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
-					">(new Array<" + l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
-					">()),0,0" + ")"
+				return "new Slice(new Pointer(" + //l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
+					//"/*new Array<" + //l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +">()*/ " +
+					"new Object(0)" +
+					"),0,0,0," + "1" + arrayOffsetCalc(t.(*types.Slice).Elem().Underlying()) + ")"
 			}
 			return "Slice"
 		case *types.Array: // TODO consider using Vector rather than Array, if faster and can be made to work
 			if retInitVal {
-				return fmt.Sprintf("new Make<%s>().array(%s,%d)",
-					l.LangType(t.(*types.Array).Elem(), false, errorInfo),
-					l.LangType(t.(*types.Array).Elem(), true, errorInfo),
-					t.(*types.Array).Len())
+				return fmt.Sprintf("new Object(%d)", haxeStdSizes.Sizeof(t))
+				//return fmt.Sprintf("/*new Make<%s>(%d).array(%s,%d)",
+				//	l.LangType(t.(*types.Array).Elem(), false, errorInfo),
+				//	haxeStdSizes.Sizeof(t),
+				//	l.LangType(t.(*types.Array).Elem(), true, errorInfo),
+				//	t.(*types.Array).Len()) + fmt.Sprintf("*/ new Object(%d)", haxeStdSizes.Sizeof(t))
 			}
-			return "Array<" + l.LangType(t.(*types.Array).Elem(), false, errorInfo) + ">"
+			return "Object" ///"Array<" + l.LangType(t.(*types.Array).Elem(), false, errorInfo) + ">"
 		case *types.Struct:
-			ret := "{"
-			for ele := 0; ele < t.(*types.Struct).NumFields(); ele++ {
-				if ele != 0 {
-					ret += ","
-				}
-				ret += fixKeyWds(t.(*types.Struct).Field(ele).Name()) + `: `
-				ret += fmt.Sprintf("%s", // "new BoxedVar<%s>(%s)",
-					//l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), false, errorInfo),
-					l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), retInitVal, errorInfo))
+			if retInitVal {
+				/*
+					ret := "["
+					for ele := 0; ele < t.(*types.Struct).NumFields(); ele++ {
+						if ele != 0 {
+							ret += ","
+						}
+						//ret += fixKeyWds(t.(*types.Struct).Field(ele).Name()) + `: `
+						ret += fmt.Sprintf("%s", // "new BoxedVar<%s>(%s)",
+							//l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), false, errorInfo),
+							l.LangType(t.(*types.Struct).Field(ele).Type().Underlying(), retInitVal, errorInfo))
+					}
+					ret += "]"
+				*/
+				return fmt.Sprintf("new Object(%d)", haxeStdSizes.Sizeof(t.(*types.Struct).Underlying()))
 			}
-			return ret + "}"
+			return "Object" //"/*Array<Dynamic>*/ " +
 		case *types.Tuple: // what is returned by a call and some other instructions, not in the Go language spec!
 			tup := t.(*types.Tuple)
 			switch tup.Len() {
@@ -148,7 +148,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				// NOTE pointer declarations create endless recursion for self-referencing structures unless initialized with null
 				return "null" //rather than: + l.LangType(t.(*types.Pointer).Elem(), retInitVal, errorInfo) + ")"
 			}
-			return "PointerIF"
+			return "Pointer"
 		case *types.Signature:
 			if retInitVal {
 				return "null"
@@ -185,7 +185,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			case types.Rune: // []rune
 				return "{var _r:Slice=Go_haxegoruntime_Runes2Raw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
 					register + "=\"\";for(_i in 0..._r.len())" +
-					register + "+=String.fromCharCode(_r.getAt(_i" + "));};"
+					register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
 			case types.Byte: // []byte
 				return register + "=Force.toRawString(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 			default:
@@ -195,11 +195,11 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Int": // make a string from a single rune
 			return "{var _r:Slice=Go_haxegoruntime_Rune2Raw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
 				register + "=\"\";for(_i in 0..._r.len())" +
-				register + "+=String.fromCharCode(_r.getAt(_i" + "));};"
+				register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
 		case "GOint64": // make a string from a single rune (held in 64 bits)
 			return "{var _r:Slice=Go_haxegoruntime_Rune2Raw.callFromRT(this._goroutine,GOint64.toInt(" + l.IndirectValue(v, errorInfo) + "));" +
 				register + "=\"\";for(_i in 0..._r.len())" +
-				register + "+=String.fromCharCode(_r.getAt(_i" + "));};"
+				register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
 		case "Dynamic":
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + ",String);"
 		default:
@@ -215,10 +215,11 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		switch destType.Underlying().(*types.Slice).Elem().Underlying().(*types.Basic).Kind() {
 		case types.Rune:
 			return register + "=" + newSliceCode("Int", "0",
-				l.IndirectValue(v, errorInfo)+".length", l.IndirectValue(v, errorInfo)+".length", errorInfo) + ";" +
+				l.IndirectValue(v, errorInfo)+".length",
+				l.IndirectValue(v, errorInfo)+".length", errorInfo, "4 /*len(rune)*/") + ";" +
 				"for(_i in 0..." + l.IndirectValue(v, errorInfo) + ".length)" +
-				register + ".setAt(_i,({var _c:Null<Int>=" + l.IndirectValue(v, errorInfo) +
-				`.charCodeAt(_i);(_c==null)?0:cast(_c,Int);})` + ");" +
+				register + ".itemAddr(_i).store_int32(({var _c:Null<Int>=" + l.IndirectValue(v, errorInfo) +
+				`.charCodeAt(_i);(_c==null)?0:Std.int(_c);})` + ");" +
 				register + "=Go_haxegoruntime_Raw2Runes.callFromRT(this._goroutine," + register + ");"
 		case types.Byte:
 			return register + "=Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
@@ -468,4 +469,45 @@ func fixKeyWds(w string) string {
 	default:
 		return w
 	}
+}
+
+func loadStoreSuffix(T types.Type, hasParameters bool) string {
+	if bt, ok := T.Underlying().(*types.Basic); ok {
+		switch bt.Kind() {
+		case types.Bool,
+			types.Int8,
+			types.Int16,
+			types.Int64,
+			types.Uint16,
+			types.Uint64,
+			types.Uintptr,
+			types.Float32,
+			types.Float64,
+			types.Complex64,
+			types.Complex128,
+			types.String:
+			return "_" + types.TypeString(nil, T) + "("
+		case types.Uint8: // to avoid "byte"
+			return "_uint8("
+		case types.Int, types.Int32: // for int and to avoid "rune"
+			return "_int32("
+		case types.Uint, types.Uint32:
+			return "_uint32("
+		}
+	}
+	if _, ok := T.Underlying().(*types.Array); ok {
+		ret := fmt.Sprintf("_object(%d", haxeStdSizes.Sizeof(T))
+		if hasParameters {
+			ret += ","
+		}
+		return ret
+	}
+	if _, ok := T.Underlying().(*types.Struct); ok {
+		ret := fmt.Sprintf("_object(%d", haxeStdSizes.Sizeof(T))
+		if hasParameters {
+			ret += ","
+		}
+		return ret
+	}
+	return "(" // no suffix, so some dynamic type
 }

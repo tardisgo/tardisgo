@@ -75,7 +75,7 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	main += "var _sf=new Go_" + pkg.Object.Name() + `_init(gr,[]).run();` + "\n" //NOTE can't use callFromHaxe() as that would call this fn
 	main += "while(_sf._incomplete) Scheduler.runAll();\n"
 	main += "Scheduler.doneInit=true;\n"
-	main += "Go.haxegoruntime_ZiLen.store('字'.length);\n" // value required by haxegoruntime to know what type of strings we have
+	main += `Go.haxegoruntime_ZiLen.store_uint32('字'.length);` // value required by haxegoruntime to know what type of strings we have
 	main += "}\n"
 	// Haxe main function, only called in a go-only environment
 	main += "\npublic static function main() : Void {\n"
@@ -171,29 +171,34 @@ func (l langType) NamedConst(packageName, objectName string, lit ssa.Const, posi
 func (l langType) Global(packageName, objectName string, glob ssa.Global, position string, isPublic bool) string {
 	pub := "public "                                                      // all globals have to be public in Haxe terms
 	gTyp := glob.Type().Underlying().(*types.Pointer).Elem().Underlying() // globals are always pointers to an underlying element
-	ptrTyp := "PointerBasic"
-	ltDesc := "Dynamic" // these values suitable for *types.Struct
-	ltInit := "null"
-	switch gTyp.(type) {
-	case *types.Basic, *types.Pointer, *types.Interface, *types.Chan, *types.Map, *types.Signature:
-		ptrTyp = "PointerBasic"
-		ltDesc = l.LangType(gTyp, false, position)
-		ltInit = l.LangType(gTyp, true, position)
-	case *types.Array:
-		ptrTyp = "Pointer"
-		ltDesc = "Array<" + l.LangType(gTyp.(*types.Array).Elem().Underlying(), false, position) + ">"
-		ltInit = l.LangType(gTyp, true, position)
-	case *types.Slice:
-		ptrTyp = "Pointer"
-		ltDesc = "Slice" // was: l.LangType(gTyp.(*types.Slice).Elem().Underlying(), false, position)
-		ltInit = l.LangType(gTyp, true, position)
-	case *types.Struct:
-		ptrTyp = "Pointer"
-		ltDesc = "Dynamic" // TODO improve!
-		ltInit = l.LangType(gTyp, true, position)
-	}
-	init := "new " + ptrTyp + "<" + ltDesc + ">(" + ltInit + ")" // initialize basic types only
-	return fmt.Sprintf("%sstatic %s %s",
-		pub, haxeVar(l.LangName(packageName, objectName), ptrTyp+"<"+ltDesc+">", init, position, "Global()"),
+	/*
+		ptrTyp := "Pointer"
+		//ltDesc := "Dynamic" // these values suitable for *types.Struct
+		ltInit := "null"
+		switch gTyp.(type) {
+		case *types.Basic, *types.Pointer, *types.Interface, *types.Chan, *types.Map, *types.Signature:
+			ptrTyp = "Pointer"
+			//ltDesc = l.LangType(gTyp, false, position)
+			ltInit = l.LangType(gTyp, true, position)
+		case *types.Array:
+			ptrTyp = "Pointer"
+			//ltDesc = "Array<" + l.LangType(gTyp.(*types.Array).Elem().Underlying(), false, position) + ">"
+			ltInit = l.LangType(gTyp, true, position)
+		case *types.Slice:
+			ptrTyp = "Pointer"
+			//ltDesc = "Slice" // was: l.LangType(gTyp.(*types.Slice).Elem().Underlying(), false, position)
+			ltInit = l.LangType(gTyp, true, position)
+		case *types.Struct:
+			ptrTyp = "Pointer"
+			//ltDesc = "Dynamic" // TODO improve!
+			ltInit = l.LangType(gTyp, true, position)
+		}
+		init := "new " + ptrTyp + "(" + ltInit + ")" // initialize basic types only
+	*/
+	//return fmt.Sprintf("%sstatic %s %s",
+	//	pub, haxeVar(l.LangName(packageName, objectName), ptrTyp, init, position, "Global()"),
+	//	l.Comment(position))
+	return fmt.Sprintf("%sstatic var %s:Pointer=new Pointer(new Object(%d)); %s",
+		pub, l.LangName(packageName, objectName), haxeStdSizes.Sizeof(gTyp),
 		l.Comment(position))
 }

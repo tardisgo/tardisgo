@@ -22,7 +22,7 @@ type Language interface {
 	FileStart(packageName, headerText string) string
 	FileEnd() string
 	SetPosHash() string
-	RunDefers() string
+	RunDefers(usesGr bool) string
 	GoClassStart() string
 	GoClassEnd(*ssa.Package) string
 	SubFnStart(int, bool) string
@@ -36,10 +36,10 @@ type Language interface {
 	Const(lit ssa.Const, position string) (string, string)
 	NamedConst(packageName, objectName string, val ssa.Const, position string) string
 	Global(packageName, objectName string, glob ssa.Global, position string, isPublic bool) string
-	FuncStart(pName, mName string, fn *ssa.Function, posStr string, isPublic bool, trackPhi bool, canOptMap map[string]bool) string
+	FuncStart(pName, mName string, fn *ssa.Function, posStr string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool) string
 	RunEnd(fn *ssa.Function) string
 	FuncEnd(fn *ssa.Function) string
-	BlockStart(block []*ssa.BasicBlock, num int) string
+	BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) string
 	BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) string
 	Jump(int) string
 	If(v interface{}, trueNext, falseNext int, errorInfo string) string
@@ -52,7 +52,7 @@ type Language interface {
 	Send(v1, v2 interface{}, errorInfo string) string
 	Ret(values []*ssa.Value, errorInfo string) string
 	RegEq(r string) string
-	Call(register string, cc ssa.CallCommon, args []ssa.Value, isBuiltin, isGo, isDefer bool, fnToCall, errorInfo string) string
+	Call(register string, cc ssa.CallCommon, args []ssa.Value, isBuiltin, isGo, isDefer, usesGr bool, fnToCall, errorInfo string) string
 	Convert(register, langType string, destType types.Type, v interface{}, errorInfo string) string
 	MakeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string
 	ChangeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string
@@ -71,12 +71,12 @@ type Language interface {
 	Extract(register string, tuple interface{}, index int, errorInfo string) string
 	Range(register string, v interface{}, errorInfo string) string
 	Next(register string, v interface{}, isString bool, errorInfo string) string
-	Panic(v1 interface{}, errorInfo string) string
+	Panic(v1 interface{}, errorInfo string, usesGr bool) string
 	TypeStart(*types.Named, string) string
 	TypeEnd(*types.Named, string) string
 	TypeAssert(Register string, X ssa.Value, AssertedType types.Type, CommaOk bool, errorInfo string) string
 	EmitTypeInfo() string
-	EmitInvoke(register string, isGo bool, isDefer bool, callCommon interface{}, errorInfo string) string
+	EmitInvoke(register string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string
 	PackageOverloaded(pkg string) (overloadPkgGo, overloadPkg string, isOverloaded bool)
 	FunctionOverloaded(pkg, fun string) bool
 	Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string

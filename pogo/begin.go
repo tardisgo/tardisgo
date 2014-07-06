@@ -18,11 +18,15 @@ import (
 	_ "github.com/tardisgo/tardisgo/tardisgolib"
 )
 
-// global variables to save having to pass them about
+// global variables to save having to pass them about (TODO these, and other, status vars should be in a structure)
 var rootProgram *ssa.Program // pointer to the root datastructure TODO make this state non-global
 var mainPackage *ssa.Package // pointer to the "main" package TODO make this state non-global
 
-var DebugFlag bool // used to signal if we are emitting debug information
+// DebugFlag is used to signal if we are emitting debug information
+var DebugFlag bool
+
+// TraceFlag is used to signal if we are emitting trace information (big)
+var TraceFlag bool
 
 // EntryPoint provides the entry point for the pogo package, called from ssadump_copy.
 func EntryPoint(mainPkg *ssa.Package) error {

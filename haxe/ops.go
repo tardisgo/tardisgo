@@ -29,17 +29,17 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 	case "*":
 		goTyp := v.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying()
 
-		lt = l.LangType(goTyp, false, errorInfo)
+		//lt = l.LangType(goTyp, false, errorInfo)
 		iVal := "" + l.IndirectValue(v, errorInfo) + "" // need to cast it to pointer, when using -dce full and closures
-		switch lt {
-		case "Int":
-			return "(" + iVal + ".load()|0)" + fmt.Sprintf("/* %v */", goTyp) // force to Int for js, compiled platforms should optimize this away
-		default:
-			//if strings.HasPrefix(lt, "Pointer") {
-			//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
-			//}
-			return iVal + ".load()" + fmt.Sprintf("/* %v */", goTyp)
-		}
+		//switch lt {
+		//case "Int":
+		//	return "(" + iVal + ".load()|0)" + fmt.Sprintf("/* %v %s */", goTyp, loadStoreSuffix(goTyp)) // force to Int for js, compiled platforms should optimize this away
+		//default:
+		//if strings.HasPrefix(lt, "Pointer") {
+		//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
+		//}
+		return iVal + ".load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */", goTyp)
+		//}
 	case "-":
 		if l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) == "Complex" {
 			return "Complex.neg(" + l.IndirectValue(v, errorInfo) + ")"

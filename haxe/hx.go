@@ -29,8 +29,6 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 			obj := l.IndirectValue(args[argOff], errorInfo)
 			code = "#if (cpp || flash) " + code + "." + strings.Trim(obj, `"`) + "( #else Reflect.callMethod(" + code + "," +
 				" Reflect.field(" + code + ", " + obj + "),[ #end " // prefix the code with the var to execute the method on
-			//code = "Reflect.callMethod(" + code + ", #if cpp " + obj +
-			//	" #else Reflect.field(" + code + ", " + obj + ") #end ,[" // prefix the code with the var to execute the method on
 			argOff++
 		} else {
 			code += "("
@@ -46,7 +44,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 				if i > 0 {
 					code += ","
 				}
-				code += fmt.Sprintf("_a[%d].val", i)
+				code += fmt.Sprintf("_a.itemAddr(%d).load().val", i)
 			}
 		}
 		if strings.HasPrefix(fnToCall, "Meth") {

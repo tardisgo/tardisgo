@@ -59,6 +59,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 // TARDIS Go addition
 var allFlag = flag.Bool("testall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
 var debugFlag = flag.Bool("debug", false, "Instrument the code to give more meaningful information during a stack dump")
+var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
 
 // TARDIS Go modification TODO review words here
 const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental).
@@ -304,17 +305,20 @@ func doTestable(args []string) error {
 			interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 		*/
 		pogo.DebugFlag = *debugFlag
+		pogo.TraceFlag = *traceFlag
 		err = pogo.EntryPoint(main) // TARDIS Go entry point, returns an error
 		if err != nil {
 			return err
 		}
 		if *allFlag {
-			results := make(chan string)
+			results := make(chan resChan)
 			for _, cmd := range targets {
 				go doTarget(cmd, results)
 			}
 			for _ = range targets {
-				fmt.Println(<-results)
+				r := <-results
+				fmt.Println(r.output)
+				r.backChan <- true
 			}
 		}
 	}
@@ -348,6 +352,11 @@ var targets = [][][]string{
 		[]string{"time", "node", "tardisgo.js"},
 	},
 	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardisgo-dv.js"},
+		[]string{"echo", `"Node/JS (using dataview):"`},
+		[]string{"time", "node", "tardisgo-dv.js"},
+	},
+	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardisgo.swf"},
 		[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
 		[]string{"open", "tardisgo.swf"},
@@ -364,7 +373,12 @@ var targets = [][][]string{
 	},
 }
 
-func doTarget(cl [][]string, results chan string) {
+type resChan struct {
+	output   string
+	backChan chan bool
+}
+
+func doTarget(cl [][]string, results chan resChan) {
 	res := ""
 	for j, c := range cl {
 		exe := c[0]
@@ -392,5 +406,7 @@ func doTarget(cl [][]string, results chan string) {
 			}
 		}
 	}
-	results <- res
+	bc := make(chan bool)
+	results <- resChan{res, bc}
+	<-bc
 }

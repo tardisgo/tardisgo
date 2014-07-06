@@ -11,6 +11,8 @@ import (
 	//"math"
 	//"math/big" // does not currently complile - infinite loop
 	//"bytes"
+	"math"
+
 	"github.com/tardisgo/tardisgo/tardisgolib"
 	"github.com/tardisgo/tardisgo/tardisgolib/hx"
 	//"runtime"
@@ -21,6 +23,7 @@ import (
 	"unicode/utf8"
 
 	// final one at end to match the constant declaration
+	_ "github.com/tardisgo/tardisgo/golibruntime/math"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
 	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
 )
@@ -124,20 +127,23 @@ func TEQruneSlice(l string, a, b []rune) bool {
 	return ret
 }
 func TEQintSlice(l string, a, b []int) bool {
+	//println("TEQintSlice DEBUG: " + l + " ")
 	if len(a) != len(b) {
 		println("TEQintSlice error "+l+" ", a, b)
 		return false
 	}
-	ret := true
 	for i := range a {
 		if a[i] != b[i] {
 			println("TEQintSlice error "+l+" ", a, b)
-			ret = false
+			return false
 		}
 	}
-	return ret
+	return true
 }
 func TEQfloat(l string, a, b, maxDif float64) bool {
+	if a == b {
+		return true
+	}
 	dif := a - b
 	if dif < 0 {
 		dif = -dif
@@ -330,8 +336,9 @@ func testStruct() {
 	TEQ(tardisgolib.CPos(), PublicStruct.a, PrivateStruct.a)
 	TEQ(tardisgolib.CPos(), PublicStruct.b, PrivateStruct.b)
 	TEQ(tardisgolib.CPos(), PublicStruct.c, PrivateStruct.c)
-	TEQ(tardisgolib.CPos(), PublicStruct.d, PrivateStruct.d)
+	TEQfloat(tardisgolib.CPos(), PublicStruct.d, PrivateStruct.d, 0.01)
 	TEQ(tardisgolib.CPos(), PublicStruct.e, PrivateStruct.e)
+	//println(tardisgolib.CPos(), PublicStruct.f[:], PrivateStruct.f[:])
 	TEQintSlice(tardisgolib.CPos(), PublicStruct.f[:], PrivateStruct.f[:])
 	PublicStruct.a = 42
 	PrivateStruct.a = 42
@@ -348,11 +355,14 @@ func testStruct() {
 	}
 }
 func Sqrt(x float64) float64 {
+	return math.Sqrt(x)
+	/* to reduce the trace size
 	z := x
 	for i := 0; i < 1000; i++ {
 		z -= (z*z - x) / (2.0 * x)
 	}
 	return z
+	*/
 }
 
 func testFloat() { // and also slices!
@@ -892,6 +902,8 @@ func testUTF8() {
 	TEQ(tardisgolib.CPos(), ' ', r)
 	TEQ(tardisgolib.CPos(), size, 1)
 
+	//println("len(Zi)=", len("字"), hx.CodeInt(`'字'.length;`))
+
 	str := "Hello, 世界"
 	r, size = utf8.DecodeLastRuneInString(str)
 	TEQ(tardisgolib.CPos(), '界', r)
@@ -1223,7 +1235,8 @@ func testInterfaceMethods() {
 
 	a = &vt // a *Vertex implements Abser
 	y, ok := a.(Abser)
-	//println(reflect.TypeOf(y).String()) => *main.Vertex
+	//println(reflect.TypeOf(y).String()) //=> *main.Vertex
+	//println(y)
 	if !ok {
 		println("Error in testInterfaceMethods(): Vertex should be in Abser interface")
 	}
@@ -1231,7 +1244,8 @@ func testInterfaceMethods() {
 	TEQfloat(tardisgolib.CPos()+"testInterfaceMethods():*Vertex.Abs()", a.Abs(), float64(5), 0.000001)
 	TEQfloat(tardisgolib.CPos()+"testInterfaceMethods():y.Abs()", y.Abs(), float64(5), 0.000001)
 	TEQfloat(tardisgolib.CPos()+"testInterfaceMethods():*Vertex.Scale(10)", a.Scale(10), float64(50), 0.000001)
-	TEQfloat(tardisgolib.CPos()+"testInterfaceMethods():y.Scale(10)", y.Scale(10), float64(653.35), 0.01)
+	//println(y)
+	TEQfloat(tardisgolib.CPos()+"testInterfaceMethods():y.Scale(10)", y.Scale(10), float64(500), 0.01)
 
 	// a=vt // a Vertex, does NOT
 
@@ -1541,8 +1555,7 @@ func testPtr() {
 
 func main() {
 	//println("Start test running in: " + tardisgolib.Platform())
-	testManyGoroutines()
-	testChanSelect()
+	testManyGoroutines() // here to run alongside the other code execution
 	tourfib()
 	testCaseSensitivity()
 	testInit()
@@ -1577,12 +1590,14 @@ func main() {
 	testUintDiv64()
 	testDefer()
 	testPtr()
+	testChanSelect()
 	aGrWG.Wait()
 	TEQint32(tardisgolib.CPos()+" testManyGoroutines() sync/atomic counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {
 		TEQ(tardisgolib.CPos(), hx.CodeInt("42;"), int(42))
 		TEQ(tardisgolib.CPos(), hx.CodeString("'test';"), "test")
 		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 1)
+		//panic("show GRs active")
 	} else {
 		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 0)
 	}

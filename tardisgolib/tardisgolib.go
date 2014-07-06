@@ -32,7 +32,15 @@ func StringsUTF16() bool { return Zilen() == 1 }
 */
 
 // Gosched schedules other goroutines.
-func Gosched() {} // an empty function here works fine to enable other goroutines to be scheduled
+func Gosched() {
+	gosched_chan := make(chan bool)
+	select {
+	case <-gosched_chan: // should never happen
+		return
+	default:
+		return
+	}
+}
 
 // NumGoroutine returns the number of active goroutines (may be more than the number runable).
 func NumGoroutine() int {
