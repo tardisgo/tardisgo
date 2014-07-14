@@ -1068,8 +1068,8 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			} else {
 				ret += l.IndirectValue(args[arg], errorInfo)
 			}
-		default: // TODO review
-			ret += "Deep.copy(" + l.IndirectValue(args[arg], errorInfo) + ")"
+		default:
+			ret += l.IndirectValue(args[arg], errorInfo)
 		}
 	}
 	if isBuiltin {
@@ -1429,7 +1429,7 @@ func (l langType) EmitInvoke(register string, isGo, isDefer, usesGr bool, callCo
 		case *types.Basic, *types.Interface: // NOTE Complex is an object as is Int64 (in java & cs), but copy does not seem to be required
 			ret += l.IndirectValue(args[arg], errorInfo)
 		default: // TODO review
-			ret += "Deep.copy(" + l.IndirectValue(args[arg], errorInfo) + ")"
+			ret += l.IndirectValue(args[arg], errorInfo)
 		}
 	}
 	if isGo {

@@ -13,7 +13,7 @@ import (
 	"code.google.com/p/go.tools/go/ssa"
 	"code.google.com/p/go.tools/go/types"
 
-	ssaopt "github.com/tardisgo/tardisgo/ssaopt"
+	"github.com/tardisgo/tardisgo/tgossa"
 )
 
 var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the functions use goroutines/channels
@@ -29,7 +29,7 @@ func emitFunctions() {
 			dceList = append(dceList, exip)
 		}
 	}
-	fnMap, grMap = ssaopt.VisitedFunctions(rootProgram, dceList)
+	fnMap, grMap = tgossa.VisitedFunctions(rootProgram, dceList)
 	/*
 		fmt.Println("DEBUG funcs not requiring goroutines:")
 		for df, db := range grMap {
@@ -245,7 +245,7 @@ func emitFunc(fn *ssa.Function) {
 			emitPhi := trackPhi
 			emitBlockStart(fn.Blocks, b, emitPhi)
 			inSubFn := false
-			for i := range fn.Blocks[b].Instrs {
+			for i := 0; i < len(fn.Blocks[b].Instrs); i++ {
 				if thisSubFn >= 0 && thisSubFn < len(subFnList) { // not at the end of the list
 					if b == subFnList[thisSubFn].block {
 						if i >= subFnList[thisSubFn].end && inSubFn {
@@ -271,7 +271,23 @@ func emitFunc(fn *ssa.Function) {
 					}
 				}
 				if !inSubFn {
-					emitPhi = emitInstruction(fn.Blocks[b].Instrs[i], fn.Blocks[b].Instrs[i].Operands(make([]*ssa.Value, 0)))
+					//TODO optimize phi case statements
+					phiList := 0
+				phiLoop:
+					switch fn.Blocks[b].Instrs[i+phiList].(type) {
+					case *ssa.Phi:
+						phiList++
+						if (i + phiList) < len(fn.Blocks[b].Instrs) {
+							goto phiLoop
+						}
+					}
+					if phiList > 1 {
+						peephole(fn.Blocks[b].Instrs[i : i+phiList])
+						i += phiList - 1
+					} else {
+						emitPhi = emitInstruction(fn.Blocks[b].Instrs[i],
+							fn.Blocks[b].Instrs[i].Operands(make([]*ssa.Value, 0)))
+					}
 				}
 			}
 			if thisSubFn >= 0 && thisSubFn < len(subFnList) { // not at the end of the list
@@ -308,10 +324,7 @@ func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode 
 			}
 		}
 	}
-	for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
-		emitInstruction(fn.Blocks[subFnList[sf].block].Instrs[i],
-			fn.Blocks[subFnList[sf].block].Instrs[i].Operands(make([]*ssa.Value, 0)))
-	}
+	peephole(fn.Blocks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end])
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf))
 }
 

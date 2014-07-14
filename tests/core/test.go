@@ -1554,6 +1554,11 @@ func testPtr() {
 }
 
 func main() {
+	var array [4][5]int
+	array[3][2] = 12
+	if array[3][2] != 12 {
+		println("Array handling error:", array[3])
+	}
 	//println("Start test running in: " + tardisgolib.Platform())
 	testManyGoroutines() // here to run alongside the other code execution
 	tourfib()

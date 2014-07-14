@@ -80,6 +80,7 @@ type Language interface {
 	PackageOverloaded(pkg string) (overloadPkgGo, overloadPkg string, isOverloaded bool)
 	FunctionOverloaded(pkg, fun string) bool
 	Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string
+	PeepholeOpt(opt, register string, code []ssa.Instruction, errorInfo string) string
 }
 
 // LanguageEntry holds the static infomation about each of the languages, expect this list to extend as more languages are added.

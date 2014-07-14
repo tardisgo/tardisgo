@@ -14,60 +14,7 @@ package haxe
 
 var haxeruntime = `
 
-class Deep { 
-	//**** This class adapted from https://gist.github.com/Asmageddon/4013485 @author Asmageddon
-	//** 
-	//** Deep copy of anything using reflection (so don't hope for much performance)
-	//** 
-	// TODO this should not be a separate haxe class, as no non-pogo code needs access to it
-	public static function copy( v:Dynamic ) : Dynamic  { 	//***** new line was: public static function copy<T>( v:T ) : T  { 
-		if (!Reflect.isObject(v)) { // simple type 
-			return v; 
-		}
-		else if (Std.is(v, String)) { // string
-			return v;
-		}
-		else if ( Std.is(v, Pointer) || Std.is(v, Object) ) { // Pointer & Object *** new code
-			return v.copy(); 
-		}
-		else if (Std.is(v, Closure)) { // Closure *** new code
-			return v;
-		}
-		else if(Std.is( v, Array )) { // array 
-			var result = Type.createInstance(Type.getClass(v), []); 
-			untyped { 
-				for( ii in 0...v.length ) {
-					result.push(copy(v[ii]));
-				}
-			} 
-			return result;
-		}
-		else if(Std.is( v, Map )) { // **** this code section written new - TODO: test further, could be a bug as Go maps are always pointers...
-			var result = Type.createInstance(Type.getClass(v), []);
-			untyped {
-				var keys : Iterator<Dynamic> = v.keys();
-				for( key in keys ) {
-					result.set(key, copy(v.get(key)));
-				}
-			} 
-			return result;
-		} //*** end new code
-		else if(Type.getClass(v) == null) { // anonymous object 
-			var obj : Dynamic = {}; 
-			for( ff in Reflect.fields(v) ) { 
-				Reflect.setField(obj, ff, copy(Reflect.field(v, ff))); 
-			}
-			return obj; 
-		} 
-		else { // class 
-			var obj = Type.createEmptyInstance(Type.getClass(v)); 
-			for(ff in Reflect.fields(v)) {
-				Reflect.setField(obj, ff, copy(Reflect.field(v, ff))); 
-			}
-			return obj; 
-		} 
-	}
-}
+// TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 class Force { // TODO maybe this should not be a separate haxe class, as no non-Go code needs access to it
 
@@ -252,20 +199,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return ret;
 	}
 	
-	
 }
-/*
-class Make<T> {
-	public inline function new(objSz:Int){}
-	public function array(iVal:T,sz:Int):Array<T> {
-		var v:Array<T>=new Array<T>();
-		for(vi in 0...sz)
-			v[vi]=iVal; 
-		return v;
-	}
-}
-*/
-// TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 // Object code
 // a single type of Go object
@@ -788,8 +722,7 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 		return ret+bds.toString()+"}";
 	}
 	public function methVal(t:Dynamic,v:Dynamic):Dynamic{
-		var tmp:Dynamic = Deep.copy(t);
-		return Reflect.callMethod(null, fn, [[],tmp,v]);
+		return Reflect.callMethod(null, fn, [[],t,v]);
 	}
 	public function callFn(params:Dynamic):Dynamic {
 		if(fn==null) Scheduler.panicFromHaxe("attempt to call null function reference in Closure()");
@@ -804,7 +737,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 
 	public function new(t:Int,v:Dynamic){
 		typ=t;
-		val=v; //Deep.copy(v); // TODO torture test that this no-deep-copy version is correct, as we want a reference to the data 
+		val=v; 
 	}
 	public function toString():String {
 		if(val==null)
@@ -823,9 +756,9 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 		else 
 			if(Std.is(i,Interface)) 	
 				if(TypeInfo.isConcrete(t)) 
-					return new Interface(t,Deep.copy(i.val)); 
+					return new Interface(t,i.val); 
 				else
-					return new Interface(i.typ,Deep.copy(i.val)); // do not allow non-concrete types for Interfaces
+					return new Interface(i.typ,i.val); // do not allow non-concrete types for Interfaces
 			else {
 				Scheduler.panicFromHaxe( "Can't change the Interface of a non-Interface type:"+i+" to: "+TypeInfo.getName(t));  
 				return new Interface(t,TypeInfo.zeroValue(t));	 //dummy value as we have hit the panic button
@@ -865,7 +798,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 			return null;
 		}
 		if(TypeInfo.isConcrete(assTyp))	
-			return Deep.copy(ifce.val);
+			return ifce.val;
 		else	
 			return new Interface(ifce.typ,ifce.val);
 	}
@@ -875,7 +808,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 		if(!(TypeInfo.isAssignableTo(ifce.typ,assTyp)||TypeInfo.isIdentical(assTyp,ifce.typ))) // TODO review need for isIdentical 
 			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
 		if(TypeInfo.isConcrete(assTyp))	
-			return {r0:Deep.copy(ifce.val),r1:true};
+			return {r0:ifce.val,r1:true};
 		else	
 			return {r0:new Interface(ifce.typ,ifce.val),r1:true};
 	}
@@ -920,7 +853,7 @@ public function send(source:T):Bool {
 	if (this.hasSpace()) {
 		next_element = (oldest_entry + num_entries) % max_entries;
 		num_entries++;
-		entries[next_element]=Deep.copy(source); // we need a full copy in the channel, not just a reference 
+		entries[next_element]=source;  
 		return true;
 	} else
 		return false;

@@ -4,8 +4,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package ssaopt provides pure ssa optimization functions.
-package ssaopt // was ssautil
+// Package tgossa provides pure ssa optimization functions in TARDISgo.
+package tgossa // was ssautil
 
 import (
 	"code.google.com/p/go.tools/go/ssa"
