@@ -81,15 +81,17 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 				errorInfo)+LanguageList[l].Comment(comment))
 
 	case *ssa.Phi:
-		phiEntries := make([]int, len(operands))
-		valEntries := make([]interface{}, len(operands))
-		for o := range operands {
-			phiEntries[o] = instruction.(*ssa.Phi).Block().Preds[o].Index
-			valEntries[o] = *operands[o]
+		text := ""
+		if len(*instruction.(*ssa.Phi).Referrers()) > 0 {
+			phiEntries := make([]int, len(operands))
+			valEntries := make([]interface{}, len(operands))
+			for o := range operands {
+				phiEntries[o] = instruction.(*ssa.Phi).Block().Preds[o].Index
+				valEntries[o] = *operands[o]
+			}
+			text = LanguageList[l].Phi(register, phiEntries, valEntries,
+				LanguageList[l].LangType(instrVal.Type(), true, errorInfo), errorInfo)
 		}
-		text := LanguageList[l].Phi(register, phiEntries, valEntries,
-			LanguageList[l].LangType(instrVal.Type(), true, errorInfo), errorInfo)
-
 		fmt.Fprintln(&LanguageList[l].buffer, text+LanguageList[l].Comment(comment))
 
 	case *ssa.Call:

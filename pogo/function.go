@@ -276,9 +276,11 @@ func emitFunc(fn *ssa.Function) {
 				phiLoop:
 					switch fn.Blocks[b].Instrs[i+phiList].(type) {
 					case *ssa.Phi:
-						phiList++
-						if (i + phiList) < len(fn.Blocks[b].Instrs) {
-							goto phiLoop
+						if len(*fn.Blocks[b].Instrs[i+phiList].(*ssa.Phi).Referrers()) > 0 {
+							phiList++
+							if (i + phiList) < len(fn.Blocks[b].Instrs) {
+								goto phiLoop
+							}
 						}
 					}
 					if phiList > 1 {

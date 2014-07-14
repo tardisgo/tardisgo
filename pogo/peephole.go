@@ -71,8 +71,11 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 		}
 	case *ssa.Phi:
 		for _, instr := range instrs {
-			_, ok := instr.(*ssa.Phi)
+			phi, ok := instr.(*ssa.Phi)
 			if !ok {
+				return // fail
+			}
+			if len(*phi.Referrers()) == 0 {
 				return // fail
 			}
 		}
