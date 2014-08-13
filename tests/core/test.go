@@ -18,14 +18,14 @@ import (
 	//"runtime"
 	//"strconv"
 	//"strings"
-	"sync" // keep these two for now...
-	"sync/atomic"
+	//"sync" // keep these two for now...
+	//"sync/atomic"
 	"unicode/utf8"
 
 	// final one at end to match the constant declaration
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
-	_ "github.com/tardisgo/tardisgo/golibruntime/sync"
-	_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
+	//_ "github.com/tardisgo/tardisgo/golibruntime/sync"
+	//_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
 )
 
 const tardisgoLibRuntimePath = "github.com/tardisgo/tardisgo/golibruntime"
@@ -1357,9 +1357,9 @@ func testCaseSensitivity() {
 }
 
 var (
-	aGrCtr    int32
-	aGrCtrMux sync.Mutex
-	aGrWG     sync.WaitGroup
+	aGrCtr int32
+	//aGrCtrMux sync.Mutex
+	//aGrWG     sync.WaitGroup
 )
 
 func aGoroutine(a int) {
@@ -1369,11 +1369,12 @@ func aGoroutine(a int) {
 	for i := 0; i < a; i++ {
 		tardisgolib.Gosched()
 	}
-	(&aGrCtrMux).Lock()
-	atomic.AddInt32(&aGrCtr, -1)
-	(&aGrCtrMux).Unlock()
+	//(&aGrCtrMux).Lock()
+	//atomic.AddInt32(&aGrCtr, -1)
+	aGrCtr--
+	//(&aGrCtrMux).Unlock()
 
-	aGrWG.Done()
+	//aGrWG.Done()
 }
 
 const numGR = 5
@@ -1382,11 +1383,11 @@ func testManyGoroutines() {
 	var n = numGR
 	aGrCtr = numGR * 2 // set up the goroutine counter
 	for i := 0; i < n; i++ {
-		aGrWG.Add(1)
+		//aGrWG.Add(1)
 		go aGoroutine(i)
 	}
 	for i := n; i > 0; i-- {
-		aGrWG.Add(1)
+		//aGrWG.Add(1)
 		go aGoroutine(i)
 	}
 }
@@ -1596,8 +1597,8 @@ func main() {
 	testDefer()
 	testPtr()
 	testChanSelect()
-	aGrWG.Wait()
-	TEQint32(tardisgolib.CPos()+" testManyGoroutines() sync/atomic counter:", aGrCtr, 0)
+	//aGrWG.Wait()
+	TEQint32(tardisgolib.CPos()+" testManyGoroutines() (NOT sync/atomic) counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {
 		TEQ(tardisgolib.CPos(), hx.CodeInt("42;"), int(42))
 		TEQ(tardisgolib.CPos(), hx.CodeString("'test';"), "test")

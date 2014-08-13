@@ -8,11 +8,11 @@
 // license that can be found in the LICENSE file.
 
 // Package sync contains runtime functions for the Go "sync" standard library package when used by TARDIS Go
+//
+// NOTE THIS PACKAGE IS NOT USABLE, DOES NOT WORK FOR math/rand or in general after Go 1.3.1 as it is incomplete
 package sync
 
 import "github.com/tardisgo/tardisgo/tardisgolib"
-
-// THIS PACKAGE ONLY PARTLY USABLE, DOES NOT WORK FOR math/rand
 
 // this init function is for the SSA compiler, ignored by the code generator
 func init() {

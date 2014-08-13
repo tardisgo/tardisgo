@@ -145,9 +145,9 @@ func doTestable(args []string) error {
 		case 'D':
 			mode |= ssa.GlobalDebug
 		case 'P':
-			mode |= ssa.LogPackages | ssa.BuildSerially
+			mode |= ssa.PrintPackages
 		case 'F':
-			mode |= ssa.LogFunctions | ssa.BuildSerially
+			mode |= ssa.PrintFunctions
 		case 'S':
 			mode |= ssa.LogSource | ssa.BuildSerially
 		case 'C':
@@ -158,8 +158,10 @@ func doTestable(args []string) error {
 			conf.SourceImports = false
 		case 'L':
 			mode |= ssa.BuildSerially
+		case 'I':
+			mode |= ssa.BareInits
 		default:
-			log.Fatalf("Unknown -build option: '%c'.", c)
+			return fmt.Errorf("unknown -build option: '%c'", c)
 		}
 	}
 

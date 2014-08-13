@@ -8,6 +8,8 @@
 // license that can be found in the LICENSE file.
 
 // Package atomic contains runtime functions for the Go "sync/atomic" standard library package when used by TARDIS Go
+//
+// NOTE THIS PACKAGE DOES NOT WORK after Go1.3.1
 package atomic
 
 import (
