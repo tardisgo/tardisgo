@@ -73,7 +73,7 @@ TARDIS Go specific runtime functions are available in [tardisgolib](https://gith
 import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go
 ```
 
-The code is developed and tested on OS X 10.9.4, using Go 1.3.1 and Haxe 3.1.3. The CI tests run on 64-bit Ubuntu. 
+The code is developed and tested on OS X 10.9.5, using Go 1.3.3 and Haxe 3.1.3. The CI tests run on 64-bit Ubuntu. 
 
 No other platforms are currently regression tested, although the project has been run on Ubuntu 32-bit and Windows 7 32-bit. Compilation to the C# target fails on Win-7 and PHP is flakey (but you probably knew that).
 
