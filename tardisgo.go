@@ -313,6 +313,12 @@ func doTestable(args []string) error {
 			return err
 		}
 		if *allFlag {
+			for _, dir := range dirs {
+				err := os.RemoveAll(dir) //
+				if err != nil {
+					fmt.Println("Error deleting existing '" + dir + "' directory: " + err.Error())
+				}
+			}
 			results := make(chan resChan)
 			for _, cmd := range targets {
 				go doTarget(cmd, results)
@@ -326,6 +332,8 @@ func doTestable(args []string) error {
 	}
 	return nil
 }
+
+var dirs = []string{"cpp", "java", "cs", "php"}
 
 var targets = [][][]string{
 	[][]string{
