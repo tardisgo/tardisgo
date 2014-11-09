@@ -5,10 +5,11 @@
 package pogo
 
 import (
-	"code.google.com/p/go.tools/go/types"
-	"code.google.com/p/go.tools/go/types/typeutil"
 	"fmt"
 	"reflect"
+
+	"code.google.com/p/go.tools/go/types"
+	"code.google.com/p/go.tools/go/types/typeutil"
 )
 
 // IsValidInPogo exists to screen out any types that the system does not handle correctly.

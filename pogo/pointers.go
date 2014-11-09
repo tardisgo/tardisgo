@@ -5,9 +5,10 @@
 package pogo
 
 import (
+	"fmt"
+
 	"code.google.com/p/go.tools/go/ssa"
 	"code.google.com/p/go.tools/go/types"
-	"fmt"
 )
 
 // This function in case special handing is required for pointers.

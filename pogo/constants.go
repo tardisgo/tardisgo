@@ -5,10 +5,11 @@
 package pogo
 
 import (
-	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/go/ssa"
 	"fmt"
 	"go/token"
+
+	"code.google.com/p/go.tools/go/exact"
+	"code.google.com/p/go.tools/go/ssa"
 )
 
 // emit the constant declarations
