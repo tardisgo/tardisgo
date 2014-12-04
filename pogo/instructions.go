@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.

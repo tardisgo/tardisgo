@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"go/token"
 
-	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/go/ssa"
+	"golang.org/x/tools/go/exact"
+	"golang.org/x/tools/go/ssa"
 )
 
 // emit the constant declarations
