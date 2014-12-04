@@ -9,8 +9,8 @@ import (
 	"go/token"
 	"strconv"
 
-	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/go/ssa"
+	"golang.org/x/tools/go/exact"
+	"golang.org/x/tools/go/ssa"
 
 	// TARDIS Go included runtime libraries, so that they get installed and the SSA code can go and load their binary form
 	_ "github.com/tardisgo/tardisgo/golibruntime"

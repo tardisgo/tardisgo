@@ -7,8 +7,8 @@ package haxe
 import (
 	"fmt"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 type phiEntry struct{ reg, val string }

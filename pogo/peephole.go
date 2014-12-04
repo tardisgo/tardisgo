@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"go/token"
 
-	"code.google.com/p/go.tools/go/ssa"
+	"golang.org/x/tools/go/ssa"
 )
 
 // peephole optimizes and emits short sequences of instructions that do not contain control flow

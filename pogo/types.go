@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"code.google.com/p/go.tools/go/types"
-	"code.google.com/p/go.tools/go/types/typeutil"
+	"golang.org/x/tools/go/types"
+	"golang.org/x/tools/go/types/typeutil"
 )
 
 // IsValidInPogo exists to screen out any types that the system does not handle correctly.
