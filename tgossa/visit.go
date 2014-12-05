@@ -1,4 +1,4 @@
-// modified version of the file: code.google.com/p/go.tools/go/ssa/ssautil/visit.go
+// modified version of the file: golang.org/x/tools/go/ssa/ssautil/visit.go
 
 // Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
@@ -8,9 +8,11 @@
 package tgossa // was ssautil
 
 import (
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
+
+type isOverloaded func(*ssa.Function) bool
 
 // TARDISGO VERSION MODIFIED FROM
 // This file defines utilities for visiting the SSA representation of
@@ -27,14 +29,14 @@ import (
 //
 // Precondition: all packages are built.
 //
-func VisitedFunctions(prog *ssa.Program, packs []*ssa.Package /*new*/) (seen, usesGR map[*ssa.Function]bool) {
+func VisitedFunctions(prog *ssa.Program, packs []*ssa.Package, isOvl isOverloaded) (seen, usesGR map[*ssa.Function]bool) {
 	visit := visitor{
 		prog:   prog,
 		packs:  packs, // new
 		seen:   make(map[*ssa.Function]bool),
 		usesGR: make(map[*ssa.Function]bool),
 	}
-	visit.program()
+	visit.program(isOvl)
 	return visit.seen, visit.usesGR
 }
 
@@ -45,28 +47,39 @@ type visitor struct {
 	usesGR map[*ssa.Function]bool // new
 }
 
-func (visit *visitor) program() {
+func (visit *visitor) program(isOvl isOverloaded) {
 	for p := range visit.packs {
-		for _, mem := range visit.packs[p].Members { //was pkg.Members {
-			if fn, ok := mem.(*ssa.Function); ok {
-				visit.function(fn)
+		if visit.packs[p] != nil {
+			if visit.packs[p].Members != nil {
+				for _, mem := range visit.packs[p].Members { //was pkg.Members {
+					if fn, ok := mem.(*ssa.Function); ok {
+						visit.function(fn, isOvl)
+					}
+				}
 			}
 		}
 	}
-	// TODO use Oracle techniques to discover which of these methods could actually be called
 	for _, T := range visit.prog.TypesWithMethodSets() {
 		mset := visit.prog.MethodSets.MethodSet(T)
 		for i, n := 0, mset.Len(); i < n; i++ {
-			visit.function(visit.prog.Method(mset.At(i)))
+			mf := visit.prog.Method(mset.At(i))
+			visit.function(mf, isOvl)
+			// ??? conservatively mark every method as requiring goroutines, in order to simplify method calls?
+			// visit.usesGR[mf] = true
+			// TODO use Oracle techniques to discover which of these methods could actually be called
 		}
 	}
 }
 
-func (visit *visitor) function(fn *ssa.Function) {
+func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 	if !visit.seen[fn] {
+		if isOvl(fn) {
+			return
+		}
 		if len(fn.Blocks) == 0 { // exclude functions that reference C/assembler code
-			// NOTE: not marked as seen, because we don't want to inculude in output
+			// NOTE: not marked as seen, because we don't want to include in output
 			// if used, the symbol will be included in the golibruntime replacement packages
+			// TODO review
 			visit.usesGR[fn] = true // conservatively, we must assume goroutines are required
 			return
 		}
@@ -77,7 +90,7 @@ func (visit *visitor) function(fn *ssa.Function) {
 			for _, instr := range b.Instrs {
 				for _, op := range instr.Operands(buf[:0]) {
 					if afn, ok := (*op).(*ssa.Function); ok {
-						visit.function(afn)
+						visit.function(afn, isOvl)
 						if visit.usesGR[afn] {
 							visit.usesGR[fn] = true
 						}
@@ -88,7 +101,8 @@ func (visit *visitor) function(fn *ssa.Function) {
 							typ := (*op).Type()
 							typ = DeRefUl(typ)
 							switch typ.(type) {
-							case *types.Chan /*, *types.Interface, *types.Signature*/ : // TODO use oracle techniques to determine which interfaces may require GR
+							case *types.Chan /*, *types.Interface, *types.Signature */ :
+								// TODO use oracle techniques to determine which interfaces may require GR
 								visit.usesGR[fn] = true
 							}
 						}

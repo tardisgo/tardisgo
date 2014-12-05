@@ -10,8 +10,8 @@ import (
 	"strings"
 	"unicode"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 
 	"github.com/tardisgo/tardisgo/tgossa"
 )
@@ -29,7 +29,7 @@ func emitFunctions() {
 			dceList = append(dceList, exip)
 		}
 	}
-	fnMap, grMap = tgossa.VisitedFunctions(rootProgram, dceList)
+	fnMap, grMap = tgossa.VisitedFunctions(rootProgram, dceList, IsOverloaded)
 	/*
 		fmt.Println("DEBUG funcs not requiring goroutines:")
 		for df, db := range grMap {
@@ -39,64 +39,50 @@ func emitFunctions() {
 		}
 	*/
 	for f := range fnMap {
-		pn := "unknown" // Defensive, as some synthetic or other edge-case functions may not have a valid package name
-		rx := f.Signature.Recv()
-		if rx == nil { // ordinary function
-			if f.Pkg != nil {
-				if f.Pkg.Object != nil {
-					pn = f.Pkg.Object.Name()
-				}
-			} else {
-				if f.Object() != nil {
-					if f.Object().Pkg() != nil {
-						pn = f.Object().Pkg().Name()
-					}
-				}
-			}
-		} else { // determine the package information from the type description
-			typ := rx.Type()
-			ts := typ.String()
-			if ts[0:1] == "*" {
-				ts = ts[1:] // loose the leading star
-			}
-			tss := strings.Split(ts, ".")
-			if len(tss) >= 2 {
-				ts = tss[len(tss)-2] // take the part before the final dot
-			} else {
-				ts = tss[0] // no dot!
-			}
-			tss = strings.Split(ts, "/") // TODO check this also works in Windows
-			ts = tss[len(tss)-1]         // take the last part of the path
-			//fmt.Printf("DEBUG function method: fn, typ, pathEnd = %s %s %s\n", f, typ, ts)
-			pn = ts
-		}
-
-		// exclude functions from emulated overloaded packages (initially none)
-		_, _, pov := LanguageList[TargetLang].PackageOverloaded(pn)
-
-		pnCount := 0 // how many packages have this package name?
-		// TODO possible code duplication! Consider using isDupPkg() in language.go for this.
-		ap := rootProgram.AllPackages()
-		for p := range ap {
-			if pn == ap[p].Object.Name() {
-				pnCount++
-			}
-		}
-
-		//if pn == "haxegoruntime" { // DEBUG
-		//	fmt.Println("DEBUG RelString=", f.RelString(nil), "===", pn, "===", pnCount)
-		//}
-		if !pov && // the package is not overloaded and
-			!LanguageList[TargetLang].FunctionOverloaded(pn, f.Name()) &&
-			!strings.HasPrefix(pn, "_") && // the package is not in the target language, signaled by a leading underscore and
-			!(strings.HasPrefix(f.Name(), "init") &&
-				strings.Contains(f.RelString(nil), LibRuntimePath) &&
-				pnCount > 1) { // not (an init function and in the libruntimepath and more than 1 package has this name)
+		if !IsOverloaded(f) {
 			emitFunc(f)
-		} else {
-			//fmt.Println("DEBUG: function not emitted - RelString=", f.RelString(nil), "===", pn, "===", pnCount)
 		}
 	}
+}
+
+func IsOverloaded(f *ssa.Function) bool {
+	pn := "unknown" // Defensive, as some synthetic or other edge-case functions may not have a valid package name
+	rx := f.Signature.Recv()
+	if rx == nil { // ordinary function
+		if f.Pkg != nil {
+			if f.Pkg.Object != nil {
+				pn = f.Pkg.Object.Name()
+			}
+		} else {
+			if f.Object() != nil {
+				if f.Object().Pkg() != nil {
+					pn = f.Object().Pkg().Name()
+				}
+			}
+		}
+	} else { // determine the package information from the type description
+		typ := rx.Type()
+		ts := typ.String()
+		if ts[0:1] == "*" {
+			ts = ts[1:] // loose the leading star
+		}
+		tss := strings.Split(ts, ".")
+		if len(tss) >= 2 {
+			ts = tss[len(tss)-2] // take the part before the final dot
+		} else {
+			ts = tss[0] // no dot!
+		}
+		tss = strings.Split(ts, "/") // TODO check this also works in Windows
+		ts = tss[len(tss)-1]         // take the last part of the path
+		//fmt.Printf("DEBUG function method: fn, typ, pathEnd = %s %s %s\n", f, typ, ts)
+		pn = ts
+	}
+
+	if LanguageList[TargetLang].FunctionOverloaded(pn, f.Name()) ||
+		strings.HasPrefix(pn, "_") { // the package is not in the target language, signaled by a leading underscore and
+		return true
+	}
+	return false
 }
 
 //------------------------------------------------------------------------------------------------------------
@@ -332,6 +318,7 @@ func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode 
 
 // Emit the start of a function.
 func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool, mustSplitCode bool) {
+	l := TargetLang
 	posStr := CodePosition(fn.Pos())
 	pName := "unknown" // TODO review why this code appears to duplicate that at the start of emitFunctions()
 	if fn.Pkg != nil {
@@ -342,9 +329,9 @@ func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool, m
 	mName := fn.Name()
 	if fn.Signature.Recv() != nil { // we have a method
 		pName = fn.Signature.Recv().Type().String() // note no underlying()
+		//pName = LanguageList[l].PackageOverloadReplace(pName)
 	}
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
-	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer,
 		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap))
 }
@@ -387,7 +374,7 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 		if callInfo.Signature().Recv() != nil {
 			pName = callInfo.Signature().Recv().Type().String() // no use of Underlying() here
 		} else {
-			pkg := callInfo.StaticCallee().Pkg
+			pkg := callInfo.StaticCallee().Package()
 			if pkg != nil {
 				pName = pkg.Object.Name()
 			}

@@ -12,6 +12,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/tardisgo/tardisgo/tardisgolib/hx"
+
+	_ "github.com/tardisgo/tardisgo/golibruntime" // to get this included in the Go
 )
 
 // init() needs to reference all of the functions used by the Haxe as part of the runtime

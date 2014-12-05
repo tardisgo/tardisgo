@@ -22,10 +22,10 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	"code.google.com/p/go.tools/go/loader"
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/ssa/interp"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/ssa/interp"
+	"golang.org/x/tools/go/types"
 
 	// TARDIS Go additions
 	"os/exec"
@@ -130,9 +130,9 @@ func doTestable(args []string) error {
 		wordSize = 4
 	}
 
-	wordSize = 4 // TARDIS Go addition to force default int size to 32 bits
-	//conf.Build.GOARCH = "tardisgo" // TARDIS Go addition to ensure no architecure-specific code will compile
-	//conf.Build.GOOS = "tardisgo"   // TARDIS Go addition to ensure no OS-specific code will compile
+	wordSize = 4              // TARDIS Go addition to force default int size to 32 bits
+	conf.Build.GOARCH = "386" // TARDIS Go addition to ensure 32-bit int
+	conf.Build.GOOS = "nacl"  // TARDIS Go addition to ensure simplest OS-specific code to emulate
 
 	conf.TypeChecker.Sizes = &types.StdSizes{
 		MaxAlign: 8,
@@ -195,30 +195,24 @@ func doTestable(args []string) error {
 		defer pprof.StopCPUProfile()
 	}
 
-	// TARDIS Go TEST
-	// Really need to find a way to replace entire packages, this experiment did not work...
-	/*
-		conf.Fset = token.NewFileSet()
-		f, err := parser.ParseFile(conf.Fset, conf.Build.GOPATH+"/src/github.com/tardisgo/tardisgo/golibruntime/runtime/runtime.go", nil, 0)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-		conf.CreateFromFiles("", f)
-		fmt.Printf("DEBUG %s %s\n", f.Name.Name, "") //, f.Name.Obj.Name)
-	*/
-	// end TARDIS Go TEST
+	// Really need to find a way to replace entire packages, this experiment is WIP so excluded for the latest push
+	// conf.Build.GOROOT = "/Users/Elliott/Desktop/tardisgo/goroot/go1.4rc2" // TODO sort out to a sensible location
+
+	if *testFlag {
+		conf.ImportWithTests(args[0]) // assumes you give the full cannonical name of package
+		args = args[1:]
+	}
 
 	// Use the initial packages from the command line.
-	args, err := conf.FromArgs(args, *testFlag)
+	_, err := conf.FromArgs(args, *testFlag)
 	if err != nil {
 		return err
 	}
 
+	// TODO will -run still work?
 	// The interpreter needs the runtime package.
 	if *runFlag {
 		conf.Import("runtime")
-		conf.Import("github.com/tardisgo/tardisgo/golibruntime/runtime") // This required for TARDIS go to run runtime
 	}
 
 	// TARDIS GO additional line to add the language specific go runtime code
@@ -232,6 +226,7 @@ func doTestable(args []string) error {
 
 	// Create and build SSA-form program representation.
 	prog := ssa.Create(iprog, mode)
+
 	prog.BuildAll()
 
 	// Run the interpreter.
@@ -333,48 +328,49 @@ func doTestable(args []string) error {
 	return nil
 }
 
-var dirs = []string{"cpp", "java", "cs", "php"}
+var dirs = []string{"tardis/cpp", "tardis/java", "tardis/cs", "tardis/php"}
 
 var targets = [][][]string{
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "cpp"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "tardis/cpp"},
 		[]string{"echo", `"CPP:"`},
-		[]string{"time", "./cpp/Go"},
+		[]string{"time", "./tardis/cpp/Go"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-java", "java"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-java", "tardis/java"},
 		[]string{"echo", `"Java:"`},
-		[]string{"time", "java", "-jar", "java/Go.jar"},
+		[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cs", "cs"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cs", "tardis/cs"},
 		[]string{"echo", `"CS:"`},
-		[]string{"time", "mono", "./cs/bin/Go.exe"},
+		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
+	// Seldom works, so removed
+	//[][]string{
+	//	[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardis/tardisgo.n"},
+	//	[]string{"echo", `"Neko:"`},
+	//	[]string{"time", "neko", "tardis/tardisgo.n"},
+	//},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardisgo.n"},
-		[]string{"echo", `"Neko:"`},
-		[]string{"time", "neko", "tardisgo.n"},
-	},
-	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardisgo.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardis/tardisgo.js"},
 		[]string{"echo", `"Node/JS:"`},
-		[]string{"time", "node", "tardisgo.js"},
+		[]string{"time", "node", "tardis/tardisgo.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardisgo-dv.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardis/tardisgo-dv.js"},
 		[]string{"echo", `"Node/JS (using dataview):"`},
-		[]string{"time", "node", "tardisgo-dv.js"},
+		[]string{"time", "node", "tardis/tardisgo-dv.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardisgo.swf"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardis/tardisgo.swf"},
 		[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
-		[]string{"open", "tardisgo.swf"},
+		[]string{"open", "tardis/tardisgo.swf"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "php", "--php-prefix", "tgo"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo"},
 		[]string{"echo", `"PHP:"`},
-		[]string{"time", "php", "php/index.php"},
+		[]string{"time", "php", "tardis/php/index.php"},
 	},
 	[][]string{
 		[]string{"echo", ``}, // Output from this line is ignored

@@ -66,7 +66,7 @@ include (
 ```
 At present, standard library packages which rely on the Go "runtime", "os", "reflect" or "unsafe" packages are not implemented (although some OSX test code is in the golibruntime tree).
 
-A start has been made on the automated integration with Haxe libraries, but this is currently incomplete see: https://github.com/tardisgo/gohaxelib
+A start has been made on the automated integration with Haxe libraries, but this is currently (Dec 2014)  incomplete and the API will change completely very soon, see the tardisgolib/hx directory for the story so far. 
 
 TARDIS Go specific runtime functions are available in [tardisgolib](https://github.com/tardisgo/tardisgo/tree/master/tardisgolib):
 ```

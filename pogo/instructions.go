@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
@@ -97,8 +97,8 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	case *ssa.Call:
 		if instruction.(*ssa.Call).Call.IsInvoke() {
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, false, false, grMap[instruction.(*ssa.Call).Parent()], instruction.(*ssa.Call).Call, errorInfo)+
-					LanguageList[l].Comment(comment))
+				LanguageList[l].EmitInvoke(register, false, false, grMap[instruction.(*ssa.Call).Parent()],
+					instruction.(*ssa.Call).Call, errorInfo)+LanguageList[l].Comment(comment))
 		} else {
 			switch instruction.(*ssa.Call).Call.Value.(type) {
 			case *ssa.Builtin:

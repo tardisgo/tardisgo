@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package reflect is not implemented in TARDIS Go, this code a set of non-working TEST routines
-package reflect
+package tgoreflect
 
 import "unsafe"
 

@@ -6,14 +6,13 @@ package haxe
 
 import (
 	"fmt"
-	"runtime"
+	"strconv"
 	"strings"
-	"unsafe"
 
-	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"github.com/tardisgo/tardisgo/pogo"
+	"golang.org/x/tools/go/exact"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 // Start the main Go class in haxe
@@ -57,17 +56,19 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	main += `if(gr!=0) throw "non-zero goroutine number in init";` + "\n"                                       // first goroutine number is always 0, NOTE using throw as panic not setup
 
 	//NOTE HACK start
-	ap := pkg.Prog.AllPackages()
-	for p := range ap {
-		// fmt.Println("DEBUG: ", ap[p].Object.Name())
-		if ap[p].Object.Name() == "runtime" {
-			var memStats runtime.MemStats // see magic variable setting required below
-			// this magic number required to init the runtime module, may change in future versions
-			// see go/tip/go/src/pkg/runtime/mem.go:68
-			main += fmt.Sprintf("Go.runtime_sizeof_C_MStats.store(%d);\n", unsafe.Sizeof(memStats))
-			break
+	/*
+		ap := pkg.Prog.AllPackages()
+		for p := range ap {
+			// fmt.Println("DEBUG: ", ap[p].Object.Name())
+			if ap[p].Object.Name() == "runtime" {
+				var memStats runtime.MemStats // see magic variable setting required below
+				// this magic number required to init the runtime module, may change in future versions
+				// see go/tip/go/src/pkg/runtime/mem.go:68
+				main += fmt.Sprintf("Go.runtime_sizeof_C_MStats.store(%d);\n", unsafe.Sizeof(memStats))
+				break
+			}
 		}
-	}
+	*/
 	//NOTE HACK end
 
 	main += "var _sfgr=new Go_haxegoruntime_init(gr,[]).run();\n" //haxegoruntime.init() NOTE can't use callFromHaxe() as that would call this fn
@@ -99,6 +100,17 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	return main + pos + "} // end Go class"
 }
 
+func haxeStringConst(s string, position string) string { // TODO add conversions for UTF16
+	strLit, err := strconv.Unquote(s)
+	if err != nil {
+		pogo.LogError(position, "Haxe", err)
+	} else {
+		strLit = strconv.QuoteToASCII(strLit)
+		strLit = strings.Replace(strLit, "\\U", "\\u", -1) // TODO replace this cludge!!
+	}
+	return strLit
+}
+
 func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 	if lit.Value == nil {
 		return "Dynamic", "null"
@@ -111,9 +123,9 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 		// TODO check if conversion of some string constant declarations are required
 		switch lit.Type().Underlying().(type) {
 		case *types.Basic:
-			return "String", lit.Value.String()
+			return "String", haxeStringConst(lit.Value.String(), position)
 		case *types.Slice:
-			return "Slice", "Force.toUTF8slice(this._goroutine," + lit.Value.String() + ")"
+			return "Slice", "Force.toUTF8slice(this._goroutine," + haxeStringConst(lit.Value.String(), position) + ")"
 		default:
 			pogo.LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown string type"))
 		}

@@ -31,15 +31,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 // Package math provides implementation and documentation of math functions overloaded by TARDIS Go->Haxe transpiler
-package math
+package tgoaddmath
 
 import mth "math"
 
+import "github.com/tardisgo/tardisgo/tardisgolib/hx"
+
 func init() { // to stop code being removed by dead-code-elimination
-	glrFloat32bits(0)
-	glrFloat32frombits(0)
-	glrFloat64bits(0)
-	glrFloat64frombits(0)
+	if false {
+		glrFloat32bits(0)
+		glrFloat32frombits(0)
+		glrFloat64bits(0)
+		glrFloat64frombits(0)
+	}
 }
 
 // Code below adapted from https://github.com/gopherjs/gopherjs/blob/master/bitcasts/bitcasts.go
@@ -50,16 +54,17 @@ func init() { // to stop code being removed by dead-code-elimination
 // Float32bits returns the IEEE 754 binary representation of f.
 //func Float32bits(f float32) uint32 { return *(*uint32)(unsafe.Pointer(&f)) }
 func glrFloat32bits(f float32) uint32 {
-	var Zero = 0.0
-	var NegZero = -Zero
+	//var Zero = 0.0
+	//var NegZero = -Zero
 	//var NaN = Zero / Zero
 	if f == 0 {
-		if f == 0 && 1/f == float32(1/NegZero) {
-			return 1 << 31
-		}
+		// TODO review removal of next 3 lines
+		//if f == 0 && 1/f == float32(1/NegZero) {
+		//	return 1 << 31
+		//}
 		return 0
 	}
-	if f != f { // NaN
+	if mth.IsNaN(float64(f)) /*f != f*/ { // NaN
 		return 2143289344
 	}
 
@@ -97,9 +102,9 @@ func glrFloat32bits(f float32) uint32 {
 // to the IEEE 754 binary representation b.
 // func Float32frombits(b uint32) float32 { return *(*float32)(unsafe.Pointer(&b)) }
 func glrFloat32frombits(b uint32) float32 {
-	var Zero = 0.0
+	//var Zero = 0.0
 	//var NegZero = -Zero
-	var NaN = Zero / Zero
+	//var NaN = Zero / Zero
 	s := float32(+1)
 	if b&(1<<31) != 0 {
 		s = -1
@@ -111,7 +116,7 @@ func glrFloat32frombits(b uint32) float32 {
 		if m == 0 {
 			return s / 0 // Inf
 		}
-		return float32(NaN)
+		return float32(mth.NaN())
 	}
 	if e != 0 {
 		m += 1 << 23
@@ -120,22 +125,24 @@ func glrFloat32frombits(b uint32) float32 {
 		e = 1
 	}
 
-	return float32(mth.Ldexp(float64(m), int(e)-127-23)) * s
+	//return float32(mth.Ldexp(float64(m), int(e)-127-23)) * s
+	return float32(float64(m)*pow2(int(e)-1023-52)) * s
 }
 
 // Float64bits returns the IEEE 754 binary representation of f.
 //func Float64bits(f float64) uint64 { return *(*uint64)(unsafe.Pointer(&f)) }
 func glrFloat64bits(f float64) uint64 {
-	var Zero = 0.0
-	var NegZero = -Zero
+	//var Zero = 0.0
+	//var NegZero = -Zero
 	//var NaN = Zero / Zero
 	if f == 0 {
-		if f == 0 && 1/f == 1/NegZero {
-			return 1 << 63
-		}
+		// TODO review exclusion of next 3 lines due to div by zero error
+		//if f == 0 && 1/f == 1/NegZero {
+		//	return 1 << 63
+		//}
 		return 0
 	}
-	if f != f { // NaN
+	if mth.IsNaN(f) /*f != f*/ { // NaN
 		return 9221120237041090561
 	}
 
@@ -168,9 +175,9 @@ func glrFloat64bits(f float64) uint64 {
 // the IEEE 754 binary representation b.
 //func Float64frombits(b uint64) float64 { return *(*float64)(unsafe.Pointer(&b)) }
 func glrFloat64frombits(b uint64) float64 {
-	var Zero = 0.0
+	//var Zero = 0.0
 	//var NegZero = -Zero
-	var NaN = Zero / Zero
+	var NaN = mth.NaN() //Zero / Zero
 	s := float64(+1)
 	if b&(1<<63) != 0 {
 		s = -1
@@ -191,7 +198,12 @@ func glrFloat64frombits(b uint64) float64 {
 		e = 1
 	}
 
-	return mth.Ldexp(float64(m), int(e)-1023-52) * s
+	//return mth.Ldexp(float64(m), int(e)-1023-52) * s
+	return float64(m) * pow2(int(e)-1023-52) * s
+}
+
+func pow2(c int) float64 { // doing this the long way because calling Math funcs causes infinate loop
+	return hx.CallFloat("Math.pow", 2, float64(2.0), float64(c))
 }
 
 // end adapted code

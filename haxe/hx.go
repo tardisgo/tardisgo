@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"code.google.com/p/go.tools/go/ssa"
+	"golang.org/x/tools/go/ssa"
 )
 
 func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo string) string {

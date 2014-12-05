@@ -7,8 +7,8 @@ package pogo
 import (
 	"fmt"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 // This function in case special handing is required for pointers.

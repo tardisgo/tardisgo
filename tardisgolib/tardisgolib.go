@@ -27,6 +27,11 @@ func StringsUTF8() bool { return Zilen() == 3 }
 // StringsUTF16 returns a boolian answering: Is the native string encoding UTF16?
 func StringsUTF16() bool { return Zilen() == 1 }
 
+// ThisGoroutine returns a unique number of the current goroutine.
+func ThisGoroutine() int {
+	return hx.CodeInt("Scheduler.ThisGoroutine();")
+}
+
 /*
 	Replicant functions of the go "runtime" package, using these rather than the runtime package generates less Haxe code
 */

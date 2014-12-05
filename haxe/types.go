@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"strings"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"github.com/tardisgo/tardisgo/pogo"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) string {
@@ -437,13 +437,9 @@ func (l langType) EmitTypeInfo() string {
 						// *** need to deal with getters and setters
 						// *** also with calling parameters which are different for a Haxe API
 					} else {
-						line = `case "` + funcObj.Name() + `": return `
 						fnToCall := l.LangName(ms.At(m).Recv().String(),
 							funcObj.Name())
-						ovPkg, _, isOv := l.PackageOverloaded(funcObj.Pkg().Name())
-						if isOv {
-							fnToCall = strings.Replace(fnToCall, "_"+funcObj.Pkg().Name()+"_", "_"+ovPkg+"_", -1) // NOTE this is not a fool-proof method
-						}
+						line = `case "` + funcObj.Name() + `": return `
 						line += `Go_` + fnToCall + `.call` + "; "
 					}
 					ret += line
@@ -457,6 +453,9 @@ func (l langType) EmitTypeInfo() string {
 			ret += "default:}\n"
 		}
 	}
+
+	// TODO look for overloaded types at this point
+
 	ret += "default:}\n Scheduler.panicFromHaxe( " + `"no method found!"` + "); return null;}\n" // TODO improve error
 
 	return ret + "}"

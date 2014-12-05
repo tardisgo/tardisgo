@@ -7,9 +7,9 @@ package haxe
 import (
 	"fmt"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"github.com/tardisgo/tardisgo/pogo"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo string) string {

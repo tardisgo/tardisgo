@@ -11,9 +11,11 @@
 package bytes
 
 func init() { // to stop the functions being removed by dead-code-elimination
-	IndexByte([]byte{}, 0)
-	Equal([]byte{}, []byte{})
-	Compare([]byte{}, []byte{})
+	if false {
+		IndexByte([]byte{}, 0)
+		Equal([]byte{}, []byte{})
+		Compare([]byte{}, []byte{})
+	}
 }
 
 //****go:noescape

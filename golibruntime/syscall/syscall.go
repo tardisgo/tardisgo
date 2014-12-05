@@ -1,5 +1,5 @@
 // Package syscall is not implemented for TARDIS Go, this code is a non-functioning TEST, only for OSX
-package syscall
+package tgosyscall
 
 func init() {
 	// NOTHING HERE WORKS!

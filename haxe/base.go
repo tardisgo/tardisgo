@@ -10,9 +10,9 @@ import (
 	"reflect"
 	"strings"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
 	"github.com/tardisgo/tardisgo/pogo"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 var haxeStdSizes = types.StdSizes{
@@ -463,10 +463,6 @@ func (l langType) Phi(register string, phiEntries []int, valEntries []interface{
 }
 
 func (l langType) LangName(p, o string) string {
-	ovPkg, _, isOv := l.PackageOverloaded(p)
-	if isOv {
-		p = ovPkg
-	}
 	return pogo.MakeID(p) + "_" + pogo.MakeID(o) //+ "_" + makeHash(pogo.MakeID(o))
 }
 
@@ -503,7 +499,8 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	case *ssa.Function:
 		pk := "unknown"
 		if v.(*ssa.Function).Signature.Recv() != nil { // it's a method
-			pk = v.(*ssa.Function).Signature.Recv().Pkg().Name() + "." + v.(*ssa.Function).Signature.Recv().Name()
+			pn := v.(*ssa.Function).Signature.Recv().Pkg().Name()
+			pk = pn + "." + v.(*ssa.Function).Signature.Recv().Name()
 		} else {
 			if v.(*ssa.Function).Pkg != nil {
 				if v.(*ssa.Function).Pkg.Object != nil {
@@ -826,11 +823,14 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 					reflect.TypeOf(args[0].Type().Underlying())))
 				return register + `null;`
 			}
-		case "print", "println": // NOTE ugly and target-specific output!
-			ret += "trace(" + fmt.Sprintf("Go.CPos(%d)", pogo.LatestValidPosHash)
-			if len(args) > 0 { // if there are more arguments to pass, add a comma
+		case "print", "println":
+			ret += "Console." + fnToCall + "(["
+			/* DEBUG if we want to know where all the prints happen
+			ret	+= fmt.Sprintf("Go.CPos(%d)", pogo.LatestValidPosHash)
+			if len(args) > 0 {                  // if there are more arguments to pass, add a comma
 				ret += ","
 			}
+			*/
 		case "delete":
 			return register + l.IndirectValue(args[0], errorInfo) + ".remove(" + l.IndirectValue(args[1], errorInfo) + ");"
 		case "append":
@@ -906,9 +906,6 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 					}
 				}
 			}
-			pns := strings.Split(pn, "/")
-			pn = pns[len(pns)-1]
-
 			targetFunc := "Go_" + fnToCall + ".call"
 
 			if strings.HasPrefix(pn, "_") && // in a package that starts with "_"
@@ -1073,6 +1070,10 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		}
 	}
 	if isBuiltin {
+		switch fnToCall {
+		case "print", "println":
+			ret += "]"
+		}
 		ret += ")"
 	} else {
 		switch cc.Value.(type) {

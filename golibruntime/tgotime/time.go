@@ -1,5 +1,5 @@
 // Package time is not implemented in TARDIS Go, this is not-fully-working TEST code, for OSX only
-package time
+package tgotime
 
 import "github.com/tardisgo/tardisgo/tardisgolib/hx"
 

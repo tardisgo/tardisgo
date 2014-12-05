@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"go/token"
 
-	"code.google.com/p/go.tools/go/exact"
-	"code.google.com/p/go.tools/go/ssa"
+	"golang.org/x/tools/go/exact"
+	"golang.org/x/tools/go/ssa"
 )
 
 // emit the constant declarations
@@ -27,10 +27,7 @@ func emitNamedConstants() {
 					isPublic := mem.Object().Exported()
 					if isPublic { // constants will be inserted inline, these declarations of public constants are for exteral use in target language
 						l := TargetLang
-						_, _, isOverloaded := LanguageList[l].PackageOverloaded(pName)
-						if !isOverloaded { // only emit constants from non-overloaded packages
-							fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].NamedConst(pName, mName, *lit, posStr))
-						}
+						fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].NamedConst(pName, mName, *lit, posStr))
 					}
 				default:
 					LogError(posStr, "pogo", fmt.Errorf("%s.%s : emitConstants() internal error, unrecognised constant type: %v",

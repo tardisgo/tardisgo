@@ -10,8 +10,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 // The Language interface enables multiple target languages for TARDIS Go.
@@ -77,7 +77,6 @@ type Language interface {
 	TypeAssert(Register string, X ssa.Value, AssertedType types.Type, CommaOk bool, errorInfo string) string
 	EmitTypeInfo() string
 	EmitInvoke(register string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string
-	PackageOverloaded(pkg string) (overloadPkgGo, overloadPkg string, isOverloaded bool)
 	FunctionOverloaded(pkg, fun string) bool
 	Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string
 	PeepholeOpt(opt, register string, code []ssa.Instruction, errorInfo string) string

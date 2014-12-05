@@ -4,7 +4,7 @@
 
 package haxe
 
-import "code.google.com/p/go.tools/go/ssa"
+import "golang.org/x/tools/go/ssa"
 
 func (l langType) append(args []ssa.Value, errorInfo string) string {
 	source := l.IndirectValue(args[1], errorInfo)

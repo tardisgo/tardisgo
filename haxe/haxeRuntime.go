@@ -14,6 +14,28 @@ package haxe
 
 var haxeruntime = `
 
+class Console {
+	public static inline function println(v:Array<Dynamic>) {
+		#if ( cpp || cs || java || neko || php || python )
+			Sys.println(join(v));
+		#else
+			haxe.Log.trace(join(v));
+		#end
+	}
+	public static inline function print(v:Array<Dynamic>) {
+		#if ( cpp || cs || java || neko || php || python )
+			Sys.print(join(v));
+		#else
+			haxe.Log.trace(join(v));
+		#end
+	}
+	static function join(v:Array<Dynamic>):String {
+		var s = "";
+		for (i in 0...v.length) s += Std.string(v[i]) ;
+		return s;
+	}
+}
+
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 class Force { // TODO maybe this should not be a separate haxe class, as no non-Go code needs access to it
@@ -765,6 +787,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 			}
 	}
 	public static function isEqual(a:Interface,b:Interface):Bool {		// TODO ensure this very wide definition of equality is OK 
+		// TODO add code to deal with overloaded types?
 		if(a==null) 
 			if(b==null) return true;
 			else 		return false;
@@ -789,6 +812,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 		the operation will fail iff the operand is nil. (Contrast with ChangeInterface, which performs no nil-check.)
 	*/
 	public static function assert(assTyp:Int,ifce:Interface):Dynamic{
+		// TODO add code to deal with overloaded types?
 		if(ifce==null) {
 			Scheduler.panicFromHaxe( "Interface.assert null Interface");
 			return null;
@@ -803,6 +827,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 			return new Interface(ifce.typ,ifce.val);
 	}
 	public static function assertOk(assTyp:Int,ifce:Interface):{r0:Dynamic,r1:Bool} {
+		// TODO add code to deal with overloaded types?
 		if(ifce==null) 
 			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
 		if(!(TypeInfo.isAssignableTo(ifce.typ,assTyp)||TypeInfo.isIdentical(assTyp,ifce.typ))) // TODO review need for isIdentical 
@@ -1592,6 +1617,7 @@ static inline function runOne(gr:Int,entryCount:Int){ // called from above to ca
 					while(!sf._deferStack.isEmpty()){ 
 						// NOTE this will run all of the defered code for a function, even if recover() is encountered
 						// TODO go back to recover code block in SSA function struct after a recover
+						// TODO consider merging code with RunDefers()
 						var def:StackFrame=sf._deferStack.pop();
 						Scheduler.push(gr,def);
 						while(def._incomplete) 
@@ -1638,6 +1664,9 @@ public static function push(gr:Int,sf:StackFrame){
 }
 public static inline function NumGoroutine():Int {
 	return grStacks.length;
+}
+public static inline function ThisGoroutine():Int {
+	return currentGR;
 }
 
 public static function stackDump():String {

@@ -7,11 +7,10 @@ package pogo
 import (
 	"fmt"
 	"go/token"
-	"strings"
 	"unicode"
 
-	"code.google.com/p/go.tools/go/ssa"
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 /* THIS SECTION ONLY REQUIRED IF GLOBALS ARE ADDRESSABLE USING OFFSETS RATTHER THAN PSEUDO-POINTERS
@@ -80,11 +79,7 @@ func emitGlobals() {
 					if !hadErrors { // no point emitting code if we have already encounderd an error
 						isPublic := unicode.IsUpper(rune(mName[0])) // Object value sometimes not available
 						l := TargetLang
-						_, _, isOverloaded := LanguageList[l].PackageOverloaded(pName)
-						if !isOverloaded &&
-							!(mName == "init$guard" && strings.HasPrefix(glob.RelString(nil), LibRuntimePath) && isDupPkg(pName)) {
-							fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].Global(pName, mName, *glob, posStr, isPublic))
-						}
+						fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].Global(pName, mName, *glob, posStr, isPublic))
 					}
 				}
 			}
