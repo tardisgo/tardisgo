@@ -21,6 +21,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"strings"
 
 	"golang.org/x/tools/go/loader"
 	"golang.org/x/tools/go/ssa"
@@ -58,11 +59,12 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 
 // TARDIS Go addition
 var allFlag = flag.Bool("testall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
-var debugFlag = flag.Bool("debug", false, "Instrument the code to give more meaningful information during a stack dump")
+var debugFlag = flag.Bool("debug", true, "Instrument the code to give more meaningful information during a stack dump (-debug=false for speed)")
 var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
+var buidTags = flag.String("tags", "", "build tags separated by spaces")
 
 // TARDIS Go modification TODO review words here
-const usage = `SSA builder and TARDIS Go transpiler (version 0.0.1-experimental).
+const usage = `SSA builder and TARDIS Go transpiler (experimental).
 Usage: tardisgo [<flag> ...] <args> ...
 A shameless copy of the ssadump utility, but also writes a 'Go.hx' Haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:
@@ -103,7 +105,7 @@ func init() {
 
 func main() {
 	if err := doMain(); err != nil {
-		fmt.Fprintf(os.Stderr, "TARDISgo: %s", err) // TARDISgo alteration
+		fmt.Fprintf(os.Stderr, "TARDISgo: %s\n", err) // TARDISgo alteration
 		os.Exit(1)
 	}
 	os.Exit(0)
@@ -133,6 +135,8 @@ func doTestable(args []string) error {
 	wordSize = 4              // TARDIS Go addition to force default int size to 32 bits
 	conf.Build.GOARCH = "386" // TARDIS Go addition to ensure 32-bit int
 	conf.Build.GOOS = "nacl"  // TARDIS Go addition to ensure simplest OS-specific code to emulate
+
+	conf.Build.BuildTags = strings.Split(*buidTags, " ")
 
 	conf.TypeChecker.Sizes = &types.StdSizes{
 		MaxAlign: 8,

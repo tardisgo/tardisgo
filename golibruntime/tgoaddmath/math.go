@@ -203,7 +203,7 @@ func glrFloat64frombits(b uint64) float64 {
 }
 
 func pow2(c int) float64 { // doing this the long way because calling Math funcs causes infinate loop
-	return hx.CallFloat("Math.pow", 2, float64(2.0), float64(c))
+	return hx.CallFloat("", "Math.pow", 2, float64(2.0), float64(c))
 }
 
 // end adapted code

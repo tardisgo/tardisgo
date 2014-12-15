@@ -793,7 +793,6 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 	hashIf := ""  // #if  - only if required
 	hashEnd := "" // #end - ditto
 	ret := ""
-	pn := "" // package name
 
 	if isBuiltin {
 		if register != "" {
@@ -891,6 +890,8 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				return register + l.hxPseudoFuncs(fnToCall, args, errorInfo)
 			}
 
+			// This code to find the package name
+			var pn string // package name
 			if cc.Method != nil {
 				pn = cc.Method.Pkg().Name()
 			} else {
@@ -906,17 +907,18 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 					}
 				}
 			}
+			pnSplit := strings.Split(pn, "/")
+			pn = pnSplit[len(pnSplit)-1]
+			//fmt.Println("DEBUG package name", pn)
+
 			targetFunc := "Go_" + fnToCall + ".call"
 
 			if strings.HasPrefix(pn, "_") && // in a package that starts with "_"
 				!strings.HasPrefix(fnToCall, "_t") { // and not a temp var TODO this may not always be accurate
-				// start _HAXELIB SPECIAL PROCESSING
-				nextReturnAddress-- // decrement to set new return address for next call generation
-				isBuiltin = true    // pretend we are in a builtin function to avoid passing 1st param as bindings
-				isHaxeAPI = true    // we are calling a Haxe native function
-				//**************************
-				//TODO ensure correct conversions for interface{} <-> uintptr (haxe:Dynamic)
-				//**************************
+				//fmt.Println("start _HAXELIB SPECIAL PROCESSING", pn, fnToCall)
+				nextReturnAddress--                     // decrement to set new return address for next call generation
+				isBuiltin = true                        // pretend we are in a builtin function to avoid passing 1st param as bindings
+				isHaxeAPI = true                        // we are calling a Haxe native function
 				bits := strings.Split(fnToCall, "_47_") // split the parts of the string separated by /
 				endbit := bits[len(bits)-1]
 				foundDot := false
@@ -960,38 +962,56 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 						fnToCall, bits[0][0:1], bits))
 				}
 				bits[0] = bits[0][1:] // discard the magic letter from the front of the function name
-				if foundDot {         // it's a Haxe method
-					ss := strings.Split(args[0].Type().String(), "/")
-					rhs := ss[len(ss)-1]                                        // lose leading slashes
-					rxTypBits := strings.Split(strings.Split(rhs, ".")[1], "_") // loose module name
-					rxTypBits[0] = rxTypBits[0][1:]                             // loose leading capital letter
-					rxTyp := strings.Join(rxTypBits, ".")                       // reconstitute with the Haxe dots
+
+				interfaceSuffix := ""
+				interfacePrefix := ""
+				if len(args) > 0 {
+					switch args[0].Type().(type) {
+					case *types.Interface:
+						interfacePrefix = "Interface.fromDynamic("
+						interfaceSuffix = ")"
+					}
+				}
+
+				if foundDot { // it's a Haxe method
+					//ss := strings.Split(args[0].Type().String(), "/")
+					//rhs := ss[len(ss)-1] // lose leading slashes
+					//rxTypBits := strings.Split(strings.Split(rhs, ".")[1], "_") // loose module name
+					//rxTypBits[0] = rxTypBits[0][1:]                             // loose leading capital letter
+					//rxTyp := strings.Join(rxTypBits, ".")                       // reconstitute with the Haxe dots
+
 					switch bits[len(bits)-1] {
-					case "goget":
-						return hashIf + register + "=cast(" + l.IndirectValue(args[0], errorInfo) + "," +
-							rxTyp + ")." + bits[len(bits)-2][1:] + ";" + hashEnd
-					case "goset":
-						return hashIf + "cast(" + l.IndirectValue(args[0], errorInfo) + "," +
-							rxTyp + ")." + bits[len(bits)-2][1:] +
-							"=" + l.IndirectValue(args[1], errorInfo) + ";" + hashEnd
+					case "g": // get
+						return hashIf + register + "=" + l.IndirectValue(args[0], errorInfo) +
+							"." + bits[len(bits)-2][1:] + ";" + hashEnd
+					case "s": // set
+						return hashIf + "" + l.IndirectValue(args[0], errorInfo) +
+							"." + bits[len(bits)-2][1:] +
+							"=" + interfacePrefix + l.IndirectValue(args[1], errorInfo) + interfaceSuffix + ";" + hashEnd
 					default:
-						targetFunc = "cast(" + l.IndirectValue(args[0], errorInfo) + ","
-						targetFunc += rxTyp + ")." + bits[len(bits)-1][1:] //remove leading capital letter
+						//targetFunc = "cast(" + l.IndirectValue(args[0], errorInfo) + ","
+						//targetFunc += rxTyp + ")." + bits[len(bits)-1][1:] //remove leading capital letter
+
+						bits = bits[:len(bits)-1]                                                      //  trim off the "_digit" suffix
+						targetFunc = l.IndirectValue(args[0], errorInfo) + "." + bits[len(bits)-1][1:] //remove leading capital letter
 
 						args = args[1:]
 					}
 				} else {
 					switch bits[len(bits)-1] {
-					case "new": // special processing for creating a new class
-						targetFunc = "new " + strings.Join(bits[:len(bits)-1], ".") // put it back into the Haxe format for names
-					case "goget": // special processing to get a class static variable
+					case "g": // special processing to get a class static variable or enum
 						return hashIf + register + "=" +
 							strings.Join(strings.Split(strings.Join(bits[:len(bits)-1], "."), "..."), "_") + ";" + hashEnd
-					case "goset": // special processing to set a class static variable
+					case "s": // special processing to set a class static variable
 						return hashIf + strings.Join(strings.Split(strings.Join(bits[:len(bits)-1], "."), "..."), "_") +
-							"=" + l.IndirectValue(args[0], errorInfo) + ";" + hashEnd
+							"=" + interfacePrefix + l.IndirectValue(args[0], errorInfo) + interfaceSuffix + ";" + hashEnd
 					default:
-						targetFunc = strings.Join(bits, ".") // put it back into the Haxe format for names
+						bits = bits[:len(bits)-1] //  trim off the "_digit" suffix
+						if bits[len(bits)-1] == "new" {
+							targetFunc = "new " + strings.Join(bits[:len(bits)-1], ".") // put it back into the Haxe format for names
+						} else {
+							targetFunc = strings.Join(bits, ".") // put it back into the Haxe format for names
+						}
 					}
 				}
 				targetFunc = strings.Join(strings.Split(targetFunc, "..."), "_")
@@ -1061,7 +1081,17 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			ret += l.IndirectValue(args[arg], errorInfo)
 		case *types.Interface:
 			if isHaxeAPI { // for Go interface{} parameters, substitute the Haxe Dynamic part
-				ret += l.IndirectValue(args[arg], errorInfo) + ".val" // TODO check works in all situations
+				goMI, ok := args[arg].(*ssa.MakeInterface) // it is an interface that has just been made
+				if ok {
+					goFn, ok := (*(goMI.Operands(nil)[0])).(*ssa.Function) // a function is the subject of the interface
+					if ok {
+						ret += "Go_" + l.FuncName(goFn) + ".callFromHaxe" // so create a literal function name
+					} else {
+						ret += l.IndirectValue(args[arg], errorInfo) + ".val"
+					}
+				} else {
+					ret += l.IndirectValue(args[arg], errorInfo) + ".val" // TODO check works in all situations
+				}
 			} else {
 				ret += l.IndirectValue(args[arg], errorInfo)
 			}
@@ -1088,6 +1118,15 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			//**************************
 			//TODO ensure correct conversions for interface{} <-> Dynamic when isHaxeAPI
 			//**************************
+			if isHaxeAPI {
+				r := cc.Signature().Results()
+				if r.Len() == 1 {
+					switch r.At(0).Type().(type) {
+					case *types.Interface:
+						ret = "Interface.fromDynamic(" + ret + ")"
+					}
+				}
+			}
 			return hashIf + register + "=" + ret + ";" + hashEnd
 		}
 		return hashIf + ret + ";" + hashEnd
@@ -1413,6 +1452,7 @@ func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) strin
 func (l langType) EmitInvoke(register string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string {
 	val := callCommon.(ssa.CallCommon).Value
 	meth := callCommon.(ssa.CallCommon).Method.Name()
+
 	ret := "Interface.invoke(" + l.IndirectValue(val, errorInfo) + `,"` + meth + `",[`
 	if isGo {
 		ret += "Scheduler.makeGoroutine()"

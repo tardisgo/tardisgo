@@ -29,16 +29,17 @@ func StringsUTF16() bool { return Zilen() == 1 }
 
 // ThisGoroutine returns a unique number of the current goroutine.
 func ThisGoroutine() int {
-	return hx.CodeInt("Scheduler.ThisGoroutine();")
+	return hx.CallInt("", "Scheduler.ThisGoroutine", 0)
 }
 
 /*
 	Replicant functions of the go "runtime" package, using these rather than the runtime package generates less Haxe code
 */
 
+var gosched_chan = make(chan interface{})
+
 // Gosched schedules other goroutines.
 func Gosched() {
-	gosched_chan := make(chan bool)
 	select {
 	case <-gosched_chan: // should never happen
 		return
@@ -49,5 +50,5 @@ func Gosched() {
 
 // NumGoroutine returns the number of active goroutines (may be more than the number runable).
 func NumGoroutine() int {
-	return hx.CodeInt("Scheduler.NumGoroutine();")
+	return hx.CallInt("", "Scheduler.NumGoroutine", 0)
 }

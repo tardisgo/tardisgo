@@ -32,7 +32,7 @@ Xbox and PlayStation.
 For more background and on-line examples see the links from: http://tardisgo.github.io/
 
 ## Project status: a working proof of concept
-####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE,  UN-OPTIMIZED, UNSTABLE API
+####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED, UNSTABLE API
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the packages "unsafe" and "reflect", which are mentioned in the core specification, are not currently supported. 
 
@@ -73,7 +73,7 @@ TARDIS Go specific runtime functions are available in [tardisgolib](https://gith
 import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go
 ```
 
-The code is developed and tested on OS X 10.9.5, using Go 1.4beta1 and Haxe 3.1.3. The CI tests run on 64-bit Ubuntu. 
+The code is developed and tested on OS X 10.9.5, using Go 1.4 and Haxe 3.1.3. The CI tests run on 64-bit Ubuntu. 
 
 No other platforms are currently regression tested, although the project has been run on Ubuntu 32-bit and Windows 7 32-bit. Compilation to the C# target fails on Win-7 and PHP is flakey (but you probably knew that).
 
@@ -116,7 +116,9 @@ To run cross-target command-line tests as quickly as possible, the "-testall" fl
 tardisgo -testall myprogram.go
 ```
 
-If you experience a panic, and want more information in the stack dump, add the "-debug" tardisgo compilation flag to instrument the code further.
+To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
+
+If you experience a panic, you get lots of information in the stack dump, but this comes at a cost. Use the "-debug=false" tardisgo compilation flag to de-instrument the code and make it go faster.
 
 If you can't work-out what is going on, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
 
@@ -143,9 +145,9 @@ In speed terms, the planned next release of Haxe (3.2) will contain cross-platfo
 
 Longer term development priorities:
 - For all Go standard libraries, report testing and implementation status
-- Improve integration with Haxe code and libraries, automating as far as possible
+- Improve integration with Haxe code and libraries, automating as far as possible - [in progress](https://github.com/tardisgo/gohaxelib)
 - Improve currently poor execution speeds and update benchmarking results
-- Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications
+- Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications - [in progress](https://github.com/tardisgo/tardisgo-samples/tree/master/openfl)
 - Improve debug and profiling capabilities
 - Add command line flags to control options
 - Publish more explanation and documentation

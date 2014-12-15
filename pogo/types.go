@@ -61,9 +61,15 @@ func LogTypeUse(t types.Type) string {
 	return fmt.Sprintf("%d", r)
 }
 
-// TypesWithMethodSets ia a utility function to avoid exposing rootProgram
-func TypesWithMethodSets() []types.Type {
-	return rootProgram.TypesWithMethodSets()
+// TypesWithMethodSets in a utility function to only return seen types
+func TypesWithMethodSets() (sets []types.Type) {
+	typs := rootProgram.TypesWithMethodSets()
+	for _,t := range typs {
+		if TypesEncountered.At(t) != nil {
+			sets = append(sets, t)
+		}
+	}
+	return sets
 }
 
 // Wrapper for target language emitTypeInfo()

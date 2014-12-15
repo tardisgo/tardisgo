@@ -579,12 +579,17 @@ func (mf *MyFloat) set42() {
 	*mf = 42
 }
 
+// this is required as Go does not allow the MyFloat2 type to inheret MyFloat.Abs
 func (f MyFloat2) Abs() float64 {
 	if f < 0 {
 		return float64(-f)
 	}
 	return float64(f)
 }
+func (f MyFloat2) Scale(x float64) float64 {
+	return float64(f) * x
+}
+
 func (ia *IntArray) set42() {
 	for i := range ia {
 		ia[i] = 42
@@ -624,6 +629,10 @@ func testNamed() {
 	f := MyFloat(-555)
 	g := MyFloat2(-555)
 	TEQfloat(tardisgolib.CPos(), f.Abs(), g.Abs(), 0.0002)
+	fi := Abser(f)
+	gi := Abser(g)
+	TEQfloat(tardisgolib.CPos(), fi.Abs(), gi.Abs(), 0.0002)
+
 	ia.set42()
 	f.set42()
 	TEQfloat(tardisgolib.CPos(), float64(ia[3]), float64(f), 0.0002)
@@ -1600,8 +1609,8 @@ func main() {
 	//aGrWG.Wait()
 	TEQint32(tardisgolib.CPos()+" testManyGoroutines() (NOT sync/atomic) counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {
-		TEQ(tardisgolib.CPos(), hx.CodeInt("42;"), int(42))
-		TEQ(tardisgolib.CPos(), hx.CodeString("'test';"), "test")
+		TEQ(tardisgolib.CPos(), hx.CodeInt("", "42;"), int(42))
+		TEQ(tardisgolib.CPos(), hx.CodeString("", "'test';"), "test")
 		TEQ(tardisgolib.CPos()+"Num Haxe GR post-wait", tardisgolib.NumGoroutine(), 1)
 		//panic("show GRs active")
 	} else {

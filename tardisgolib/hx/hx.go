@@ -7,86 +7,108 @@
 //
 package hx
 
+// Func returns the Haxe form of a Go function
+func Func(function interface{}) uintptr { return 0 }
+
 // Code inserts the given constant Haxe code at this point.
-// resTyp = a string giving the Go name of the type of the data to be returned as an interface. "" if nothing is returned.
+// ifLogic = a constant string giving the logic for wrapping Haxe complie time condition, ignored if "": #if (ifLogic) ... #end
+// resTyp = a constant string giving the Go name of the type of the data to be returned as an interface. "" if nothing is returned.
 // code = must be a constant string containing a well-formed Haxe statement, probably terminated with a ";".
 // args = whatever aguments are passed (as interfaces), typical haxe code to access the value of an argument is "_a[3].val".
 // Try the Go code:
-//   hx.Code("trace('HAXE trace:',_a[0].val,_a[1].val,_a[2].val,_a[3].val);", 11, 22, 33, 44)
-func Code(code string, args ...interface{}) {}
+//   hx.Code("",trace('HAXE trace:',_a.itemAddr(0).load().val,_a.itemAddr(1).load().val);", 42,43)
+func Code(ifLogic, code string, args ...interface{}) {}
 
 // CodeIface - same as Code() but returns an interface.
-func CodeIface(resTyp, code string, args ...interface{}) interface{} { return nil }
+func CodeIface(ifLogic, resTyp, code string, args ...interface{}) interface{} { return nil }
 
 // CodeBool - same as Code() but returns a bool.
-func CodeBool(code string, args ...interface{}) bool { return false }
+func CodeBool(ifLogic, code string, args ...interface{}) bool { return false }
 
 // CodeInt - same as Code() but returns an int.
-func CodeInt(code string, args ...interface{}) int { return 0 }
+func CodeInt(ifLogic, code string, args ...interface{}) int { return 0 }
 
 // CodeFloat - same as Code() but returns a float64.
-func CodeFloat(code string, args ...interface{}) float64 { return 0.0 }
+func CodeFloat(ifLogic, code string, args ...interface{}) float64 { return 0.0 }
 
 // CodeString - same as Code() but returns a string.
-func CodeString(code string, args ...interface{}) string { return "" }
+func CodeString(ifLogic, code string, args ...interface{}) string { return "" }
 
-// CodeDynamic - same as Code() but returns a uintptr (modeled as Haxe Dynamic in TARDIS Go, so can hold any Haxe object).
-func CodeDynamic(code string, args ...interface{}) uintptr { return 0 }
+// CodeDynamic - same as Code() but returns a Dynamic (modeled as Haxe Dynamic in TARDIS Go, so can hold any Haxe object).
+func CodeDynamic(ifLogic, code string, args ...interface{}) uintptr { return 0 }
 
-// Call static Haxe functions, target must be a constant string, nargs must be a constant number of arguments.
+// Call static Haxe functions, ifLogic, resTyp & target must be constant strings, nargs must be a constant number of arguments.
 
-func Call(target string, nargs int, args ...interface{})                          {}
-func CallIface(resTyp, target string, nargs int, args ...interface{}) interface{} { return nil }
-func CallBool(target string, nargs int, args ...interface{}) bool                 { return false }
-func CallInt(target string, nargs int, args ...interface{}) int                   { return 0 }
-func CallFloat(target string, nargs int, args ...interface{}) float64             { return 0.0 }
-func CallString(target string, nargs int, args ...interface{}) string             { return "" }
-func CallDynamic(target string, nargs int, args ...interface{}) uintptr           { return 0 }
+func Call(ifLogic, target string, nargs int, args ...interface{})                          {}
+func CallIface(ifLogic, resTyp, target string, nargs int, args ...interface{}) interface{} { return nil }
+func CallBool(ifLogic, target string, nargs int, args ...interface{}) bool                 { return false }
+func CallInt(ifLogic, target string, nargs int, args ...interface{}) int                   { return 0 }
+func CallFloat(ifLogic, target string, nargs int, args ...interface{}) float64             { return 0.0 }
+func CallString(ifLogic, target string, nargs int, args ...interface{}) string             { return "" }
+func CallDynamic(ifLogic, target string, nargs int, args ...interface{}) uintptr           { return 0 }
 
-// Call instance Haxe functions, method must be a constant string, nargs must be a constant number of arguments.
+func New(ifLogic, target string, nargs int, args ...interface{}) uintptr { return 0 } // new haxe type
 
-func Meth(object uintptr, method string, nargs int, args ...interface{}) {}
-func MethIface(resTyp, object uintptr, nargs int, method string, args ...interface{}) interface{} {
+// Call Haxe instance functions, method must be a constant string, nargs must be a constant number of arguments.
+// haxeType is required when the underlying haxe object is a simple type in compiled langs, like Date (int in cpp), otherwise ""
+// ifLogic, resTyp & haxeType must be constant strings
+
+func Meth(ifLogic string, object uintptr, haxeType string, method string, nargs int, args ...interface{}) {
+}
+func MethIface(ifLogic string, resTyp uintptr, object interface{}, haxeType string, nargs int, method string, args ...interface{}) interface{} {
 	return nil
 }
-func MethBool(object uintptr, method string, nargs int, args ...interface{}) bool       { return false }
-func MethInt(object uintptr, method string, nargs int, args ...interface{}) int         { return 0 }
-func MethFloat(object uintptr, method string, nargs int, args ...interface{}) float64   { return 0.0 }
-func MethString(object uintptr, method string, nargs int, args ...interface{}) string   { return "" }
-func MethDynamic(object uintptr, method string, nargs int, args ...interface{}) uintptr { return 0 }
+func MethBool(ifLogic string, object uintptr, haxeType string, method string, nargs int, args ...interface{}) bool {
+	return false
+}
+func MethInt(ifLogic string, object uintptr, haxeType string, method string, nargs int, args ...interface{}) int {
+	return 0
+}
+func MethFloat(ifLogic string, object uintptr, haxeType string, method string, nargs int, args ...interface{}) float64 {
+	return 0.0
+}
+func MethString(ifLogic string, object uintptr, haxeType string, method string, nargs int, args ...interface{}) string {
+	return ""
+}
+func MethDynamic(ifLogic string, object uintptr, haxeType string, method string, nargs int, args ...interface{}) uintptr {
+	return 0
+}
 
-// Get a static Haxe value, name must be a constant string.
+// Get a static Haxe value, ifLogic, resTyp & name must be constant strings.
 
-func GetIface(resTyp, name string) interface{} { return nil }
-func GetBool(name string) bool                 { return false }
-func GetInt(name string) int                   { return 0 }
-func GetFloat(name string) float64             { return 0.0 }
-func GetString(name string) string             { return "" }
-func GetDynamic(name string) uintptr           { return 0 }
+func GetIface(ifLogic, resTyp, name string) interface{} { return nil }
+func GetBool(ifLogic, name string) bool                 { return false }
+func GetInt(ifLogic, name string) int                   { return 0 }
+func GetFloat(ifLogic, name string) float64             { return 0.0 }
+func GetString(ifLogic, name string) string             { return "" }
+func GetDynamic(ifLogic, name string) uintptr           { return 0 }
 
-// Set a static Haxe value, name must be a constant string.
+// Set a static Haxe value, ifLogic, resTyp & name must be constant strings.
 
-func SetIface(resTyp, name string, val interface{}) {}
-func SetBool(name string, val bool)                 {}
-func SetInt(name string, val int)                   {}
-func SetFloat(name string, val float64)             {}
-func SetString(name string, val string)             {}
-func SetDynamic(name string, val uintptr)           {}
+func SetIface(ifLogic, resTyp, name string, val interface{}) {}
+func SetBool(ifLogic, name string, val bool)                 {}
+func SetInt(ifLogic, name string, val int)                   {}
+func SetFloat(ifLogic, name string, val float64)             {}
+func SetString(ifLogic, name string, val string)             {}
+func SetDynamic(ifLogic, name string, val uintptr)           {}
 
-// Get a field value in a Haxe object, name must be a constant string.
+// Get a field value in a Haxe object, ifLogic, resTyp & name must be constant strings.
 
-func FgetIface(resTyp string, object uintptr, name string) interface{} { return nil }
-func FgetBool(object uintptr, name string) bool                        { return false }
-func FgetInt(object uintptr, name string) int                          { return 0 }
-func FgetFloat(object uintptr, name string) float64                    { return 0.0 }
-func FgetString(object uintptr, name string) string                    { return "" }
-func FgetDynamic(object uintptr, name string) uintptr                  { return 0 }
+func FgetIface(ifLogic, resTyp string, object uintptr, haxeType string, name string) interface{} {
+	return nil
+}
+func FgetBool(ifLogic string, object uintptr, haxeType string, name string) bool       { return false }
+func FgetInt(ifLogic string, object uintptr, haxeType string, name string) int         { return 0 }
+func FgetFloat(ifLogic string, object uintptr, haxeType string, name string) float64   { return 0.0 }
+func FgetString(ifLogic string, object uintptr, haxeType string, name string) string   { return "" }
+func FgetDynamic(ifLogic string, object uintptr, haxeType string, name string) uintptr { return 0 }
 
-// Set a field value in a Haxe object, name must be a constant string.
+// Set a field value in a Haxe object, ifLogic, resTyp & name must be constant strings.
 
-func FsetIface(resTyp string, object uintptr, name string, val interface{}) {}
-func FsetBool(object uintptr, name string, val bool)                        {}
-func FsetInt(object uintptr, name string, val int)                          {}
-func FsetFloat(object uintptr, name string, val float64)                    {}
-func FsetString(object uintptr, name string, val string)                    {}
-func FsetDynamic(object uintptr, name string, val uintptr)                  {}
+func FsetIface(ifLogic, resTyp string, object uintptr, haxeType string, name string, val interface{}) {
+}
+func FsetBool(ifLogic string, object uintptr, haxeType string, name string, val bool)       {}
+func FsetInt(ifLogic string, object uintptr, haxeType string, name string, val int)         {}
+func FsetFloat(ifLogic string, object uintptr, haxeType string, name string, val float64)   {}
+func FsetString(ifLogic string, object uintptr, haxeType string, name string, val string)   {}
+func FsetDynamic(ifLogic string, object uintptr, haxeType string, name string, val uintptr) {}

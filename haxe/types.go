@@ -76,6 +76,14 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			}
 			return "Interface"
 		case *types.Named:
+			haxeName := getHaxeClass(t.(*types.Named).String())
+			//fmt.Println("DEBUG Go named type -> Haxe type :", t.(*types.Named).String(), "->", haxeName)
+			if haxeName != "" {
+				if retInitVal {
+					return `null` // NOTE code to the right does not work in openfl/flash: `Type.createEmptyInstance(` + haxeName + ")"
+				}
+				return haxeName
+			}
 			return l.LangType(t.(*types.Named).Underlying(), retInitVal, errorInfo)
 		case *types.Chan:
 			if retInitVal {
@@ -343,10 +351,42 @@ func (l langType) TypeAssert(register string, v ssa.Value, AssertedType types.Ty
 	return register + `=Interface.assert(` + pogo.LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
 }
 
+func getHaxeClass(fullname string) string {
+	if fullname[0] != '*' { // pointers can't be Haxe types
+		bits := strings.Split(fullname, "/")
+		s := bits[len(bits)-1] // right-most bit contains the package name & type name
+		// fmt.Println("DEBUG bit to consider", s)
+		if s[0] == '_' { // leading _ on the package name means a haxe type
+			//fmt.Println("DEBUG non-pointer goType", goType)
+			splits := strings.Split(s, ".")
+			if len(splits) == 2 { // we have a package and type
+				goType := splits[1][1:] // type part only, without the leading Restrictor
+				haxeType := strings.Replace(goType, "_", ".", -1)
+				haxeType = strings.Replace(haxeType, "...", ".", -1)
+				// fmt.Println("DEBUG go->haxe found", goType, "->", haxeType)
+				return haxeType
+			}
+		}
+	}
+	return ""
+}
+
 func (l langType) EmitTypeInfo() string {
 	ret := "class TypeInfo{\n"
 	pte := pogo.TypesEncountered
 	pteKeys := pogo.TypesEncountered.Keys()
+
+	ret += "public static function isHaxeClass(id:Int):Bool {\nswitch(id){" + "\n"
+	for k := range pteKeys {
+		v := pte.At(pteKeys[k])
+		goType := pteKeys[k].String()
+		//fmt.Println("DEBUG full goType", goType)
+		haxeClass := getHaxeClass(goType)
+		if haxeClass != "" {
+			ret += "case " + fmt.Sprintf("%d", v) + `: return true; // ` + goType + "\n"
+		}
+	}
+	ret += `default: return false;}}` + "\n"
 
 	ret += "public static function getName(id:Int):String {\nswitch(id){" + "\n"
 	for k := range pteKeys {
@@ -437,10 +477,15 @@ func (l langType) EmitTypeInfo() string {
 						// *** need to deal with getters and setters
 						// *** also with calling parameters which are different for a Haxe API
 					} else {
+						line = `case "` + funcObj.Name() + `": return `
+						//haxeClass := getHaxeClass(ms.At(m).Recv().String())
+						//if haxeClass == "" {
 						fnToCall := l.LangName(ms.At(m).Recv().String(),
 							funcObj.Name())
-						line = `case "` + funcObj.Name() + `": return `
 						line += `Go_` + fnToCall + `.call` + "; "
+						//} else {
+						//	line += haxeClass + "." + funcObj.Name() + "; "
+						//}
 					}
 					ret += line
 				}

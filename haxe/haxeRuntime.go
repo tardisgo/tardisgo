@@ -639,7 +639,7 @@ class Slice {
 	private var start:Int;
 	private var end:Int;
 	private var capacity:Int;
-	public var length:Int; // could make this a function access, but it never changes and is used a lot
+	public var length:Int; // could make this a function access, but it never changes (?) and is used a lot
 	
 	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) {
 		baseArray = fromArray;
@@ -753,7 +753,7 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 	}
 }
 
-class Interface{ // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix go //TODO tidy names 
+class Interface{ // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix tgo //TODO tidy names 
 	public var typ:Int; // the possibly interface type that has been cast to
 	public var val:Dynamic;
 
@@ -763,9 +763,28 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 	}
 	public function toString():String {
 		if(val==null)
-			return "Interface{nil:"+TypeInfo.getName(typ)+"}";
+			return "Interface{nil:"+TypeInfo.getName(typ)+"}"; // ??? Can this path ever be reached ???
 		else
 			return "Interface{"+val+":"+TypeInfo.getName(typ)+"}";
+	}
+	public static function toDynamic(v:Interface):Dynamic {
+		if(v==null)
+			return null;
+		return v.val;
+	}
+	public static function fromDynamic(v:Dynamic):Interface {
+		if(v==null)
+			return null;
+		if(Std.is(v,Bool))
+			return new Interface(TypeInfo.getId("bool"),v); 
+		if(Std.is(v,Int))
+			return new Interface(TypeInfo.getId("int"),v); // ??? UInt ??? 
+		if(Std.is(v,Float))
+			return new Interface(TypeInfo.getId("float64"),v); 
+		if(Std.is(v,String))
+			return new Interface(TypeInfo.getId("string"),v); 
+		// TODO consider testing for other types here?
+		return new Interface(TypeInfo.getId("uintptr"),v); 
 	}
 	public static function change(t:Int,i:Interface):Interface {
 		if(i==null)	
@@ -827,7 +846,6 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 			return new Interface(ifce.typ,ifce.val);
 	}
 	public static function assertOk(assTyp:Int,ifce:Interface):{r0:Dynamic,r1:Bool} {
-		// TODO add code to deal with overloaded types?
 		if(ifce==null) 
 			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
 		if(!(TypeInfo.isAssignableTo(ifce.typ,assTyp)||TypeInfo.isIdentical(assTyp,ifce.typ))) // TODO review need for isIdentical 
@@ -840,13 +858,10 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 	public static function invoke(ifce:Interface,meth:String,args:Array<Dynamic>):Dynamic {
 		if(ifce==null) 
 			Scheduler.panicFromHaxe( "Interface.invoke null Interface"); 
-		//trace("Invoke:"+ifce+":"+meth);
 		if(!Std.is(ifce,Interface)) 
 			Scheduler.panicFromHaxe( "Interface.invoke on non-Interface value"); 
-		//return Reflect.callMethod(o:Dynamic, func:Dynamic, args:Array<Dynamic>);
-		var fn:Dynamic=TypeInfo.method(ifce.typ,meth);
-		//trace("Invoke:"+TypeInfo.getName(ifce.typ)+":"+meth+":"+ifce.val+":"+fn);
-		//return fn([],Deep.copy(ifce.val));
+		var fn:Dynamic;
+		fn=TypeInfo.method(ifce.typ,meth);
 		return Reflect.callMethod(null, fn, args);
 	}
 }
