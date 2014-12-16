@@ -113,7 +113,7 @@ var fnUsesGr bool               // does the current function use Goroutines?
 
 func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, position string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool) string {
 
-	//fmt.Println("DEBUG: HAXE FuncStart: ", packageName, ".", objectName)
+	//fmt.Println("DEBUG: HAXE FuncStart: ", packageName, ".", objectName, usesGr)
 
 	nextReturnAddress = -1
 	hadReturn = false
@@ -207,7 +207,10 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
 	}
-	ret += ").run(); \nwhile(_sf._incomplete) Scheduler.runAll();\n" // TODO alter for multi-threading if ever implemented
+	ret += ").run(); \n"
+	if usesGr {
+		ret += "while(_sf._incomplete) Scheduler.runAll();\n" // TODO alter for multi-threading if ever implemented
+	}
 	if fn.Signature.Results().Len() > 0 {
 		ret += "return _sf.res();\n"
 	}
@@ -244,7 +247,10 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
 	}
-	ret += ").run(); \nwhile(_sf._incomplete) Scheduler.run1(_gr);\n" // NOTE no "panic()" or "go" code in runtime Go
+	ret += ").run(); \n"
+	if usesGr {
+		ret += "while(_sf._incomplete) Scheduler.run1(_gr);\n" // NOTE no "panic()" or "go" code in runtime Go
+	}
 	if fn.Signature.Results().Len() > 0 {
 		ret += "return _sf.res();\n"
 	}
@@ -282,12 +288,16 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 				case *ssa.Builtin:
 					//NoOp
 				default:
-					// TODO optimise here for pseudo-functions used when calling Haxe code direct
-					ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
-					if usesGr {
-						ret += " #if js =null #end ;\n"
-					} else {
-						ret += "=null;\n" // need to initalize when using the native stack for these vars
+					// Optimise here not to declare Stack Frames for pseudo-functions used when calling Haxe code direct
+					pp := getPackagePath(in.(*ssa.Call).Common())
+					ppBits := strings.Split(pp, "/")
+					if ppBits[len(ppBits)-1] != "hx" && !strings.HasPrefix(ppBits[len(ppBits)-1], "_") {
+						ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
+						if usesGr {
+							ret += " #if js =null #end ;\n"
+						} else {
+							ret += "=null;\n" // need to initalize when using the native stack for these vars
+						}
 					}
 					pseudoNextReturnAddress--
 				}
@@ -300,7 +310,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 			}
 
 			reg := l.Value(in, pogo.CodePosition(in.Pos()))
-			if reg != "" {
+			if reg != "" && !canOptMap[reg[1:]] { // only add the reg to the SF if not defined in sub-functions
 				// Underlying() not used in 2 lines below because of *ssa.(opaque type)
 				typ := l.LangType(in.(ssa.Value).Type(), false, reg+"@"+position)
 				init := l.LangType(in.(ssa.Value).Type(), true, reg+"@"+position) // this may be overkill...
@@ -353,7 +363,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 }
 
 func (l langType) runFunctionCode(packageName, objectName, msg string) string {
-	ret := "public function run():Go_" + l.LangName(packageName, objectName) + " {\n"
+	ret := "public function run():Go_" + l.LangName(packageName, objectName) + " { //" + msg + "\n"
 	ret += emitTrace(`Run: ` + l.LangName(packageName, objectName) + " " + msg)
 	return ret
 }
@@ -402,7 +412,7 @@ func haxeVar(reg, typ, init, position, errorStart string) string {
 		return ""
 	}
 	ret := "var " + reg + ":" + typ
-	if init != "" && init != "null" {
+	if init != "" {
 		ret += init
 	}
 	return ret + ";"
@@ -781,6 +791,27 @@ func (l langType) Panic(v1 interface{}, errorInfo string, usesGr bool) string {
 	return ret
 }
 
+func getPackagePath(cc *ssa.CallCommon) string {
+	// This code to find the package name
+	var pn string // package name
+	if cc.Method != nil {
+		pn = cc.Method.Pkg().Name()
+	} else {
+		if cc.StaticCallee() != nil {
+			if cc.StaticCallee().Package() != nil {
+				pn = cc.StaticCallee().Package().String()
+			} else {
+				if cc.StaticCallee().Object() != nil {
+					if cc.StaticCallee().Object().Pkg() != nil {
+						pn = cc.StaticCallee().Object().Pkg().Name()
+					}
+				}
+			}
+		}
+	}
+	return pn
+}
+
 func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isBuiltin, isGo, isDefer, usesGr bool, fnToCall, errorInfo string) string {
 	isHaxeAPI := false
 	hashIf := ""  // #if  - only if required
@@ -883,23 +914,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				return register + l.hxPseudoFuncs(fnToCall, args, errorInfo)
 			}
 
-			// This code to find the package name
-			var pn string // package name
-			if cc.Method != nil {
-				pn = cc.Method.Pkg().Name()
-			} else {
-				if cc.StaticCallee() != nil {
-					if cc.StaticCallee().Package() != nil {
-						pn = cc.StaticCallee().Package().String()
-					} else {
-						if cc.StaticCallee().Object() != nil {
-							if cc.StaticCallee().Object().Pkg() != nil {
-								pn = cc.StaticCallee().Object().Pkg().Name()
-							}
-						}
-					}
-				}
-			}
+			pn := getPackagePath(&cc)
 			pnSplit := strings.Split(pn, "/")
 			pn = pnSplit[len(pnSplit)-1]
 			//fmt.Println("DEBUG package name", pn)

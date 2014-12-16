@@ -37,6 +37,7 @@ func VisitedFunctions(prog *ssa.Program, packs []*ssa.Package, isOvl isOverloade
 		usesGR: make(map[*ssa.Function]bool),
 	}
 	visit.program(isOvl)
+	//fmt.Printf("DEBUG VisitedFunctions.usesGR %v\n", visit.usesGR)
 	return visit.seen, visit.usesGR
 }
 
@@ -80,7 +81,7 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 			// NOTE: not marked as seen, because we don't want to include in output
 			// if used, the symbol will be included in the golibruntime replacement packages
 			// TODO review
-			visit.usesGR[fn] = true // conservatively, we must assume goroutines are required
+			visit.usesGR[fn] = false // external functions cannot use goroutines
 			return
 		}
 		visit.seen[fn] = true
@@ -96,17 +97,19 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 						}
 						//println(fn.Name(), " calls ", afn.Name())
 					}
+					/* TODO, review if this code should be included
 					if !visit.usesGR[fn] {
 						if _, ok := (*op).(ssa.Value); ok {
 							typ := (*op).Type()
 							typ = DeRefUl(typ)
 							switch typ.(type) {
-							case *types.Chan /*, *types.Interface, *types.Signature */ :
-								// TODO use oracle techniques to determine which interfaces may require GR
-								visit.usesGR[fn] = true
+							case *types.Chan , *types.Interface, *types.Signature :
+								// TODO use oracle techniques to determine which interfaces or functions may require GR
+								visit.usesGR[fn] = true // may be too conservative
 							}
 						}
 					}
+					*/
 				}
 				if !visit.usesGR[fn] {
 					switch instr.(type) {
