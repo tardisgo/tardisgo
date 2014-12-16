@@ -793,17 +793,21 @@ func (l langType) Panic(v1 interface{}, errorInfo string, usesGr bool) string {
 
 func getPackagePath(cc *ssa.CallCommon) string {
 	// This code to find the package name
-	var pn string // package name
-	if cc.Method != nil {
-		pn = cc.Method.Pkg().Name()
-	} else {
-		if cc.StaticCallee() != nil {
-			if cc.StaticCallee().Package() != nil {
-				pn = cc.StaticCallee().Package().String()
-			} else {
-				if cc.StaticCallee().Object() != nil {
-					if cc.StaticCallee().Object().Pkg() != nil {
-						pn = cc.StaticCallee().Object().Pkg().Name()
+	var pn string = "UNKNOWN" // package name
+	if cc != nil {
+		if cc.Method != nil {
+			if cc.Method.Pkg() != nil {
+				pn = cc.Method.Pkg().Name()
+			}
+		} else {
+			if cc.StaticCallee() != nil {
+				if cc.StaticCallee().Package() != nil {
+					pn = cc.StaticCallee().Package().String()
+				} else {
+					if cc.StaticCallee().Object() != nil {
+						if cc.StaticCallee().Object().Pkg() != nil {
+							pn = cc.StaticCallee().Object().Pkg().Name()
+						}
 					}
 				}
 			}

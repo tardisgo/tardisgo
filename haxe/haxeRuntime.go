@@ -252,7 +252,7 @@ class Object { // this implementation will improve with typed array access
 		length = byteSize;
 	}
 	public function isEqual(off:Int,target:Object,tgtOff:Int):Bool { // TODO check if correct, used by interface{} value comparison
-		trace("isEqual");
+		//trace("isEqual");
 		if((this.length-off)!=(target.length-tgtOff)) return false;
 		for(i in 0...(this.length-off)) {
 			if(this.get(i+off)!=target.get(i+tgtOff))

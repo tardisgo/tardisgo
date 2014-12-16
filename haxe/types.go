@@ -189,7 +189,12 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 	}
 	switch langType { // target Haxe type
 	case "Dynamic": // no cast allowed for dynamic variables
-		return register + "=" + l.IndirectValue(v, errorInfo) + ";" // TODO review if this is correct for Int64
+		vInt := l.IndirectValue(v, errorInfo)
+		switch srcTyp {
+		case "GOint64":
+			vInt = "GOint64.toInt(" + vInt + ")" // some Go code uses uintptr as just another integer
+		}
+		return register + "=" + vInt + ";" // TODO review if this is correct for Int64
 	case "String":
 		switch srcTyp {
 		case "Slice":
