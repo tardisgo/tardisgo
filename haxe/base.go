@@ -98,14 +98,6 @@ func (langType) FileStart(haxePackageName, headerText string) string {
 	return "package " + haxePackageName + ";\n" + imports + headerText + tardisgoLicence + haxeruntime
 }
 
-// Type definitions are not carried through to Haxe, though they might be to other target languages
-func (l langType) TypeStart(nt *types.Named, err string) string {
-	return "" //ret
-}
-func (langType) TypeEnd(nt *types.Named, err string) string {
-	return "" //"}"
-}
-
 func (langType) FileEnd() string {
 	return ""
 }
@@ -1358,14 +1350,21 @@ func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
 }
 
 func (l langType) MapUpdate(Map, Key, Value interface{}, errorInfo string) string {
+	key := l.IndirectValue(Key, errorInfo)
+	if l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo) == "Object" {
+		key += ".toString()" // object keys must be serialized
+	}
 	ret := l.IndirectValue(Map, errorInfo) + ".set("
-	ret += l.IndirectValue(Key, errorInfo) + ","
+	ret += key + ","
 	ret += l.IndirectValue(Value, errorInfo) + ");"
 	return ret
 }
 
 func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorInfo string) string {
 	keyString := l.IndirectValue(Key, errorInfo)
+	if l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo) == "Object" {
+		keyString += ".toString()" // object keys must be serialized
+	}
 	if l.LangType(Map.(ssa.Value).Type().Underlying(), false, errorInfo) == "String" {
 		switch Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 		case types.Int64, types.Uint64:

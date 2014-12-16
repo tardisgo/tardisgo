@@ -91,11 +91,15 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			}
 			return "Channel<" + l.LangType(t.(*types.Chan).Elem(), false, errorInfo) + ">"
 		case *types.Map:
+			key := l.LangType(t.(*types.Map).Key(), false, errorInfo)
+			if key == "Object" {
+				key = "String" // objects as keys must be serialized into strings to get the correct results
+			}
 			if retInitVal {
-				return "new Map<" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + "," +
+				return "new Map<" + key + "," +
 					l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">()"
 			}
-			return "Map<" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + "," +
+			return "Map<" + key + "," +
 				l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">"
 		case *types.Slice:
 			if retInitVal {
@@ -372,7 +376,9 @@ func getHaxeClass(fullname string) string {
 }
 
 func (l langType) EmitTypeInfo() string {
-	ret := "class TypeInfo{\n"
+	var ret string
+
+	ret += "class TypeInfo{\n"
 	pte := pogo.TypesEncountered
 	pteKeys := pogo.TypesEncountered.Keys()
 
@@ -554,4 +560,12 @@ func loadStoreSuffix(T types.Type, hasParameters bool) string {
 		return ret
 	}
 	return "(" // no suffix, so some dynamic type
+}
+
+// Type definitions are not carried through to Haxe, though they might be to other target languages
+func (l langType) TypeStart(nt *types.Named, err string) string {
+	return "" //ret
+}
+func (langType) TypeEnd(nt *types.Named, err string) string {
+	return "" //"}"
 }

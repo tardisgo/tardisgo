@@ -1607,6 +1607,15 @@ func testUnsafe() { // adapted from http://stackoverflow.com/questions/19721008/
 	TEQint32(tardisgolib.CPos(), m[0], *(*int32)(unsafe.Pointer(mPtr)))
 }
 
+type ObjKey [2]int
+
+func testObjMap() {
+	m := map[ObjKey]int32{
+		ObjKey{1, 2}: 3,
+	}
+	TEQint32(tardisgolib.CPos(), 3, m[ObjKey{1, 2}])
+}
+
 func main() {
 	var array [4][5]int
 	array[3][2] = 12
@@ -1652,6 +1661,7 @@ func main() {
 	testChanSelect()
 	testEmbed()
 	testUnsafe()
+	testObjMap()
 	//aGrWG.Wait()
 	TEQint32(tardisgolib.CPos()+" testManyGoroutines() (NOT sync/atomic) counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {
