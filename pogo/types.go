@@ -22,7 +22,7 @@ func IsValidInPogo(et types.Type, posStr string) bool {
 			types.Int, types.Int8, types.Int16, types.Int32, types.UntypedInt, types.UntypedRune,
 			types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Int64, types.Uint64,
 			types.Complex64, types.Complex128, types.UntypedComplex,
-			types.Uintptr, types.UnsafePointer: // these last two return a poisoned value
+			types.Uintptr, types.UnsafePointer:
 			return true
 		default:
 			if et.(*types.Basic).String() == "invalid type" { // the type of unused map value itterators!
@@ -64,7 +64,7 @@ func LogTypeUse(t types.Type) string {
 // TypesWithMethodSets in a utility function to only return seen types
 func TypesWithMethodSets() (sets []types.Type) {
 	typs := rootProgram.TypesWithMethodSets()
-	for _,t := range typs {
+	for _, t := range typs {
 		if TypesEncountered.At(t) != nil {
 			sets = append(sets, t)
 		}

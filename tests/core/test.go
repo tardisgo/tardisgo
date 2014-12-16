@@ -12,6 +12,7 @@ import (
 	//"math/big" // does not currently complile - infinite loop
 	//"bytes"
 	"math"
+	"unsafe"
 
 	"github.com/tardisgo/tardisgo/tardisgolib"
 	"github.com/tardisgo/tardisgo/tardisgolib/hx"
@@ -1563,6 +1564,49 @@ func testPtr() {
 
 }
 
+type tbe struct {
+	a int
+	b string
+}
+
+func (x tbe) zip() string {
+	ret := ""
+	for z := 0; z < x.a; z++ {
+		ret += x.b
+	}
+	return ret
+}
+
+type testtbe struct {
+	tbe // embedded struct
+	c   bool
+}
+
+func testEmbed() {
+	var t testtbe
+	t.a = 3
+	t.b = "Grunt"
+	TEQ(tardisgolib.CPos(), "GruntGruntGrunt", t.zip())
+}
+
+func testUnsafe() { // adapted from http://stackoverflow.com/questions/19721008/golang-unsafe-dynamic-byte-array
+
+	// Arbitrary size
+	n := 4
+
+	// Create a slice of the correct size
+	m := make([]int32, n)
+
+	// Use convoluted indirection to cast the first few bytes of the slice
+	// to an unsafe uintptr
+	mPtr := (*uintptr)(unsafe.Pointer(&m[0]))
+
+	// Check it worked
+	m[0] = 987
+	// (we have to recast the uintptr to a *int to examine it)
+	TEQint32(tardisgolib.CPos(), m[0], *(*int32)(unsafe.Pointer(mPtr)))
+}
+
 func main() {
 	var array [4][5]int
 	array[3][2] = 12
@@ -1606,6 +1650,8 @@ func main() {
 	testDefer()
 	testPtr()
 	testChanSelect()
+	testEmbed()
+	testUnsafe()
 	//aGrWG.Wait()
 	TEQint32(tardisgolib.CPos()+" testManyGoroutines() (NOT sync/atomic) counter:", aGrCtr, 0)
 	if tardisgolib.Host() == "haxe" {

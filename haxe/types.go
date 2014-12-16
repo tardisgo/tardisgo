@@ -55,9 +55,9 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				return "UNTYPED_INT" // NOTE: if this value were ever to be used, it would cause a Haxe compilation error
 			case types.UnsafePointer:
 				if retInitVal {
-					return "new UnsafePointer(null)" // TODO is this correct? or should it be null
+					return "null" // NOTE ALL pointers are unsafe
 				}
-				return "UnsafePointer"
+				return "Pointer"
 			case types.Uintptr: // Uintptr sometimes used as an integer type, sometimes as a container for another type
 				if retInitVal {
 					return "null"
@@ -277,8 +277,8 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 		}
 	case "UnsafePointer":
-		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("attempt to convert a value to be an Unsafe Pointer, which is unsupported"))
-		return register + "=new UnsafePointer(" + l.IndirectValue(v, errorInfo) + ");" // this will generate a runtime exception if called
+		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("converting a value to be an Unsafe Pointer"))
+		return register + "=" + l.IndirectValue(v, errorInfo) + ";" // ALL Pointers are unsafe
 	default:
 		if strings.HasPrefix(srcTyp, "Array<") {
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - No way to convert to %s from %s ", langType, srcTyp))
@@ -332,9 +332,9 @@ func (l langType) ChangeType(register string, regTyp interface{}, v interface{},
 				/* from https://groups.google.com/forum/#!topic/golang-dev/6eDTDZPWvoM
 				   	Treat unsafe.Pointer -> *T conversions by returning new(T).
 				   	This is incorrect but at least preserves type-safety...
-					TODO decide how UnsafePointer should fail!
+					TODO decide if the above method is better than just copying the value as below
 				*/
-				return register + "=new UnsafePointer(" + l.LangType(regTyp.(types.Type), true, errorInfo) + ");"
+				return register + "=" + l.LangType(regTyp.(types.Type), true, errorInfo) + ";"
 			}
 		}
 	}

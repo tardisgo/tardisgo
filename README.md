@@ -34,13 +34,14 @@ For more background and on-line examples see the links from: http://tardisgo.git
 ## Project status: a working proof of concept
 ####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED, UNSTABLE API
 
-All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the packages "unsafe" and "reflect", which are mentioned in the core specification, are not currently supported. 
+All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet supported. 
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called funciton). So loops without channel operations may never give up control. The function tardisgolib.Gosched() provides a convenient way to give up control (it perfoms a channel select operation).  
 
 Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If the standard package is not mentioned in the notes below, please assume it does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!").  
 
 Some standard Go library packages do not call any runtime C or assembler functions and will probably work OK (though their tests still need to be rewritten and run to validate their correctness), these include:
+- unsafe
 - errors
 - unicode
 - unicode/utf8 
@@ -64,7 +65,7 @@ include (
 	_ "github.com/tardisgo/tardisgo/golibruntime/math"
 )
 ```
-At present, standard library packages which rely on the Go "runtime", "os", "reflect" or "unsafe" packages are not implemented (although some OSX test code is in the golibruntime tree).
+At present, standard library packages which rely on the Go "runtime", "os", "reflect" or other low-level packages are not implemented.
 
 A start has been made on the automated integration with Haxe libraries, but this is currently (Dec 2014)  incomplete and the API will change completely very soon, see the tardisgolib/hx directory for the story so far. 
 
@@ -106,7 +107,7 @@ haxe -main tardis.Go --interp
 ... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
 
-There is a TARDIS Go only Haxe compilation flag for JS to control use of the new dataview method of object access (eventually this may allow unsafe pointers to be modelled, has a smaller memory footprint, but goes slower than the standard method): 
+There is a TARDIS Go only Haxe compilation flag for JS to control use of the dataview method of object access (this has a smaller memory footprint and allows unsafe pointers to be modelled more accurately, but goes slower than the standard method): 
 ```
 haxe -main tardis.Go -D dataview -js tardisgo.js
 ```
@@ -118,9 +119,9 @@ tardisgo -testall myprogram.go
 
 To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
 
-If you experience a panic, you get lots of information in the stack dump, but this comes at a cost. Use the "-debug=false" tardisgo compilation flag to de-instrument the code and make it go faster.
+When you experience a panic, you will get the latest Go source code line information in the stack dump, but this comes at a cost. Use the "-debug=false" tardisgo compilation flag to de-instrument the code and make it go faster.
 
-If you can't work-out what is going on, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
+If you can't work-out what is going on prior to a panic, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
 
 PHP specific issues:
 * to compile for PHP you currently need to add the haxe compilation option "--php-prefix tgo" to avoid name conflicts
@@ -139,9 +140,9 @@ If you transpile your own code using TARDIS Go, please report the bugs that you 
 
 ## Future plans:
 
-The focus of short-term development is to get the Haxe implementation production ready. In particular, smooth interaction with external Haxe code is required to make the project useful for real work. 
+The focus of short-term development is to get the Haxe implementation production ready. In particular, smooth interaction with external Haxe code is required to make the project useful for real work, [an experimental version of which is available](https://github.com/tardisgo/gohaxelib). 
 
-In speed terms, the planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for much faster execution times by not using the Haxe "Dynamic" type to store values on the heap and pointers to them. (See the -dataview js haxe compilation flag for a partial implementation.)
+In speed terms, the planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for faster execution times by making less use of the Haxe "Dynamic" type to store values on the heap. (See the -dataview js haxe compilation flag for a partial implementation.)
 
 Longer term development priorities:
 - For all Go standard libraries, report testing and implementation status

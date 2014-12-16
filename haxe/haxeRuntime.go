@@ -31,7 +31,7 @@ class Console {
 	}
 	static function join(v:Array<Dynamic>):String {
 		var s = "";
-		for (i in 0...v.length) s += Std.string(v[i]) ;
+		for (i in 0...v.length) s += Std.string(v[i]) + " " ;
 		return s;
 	}
 }
@@ -624,13 +624,13 @@ class Pointer {
 	}
 }
 
-// Unsafe Pointer code
-
-@:keep
-class UnsafePointer  {  // Unsafe Pointers are not yet supported, but Go library code requires that they can be created
-	public function new(x:Dynamic){
-	}
-}
+// Unsafe Pointer code - not required as ALL pointers are unsafe
+//
+//@:keep
+//class UnsafePointer  {  // Unsafe Pointers are not yet supported, but Go library code requires that they can be created
+//	public function new(x:Dynamic){
+//	}
+//}
 
 @:keep
 class Slice {

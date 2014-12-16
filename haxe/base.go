@@ -290,6 +290,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 				case *ssa.Builtin:
 					//NoOp
 				default:
+					// TODO optimise here for pseudo-functions used when calling Haxe code direct
 					ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
 					if usesGr {
 						ret += " #if js =null #end ;\n"
@@ -313,7 +314,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 				init := l.LangType(in.(ssa.Value).Type(), true, reg+"@"+position) // this may be overkill...
 
 				if strings.HasPrefix(init, "{") || strings.HasPrefix(init, "new Pointer") ||
-					strings.HasPrefix(init, "new UnsafePointer") ||
+					//strings.HasPrefix(init, "new UnsafePointer") ||
 					strings.HasPrefix(init, "new Object") || strings.HasPrefix(init, "new Slice") ||
 					strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new Map") ||
 					strings.HasPrefix(init, "new Complex") || strings.HasPrefix(init, "GOint64.make") { // stop unnecessary initialisation
