@@ -624,14 +624,6 @@ class Pointer {
 	}
 }
 
-// Unsafe Pointer code - not required as ALL pointers are unsafe
-//
-//@:keep
-//class UnsafePointer  {  // Unsafe Pointers are not yet supported, but Go library code requires that they can be created
-//	public function new(x:Dynamic){
-//	}
-//}
-
 @:keep
 class Slice {
 	private var baseArray:Pointer;
@@ -972,13 +964,13 @@ public static inline function neq(x:Complex,y:Complex):Bool { // "!="
 }
 }
 
-// optimize to use cs and java base i64 types 
-//#if ( cpp || cs || java )
-//	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
-//#else
+// TODO optimize to use cs and java base i64 types, as with cpp below
+#if ( cpp )
+	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
+#else
 	typedef HaxeInt64Typedef = Int64;  // use the copied and modified version of the standard library class below
-//	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
-//#end
+	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
+#end
 
 // this abstract type to enable correct handling for Go of HaxeInt64Typedef
 abstract HaxeInt64abs(HaxeInt64Typedef) 
@@ -1223,9 +1215,6 @@ public static function ucompare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
 }
 
 	typedef GOint64 = HaxeInt64abs;
-/* TODO re-optimize to use cs and java base i64 types once all working
-#end
-*/
 
 //**************** rewrite of std Haxe library function haxe.Int64 for PHP integer overflow an other errors
 /*
@@ -1755,206 +1744,3 @@ public static inline function wrapnilchk(p:Pointer):Pointer {
 
 
 `
-
-/***************************** TODO consider re-using this code to point to general Haxe types ****
-
-@:keep
-class Pointer { // slow! heavy use of Dynamic typing and reflection
-	private var heapObj:Dynamic; // the actual object holding the value
-	private var offs:Array<Int>; // the offsets into the object, if any
-
-	public function new(from:Dynamic){
-		heapObj = from; // new Object(from);
-		offs = new Array<Int>();
-	}
-	public function load():Dynamic { // this returns the thing pointed at
-		var ret:Dynamic = heapObj;
-		for(i in 0...offs.length) {
-			try	ret = ret[offs[i]]
-			catch (ret:Dynamic)	Scheduler.panicFromHaxe("failed attempt to dereference pointer reading from index:"+offs.toString());
-		}
-		return ret;
-	}
-	public function store(v:Dynamic):Void {
-		if(offs.length==0)
-			heapObj = v;
-		else {
-			var a:Dynamic = heapObj;
-			for(i in 0...offs.length-1) {
-				try a = a[offs[i]]
-				catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());
-			}
-			try a[offs[offs.length-1]] = v
-			catch (a:Dynamic) Scheduler.panicFromHaxe("failed attempt to dereference pointer writing to index:"+offs.toString());
-		}
-	}
-	public function addr(off:Int):Pointer {
-		var ret:Pointer = new Pointer(this.heapObj);
-		ret.offs = this.offs.copy();
-		ret.offs[this.offs.length]=off;
-		return ret;
-	}
-	public function fieldAddr(f:Int):Pointer {
-		var ret:Pointer = new Pointer(this.heapObj);
-		ret.offs = this.offs.copy();
-		ret.offs[this.offs.length]=f;
-		return ret;
-	}
-	public inline function copy():Pointer {
-		return this;
-	}
-	public inline function load_object(size:Int):Dynamic{
-		return this.load();
-	}
-	public inline function load_bool():Bool {
-		return this.load();
-	}
-	public inline function load_int8():Int {
-		return this.load();
-	}
-	public inline function load_int16():Int {
-		return this.load();
-	}
-	public inline function load_int32():Int {
-		return this.load();
-	}
-	public inline function load_int64():GOint64 {
-		return this.load();
-	}
-	public inline function load_uint8():Int {
-		return this.load();
-	}
-	public inline function load_uint16():Int {
-		return this.load();
-	}
-	public inline function load_uint32():Int {
-		return this.load();
-	}
-	public inline function load_uint64():GOint64 {
-		return this.load();
-	}
-	public inline function load_uintptr():Dynamic { return this.load(); }
-	public inline function load_float32():Float {
-		return this.load();
-	}
-	public inline function load_float64():Float {
-		return this.load();
-	}
-	public inline function load_complex64():Complex {
-		return this.load();
-	}
-	public inline function load_complex128():Complex {
-		return this.load();
-	}
-	public inline function load_string():String {
-		return this.load();
-	}
-	public inline function store_object(sz:Int,v:Dynamic):Void { this.store(v); }
-	public inline function store_bool(v:Bool):Void { this.store(v); }
-	public inline function store_int8(v:Int):Void { this.store(v); }
-	public inline function store_int16(v:Int):Void { this.store(v); }
-	public inline function store_int32(v:Int):Void { this.store(v); }
-	public inline function store_int64(v:GOint64):Void { this.store(v); }
-	public inline function store_uint8(v:Int):Void { this.store(v); }
-	public inline function store_uint16(v:Int):Void { this.store(v); }
-	public inline function store_uint32(v:Int):Void { this.store(v); }
-	public inline function store_uint64(v:GOint64):Void { this.store(v); }
-	public inline function store_uintptr(v:Dynamic):Void { this.store(v); }
-	public inline function store_float32(v:Float):Void { this.store(v); }
-	public inline function store_float64(v:Float):Void { this.store(v); }
-	public inline function store_complex64(v:Complex):Void { this.store(v); }
-	public inline function store_complex128(v:Complex):Void { this.store(v); }
-	public inline function store_string(v:String):Void { this.store(v); }
-}
-*** END pointer for general Haxe types *********************/
-
-/* TODO re-optimize to use cs and java base i64 types once all working
-#if ( java || cs )
-// this class required to allow load/save of this type via pointer class in Java, as lib fn casts Dynamic to Int64 via Int
-// also required in c# to avoid integer overflow errors, probably because of a related problem
-// TODO consider ways to optimize
-
-class GOint64  {
-private var i64:HaxeInt64abs;
-
-private inline function new(v:HaxeInt64abs) {
-	i64=v;
-}
-public inline function toString():String {
-	return HaxeInt64abs.toStr(i64);
-}
-public static inline function make(h:Int,l:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.make(h,l));
-}
-public static inline function toInt(v:GOint64):Int {
-	return HaxeInt64abs.toInt(v.i64);
-}
-public static inline function toFloat(v:GOint64):Float{
-	return HaxeInt64abs.toFloat(v.i64);
-}
-public static inline function toUFloat(v:GOint64):Float{
-	return HaxeInt64abs.toUFloat(v.i64);
-}
-public static inline function toStr(v:GOint64):String {
-	return HaxeInt64abs.toStr(v.i64);
-}
-public static inline function ofInt(v:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.ofInt(v));
-}
-public static inline function ofFloat(v:Float):GOint64 {
-	return new GOint64(HaxeInt64abs.ofFloat(v));
-}
-public static inline function ofUFloat(v:Float):GOint64 {
-	return new GOint64(HaxeInt64abs.ofUFloat(v));
-}
-public static inline function neg(v:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.neg(v.i64));
-}
-public static inline function isZero(v:GOint64):Bool {
-	return HaxeInt64abs.isZero(v.i64);
-}
-public static inline function isNeg(v:GOint64):Bool {
-	return HaxeInt64abs.isNeg(v.i64);
-}
-public static inline function add(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.add(x.i64,y.i64));
-}
-public static inline function and(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.and(x.i64,y.i64));
-}
-public static inline function div(x:GOint64,y:GOint64,isSigned:Bool):GOint64 {
-	return new GOint64(HaxeInt64abs.div(x.i64,y.i64,isSigned));
-}
-public static inline function mod(x:GOint64,y:GOint64,isSigned:Bool):GOint64 {
-	return new GOint64(HaxeInt64abs.mod(x.i64,y.i64,isSigned));
-}
-public static inline function mul(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.mul(x.i64,y.i64));
-}
-public static inline function or(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.or(x.i64,y.i64));
-}
-public static inline function shl(x:GOint64,y:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.shl(x.i64,y));
-}
-public static inline function ushr(x:GOint64,y:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.ushr(x.i64,y));
-}
-public static inline function shr(x:GOint64,y:Int):GOint64 {
-	return new GOint64(HaxeInt64abs.shr(x.i64,y));
-}
-public static inline function sub(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.sub(x.i64,y.i64));
-}
-public static inline function xor(x:GOint64,y:GOint64):GOint64 {
-	return new GOint64(HaxeInt64abs.xor(x.i64,y.i64));
-}
-public static inline function compare(x:GOint64,y:GOint64):Int {
-	return HaxeInt64abs.compare(x.i64,y.i64);
-}
-public static inline function ucompare(x:GOint64,y:GOint64):Int {
-	return HaxeInt64abs.ucompare(x.i64,y.i64);
-}
-}
-#else
-*/
