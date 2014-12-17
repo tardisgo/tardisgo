@@ -282,6 +282,8 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	for b := range fn.Blocks {
 		for i := range fn.Blocks[b].Instrs {
 			in := fn.Blocks[b].Instrs[i]
+			reg := l.Value(in, pogo.CodePosition(in.Pos()))
+
 			switch in.(type) {
 			case *ssa.Call:
 				switch in.(*ssa.Call).Call.Value.(type) {
@@ -307,9 +309,15 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 				if in.(*ssa.UnOp).Op == token.ARROW {
 					pseudoNextReturnAddress--
 				}
+			case *ssa.Alloc:
+				if !in.(*ssa.Alloc).Heap { // allocate space on the stack if possible
+					//fmt.Println("DEBUG allocate stack space for", reg, "at", position)
+					if reg != "" {
+						ret += haxeVar(reg+"_stackalloc", "Object", "="+allocNewObject(in.(*ssa.Alloc).Type()), position, "FuncStart()") + "\n"
+					}
+				}
 			}
 
-			reg := l.Value(in, pogo.CodePosition(in.Pos()))
 			if reg != "" && !canOptMap[reg[1:]] { // only add the reg to the SF if not defined in sub-functions
 				// Underlying() not used in 2 lines below because of *ssa.(opaque type)
 				typ := l.LangType(in.(ssa.Value).Type(), false, reg+"@"+position)
@@ -1200,7 +1208,12 @@ func doCall(register, callCode string, usesGr bool) string {
 	return ret
 }
 
-func (l langType) Alloc(reg string, v interface{}, errorInfo string) string {
+func allocNewObject(t types.Type) string {
+	typ := t.Underlying().(*types.Pointer).Elem().Underlying()
+	return fmt.Sprintf("new Object(%d)", haxeStdSizes.Sizeof(typ))
+}
+
+func (l langType) Alloc(reg string, heap bool, v interface{}, errorInfo string) string {
 	if reg == "" {
 		return "" // if the register is not used, don't emit the code!
 	}
@@ -1222,7 +1235,6 @@ func (l langType) Alloc(reg string, v interface{}, errorInfo string) string {
 		return reg + "=new " + ptrTyp +
 			"(" + l.LangType(typ, true, errorInfo) + ");"
 	*/
-	typ := v.(types.Type).Underlying().(*types.Pointer).Elem().Underlying()
 	/*
 		switch typ.(type) {
 		case *types.Array:
@@ -1235,8 +1247,11 @@ func (l langType) Alloc(reg string, v interface{}, errorInfo string) string {
 			return ""
 		}
 	*/
-	return fmt.Sprintf("%s=new Pointer(new Object(%d));",
-		reg, haxeStdSizes.Sizeof(typ))
+	if heap {
+		return fmt.Sprintf("%s=new Pointer(%s);", reg, allocNewObject(v.(types.Type)))
+	}
+	//fmt.Println("DEBUG Alloc on Stack", reg, errorInfo)
+	return fmt.Sprintf("%s=new Pointer(%s_stackalloc.clear());", reg, reg)
 }
 
 func (l langType) MakeChan(reg string, v interface{}, errorInfo string) string {

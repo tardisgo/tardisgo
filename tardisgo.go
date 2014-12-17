@@ -169,6 +169,11 @@ func doTestable(args []string) error {
 		}
 	}
 
+	// TARDIS go addition
+	if *debugFlag {
+		mode |= ssa.GlobalDebug
+	}
+
 	var interpMode interp.Mode
 	for _, c := range *interpFlag {
 		switch c {

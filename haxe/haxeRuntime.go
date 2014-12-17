@@ -251,6 +251,13 @@ class Object { // this implementation will improve with typed array access
 		#end
 		length = byteSize;
 	}
+	public function clear():Object {
+		for(i in 0...this.length){
+			set_uint8(i,0);
+			if(i&3==0) set(i,null);
+		}
+		return this; // to allow use without a temp var
+	}
 	public function isEqual(off:Int,target:Object,tgtOff:Int):Bool { // TODO check if correct, used by interface{} value comparison
 		//trace("isEqual");
 		if((this.length-off)!=(target.length-tgtOff)) return false;

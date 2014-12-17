@@ -222,9 +222,9 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.Alloc:
 		fmt.Fprintln(&LanguageList[l].buffer,
-			LanguageList[l].Alloc(register,
-				instruction.(*ssa.Alloc).Type() /*was+: .(*types.Pointer).Elem() */, errorInfo)+
-				LanguageList[l].Comment(comment))
+			LanguageList[l].Alloc(register, instruction.(*ssa.Alloc).Heap,
+				instruction.(*ssa.Alloc).Type(), errorInfo)+
+				LanguageList[l].Comment(instruction.(*ssa.Alloc).Comment+" "+comment))
 
 	case *ssa.MakeClosure:
 		fmt.Fprintln(&LanguageList[l].buffer,

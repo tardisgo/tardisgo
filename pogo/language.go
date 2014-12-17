@@ -57,7 +57,7 @@ type Language interface {
 	MakeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string
 	ChangeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string
 	ChangeType(register string, regTyp, v interface{}, errorInfo string) string
-	Alloc(register string, v interface{}, errorInfo string) string
+	Alloc(register string, heap bool, v interface{}, errorInfo string) string
 	MakeClosure(register string, v interface{}, errorInfo string) string
 	MakeSlice(register string, v interface{}, errorInfo string) string
 	MakeChan(register string, v interface{}, errorInfo string) string
