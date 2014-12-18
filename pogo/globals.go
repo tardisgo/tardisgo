@@ -86,3 +86,27 @@ func emitGlobals() {
 		}
 	}
 }
+
+type GlobalInfo struct {
+	Package string
+	Member  string
+	Global  *ssa.Global
+	Public  bool
+}
+
+func GlobalList() []GlobalInfo {
+	var gi = make([]GlobalInfo, 0)
+	allPack := rootProgram.AllPackages()
+	for pkgIdx := range allPack {
+		pkg := allPack[pkgIdx]
+		for mName, mem := range pkg.Members {
+			if mem.Token() == token.VAR {
+				glob := mem.(*ssa.Global)
+				pName := glob.Pkg.Object.Name()
+				isPublic := unicode.IsUpper(rune(mName[0])) // Object value sometimes not available
+				gi = append(gi, GlobalInfo{pName, mName, glob, isPublic})
+			}
+		}
+	}
+	return gi
+}

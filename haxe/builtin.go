@@ -34,3 +34,7 @@ func (l langType) copy(register string, args []ssa.Value, errorInfo string) stri
 	// TODO consider makting this a runtime function
 	return ret + code
 }
+
+func (l langType) DebugRef(userName string, val interface{}, errorInfo string) string {
+	return `this._debugVars.set("` + userName + `",` + l.IndirectValue(val, errorInfo) + ");"
+}

@@ -112,6 +112,13 @@ There is a TARDIS Go only Haxe compilation flag for JS to control use of the dat
 haxe -main tardis.Go -D dataview -js tardisgo.js
 ```
 
+For the C++ & Neko (--interp) targets, a very simple debugger is available by using the "-D godebug" Haxe flag, for example to use it in C++ type:
+```
+haxe -main tardis.Go -D godebug -cpp cpp
+./cpp/Go
+``` 
+To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). TARDISgo must have been run previously with "-debug=true", which is the default.
+
 To run cross-target command-line tests as quickly as possible, the "-testall" flag  concurrently runs the Haxe compiler and executes the resulting code for all supported targets (with compiler output suppressed and results appearing in the order they complete, with an execution time):
 ```
 tardisgo -testall myprogram.go

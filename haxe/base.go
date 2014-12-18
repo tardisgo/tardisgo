@@ -148,6 +148,9 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
 	for p := range fn.Params {
 		ret += "this.p_" + pogo.MakeID(fn.Params[p].Name()) + "=p_" + pogo.MakeID(fn.Params[p].Name()) + ";\n"
+		if pogo.DebugFlag {
+			ret += `this._debugVars.set("` + fn.Params[p].Name() + `",p_` + pogo.MakeID(fn.Params[p].Name()) + ");\n"
+		}
 	}
 	ret += emitTrace(`New:` + l.LangName(packageName, objectName))
 	ret += "Scheduler.push(gr,this);\n}\n"
@@ -359,6 +362,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	if usesGr {
 		ret += l.runFunctionCode(packageName, objectName, "")
 	}
+
 	ret += "#if !js while(true)switch(_Next){ #end"
 
 	//}

@@ -34,6 +34,30 @@ class Console {
 		for (i in 0...v.length) s += Std.string(v[i]) + " " ;
 		return s;
 	}
+	public static function readln():Null<String> {
+		#if (cpp || cs || java || neko || php )
+			var s:String="";
+			var ch:Int=0;
+			while(ch != 13 ){ // carrage return (mac)
+				ch = Sys.getChar(true);
+				//Sys.println(ch);
+				if(ch == 127){ // backspace (mac)
+					s = s.substr(0,s.length-1);
+					Sys.print("\n"+s);
+				}else{
+					s += String.fromCharCode(ch);
+				}
+			}
+			s = s.substr(0,s.length-1); // loose final CR
+			Sys.print("\n");
+			if(s.length==0)
+				return null;
+			else
+				return s;
+		#else
+			return null;
+		#end
+	}
 }
 
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
@@ -626,8 +650,8 @@ class Pointer {
 	public inline function store_complex64(v:Complex):Void { obj.set_complex64(off,v); }
 	public inline function store_complex128(v:Complex):Void { obj.set_complex128(off,v); }
 	public inline function store_string(v:String):Void { obj.set_string(off,v); }
-	public inline function toString(sz:Int):String {
-		return obj.toString(off,sz);
+	public inline function toString(sz:Int=-1):String {
+		return " &{ "+obj.toString(off,sz)+" } ";
 	}
 }
 
@@ -736,11 +760,12 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 	}
 	public function toString():String {
 		var ret:String = "Closure{"+fn+",";
-		//for(i in 0...bds.length) {
-		//	if(i!=0) ret += ",";
-		//	ret+= bds[i];
-		//}
-		return ret+bds.toString()+"}";
+		if(bds!=null)
+			for(i in 0...bds.length) {
+				if(i!=0) ret += ",";
+				ret+= bds[i];
+			}
+		return ret+"}";
 	}
 	public function methVal(t:Dynamic,v:Dynamic):Dynamic{
 		return Reflect.callMethod(null, fn, [[],t,v]);
@@ -1515,25 +1540,154 @@ public var _functionName:String;
 public var _goroutine(default,null):Int;
 public var _bds:Dynamic; // bindings for closures
 public var _deferStack:List<StackFrame>;
+public var _debugVars:Map<String,Dynamic>;
+#if godebug
+	var _debugVarsLast:Map<String,Dynamic>;
+	static var _debugBP:Map<Int,Bool>;
+#end
 
 public function new(gr:Int,ph:Int,name:String){
 	_goroutine=gr;
 	_functionPH=ph;
 	_functionName=name;
 	_deferStack=new List<StackFrame>();
+	_debugVars=new Map<String,Dynamic>();
+	#if godebug
+		_debugVarsLast= new Map<String,Dynamic>();
+	#end
+	this.setPH(ph); // so that we call the debugger, if it is enabled
 	// TODO optionally profile function entry here
 }
 
 public function setLatest(ph:Int,blk:Int){ // this can be done inline, but generates too much code
-	this.setPH(ph);
 	_latestBlock=blk;
+	this.setPH(ph);
 	// TODO optionally profile block entry here
 }
 
 public function setPH(ph:Int){
 	_latestPH=ph;
 	// TODO optionally profile instruction line entry here	
+	// optionally add debugger code here, if the target supports Console.readln()
+	#if (godebug && (cpp || neko))
+		// TODO add support for: cs || java || php 
+		if(_debugBP==null||_debugBP.exists(ph)){
+			var stay=true;
+			var ln:Null<String>;
+			while(stay){
+				printDebugState();
+				ln=Console.readln();
+				if(ln==null)
+					stay=false; // effectively step a line 
+				else {
+					// debugger commands
+					var fb=new Array<Dynamic>();
+					var bits=ln.split(" ");
+					switch(ln.charAt(0)){
+					case "S","s","R","r":
+						if(bits.length<3)
+							fb[0]="please use the format: S/R filename linenumber";
+						else{
+							if(_debugBP==null){
+								_debugBP=new Map<Int,Bool>();
+							}
+							var base=Go.getStartCPos(bits[1]);
+							if(base==-1)
+								fb[0]="sorry, can't find file: "+bits[1];
+							else{
+								var off=Std.parseInt(bits[2]);
+								if(off==null)
+									fb[0]="sorry, can't parseInt: "+bits[2];
+								else{
+									fb[0]="break-point ";
+									switch(ln.charAt(0)){
+									case "S","s":
+										fb[1]="set";						
+										_debugBP.set(base+off,true);
+									case "R","r":
+										fb[1]="removed";						
+										if(_debugBP.exists(base+off))
+											_debugBP.remove(base+off);
+									}
+									fb[2]=" at: "+Go.CPos(base+off);
+								}
+							}	
+						}
+					case "B","b":
+						if(_debugBP==null){
+							fb[0]="no break-points set";
+						} else {
+							fb[0]="break-points:\n";
+							var ent=1;
+							for(b in _debugBP.keys()){
+								fb[ent]="\t"+Go.CPos(b)+"\n";
+								ent+=1;
+							}
+						}							
+					case "C","c":
+						_debugBP=null;
+						fb[0]="all break-points cleared";
+					case "L","l":
+						if(bits.length>=2)
+							if(_debugVars.exists(bits[1])){
+								var v:String;
+								if(bits[1].indexOf(".")!=-1) // global
+									v="global: "+_debugVars.get(bits[1]).toString();
+								else
+								 	v=Std.string(_debugVars.get(bits[1]));
+								fb[0]="Local assignment to: "+bits[1]+" = "+v.substr(0,500);
+							} else
+								fb[0]="Can't find local assignment: "+bits[1];
+						else{
+							fb[0]="Local assignments:\n";
+							var ent=1;
+							for(b in _debugVars.keys()){
+								if(b.indexOf(".")==-1) { // local
+									fb[ent]="\t"+b+" = "+Std.string(_debugVars.get(b)).substr(0,500)+"\n";
+									ent+=1;
+								}	
+							}
+						}							
+					case "G","g":
+						if(bits.length<2)
+							fb[0]="please use the format: G globalname ";
+						else 
+							fb[0]="Global: "+Go.getGlobal(bits[1]).substr(0,500);	
+					case "D","d":
+						fb[0]=Scheduler.stackDump();					
+					case "X","x":
+						_debugBP=new Map<Int,Bool>();
+						_debugBP.set(-1,true); // unreachable break-point
+						fb[0]="exiting debugger";
+						stay=false;
+					default:
+						fb[0]="commands: B=BrakePointList, S/R=Set/RemoveBP name line, C=ClearAllBP, L=Local name, G=Global name, D=stackDump, X=eXit debugger";
+					}
+					Console.println(fb);
+				}
+			}
+		}
+	#end
 }
+
+#if godebug
+public function printDebugState():Void{
+	var guf=new Array<Dynamic>();
+	var gc=1;
+	guf[0]="GR:"+_goroutine+" - "+_functionName+" @ "+Go.CPos(_latestPH);
+	for(k in _debugVars.keys()){
+		if(_debugVars.get(k)!=_debugVarsLast.get(k)){
+			if(k.indexOf(".")!=-1) // global
+				guf[gc]="\n"+k+" = "+cast(_debugVars.get(k),Pointer).toString().substr(0,500);
+			else
+				guf[gc]="\n"+k+" = "+Std.string(_debugVars.get(k)).substr(0,500);
+			gc+=1;
+			_debugVarsLast.set(k,_debugVars.get(k));
+		}
+	}
+	Console.println(guf);
+}
+#end
 
 public inline function defer(fn:StackFrame){
 	//trace("defer");
@@ -1549,7 +1703,6 @@ public function runDefers(){
 	}
 }
 
-
 }
 
 interface StackFrame
@@ -1562,6 +1715,7 @@ public var _functionName:String;
 public var _goroutine(default,null):Int;
 public var _bds:Dynamic; // bindings for closures as a anonymous struct
 public var _deferStack:List<StackFrame>;
+public var _debugVars:Map<String,Dynamic>;
 function run():StackFrame; // function state machine (set up by each Go function Haxe class)
 function res():Dynamic; // function result (set up by each Go function Haxe class)
 }
@@ -1699,6 +1853,15 @@ public static function stackDump():String {
 					ret += "\t"+ent._functionName+" starting at "+Go.CPos(ent._functionPH);
 					ret += " latest position "+Go.CPos(ent._latestPH);
 					ret += " latest block "+ent._latestBlock+"\n";
+					if(ent._debugVars!=null){
+						for(k in ent._debugVars.keys()) {
+							if(k.indexOf(".")==-1){ // not a global assignment, so showing only locals
+								var t:Dynamic=ent._debugVars.get(k);
+								if(t==null) t="nil";
+								ret += "\t\tvar "+k+" = "+t+"\n";
+							}
+						}
+					}
 				}
 			}
 		}

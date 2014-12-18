@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"go/ast"
+
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
 )
@@ -24,15 +26,19 @@ var previousErrorInfo string // used to give some indication of the error's loca
 func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFlag bool) {
 	l := TargetLang
 	emitPhiFlag = true
-	prev := LatestValidPosHash
-	MakePosHash(instruction.(ssa.Instruction).Pos()) // this so that we log the nearby position info
-	if prev != LatestValidPosHash {                  // new info, so put out an update
-		if DebugFlag { // but only in Debug mode
-			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].SetPosHash())
+	errorInfo := ""
+	_, isDebug := instruction.(*ssa.DebugRef)
+	if !isDebug { // Don't update the code position for debug refs
+		prev := LatestValidPosHash
+		MakePosHash(instruction.(ssa.Instruction).Pos()) // this so that we log the nearby position info
+		if prev != LatestValidPosHash {                  // new info, so put out an update
+			if DebugFlag { // but only in Debug mode
+				fmt.Fprintln(&LanguageList[l].buffer,
+					LanguageList[l].SetPosHash())
+			}
 		}
+		errorInfo = CodePosition(instruction.(ssa.Instruction).Pos())
 	}
-	errorInfo := CodePosition(instruction.(ssa.Instruction).Pos())
 	if errorInfo == "" {
 		errorInfo = previousErrorInfo
 	} else {
@@ -381,9 +387,25 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 					LanguageList[l].Comment(comment))
 		}
 
-	case *ssa.DebugRef: // TODO just generates a comment at the moment, short term the comment could include the actual Go code, long term it needs some way to link to a debugger
-		fmt.Fprintln(&LanguageList[l].buffer,
-			LanguageList[l].Comment(comment))
+	case *ssa.DebugRef: // TODO the comment could include the actual Go code
+		debugCode := ""
+		ident, ok := instruction.(*ssa.DebugRef).Expr.(*ast.Ident)
+		if ok {
+			if ident.Obj != nil {
+				if ident.Obj.Kind == ast.Var {
+					//fmt.Printf("DEBUGref %s (%s) => %s %+v %+v %+v\n", instruction.(*ssa.DebugRef).X.Name(),
+					//	instruction.(*ssa.DebugRef).X.Type().String(),
+					//	ident.Name, ident.Obj.Decl, ident.Obj.Data, ident.Obj.Type)
+					name := ident.Name
+					glob, isGlob := instruction.(*ssa.DebugRef).X.(*ssa.Global)
+					if isGlob {
+						name = glob.Pkg.String()[len("package "):] + "." + name
+					}
+					debugCode = LanguageList[l].DebugRef(name, instruction.(*ssa.DebugRef).X, errorInfo)
+				}
+			}
+		}
+		fmt.Fprintln(&LanguageList[l].buffer, debugCode+LanguageList[l].Comment(comment))
 
 	case *ssa.Select:
 		text := LanguageList[l].Select(true, register, instruction, false, errorInfo)

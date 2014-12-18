@@ -95,7 +95,27 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 			strings.Replace(pogo.PosHashFileList[p].FileName, "\\", "\\\\", -1),
 			pogo.PosHashFileList[p].BasePosHash) + "\n"
 	}
-	pos += "else return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";}\n"
+	pos += "else return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";\n}\n"
+
+	if pogo.DebugFlag {
+		pos += "\npublic static function getStartCPos(s:String):Int {\n"
+		for p := len(pogo.PosHashFileList) - 1; p >= 0; p-- {
+			pos += "\t" + fmt.Sprintf(`if("%s".indexOf(s)!=-1) return %d;`,
+				strings.Replace(pogo.PosHashFileList[p].FileName, "\\", "\\\\", -1),
+				pogo.PosHashFileList[p].BasePosHash) + "\n"
+		}
+		pos += "\treturn -1;\n}\n"
+
+		pos += "\npublic static function getGlobal(s:String):String {\n"
+		globs := pogo.GlobalList()
+		for _, g := range globs {
+			goName := strings.Replace(g.Package+"."+g.Member, "\\", "\\\\", -1)
+			pos += "\t" + fmt.Sprintf(`if("%s".indexOf(s)!=-1) return "%s = "+%s.toString();`,
+				goName, goName, l.LangName(g.Package, g.Member)) + "\n"
+		}
+		pos += "\treturn \"Couldn't find global: \"+s;\n}\n"
+
+	}
 
 	return main + pos + "} // end Go class"
 }
