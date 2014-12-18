@@ -82,7 +82,7 @@ No other platforms are currently regression tested, although the project has bee
  
 Dependencies:
 ```
-go get code.google.com/p/go.tools
+go get golang.org/x/tools
 ```
 
 TARDIS Go:
