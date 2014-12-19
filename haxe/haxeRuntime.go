@@ -1720,7 +1720,7 @@ function run():StackFrame; // function state machine (set up by each Go function
 function res():Dynamic; // function result (set up by each Go function Haxe class)
 }
 
-class Scheduler { // NOTE this code requires a single-thread, as there is no locking 
+class Scheduler { // NOTE this code requires a single-thread, as there is no locking TODO detect deadlocks
 // public
 public static var doneInit:Bool=false; // flag to limit go-routines to 1 during the init() processing phase
 // private

@@ -22,7 +22,7 @@ var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the f
 func emitFunctions() {
 	//fnMap := ssautil.AllFunctions(rootProgram)
 	dceList := []*ssa.Package{mainPackage, rootProgram.ImportedPackage(LanguageList[TargetLang].Goruntime)}
-	dceExceptions := []string{"math"} // can't be DCE'd
+	dceExceptions := []string{"math"} // can't be DCE'd  - TODO check this is still true
 	for _, ex := range dceExceptions {
 		exip := rootProgram.ImportedPackage(ex)
 		if exip != nil {

@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Package math provides implementation and documentation of math functions overloaded by TARDIS Go->Haxe transpiler
 package tgoaddmath
 
-import mth "math"
-
 import "github.com/tardisgo/tardisgo/tardisgolib/hx"
 
 func init() { // to stop code being removed by dead-code-elimination
@@ -64,7 +62,7 @@ func glrFloat32bits(f float32) uint32 {
 		//}
 		return 0
 	}
-	if mth.IsNaN(float64(f)) /*f != f*/ { // NaN
+	if f != f { // NaN
 		return 2143289344
 	}
 
@@ -90,7 +88,13 @@ func glrFloat32bits(f float32) uint32 {
 		f *= 2
 	}
 
-	r := mth.Mod(float64(f), 2)
+	// below is code to simulate: r := mth.Mod(float64(f), 2)
+	if f < 0 {
+		panic("glrFloat32bits")
+	}
+	t := float64(f) / 2
+	r := float64(f) - (2 * t)
+	// end simulate code
 	if (r > 0.5 && r < 1) || r >= 1.5 { // round to nearest even
 		f++
 	}
@@ -116,7 +120,7 @@ func glrFloat32frombits(b uint32) float32 {
 		if m == 0 {
 			return s / 0 // Inf
 		}
-		return float32(mth.NaN())
+		return float32(hx.GetFloat("", "Math.NaN"))
 	}
 	if e != 0 {
 		m += 1 << 23
@@ -142,7 +146,7 @@ func glrFloat64bits(f float64) uint64 {
 		//}
 		return 0
 	}
-	if mth.IsNaN(f) /*f != f*/ { // NaN
+	if f != f { // NaN
 		return 9221120237041090561
 	}
 
@@ -177,7 +181,7 @@ func glrFloat64bits(f float64) uint64 {
 func glrFloat64frombits(b uint64) float64 {
 	//var Zero = 0.0
 	//var NegZero = -Zero
-	var NaN = mth.NaN() //Zero / Zero
+	var NaN = hx.GetFloat("", "Math.NaN") //Zero / Zero
 	s := float64(+1)
 	if b&(1<<63) != 0 {
 		s = -1
