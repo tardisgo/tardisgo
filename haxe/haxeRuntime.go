@@ -82,14 +82,14 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static inline function toUint64(v:GOint64):GOint64 {
 		return v;
 	}	
-	public static inline function toInt8(v:Int):Int {
+	public static function toInt8(v:Int):Int {
 		var r:Int = v & 0xFF;
 		if ((r & 0x80) != 0){ // it should be -ve
 			return -1 - 0xFF + r;
 		}
 		return r;
 	}	
-	public static inline function toInt16(v:Int):Int {
+	public static function toInt16(v:Int):Int {
 		var r:Int = v & 0xFFFF;
 		if ((r & 0x8000) != 0){ // it should be -ve
 			return -1 - 0xFFFF + r;
@@ -112,7 +112,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static inline function toInt64(v:GOint64):GOint64 { // this in case special handling is required for some platforms
 		return v;
 	}	
-	public static inline function toInt(v:Dynamic):Int { // get an Int from a Dynamic variable (uintptr is stored as Dynamic)
+	public static function toInt(v:Dynamic):Int { // get an Int from a Dynamic variable (uintptr is stored as Dynamic)
 		if (!Reflect.isObject(v))  			// simple type, so leave quickly and take defaults 
 			return v; 
 		else
