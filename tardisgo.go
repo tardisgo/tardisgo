@@ -59,7 +59,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 
 // TARDIS Go addition
 var allFlag = flag.Bool("testall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
-var debugFlag = flag.Bool("debug", true, "Instrument the code to give more meaningful information during a stack dump (-debug=false for speed)")
+var debugFlag = flag.Bool("debug", false, "Instrument the code to enable debugging, add comments, and give more meaningful information during a stack dump (warning: increased code size)")
 var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
 var buidTags = flag.String("tags", "", "build tags separated by spaces")
 
@@ -133,8 +133,8 @@ func doTestable(args []string) error {
 	}
 
 	wordSize = 4              // TARDIS Go addition to force default int size to 32 bits
-	conf.Build.GOARCH = "386" // TARDIS Go addition to ensure 32-bit int
-	conf.Build.GOOS = "nacl"  // TARDIS Go addition to ensure simplest OS-specific code to emulate
+	conf.Build.GOARCH = "tgo" // or 386? TARDIS Go addition to ensure 32-bit int
+	conf.Build.GOOS = "tgo"   // or nacl? TARDIS Go addition to ensure simplest OS-specific code to emulate
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
 
@@ -206,6 +206,7 @@ func doTestable(args []string) error {
 
 	// Really need to find a way to replace entire packages, this experiment is WIP so excluded for the latest push
 	// conf.Build.GOROOT = "/Users/Elliott/Desktop/tardisgo/goroot/go1.4rc2" // TODO sort out to a sensible location
+	// fmt.Println("DEBUG GOPATH", conf.Build.GOPATH) // TODO set GOROOT by concatonating with this unless TGOPATH is set
 
 	if *testFlag {
 		conf.ImportWithTests(args[0]) // assumes you give the full cannonical name of package

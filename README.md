@@ -112,21 +112,20 @@ There is a TARDIS Go only Haxe compilation flag for JS to control use of the dat
 haxe -main tardis.Go -D dataview -js tardisgo.js
 ```
 
-For the C++ & Neko (--interp) targets, a very simple debugger is available by using the "-D godebug" Haxe flag, for example to use it in C++ type:
+To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
+
+Use the "-debug=true" tardisgo compilation flag to instrument the code and add automated comments to the Haxe. When you experience a panic in this mode the latest Go source code line information and local variables appears in the stack dump. For the C++ & Neko (--interp) targets, a very simple debugger is also available by using the "-D godebug" Haxe flag, for example to use it in C++ type:
 ```
-haxe -main tardis.Go -D godebug -cpp cpp
-./cpp/Go
+tardisgo -debug=true myprogram.go
+haxe -main tardis.Go -dce full -D godebug -cpp tardis/cpp
+./tardis/cpp/Go
 ``` 
-To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). TARDISgo must have been run previously with "-debug=true", which is the default.
+To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). 
 
 To run cross-target command-line tests as quickly as possible, the "-testall" flag  concurrently runs the Haxe compiler and executes the resulting code for all supported targets (with compiler output suppressed and results appearing in the order they complete, with an execution time):
 ```
 tardisgo -testall myprogram.go
 ```
-
-To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
-
-When you experience a panic, you will get the latest Go source code line information in the stack dump, but this comes at a cost. Use the "-debug=false" tardisgo compilation flag to de-instrument the code and make it go faster.
 
 If you can't work-out what is going on prior to a panic, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
 

@@ -77,7 +77,7 @@ func (langType) FileTypeSuffix() string { return ".hx" }
 
 // make a comment
 func (langType) Comment(c string) string {
-	if c != "" {
+	if c != "" && pogo.DebugFlag { // only comment if something to say and in debug mode
 		return " // " + c
 	}
 	return ""
