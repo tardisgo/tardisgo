@@ -133,9 +133,11 @@ func doTestable(args []string) error {
 		wordSize = 4
 	}
 
-	wordSize = 4              // TARDIS Go addition to force default int size to 32 bits
-	conf.Build.GOARCH = "tgo" // or 386? TARDIS Go addition to ensure 32-bit int
-	conf.Build.GOOS = "nacl"  // TARDIS Go addition to ensure simplest OS-specific code to emulate
+	if !(*runFlag) {
+		wordSize = 4               // TARDIS Go addition to force default int size to 32 bits
+		conf.Build.GOARCH = "haxe" // or 386? TARDIS Go addition - 32-bit ints
+		conf.Build.GOOS = "haxe"   // or nacl? TARDIS Go addition - simplest OS-specific code to emulate?
+	}
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
 
@@ -223,7 +225,6 @@ func doTestable(args []string) error {
 		return err
 	}
 
-	// TODO will -run still work?
 	// The interpreter needs the runtime package.
 	if *runFlag {
 		conf.Import("runtime")
@@ -278,10 +279,9 @@ func doTestable(args []string) error {
 		}
 
 		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
-	}
-
-	// TARDIS Go additions: copy run interpreter code above, but call pogo class
-	if true {
+	} else {
+		// if not interpreting...
+		// TARDIS Go additions: copy run interpreter code above, but call pogo class
 		var main *ssa.Package
 		pkgs := prog.AllPackages()
 		if *testFlag {
