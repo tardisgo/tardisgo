@@ -137,13 +137,13 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 
 	//Create the stack frame variables
 	for p := range fn.Params {
-		ret += "var " + "p_" + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position) + ";\n"
+		ret += "var " + "p_" + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position) + ";\n"
 	}
 	ret += "public function new(gr:Int,"
 	ret += "_bds:Dynamic" //bindings
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
 	for p := range fn.Params {
@@ -160,14 +160,14 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	case 0:
 		// NoOp
 	case 1:
-		rTyp = l.LangType(fn.Signature.Results().At(0).Type().Underlying(), false, position)
+		rTyp = l.LangType(fn.Signature.Results().At(0).Type() /*.Underlying()*/, false, position)
 	default:
 		rTyp = "{"
 		for r := 0; r < fn.Signature.Results().Len(); r++ {
 			if r != 0 {
 				rTyp += ", "
 			}
-			rTyp += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type().Underlying(), false, position)
+			rTyp += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type() /*.Underlying()*/, false, position)
 		}
 		rTyp += "}"
 	}
@@ -184,21 +184,21 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		if p != 0 {
 			ret += ", "
 		}
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") : "
 	switch fn.Signature.Results().Len() {
 	case 0:
 		ret += "Void"
 	case 1:
-		ret += l.LangType(fn.Signature.Results().At(0).Type().Underlying(), false, position)
+		ret += l.LangType(fn.Signature.Results().At(0).Type() /*.Underlying()*/, false, position)
 	default:
 		ret += "{"
 		for r := 0; r < fn.Signature.Results().Len(); r++ {
 			if r != 0 {
 				ret += ", "
 			}
-			ret += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type().Underlying(), false, position)
+			ret += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type() /*.Underlying()*/, false, position)
 		}
 		ret += "}"
 	}
@@ -220,26 +220,26 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "}\n"
 
 	// call from haxe go runtime - use current goroutine
-	ret += "public static inline function callFromRT( _gr"
+	ret += "public static inline function callFromRT( _gr:Int"
 	for p := range fn.Params {
 		//if p != 0 {
 		ret += ", "
 		//}
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") : "
 	switch fn.Signature.Results().Len() {
 	case 0:
 		ret += "Void"
 	case 1:
-		ret += l.LangType(fn.Signature.Results().At(0).Type().Underlying(), false, position)
+		ret += l.LangType(fn.Signature.Results().At(0).Type() /*.Underlying()*/, false, position)
 	default:
 		ret += "{"
 		for r := 0; r < fn.Signature.Results().Len(); r++ {
 			if r != 0 {
 				ret += ", "
 			}
-			ret += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type().Underlying(), false, position)
+			ret += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type() /*.Underlying()*/, false, position)
 		}
 		ret += "}"
 	}
@@ -264,7 +264,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "_bds:Dynamic"                                //bindings
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type().Underlying(), false, fn.Params[p].Name()+position)
+		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") : Go_" + l.LangName(packageName, objectName)
 	ret += "\n{" + ""
@@ -356,7 +356,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	if trackPhi {
 		ret += "var _Phi:Int=0;\n"
 	}
-	ret += "var _Next:Int=0;\n"
+	//ret += "_Next=0;\n" // now defined in the interface StackFrame and StackFrameBasis
 	//}
 
 	if usesGr {
@@ -987,35 +987,23 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				}
 				bits[0] = bits[0][1:] // discard the magic letter from the front of the function name
 
-				interfaceSuffix := ""
-				interfacePrefix := ""
-				if len(args) > 0 {
-					switch args[0].Type().(type) {
-					case *types.Interface:
-						interfacePrefix = "Interface.fromDynamic("
-						interfaceSuffix = ")"
-					}
-				}
-
 				if foundDot { // it's a Haxe method
-					//ss := strings.Split(args[0].Type().String(), "/")
-					//rhs := ss[len(ss)-1] // lose leading slashes
-					//rxTypBits := strings.Split(strings.Split(rhs, ".")[1], "_") // loose module name
-					//rxTypBits[0] = rxTypBits[0][1:]                             // loose leading capital letter
-					//rxTyp := strings.Join(rxTypBits, ".")                       // reconstitute with the Haxe dots
-
 					switch bits[len(bits)-1] {
 					case "g": // get
 						return hashIf + register + "=" + l.IndirectValue(args[0], errorInfo) +
 							"." + bits[len(bits)-2][1:] + ";" + hashEnd
 					case "s": // set
+						interfaceSuffix := ""
+						interfacePrefix := ""
+						switch args[1].Type().(type) {
+						case *types.Interface:
+							interfacePrefix = "Force.toHaxeParam("
+							interfaceSuffix = ")"
+						}
 						return hashIf + "" + l.IndirectValue(args[0], errorInfo) +
 							"." + bits[len(bits)-2][1:] +
 							"=" + interfacePrefix + l.IndirectValue(args[1], errorInfo) + interfaceSuffix + ";" + hashEnd
 					default:
-						//targetFunc = "cast(" + l.IndirectValue(args[0], errorInfo) + ","
-						//targetFunc += rxTyp + ")." + bits[len(bits)-1][1:] //remove leading capital letter
-
 						bits = bits[:len(bits)-1]                                                      //  trim off the "_digit" suffix
 						targetFunc = l.IndirectValue(args[0], errorInfo) + "." + bits[len(bits)-1][1:] //remove leading capital letter
 
@@ -1027,6 +1015,13 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 						return hashIf + register + "=" +
 							strings.Join(strings.Split(strings.Join(bits[:len(bits)-1], "."), "..."), "_") + ";" + hashEnd
 					case "s": // special processing to set a class static variable
+						interfaceSuffix := ""
+						interfacePrefix := ""
+						switch args[0].Type().(type) {
+						case *types.Interface:
+							interfacePrefix = "Force.toHaxeParam("
+							interfaceSuffix = ")"
+						}
 						return hashIf + strings.Join(strings.Split(strings.Join(bits[:len(bits)-1], "."), "..."), "_") +
 							"=" + interfacePrefix + l.IndirectValue(args[0], errorInfo) + interfaceSuffix + ";" + hashEnd
 					default:
@@ -1104,18 +1099,8 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		case *types.Basic: // NOTE Complex is an object as is Int64 (in java & cs), but copy does not seem to be required
 			ret += l.IndirectValue(args[arg], errorInfo)
 		case *types.Interface:
-			if isHaxeAPI { // for Go interface{} parameters, substitute the Haxe Dynamic part
-				goMI, ok := args[arg].(*ssa.MakeInterface) // it is an interface that has just been made
-				if ok {
-					goFn, ok := (*(goMI.Operands(nil)[0])).(*ssa.Function) // a function is the subject of the interface
-					if ok {
-						ret += "Go_" + l.FuncName(goFn) + ".callFromHaxe" // so create a literal function name
-					} else {
-						ret += l.IndirectValue(args[arg], errorInfo) + ".val"
-					}
-				} else {
-					ret += l.IndirectValue(args[arg], errorInfo) + ".val" // TODO check works in all situations
-				}
+			if isHaxeAPI {
+				ret += "Force.toHaxeParam(" + l.IndirectValue(args[arg], errorInfo) + ")"
 			} else {
 				ret += l.IndirectValue(args[arg], errorInfo)
 			}

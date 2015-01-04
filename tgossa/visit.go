@@ -55,6 +55,9 @@ func (visit *visitor) program(isOvl isOverloaded) {
 				for _, mem := range visit.packs[p].Members { //was pkg.Members {
 					if fn, ok := mem.(*ssa.Function); ok {
 						visit.function(fn, isOvl)
+						if visit.usesGR[fn] {
+							visit.refsUseGR(fn.Referrers(), make(map[*ssa.Function]bool))
+						}
 					}
 				}
 			}
@@ -68,6 +71,22 @@ func (visit *visitor) program(isOvl isOverloaded) {
 			// ??? conservatively mark every method as requiring goroutines, in order to simplify method calls?
 			// visit.usesGR[mf] = true
 			// TODO use Oracle techniques to discover which of these methods could actually be called
+			if visit.usesGR[mf] {
+				visit.refsUseGR(mf.Referrers(), make(map[*ssa.Function]bool))
+			}
+		}
+	}
+}
+
+func (visit *visitor) refsUseGR(refs *[]ssa.Instruction, refed map[*ssa.Function]bool) {
+	if refs != nil {
+		for r := range *refs {
+			fn := (*refs)[r].Parent()
+			if !refed[fn] {
+				visit.usesGR[fn] = true
+				refed[fn] = true
+				visit.refsUseGR(fn.Referrers(), refed)
+			}
 		}
 	}
 }
@@ -97,19 +116,18 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 						}
 						//println(fn.Name(), " calls ", afn.Name())
 					}
-					/* TODO, review if this code should be included
+					// TODO, review if this code should be included
 					if !visit.usesGR[fn] {
 						if _, ok := (*op).(ssa.Value); ok {
 							typ := (*op).Type()
 							typ = DeRefUl(typ)
 							switch typ.(type) {
-							case *types.Chan , *types.Interface, *types.Signature :
+							case *types.Chan, *types.Interface, *types.Signature:
 								// TODO use oracle techniques to determine which interfaces or functions may require GR
 								visit.usesGR[fn] = true // may be too conservative
 							}
 						}
 					}
-					*/
 				}
 				if !visit.usesGR[fn] {
 					switch instr.(type) {

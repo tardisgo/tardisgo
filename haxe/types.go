@@ -298,8 +298,13 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 }
 
 func (l langType) MakeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string {
-	return register + `=new Interface(` + pogo.LogTypeUse(v.(ssa.Value).Type() /*NOT underlying()*/) + `,` +
-		l.IndirectValue(v, errorInfo) + ");"
+	ret := `new Interface(` + pogo.LogTypeUse(v.(ssa.Value).Type() /*NOT underlying()*/) + `,` +
+		l.IndirectValue(v, errorInfo) + ")"
+	if getHaxeClass(regTyp.String()) != "" {
+		ret = "Force.toHaxeParam(" + ret + ")" // as interfaces are not native to haxe, so need to convert
+		// TODO optimize when stable
+	}
+	return register + `=` + ret + ";"
 }
 
 func (l langType) ChangeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string {
@@ -335,6 +340,15 @@ func (l langType) ChangeType(register string, regTyp interface{}, v interface{},
 		return register + "=" +
 			"new Closure(Go_" + l.LangName(pf, v.(*ssa.Function).Name()) + ".call,[]);"
 	default:
+		hType := getHaxeClass(regTyp.(types.Type).String())
+		if hType != "" {
+			switch v.(ssa.Value).Type().Underlying().(type) {
+			case *types.Interface:
+				return register + "=" + l.IndirectValue(v, errorInfo) + ".val;"
+			default:
+				return register + "=cast " + l.IndirectValue(v, errorInfo) + ";" // unsafe cast!
+			}
+		}
 		switch v.(ssa.Value).Type().Underlying().(type) {
 		case *types.Basic:
 			if v.(ssa.Value).Type().Underlying().(*types.Basic).Kind() == types.UnsafePointer {
@@ -350,6 +364,7 @@ func (l langType) ChangeType(register string, regTyp interface{}, v interface{},
 	return register + `=` + l.IndirectValue(v, errorInfo) + ";" // usually, this is a no-op as far as Haxe is concerned
 
 }
+
 func (l langType) TypeAssert(register string, v ssa.Value, AssertedType types.Type, CommaOk bool, errorInfo string) string {
 	if register == "" {
 		return ""

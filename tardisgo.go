@@ -62,6 +62,7 @@ var allFlag = flag.Bool("testall", false, "For all targets: invokes the Haxe com
 var debugFlag = flag.Bool("debug", false, "Instrument the code to enable debugging, add comments, and give more meaningful information during a stack dump (warning: increased code size)")
 var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
 var buidTags = flag.String("tags", "", "build tags separated by spaces")
+var tgoroot = flag.String("tgoroot", "", "set goroot to the given value")
 
 // TARDIS Go modification TODO review words here
 const usage = `SSA builder and TARDIS Go transpiler (experimental).
@@ -134,7 +135,7 @@ func doTestable(args []string) error {
 
 	wordSize = 4              // TARDIS Go addition to force default int size to 32 bits
 	conf.Build.GOARCH = "tgo" // or 386? TARDIS Go addition to ensure 32-bit int
-	conf.Build.GOOS = "tgo"   // or nacl? TARDIS Go addition to ensure simplest OS-specific code to emulate
+	conf.Build.GOOS = "nacl"  // TARDIS Go addition to ensure simplest OS-specific code to emulate
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
 
@@ -204,12 +205,15 @@ func doTestable(args []string) error {
 		defer pprof.StopCPUProfile()
 	}
 
-	// Really need to find a way to replace entire packages, this experiment is WIP so excluded for the latest push
-	// conf.Build.GOROOT = "/Users/Elliott/Desktop/tardisgo/goroot/go1.4rc2" // TODO sort out to a sensible location
-	// fmt.Println("DEBUG GOPATH", conf.Build.GOPATH) // TODO set GOROOT by concatonating with this unless TGOPATH is set
+	// Really need to find a way to replace entire packages, this experiment is WIP
+	// Eventually this might be better as an environment variable
+	if *tgoroot != "" {
+		conf.Build.GOROOT = *tgoroot // TODO set the default value, when different from system
+	}
+	// fmt.Println("DEBUG GOPATH", conf.Build.GOPATH)
 
 	if *testFlag {
-		conf.ImportWithTests(args[0]) // assumes you give the full cannonical name of package
+		conf.ImportWithTests(args[0]) // assumes you give the full cannonical name of the package to test
 		args = args[1:]
 	}
 
@@ -356,12 +360,12 @@ var targets = [][][]string{
 		[]string{"echo", `"CS:"`},
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
-	// Seldom works, so removed
-	//[][]string{
-	//	[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardis/tardisgo.n"},
-	//	[]string{"echo", `"Neko:"`},
-	//	[]string{"time", "neko", "tardis/tardisgo.n"},
-	//},
+	// TODO Seldom works, so remove?
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardis/tardisgo.n"},
+		[]string{"echo", `"Neko:"`},
+		[]string{"time", "neko", "tardis/tardisgo.n"},
+	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardis/tardisgo.js"},
 		[]string{"echo", `"Node/JS:"`},

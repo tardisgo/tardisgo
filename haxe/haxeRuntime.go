@@ -244,6 +244,18 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		}
 		return ret;
 	}
+
+	public static function toHaxeParam(v:Dynamic):Dynamic { // TODO only use for functions
+		if(v==null) return null;
+		if(Std.is(v,Interface)){
+			if(Std.is(v.val,Closure) && v.typ!=-1){ // a closure not made by hx.CallbackFunc
+				return v.val.buildCallbackFn();
+			}else{
+				return v.val;
+			}
+		}
+		return v;
+	}
 	
 }
 
@@ -771,9 +783,23 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 		return Reflect.callMethod(null, fn, [[],t,v]);
 	}
 	public function callFn(params:Dynamic):Dynamic {
-		if(fn==null) Scheduler.panicFromHaxe("attempt to call null function reference in Closure()");
+		if(fn==null) Scheduler.panicFromHaxe("attempt to call null function reference in Closure.callFn()");
 		if(!Reflect.isFunction(fn)) Scheduler.panicFromHaxe("invalid function reference in Closure(): "+fn);
 		return Reflect.callMethod(null, fn, params);
+	}
+	// This technique is used to create callback functions
+	public function buildCallbackFn():Dynamic { 
+		//trace("buildCallbackFn");
+		function bcf(params:Array<Dynamic>):Dynamic {
+			//trace("bcf");
+			if(!Go.doneInit) Go.init();
+			params.insert(0,bds); // the variables bound in the closure (at final index 1)
+			params.insert(0,0); // use goroutine 0 (at final index 0)
+			var SF:StackFrame=Reflect.callMethod(null, fn, params); 
+			while(SF._incomplete) Scheduler.runAll();
+			return SF.res();
+		}
+		return Reflect.makeVarArgs(bcf); 
 	}
 }
 
@@ -1532,6 +1558,7 @@ class Int64 {
 // GoRoutine 
 class StackFrameBasis
 {
+public var _Next:Int=0;
 public var _incomplete(default,null):Bool=true;
 public var _latestPH:Int=0;
 public var _latestBlock:Int=0;
@@ -1707,6 +1734,7 @@ public function runDefers(){
 
 interface StackFrame
 {
+public var _Next(default,null):Int;
 public var _incomplete(default,null):Bool;
 public var _latestPH:Int;
 public var _latestBlock:Int;
@@ -1731,8 +1759,50 @@ static var panicStackDump:String="";
 static var entryCount:Int=0; // this to be able to monitor the re-entrys into this routine for debug
 static var currentGR:Int=0; // the current goroutine, used by Scheduler.panicFromHaxe(), NOTE this requires a single thread
 
-public static function timerEventHandler(dummy:Dynamic) { // if the scheduler is being run from a timer, this is where it comes to
-	runAll();
+// if the scheduler is being run from a timer, this is where it comes to
+public static var runLimit:Int=0;
+public static function timerEventHandler(dummy:Dynamic) {
+	if(runLimit<2) 
+		runAll();
+	else
+		runToStasis(runLimit); 
+}
+
+static inline function runToStasis(cycles:Int) {
+	var lastHash=new Array<Null<Int>>();
+	var thisHash=makeStateHash();
+	while( !hashesEqual(lastHash,thisHash) && cycles>0){
+		lastHash = thisHash;
+		runAll();
+		thisHash = makeStateHash();
+		cycles -= 1;
+	}
+	//if(cycles>0)
+	//	trace("Stasis achieved at "+cycles);
+	//else
+	//	trace("Stasis not achieved");
+}
+
+static function hashesEqual(a:Array<Null<Int>>,b:Array<Null<Int>>):Bool{
+	if(a.length != b.length) 
+		return false;
+	for(i in 0...a.length)
+		if(a[i]!=b[i]) 
+			return false;
+	return true;
+}
+
+static function makeStateHash():Array<Null<Int>> { // TODO this is very ugly, and probably slow, so improve by checking for change on the fly?
+	var hash=new Array<Null<Int>>();
+	for( gr in 0 ... grStacks.length){
+		var first = grStacks[gr].first();
+		if(first==null)
+			hash[gr] = null;
+		else
+			hash[gr] = first._functionPH + first._Next;
+	}
+	//trace("makeStateHash()="+hash);
+	return hash;
 }
 
 public static function runAll() { // this must be re-entrant, in order to allow Haxe->Go->Haxe->Go for some runtime functions
@@ -1751,8 +1821,8 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 		runOne(0,entryCount);
 	}
 
-	if(doneInit  && entryCount==1 ) {	// don't run extra goroutines when we are re-entrant or have not finished initialistion
-									// NOTE this means that Haxe->Go->Haxe->Go code cannot run goroutines 
+	if(doneInit  && entryCount==1 ) {	 // don't run extra goroutines when we are re-entrant or have not finished initialistion
+									     // NOTE this means that Haxe->Go->Haxe->Go code cannot run goroutines 
 		for(cg in 1...grStacks.length) { // length may grow during a run through, NOTE goroutine 0 not run again
 			if(!grStacks[cg].isEmpty()) {
 				runOne(cg,entryCount);
@@ -1804,7 +1874,7 @@ public static inline function run1(gr:Int){ // used by callFromRT() for every go
 		}	
 }
 public static function makeGoroutine():Int {
-	for (r in 0 ... grStacks.length)
+	for (r in 1 ... grStacks.length) // goroutine zero is reserved for init activities, main.main() and Haxe call-backs
 		if(grStacks[r].isEmpty())
 		{
 			grInPanic[r]=false;
@@ -1888,7 +1958,7 @@ public static function recover(gr:Int):Interface{
 }
 public static function panicFromHaxe(err:String) { 
 	if(currentGR>=grStacks.length||currentGR<0) 
-		// if currnent goroutine is -ve, or out of range, always panics in goroutine 0
+		// if current goroutine is -ve, or out of range, always panics in goroutine 0
 		panic(0,new Interface(TypeInfo.getId("string"),"Runtime panic, unknown goroutine, "+err+" "));
 	else
 		panic(currentGR,new Interface(TypeInfo.getId("string"),"Runtime panic, "+err+" "));

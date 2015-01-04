@@ -17,14 +17,22 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		return "" // no need to generate code for the go init function
 	}
 
-	if fnToCall == "Func" {
+	if fnToCall == "CallbackFunc" {
 		// NOTE there will be a preceeding MakeInterface call that is made redundant by this code
 		if len(args) == 1 {
 			goMI, ok := args[0].(*ssa.MakeInterface)
 			if ok {
 				goFn, ok := (*(goMI.Operands(nil)[0])).(*ssa.Function)
 				if ok {
-					return "Go_" + l.FuncName(goFn) + ".callFromHaxe;"
+					return "new Interface(-1," + l.IndirectValue(args[0], errorInfo) + ".val.buildCallbackFn()); // Go_" + l.FuncName(goFn)
+				}
+				_, ok = (*(goMI.Operands(nil)[0])).(*ssa.MakeClosure)
+				if ok {
+					return "new Interface(-1," + l.IndirectValue(args[0], errorInfo) + ".val.buildCallbackFn());"
+				}
+				con, ok := (*(goMI.Operands(nil)[0])).(*ssa.Const)
+				if ok {
+					return "new Interface(-1," + strings.Trim(l.IndirectValue(con, errorInfo), "\"") + ");"
 				}
 			}
 		}
@@ -60,7 +68,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 
 	if strings.HasSuffix(fnToCall, "Iface") {
 		argOff = 2
-		wrapStart += "new Interface(TypeInfo.getId(" + l.IndirectValue(args[0], errorInfo) + "),{"
+		wrapStart += "new Interface(TypeInfo.getId(" + l.IndirectValue(args[1], errorInfo) + "),{"
 		wrapEnd = "});" + wrapEnd
 	}
 	code := ""
@@ -111,7 +119,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	}
 	if strings.HasPrefix(fnToCall, "Set") {
 		argOff++
-		code = l.IndirectValue(args[argOff], errorInfo) + "=" + code + ";"
+		code = code + "=" + l.IndirectValue(args[argOff], errorInfo) + ";"
 		usesArgs = false
 	}
 	if strings.HasPrefix(fnToCall, "Fget") {

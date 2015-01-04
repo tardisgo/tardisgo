@@ -7,8 +7,9 @@
 //
 package hx
 
-// Func returns the Haxe form of a Go function
-func Func(function interface{}) uintptr { return 0 }
+// CallbackFunc returns the Haxe-callable form of a Go function, or
+// if passed a string value, it gives the actual name of a Haxe function e.g. "Scheduler.timerEventHandler"
+func CallbackFunc(function interface{}) interface{} { return 0 }
 
 // Code inserts the given constant Haxe code at this point.
 // ifLogic = a constant string giving the logic for wrapping Haxe complie time condition, ignored if "": #if (ifLogic) ... #end
@@ -16,7 +17,7 @@ func Func(function interface{}) uintptr { return 0 }
 // code = must be a constant string containing a well-formed Haxe statement, probably terminated with a ";".
 // args = whatever aguments are passed (as interfaces), typical haxe code to access the value of an argument is "_a[3].val".
 // Try the Go code:
-//   hx.Code("",trace('HAXE trace:',_a.itemAddr(0).load().val,_a.itemAddr(1).load().val);", 42,43)
+//   hx.Code("","trace('HAXE trace:',_a.itemAddr(0).load().val,_a.itemAddr(1).load().val);", 42,43)
 func Code(ifLogic, code string, args ...interface{}) {}
 
 // CodeIface - same as Code() but returns an interface.
@@ -85,7 +86,7 @@ func GetDynamic(ifLogic, name string) uintptr           { return 0 }
 
 // Set a static Haxe value, ifLogic, resTyp & name must be constant strings.
 
-func SetIface(ifLogic, resTyp, name string, val interface{}) {}
+func SetIface(ifLogic, resTyp, name string, val interface{}) {} // TODO is this required?
 func SetBool(ifLogic, name string, val bool)                 {}
 func SetInt(ifLogic, name string, val int)                   {}
 func SetFloat(ifLogic, name string, val float64)             {}
@@ -106,7 +107,7 @@ func FgetDynamic(ifLogic string, object uintptr, haxeType string, name string) u
 // Set a field value in a Haxe object, ifLogic, resTyp & name must be constant strings.
 
 func FsetIface(ifLogic, resTyp string, object uintptr, haxeType string, name string, val interface{}) {
-}
+}                                                                                           // TODO is this required?
 func FsetBool(ifLogic string, object uintptr, haxeType string, name string, val bool)       {}
 func FsetInt(ifLogic string, object uintptr, haxeType string, name string, val int)         {}
 func FsetFloat(ifLogic string, object uintptr, haxeType string, name string, val float64)   {}
