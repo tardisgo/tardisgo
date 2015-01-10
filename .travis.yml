@@ -1,8 +1,9 @@
 language: go
-go: 1.2
+go: 1.4
 
 before_install:
   - sudo add-apt-repository ppa:eyecreate/haxe -y
   - sudo apt-get update
   - sudo apt-get install haxe -y --force-yes
 
+script: go test -v .

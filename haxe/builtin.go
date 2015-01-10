@@ -12,10 +12,7 @@ func (l langType) append(args []ssa.Value, errorInfo string) string {
 		source = "Force.toUTF8slice(this._goroutine," + source + ")" // if we have a string, we must convert it to a slice
 	}
 	target := l.IndirectValue(args[0], errorInfo)
-	ret := target + ".append(" + source + ")"
-	if target == "null" {
-		ret = source
-	}
+	ret := target + "==null?" + source + ":" + target + ".append(" + source + ")"
 	//fmt.Printf("APPEND DEBUG: %s - %+v - %s\n", ulSize, args, ret)
 
 	return ret
@@ -31,7 +28,7 @@ func (l langType) copy(register string, args []ssa.Value, errorInfo string) stri
 		source = "Force.toUTF8slice(this._goroutine," + source + ")" // if we have a string, we must convert it to a slice
 	}
 	code := l.IndirectValue(args[0], errorInfo) + ".copy(" + source + ")"
-	// TODO consider makting this a runtime function
+	// TODO consider making this a runtime function
 	return ret + code
 }
 

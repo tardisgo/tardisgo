@@ -32,7 +32,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 				}
 				con, ok := (*(goMI.Operands(nil)[0])).(*ssa.Const)
 				if ok {
-					return "new Interface(-1," + strings.Trim(l.IndirectValue(con, errorInfo), "\"") + ");"
+					return "new Interface(-1," + tgoString(l.IndirectValue(con, errorInfo), errorInfo) + ");"
 				}
 			}
 		}
@@ -47,8 +47,8 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 
 	ifLogic := l.IndirectValue(args[0], errorInfo)
 	//fmt.Println("DEBUG:ifLogic=", ifLogic, "AT", errorInfo)
-	if len(ifLogic) > 2 && ifLogic[0] == '"' { // the empty string comes back as two double quotes
-		ifLogic = strings.Trim(ifLogic, `"`)
+	ifLogic = tgoString(ifLogic, errorInfo)
+	if len(ifLogic) > 0 {
 		wrapStart = " #if (" + ifLogic + ") "
 		defVal := "null"
 		if strings.HasSuffix(fnToCall, "Bool") {
@@ -66,29 +66,31 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		wrapEnd = " #else " + defVal + "; #end "
 	}
 
+	if strings.HasSuffix(fnToCall, "String") && !strings.HasPrefix(fnToCall, "Fset") && !strings.HasPrefix(fnToCall, "Set") {
+		wrapStart += " Force.fromHaxeString({"
+		wrapEnd = "});" + wrapEnd
+	}
+
 	if strings.HasSuffix(fnToCall, "Iface") {
 		argOff = 2
-		wrapStart += "new Interface(TypeInfo.getId(" + l.IndirectValue(args[1], errorInfo) + "),{"
+		wrapStart += "new Interface(TypeInfo.getId(\"" + tgoString(l.IndirectValue(args[1], errorInfo), errorInfo) + "\"),{"
 		wrapEnd = "});" + wrapEnd
 	}
 	code := ""
 	if strings.HasPrefix(fnToCall, "New") {
 		code = "new "
 	}
-	code += strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`)
+	code += strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) // trim quotes if it has any
 	if strings.HasPrefix(fnToCall, "Call") || strings.HasPrefix(fnToCall, "Meth") || strings.HasPrefix(fnToCall, "New") {
 		argOff++
 		if strings.HasPrefix(fnToCall, "Meth") {
-			haxeType := strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`)
+			haxeType := tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo)
 			if len(haxeType) > 0 {
 				code = "cast(" + code + "," + haxeType + ")"
 			}
 			argOff++
 			obj := l.IndirectValue(args[argOff], errorInfo)
 			code += "." + strings.Trim(obj, `"`) + "("
-			// If in need of reflection:
-			//code = "#if (cpp || flash) " + code + "." + strings.Trim(obj, `"`) + "( #else Reflect.callMethod(" + code + "," +
-			//	" Reflect.field(" + code + ", " + obj + "),[ #end " // prefix the code with the var to execute the method on
 			argOff++
 		} else {
 			code += "("
@@ -104,12 +106,8 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 				if i > 0 {
 					code += ","
 				}
-				code += fmt.Sprintf("_a.itemAddr(%d).load().val", i)
+				code += fmt.Sprintf("Force.toHaxeParam(_a.itemAddr(%d).load().val)", i)
 			}
-		}
-		if strings.HasPrefix(fnToCall, "Meth") {
-			// If in need of reflection:
-			//code += " #if !(cpp || flash) ] #end "
 		}
 		code += ");"
 	}
@@ -125,24 +123,18 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	if strings.HasPrefix(fnToCall, "Fget") {
 		argOff++
 		if l.IndirectValue(args[argOff], errorInfo) != `""` {
-			code = "cast(" + code + "," + strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) + ")"
+			code = "cast(" + code + "," + tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"
 		}
-		code += "." + strings.Trim(l.IndirectValue(args[argOff+1], errorInfo), `"`) + "; "
-		//code = "#if (cpp || flash) " + code + "." + strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) + "; #else " +
-		//	"Reflect.getProperty(" + code + "," + l.IndirectValue(args[argOff], errorInfo) + "); #end "
+		code += "." + tgoString(l.IndirectValue(args[argOff+1], errorInfo), errorInfo) + "; "
 		usesArgs = false
 	}
 	if strings.HasPrefix(fnToCall, "Fset") {
 		argOff++
 		if l.IndirectValue(args[argOff], errorInfo) != `""` {
-			code = "cast(" + code + "," + strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) + ")"
+			code = "cast(" + code + "," + tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"
 		}
-		code += "." + strings.Trim(l.IndirectValue(args[argOff+1], errorInfo), `"`) +
-			"=" + l.IndirectValue(args[argOff+2], errorInfo) + "; "
-		//code = "#if (cpp || flash) " + code + "." + strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) +
-		//	"=" + l.IndirectValue(args[argOff+1], errorInfo) + "; #else " +
-		//	"Reflect.setProperty(" + code + "," +
-		//	l.IndirectValue(args[argOff], errorInfo) + "," + l.IndirectValue(args[argOff+1], errorInfo) + "); #end "
+		code += "." + tgoString(l.IndirectValue(args[argOff+1], errorInfo), errorInfo) +
+			"=Force.toHaxeParam(" + l.IndirectValue(args[argOff+2], errorInfo) + "); "
 		usesArgs = false
 	}
 
@@ -151,4 +143,13 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		ret += "var _a=" + l.IndirectValue(args[argOff+1], errorInfo) + "; "
 	}
 	return ret + wrapStart + code + wrapEnd + " }"
+}
+
+func tgoString(s, errorInfo string) string {
+	bits := strings.Split(s, `"`)
+	if len(bits) < 2 {
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("hx.() argument is not a usable string constant"))
+		return ""
+	}
+	return bits[1]
 }

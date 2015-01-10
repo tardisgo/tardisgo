@@ -179,7 +179,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	}
 
 	// call from haxe (TODO: maybe run in a new goroutine)
-	ret += "public static inline function callFromHaxe( "
+	ret += "public static function callFromHaxe( "
 	for p := range fn.Params {
 		if p != 0 {
 			ret += ", "
@@ -208,7 +208,13 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "(0,null" // NOTE calls from Haxe hijack goroutine 0, so the main go goroutine will be suspended for the duration
 	for p := range fn.Params {
 		ret += ", "
+		if fn.Params[p].Type().Underlying().String() == "string" {
+			ret += "Force.fromHaxeString("
+		}
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
+		if fn.Params[p].Type().Underlying().String() == "string" {
+			ret += ")"
+		}
 	}
 	ret += ").run(); \n"
 	if usesGr {
@@ -220,7 +226,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "}\n"
 
 	// call from haxe go runtime - use current goroutine
-	ret += "public static inline function callFromRT( _gr:Int"
+	ret += "public static function callFromRT( _gr:Int"
 	for p := range fn.Params {
 		//if p != 0 {
 		ret += ", "
@@ -260,8 +266,8 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "}\n"
 
 	// call
-	ret += "public static inline function call( gr:Int," //this just creates the stack frame, NOTE does not run anything because also used for defer
-	ret += "_bds:Dynamic"                                //bindings
+	ret += "public static function call( gr:Int," //this just creates the stack frame, NOTE does not run anything because also used for defer
+	ret += "_bds:Dynamic"                         //bindings
 	for p := range fn.Params {
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
@@ -896,27 +902,14 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		switch fnToCall {
 
 		//
-		// pogo specific function rewriting
-		//
-		case "tardisgolib_Host":
-			nextReturnAddress-- //decrement to set new return address for next call generation
-			return register + `="` + l.LanguageName() + `";`
-		case "tardisgolib_Platform":
-			nextReturnAddress-- //decrement to set new return address for next call generation
-			return register + `=Go.Platform();`
-		case "tardisgolib_CPos":
-			nextReturnAddress-- //decrement to set new return address for next call generation
-			return register + fmt.Sprintf("=Go.CPos(%d);", pogo.LatestValidPosHash)
-		case "tardisgolib_Zilen":
-			nextReturnAddress-- //decrement to set new return address for next call generation
-			return register + "='字'.length;"
-
-		//
 		// Go library complex function rewriting
 		//
-		case "math_Inf":
+		case "runtime_Breakpoint":
 			nextReturnAddress-- //decrement to set new return address for next call generation
-			return register + "=(" + l.IndirectValue(args[0], errorInfo) + ">=0?Math.POSITIVE_INFINITY:Math.NEGATIVE_INFINITY);"
+			return "this.breakpoint();"
+		//case "math_Inf":
+		//	nextReturnAddress-- //decrement to set new return address for next call generation
+		//	return register + "=(" + l.IndirectValue(args[0], errorInfo) + ">=0?Math.POSITIVE_INFINITY:Math.NEGATIVE_INFINITY);"
 
 		default:
 			//
@@ -990,12 +983,31 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				if foundDot { // it's a Haxe method
 					switch bits[len(bits)-1] {
 					case "g": // get
-						return hashIf + register + "=" + l.IndirectValue(args[0], errorInfo) +
-							"." + bits[len(bits)-2][1:] + ";" + hashEnd
+						if register != "" {
+							ret := l.IndirectValue(args[0], errorInfo) + "." + bits[len(bits)-2][1:]
+							r := cc.Signature().Results()
+							if r.Len() == 1 {
+								switch r.At(0).Type().Underlying().(type) {
+								case *types.Interface:
+									ret = "Interface.fromDynamic(" + ret + ")"
+								case *types.Basic:
+									if r.At(0).Type().Underlying().(*types.Basic).Kind() == types.String {
+										ret = "Force.fromHaxeString(" + ret + ")"
+									}
+								}
+							}
+							return hashIf + register + "=" + ret + ";" + hashEnd
+						}
+						return ""
 					case "s": // set
 						interfaceSuffix := ""
 						interfacePrefix := ""
-						switch args[1].Type().(type) {
+						switch args[1].Type().Underlying().(type) {
+						case *types.Basic:
+							if args[1].Type().Underlying().(*types.Basic).Kind() == types.String {
+								interfacePrefix = "Force.toHaxeString("
+								interfaceSuffix = ")"
+							}
 						case *types.Interface:
 							interfacePrefix = "Force.toHaxeParam("
 							interfaceSuffix = ")"
@@ -1012,12 +1024,31 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				} else {
 					switch bits[len(bits)-1] {
 					case "g": // special processing to get a class static variable or enum
-						return hashIf + register + "=" +
-							strings.Join(strings.Split(strings.Join(bits[:len(bits)-1], "."), "..."), "_") + ";" + hashEnd
+						if register != "" {
+							ret := strings.Join(strings.Split(strings.Join(bits[:len(bits)-1], "."), "..."), "_")
+							r := cc.Signature().Results()
+							if r.Len() == 1 {
+								switch r.At(0).Type().Underlying().(type) {
+								case *types.Interface:
+									ret = "Interface.fromDynamic(" + ret + ")"
+								case *types.Basic:
+									if r.At(0).Type().Underlying().(*types.Basic).Kind() == types.String {
+										ret = "Force.fromHaxeString(" + ret + ")"
+									}
+								}
+							}
+							return hashIf + register + "=" + ret + ";" + hashEnd
+						}
+						return ""
 					case "s": // special processing to set a class static variable
 						interfaceSuffix := ""
 						interfacePrefix := ""
-						switch args[0].Type().(type) {
+						switch args[0].Type().Underlying().(type) {
+						case *types.Basic:
+							if args[0].Type().Underlying().(*types.Basic).Kind() == types.String {
+								interfacePrefix = "Force.toHaxeString("
+								interfaceSuffix = ")"
+							}
 						case *types.Interface:
 							interfacePrefix = "Force.toHaxeParam("
 							interfaceSuffix = ")"
@@ -1096,11 +1127,15 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		switch args[arg].Type().Underlying().(type) { // TODO this may be in need of further optimization
 		case *types.Pointer, *types.Slice, *types.Chan: // must pass a reference, not a copy
 			ret += l.IndirectValue(args[arg], errorInfo)
-		case *types.Basic: // NOTE Complex is an object as is Int64 (in java & cs), but copy does not seem to be required
-			ret += l.IndirectValue(args[arg], errorInfo)
 		case *types.Interface:
 			if isHaxeAPI {
 				ret += "Force.toHaxeParam(" + l.IndirectValue(args[arg], errorInfo) + ")"
+			} else {
+				ret += l.IndirectValue(args[arg], errorInfo)
+			}
+		case *types.Basic:
+			if isHaxeAPI && args[arg].Type().Underlying().(*types.Basic).Kind() == types.String {
+				ret += "Force.toHaxeString(" + l.IndirectValue(args[arg], errorInfo) + ")"
 			} else {
 				ret += l.IndirectValue(args[arg], errorInfo)
 			}
@@ -1125,14 +1160,18 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 	if isBuiltin {
 		if register != "" {
 			//**************************
-			//TODO ensure correct conversions for interface{} <-> Dynamic when isHaxeAPI
+			// ensure correct conversions for interface{} <-> Dynamic when isHaxeAPI
 			//**************************
 			if isHaxeAPI {
 				r := cc.Signature().Results()
 				if r.Len() == 1 {
-					switch r.At(0).Type().(type) {
+					switch r.At(0).Type().Underlying().(type) {
 					case *types.Interface:
 						ret = "Interface.fromDynamic(" + ret + ")"
+					case *types.Basic:
+						if r.At(0).Type().Underlying().(*types.Basic).Kind() == types.String {
+							ret = "Force.fromHaxeString(" + ret + ")"
+						}
 					}
 				}
 			}
@@ -1299,8 +1338,12 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 			fmt.Sprintf("%d", x.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Len()) +
 			"," + eleSz + `);`
 	case *types.Basic: // assume a string is in need of slicing...
-		return register + "=Force.toRawString(this._goroutine,Force.toUTF8slice(this._goroutine," + xString +
-			`).subSlice(` + lvString + `,` + hvString + `)` + `);`
+		//return register + "=Force.toRawString(this._goroutine,Force.toUTF8slice(this._goroutine," + xString +
+		//	`).subSlice(` + lvString + `,` + hvString + `)` + `);`
+		if hvString == "-1" {
+			return register + "=(" + xString + ").substr(" + lvString + ");"
+		}
+		return register + "=(" + xString + ").substr(" + lvString + "," + hvString + "-" + lvString + ");"
 	default:
 		pogo.LogError(errorInfo, "Haxe",
 			fmt.Errorf("haxe.Slice() - unhandled type: %v", reflect.TypeOf(x.(ssa.Value).Type().Underlying())))
@@ -1393,13 +1436,15 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 		case types.Int64, types.Uint64:
 			keyString = keyString + ".toInt()"
 		}
-		sliceCode := "Force.toUTF8slice(this._goroutine," + l.IndirectValue(Map, errorInfo) + ")"
-		valueCode := sliceCode + ".itemAddr(" + keyString + ").load_uint8()"
+		//sliceCode := "Force.toUTF8slice(this._goroutine," + l.IndirectValue(Map, errorInfo) + ")"
+		//valueCode := sliceCode + ".itemAddr(" + keyString + ").load_uint8()"
+		valueCode := l.IndirectValue(Map, errorInfo) + ".charCodeAt(" + keyString + ")"
 		if commaOk {
-			return reg + "=(" + keyString + "<0)||(" + keyString + ">=" + sliceCode + ".len() ?" +
-				"{r0:0,r1:false}:{r0:" + valueCode + ",r1:true};"
+			return reg + "=(" + valueCode + "==null) ?" +
+				"{r0:0,r1:false}:{r0:Std.int(" + valueCode + "),r1:true};"
 		}
-		return reg + "=" + valueCode + ";"
+		return reg + "=(" + valueCode + "==null) ?" +
+			"{Scheduler.ioor();0;}:Std.int(" + valueCode + ");"
 	}
 	// assume it is a Map
 	li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/exact"
@@ -121,14 +122,57 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 }
 
 func haxeStringConst(s string, position string) string { // TODO add conversions for UTF16
-	strLit, err := strconv.Unquote(s)
+	s, err := strconv.Unquote(s)
 	if err != nil {
 		pogo.LogError(position, "Haxe", err)
-	} else {
-		strLit = strconv.QuoteToASCII(strLit)
-		strLit = strings.Replace(strLit, "\\U", "\\u", -1) // TODO replace this cludge!!
+		return ""
 	}
-	return strLit
+
+	ret0 := ""
+	hadEsc := false
+	for i := 0; i < len(s); i++ {
+		c := rune(s[i])
+		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '\\' && !hadEsc {
+			ret0 += string(c)
+		} else {
+			ret0 += fmt.Sprintf("\\x%02X", c)
+			hadEsc = true
+		}
+	}
+	ret0 = `"` + ret0 + `"`
+
+	ret := ``
+	compound := ""
+	hadStr := false
+	for i := 0; i < len(s); i++ {
+		c := rune(s[i])
+		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '\\' {
+			compound += string(c)
+		} else {
+			if hadStr {
+				ret += "+"
+			}
+			if compound != "" {
+				compound = `"` + compound + `"+`
+			}
+			ret += fmt.Sprintf("%sString.fromCharCode(%d)", compound, c)
+			compound = ""
+			hadStr = true
+		}
+	}
+	if hadStr {
+		if compound != "" {
+			ret += fmt.Sprintf("+\"%s\"", compound)
+		}
+	} else {
+		ret += fmt.Sprintf("\"%s\"", compound)
+	}
+
+	if ret0 == ret {
+		return ret
+	}
+	return ` #if (cpp || neko || php) ` + ret0 + ` #else ` + ret + " #end "
+
 }
 
 func (langType) Const(lit ssa.Const, position string) (typ, val string) {

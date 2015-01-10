@@ -31,7 +31,12 @@ class Console {
 	}
 	static function join(v:Array<Dynamic>):String {
 		var s = "";
-		for (i in 0...v.length) s += Std.string(v[i]) + " " ;
+		for (i in 0...v.length) {
+			if(Std.is(v[i],String)) 
+				s+= Force.toHaxeString(v[i]) + " ";
+			else
+				s += Std.string(v[i]) + " " ;
+		}
 		return s;
 	}
 	public static function readln():Null<String> {
@@ -192,9 +197,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return GOint64.toInt(GOint64.mod(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
 		}
 	}
-	public static function floatDiv(x:Float,y:Float):Float {
-		if(y==0.0)
-			Scheduler.panicFromHaxe("attempt to divide float value by 0"); 
+	public static inline function floatDiv(x:Float,y:Float):Float {
+		//if(y==0.0) // divide by zero gives +/- infinity - so valid ... TODO check back to Go spec
+		//	Scheduler.panicFromHaxe("attempt to divide float value by 0"); 
 		return x/y;
 	}
 	public static function floatMod(x:Float,y:Float):Float {
@@ -203,60 +208,86 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return x%y;
 	}
 
-	public static function toUTF8length(gr:Int,s:String):Int {
-		return "字".length==3 ? s.length : toUTF8slice(gr,s).len(); // no need to unpack the string if already UTF8
+	public static inline function toUTF8length(gr:Int,s:String):Int {
+			return s.length;
 	}
-	// return the UTF8 version of a potentiallly UTF16 string in a Slice
+	// return the UTF8 version of a string in a Slice
 	public static function toUTF8slice(gr:Int,s:String):Slice {
 		var a:Array<Int> = new Array<Int>();
 		for(i in 0...s.length){
 				var t:Null<Int>=s.charCodeAt(i) ;
 				if(t==null) 
 					Scheduler.panicFromHaxe("Haxe runtime Force.toUTF8slice() unexpected null encountered");
-				else
-					a[i]=Std.int(t) ;
+				else{
+					var x = Std.int(t);
+					a[i] = x;
+				}
 		}
-		if ( "字".length==3 ) { // already UTF8 encoded
-			var sl:Slice = new Slice(new Pointer(new Object(a.length)),0,-1,a.length,1);
-			for(i in 0...a.length)
-				sl.itemAddr(i).store_uint8(a[i]);
-			return sl;
-		}else{
-			var sl:Slice = new Slice(new Pointer(new Object(a.length<<1)),0,-1,a.length,2);
-			for(i in 0...a.length)
-				sl.itemAddr(i).store_uint16(a[i]);
-			var v1:Slice=Go_haxegoruntime_UTF16toRunes.callFromRT(gr,sl);
-			return Go_haxegoruntime_RunesToUTF8.callFromRT(gr,v1);
-		}
+		var sl:Slice=new Slice(new Pointer(new Object(a.length)),0,-1,a.length,1);
+		for(i in 0...a.length)
+			sl.itemAddr(i).store_uint8(a[i]);
+		return sl;
 	}
 	public static function toRawString(gr:Int,sl:Slice):String {
 		var ret:String="";
-		if ( "字".length==1 ) { // needs to be translated to UTF16
-			var v1:Slice=Go_haxegoruntime_UTF8toRunes.callFromRT(gr,sl);
-			sl=Go_haxegoruntime_RunesToUTF16.callFromRT(gr,v1);
-			for(i in 0...sl.len()) {
-				ret += String.fromCharCode( sl.itemAddr(i).load_uint16() );
-			}
-			return ret;
-		}
 		for(i in 0...sl.len()) {
-			ret += String.fromCharCode( sl.itemAddr(i).load_uint8() );
+			var x = sl.itemAddr(i).load_uint8();
+			ret += String.fromCharCode( x );
 		}
 		return ret;
 	}
 
-	public static function toHaxeParam(v:Dynamic):Dynamic { // TODO only use for functions
+	public static function toHaxeParam(v:Dynamic):Dynamic { // TODO optimize if we know it is a function or string
 		if(v==null) return null;
 		if(Std.is(v,Interface)){
 			if(Std.is(v.val,Closure) && v.typ!=-1){ // a closure not made by hx.CallbackFunc
 				return v.val.buildCallbackFn();
 			}else{
-				return v.val;
+				v = v.val;
 			}
+		}
+		if(Std.is(v,String)){
+			v=toHaxeString(v);
 		}
 		return v;
 	}
 	
+	public static #if (cpp || neko || php) inline #end function toHaxeString(v:String):String {
+		#if !( cpp || neko || php ) // need to translate back to UTF16 when passing back to Haxe
+			var sli:Slice=new Slice(new Pointer(new Object(v.length)),0,-1,v.length,1);
+			for(i in 0...v.length){
+				if(v.charCodeAt(i)>0xff) return v; // probably already encoded as UTF-16
+				sli.itemAddr(i).store_uint8(v.charCodeAt(i));
+			}
+			var slr = Go_haxegoruntime_UTF8toRunes.callFromRT(0,sli);
+			var slo = Go_haxegoruntime_RunesToUTF16.callFromRT(0,slr);
+			v="";
+			for(i in 0...slo.len()) {
+				v += String.fromCharCode( slo.itemAddr(i).load_uint16() );
+			}
+		#end
+		return v;
+	}
+
+	public static #if (cpp || neko || php) inline #end function fromHaxeString(v:String):String {
+		#if !( cpp || neko || php ) // need to translate from UTF16 to UTF8 when passing back to Go
+			var sli:Slice=new Slice(new Pointer(new Object(v.length<<1)),0,-1,v.length,2);
+			var allSmall = true;
+			for(i in 0...v.length){
+				if(v.charCodeAt(i)>0xff) allSmall=false; // encoded as UTF-16 with big vals
+				sli.itemAddr(i).store_uint16(v.charCodeAt(i));
+			}
+			if(allSmall) return v; // no need to go through the whole procedure if no chars larger than 8-bit
+			var slr = Go_haxegoruntime_UTF16toRunes.callFromRT(0,sli);
+			var slo = Go_haxegoruntime_RunesToUTF8.callFromRT(0,slr);
+			v="";
+			for(i in 0...slo.len()) {
+				v += String.fromCharCode( slo.itemAddr(i).load_uint8() );
+			}
+		#end
+		return v;
+	}
+
 }
 
 // Object code
@@ -274,6 +305,12 @@ class Object { // this implementation will improve with typed array access
 		private var iVec:haxe.ds.Vector<Int>; 
 	#end
 	private var length:Int;
+	public var uniqueRef:Int; // to give pointers a unique numerical value
+
+	private static var uniqueCount:Int=0;
+	#if godebug
+		public static var memory = new Map<Int,Object>();
+	#end
 
 	public inline function new(byteSize:Int){ // size is in bytes
 		#if (js && dataview)
@@ -286,6 +323,11 @@ class Object { // this implementation will improve with typed array access
 			iVec = new haxe.ds.Vector<Int>(byteSize);
 		#end
 		length = byteSize;
+		uniqueCount += 1;
+		uniqueRef = uniqueCount;
+		#if godebug
+			memory.set(uniqueRef,this);
+		#end
 	}
 	public function clear():Object {
 		for(i in 0...this.length){
@@ -553,10 +595,12 @@ class Object { // this implementation will improve with typed array access
 		set(i,v); 
 	}
 	private inline static function str(v:Dynamic):String{
-		return v==null?"":Std.string(v);
+		return v==null?"nil":Std.is(v,Pointer)?v.toUniqueVal():Std.string(v);
 	}
 	public inline function toString(addr:Int=0,count:Int=-1):String{
 		if(count==-1) count=this.length;
+		if(addr<0) addr=0;
+		if(count<0 || count>(this.length-addr)) count = this.length-addr;
 		var ret:String =  "{";
 		for(i in 0...count){
 			if(i>0) ret = ret + ",";
@@ -576,6 +620,12 @@ class Pointer {
 		obj = from; 
 		off = 0;
 	}
+	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
+		if(p1==p2) return true; // simple case of being the same haxe object
+		if(p1==null || p2==null) return false; // one of them is null (if above handles both null)
+		if(p1.obj.uniqueRef==p2.obj.uniqueRef && p1.off==p2.off) return true; // point to same object & offset
+		return false;
+	}
 	public inline function addr(byteOffset:Int):Pointer {
 		var ret:Pointer = new Pointer(this.obj);
 		ret.off = this.off+byteOffset;
@@ -586,9 +636,6 @@ class Pointer {
 	}
 	public inline function copy():Pointer {
 		return this;
-	}
-	public inline function isEqual(other:Pointer):Bool{
-		return obj.isEqual(this.off,other.obj,other.off);
 	}
 	public inline function load_object(sz:Int):Object { 
 		return obj.get_object(sz,off);
@@ -665,6 +712,9 @@ class Pointer {
 	public inline function toString(sz:Int=-1):String {
 		return " &{ "+obj.toString(off,sz)+" } ";
 	}
+	public inline function toUniqueVal():String {
+		return "&<"+Std.string(obj.uniqueRef)+":"+Std.string(off)+">";
+	}
 }
 
 @:keep
@@ -708,16 +758,19 @@ class Slice {
 		return new Slice(new Pointer(newObj),0,length+newEnt.len(),length+newEnt.len(),itemSize);
 	}
 	public function copy(source:Slice):Int{
-		var copySize:Int=this.len();
-		if(source.len()<this.len()) 
+		var copySize:Int=this.cap();
+		if(source.len()<copySize) 
 			copySize=source.len(); 
 		if(this.baseArray==source.baseArray){ // copy within the same slice
 			if(this.start<=source.start){
 				for(i in 0...copySize)
 					this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
 			}else{
-				for(i in copySize...0)
+				var i = copySize-1;
+				while(i>=0){
 					this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
+					i-=1;
+				}
 			}
 		}else{
 			for(i in 0...copySize)
@@ -1592,6 +1645,14 @@ public function setLatest(ph:Int,blk:Int){ // this can be done inline, but gener
 	// TODO optionally profile block entry here
 }
 
+public inline function breakpoint(){
+	#if godebug
+		trace("GODEBUG: runtime.Breakpoint()");
+		_debugBP.set(_latestPH,true); // set a constant debug trap
+		setPH(_latestPH); // run the debugger
+	#end
+}
+
 public function setPH(ph:Int){
 	_latestPH=ph;
 	// TODO optionally profile instruction line entry here	
@@ -1680,6 +1741,21 @@ public function setPH(ph:Int){
 							fb[0]="please use the format: G globalname ";
 						else 
 							fb[0]="Global: "+Go.getGlobal(bits[1]).substr(0,500);	
+					case "M","m":
+						if(bits.length<3)
+							fb[0]="please use the format: M objectID offset ";
+						else {
+							var id=Std.parseInt(bits[1]);
+							if(id==null)
+									fb[0]="sorry, can't parseInt: "+bits[1];
+							else{
+								var off=Std.parseInt(bits[2]);
+								if(off==null)
+									fb[0]="sorry, can't parseInt: "+bits[2];
+								else
+									fb[0]="Memory: "+Object.memory.get(id).toString(off).substr(0,500);	
+							}
+						}
 					case "D","d":
 						fb[0]=Scheduler.stackDump();					
 					case "X","x":
@@ -1688,7 +1764,7 @@ public function setPH(ph:Int){
 						fb[0]="exiting debugger";
 						stay=false;
 					default:
-						fb[0]="commands: B=BrakePointList, S/R=Set/RemoveBP name line, C=ClearAllBP, L=Local name, G=Global name, D=stackDump, X=eXit debugger";
+						fb[0]="commands: B=BrakePointList, S/R=Set/RemoveBP name line, C=ClearAllBP, L=Local name, G=Global name, M=Memory id offset, D=stackDump, X=eXit debugger";
 					}
 					Console.println(fb);
 				}
@@ -1939,16 +2015,52 @@ public static function stackDump():String {
 	return ret;
 }
 
+public static function getNumCallers(gr:Int):Int {
+	if(grStacks[gr].isEmpty()) {
+		return 0;
+	} else {
+		return grStacks[gr].length;
+	}
+}
+
+public static function getCallerX(gr:Int,x:Int):Int {
+	if(grStacks[gr].isEmpty()) {
+		return 0; // error
+	} else {
+		var it=grStacks[gr].iterator();
+		while(it.hasNext()) {
+			var ent=it.next();
+			if(x==0) {
+				if(ent==null) {
+					return 0; // this is an error 
+				} else {
+					return ent._latestPH;
+				}
+			}
+			x -= 1;
+		}
+	}
+	return 0; // error
+}
+
 public static function traceStackDump() {trace(stackDump());}
 
 public static function panic(gr:Int,err:Interface){
 	if(gr>=grStacks.length||gr<0)
 		throw "Scheduler.panic() invalid goroutine";
-	if(!grInPanic[gr]) { // if we are already in a panic, keep the first message and stack-dump
+	if(grInPanic[gr]) { // if we are already in a panic, not much we can do...
+		trace("HELP! Scheduler.panic() panic within panic for goroutine "+Std.string(gr)+" message: "+err.toString());		
+	}else{
 		grInPanic[gr]=true;
 		grPanicMsg[gr]=err;
 		panicStackDump=stackDump();
-	}
+		#if godebug
+			trace("GODEBUG: panic in goroutine "+Std.string(gr)+" message: "+err.toString());
+			var top = grStacks[gr].first();
+			if(top!=null)
+				cast(top,StackFrameBasis).breakpoint();
+		#end
+	} 
 }
 public static function recover(gr:Int):Interface{
 	if(gr>=grStacks.length||gr<0)
@@ -1984,3 +2096,43 @@ public static inline function wrapnilchk(p:Pointer):Pointer {
 
 
 `
+
+/*
+class GOstring { // TODO this class is a work-in-progress
+	public var v:Array<Int>;
+	public var length(get, null):Int;
+  	function get_length():Int {
+    	return v.length;
+  	}
+	public inline function new(p:Array<Int>) {
+		v = p;
+	}
+	public static function fromCharCode(n:Int):GOstring {
+		return new GOstring([n]);
+	}
+	public static function fromString(s:String):GOstring {
+		// TODO
+		return new GOstring([0]);
+	}
+	public function toString():String {
+		var ret:String="";
+		if ( "字".length==1 ) { // v needs to be translated to UTF16
+			// TODO v0
+			var v1:Slice=Go_haxegoruntime_UTF8toRunes.callFromRT(gr,v0);
+			var sl:Slice=Go_haxegoruntime_RunesToUTF16.callFromRT(gr,v1);
+			for(i in 0...sl.len()) {
+				ret += String.fromCharCode( sl.itemAddr(i).load_uint16() );
+			}
+			return ret;
+		}
+		for(i in 0...v.length){
+			ret += String.fromCharCode( v[i] );
+		}
+		return ret;
+	}
+	public function charCodeAt(n:Int):Null<Int> {
+		return v[n];
+	}
+	//... as string
+}
+*/

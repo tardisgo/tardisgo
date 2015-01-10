@@ -9,3 +9,7 @@ tests/*/*.swf
 tests/*/tardis/Go.hx
 tests/*/tardis/*
 tardisgo
+goroot/haxe/*/src/*/tardis/*
+goroot/haxe/*/src/*/*/tardis/*
+goroot/haxe/*/src/*/*/*/tardis/*
+goroot/haxe/*/src/*/*/*/*/tardis/*

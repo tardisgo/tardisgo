@@ -32,21 +32,25 @@ For more background and on-line examples see the links from: http://tardisgo.git
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet supported. 
 
-Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called funciton). So loops without channel operations may never give up control. The function tardisgolib.Gosched() provides a convenient way to give up control (it perfoms a channel select operation).  
+Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to give up control.  
 
-Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If the standard package is not mentioned in the notes below, please assume it does not work. So fmt.Println("Hello world!") will not transpile, instead use the go builtin function: println("Hello world!").  
+Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If the standard package is not mentioned in the notes below, please assume it does not work. 
+
+For testing purposes, the "fmt" and "testing" packages are currently emulated in an ugly and part-working way.
 
 Some standard Go library packages do not call any runtime C or assembler functions and will probably work OK (though their tests still need to be rewritten and run to validate their correctness), these include:
- unsafe, errors, unicode, unicode/utf8, unicode/utf16, sort, container/heap, container/list & container/ring.
+ errors, unicode, unicode/utf16.
 
-Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "runtime", "os", "reflect" or other low-level packages are not implemented.
+Currently the only the standard packages that pass their tests are:
+- "container/heap"
+- "container/list"
+- "container/ring"
+- "sort"
+- "unicode/utf8"
 
-A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the tardisgolib/hx directory and gohaxelib repository for the story so far. 
+Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "os", "reflect" or other low-level packages are not implemented. Package "runtime" is part-implemented.
 
-TARDIS Go specific runtime functions are available in [tardisgolib](https://github.com/tardisgo/tardisgo/tree/master/tardisgolib):
-```
-import "github.com/tardisgo/tardisgo/tardisgolib" // runtime functions for TARDIS Go, API unstable
-```
+A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
 The code is developed and tested on OS X 10.9.5, using Go 1.4 and Haxe 3.1.3. The CI tests run on 64-bit Ubuntu. 
 
@@ -106,6 +110,8 @@ If you can't work-out what is going on prior to a panic, you can add the "-trace
 PHP specific issues:
 * to compile for PHP you currently need to add the haxe compilation option "--php-prefix tgo" to avoid name conflicts
 * very long PHP class/file names may cause name resolution problems on some platforms
+
+Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 even when strings for that host are encoded as UTF-16. The system should automatically do the translation to/from the correct format at the Go/Haxe boundary, but there are certain to be some occasions when a translation has to be done explicitly (see Force.toHaxeString/Force.fromHaxeString in haxe/haxeruntime.go).
 
 ## Next steps:
 Please go to http://github.com/tardisgo/tardisgo-samples for example Go code modified to work with tardisgo.

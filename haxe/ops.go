@@ -134,13 +134,13 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 		}
 
 	} else if v1LangType == "String" {
-		switch op {
-		case ">", "<", "<=", ">=":
-			return "(Go_haxegoruntime_StringCompare.callFromRT(this._goroutine," + v1string + "," + v2string +
-				")" + op + "0)"
-		default:
-			return "(" + v1string + op + v2string + ")"
-		}
+		//switch op {
+		//case ">", "<", "<=", ">=":
+		//	return "(Go_haxegoruntime_StringCompare.callFromRT(this._goroutine," + v1string + "," + v2string +
+		//		")" + op + "0)"
+		//default:
+		return "(" + v1string + op + v2string + ")"
+		//}
 
 	} else if v1LangType == "Interface" {
 		switch op {
@@ -150,6 +150,17 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 			return "!Interface.isEqual(" + v1string + "," + v2string + ")"
 		default:
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Interface op: %s", op))
+			return ""
+		}
+
+	} else if v1LangType == "Pointer" {
+		switch op {
+		case "==":
+			return "Pointer.isEqual(" + v1string + "," + v2string + ")"
+		case "!=":
+			return "!Pointer.isEqual(" + v1string + "," + v2string + ")"
+		default:
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Pointer op: %s", op))
 			return ""
 		}
 

@@ -135,8 +135,8 @@ func doTestable(args []string) error {
 
 	if !(*runFlag) {
 		wordSize = 4               // TARDIS Go addition to force default int size to 32 bits
-		conf.Build.GOARCH = "haxe" // or 386? TARDIS Go addition - 32-bit ints
-		conf.Build.GOOS = "haxe"   // or nacl? TARDIS Go addition - simplest OS-specific code to emulate?
+		conf.Build.GOARCH = "haxe" // or haxe? TARDIS Go addition - 32-bit int
+		conf.Build.GOOS = "haxe"   // or haxe? TARDIS Go addition - simplest OS-specific code to emulate?
 	}
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
@@ -207,12 +207,16 @@ func doTestable(args []string) error {
 		defer pprof.StopCPUProfile()
 	}
 
-	// Really need to find a way to replace entire packages, this experiment is WIP
-	// Eventually this might be better as an environment variable
-	if *tgoroot != "" {
-		conf.Build.GOROOT = *tgoroot // TODO set the default value, when different from system
+	// TODO Eventually this might be better as an environment variable
+	if !(*runFlag) {
+		if *tgoroot == "" {
+			conf.Build.GOROOT = conf.Build.GOPATH + "/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4"
+		} else {
+			conf.Build.GOROOT = *tgoroot
+		}
 	}
-	// fmt.Println("DEBUG GOPATH", conf.Build.GOPATH)
+	//fmt.Println("DEBUG GOPATH", conf.Build.GOPATH)
+	//fmt.Println("DEBUG GOROOT", conf.Build.GOROOT)
 
 	if *testFlag {
 		conf.ImportWithTests(args[0]) // assumes you give the full cannonical name of the package to test

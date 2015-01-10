@@ -231,13 +231,16 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		}
 		switch destType.Underlying().(*types.Slice).Elem().Underlying().(*types.Basic).Kind() {
 		case types.Rune:
-			return register + "=" + newSliceCode("Int", "0",
-				l.IndirectValue(v, errorInfo)+".length",
-				l.IndirectValue(v, errorInfo)+".length", errorInfo, "4 /*len(rune)*/") + ";" +
-				"for(_i in 0..." + l.IndirectValue(v, errorInfo) + ".length)" +
-				register + ".itemAddr(_i).store_int32(({var _c:Null<Int>=" + l.IndirectValue(v, errorInfo) +
-				`.charCodeAt(_i);(_c==null)?0:Std.int(_c);})` + ");" +
-				register + "=Go_haxegoruntime_Raw2Runes.callFromRT(this._goroutine," + register + ");"
+			//return register + "=" + newSliceCode("Int", "0",
+			//	l.IndirectValue(v, errorInfo)+".length",
+			//	l.IndirectValue(v, errorInfo)+".length", errorInfo, "4 /*len(rune)*/") + ";" +
+			//	"for(_i in 0..." + l.IndirectValue(v, errorInfo) + ".length)" +
+			//	register + ".itemAddr(_i).store_int32(({var _c:Null<Int>=" + l.IndirectValue(v, errorInfo) +
+			//	`.charCodeAt(_i);(_c==null)?0:Std.int(_c)&0xff;})` + ");" +
+			//	register + "=Go_haxegoruntime_Raw2Runes.callFromRT(this._goroutine," + register + ");"
+			return register +
+				"=Go_haxegoruntime_UTF8toRunes.callFromRT(this._goroutine,Force.toUTF8slice(this._goroutine," +
+				l.IndirectValue(v, errorInfo) + "));"
 		case types.Byte:
 			return register + "=Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 		default:
@@ -286,7 +289,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 		}
 	case "UnsafePointer":
-		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("converting a value to be an Unsafe Pointer"))
+		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("converting a value to be an Unsafe Pointer may not work!"))
 		return register + "=" + l.IndirectValue(v, errorInfo) + ";" // ALL Pointers are unsafe
 	default:
 		if strings.HasPrefix(srcTyp, "Array<") {
