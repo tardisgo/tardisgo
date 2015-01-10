@@ -215,8 +215,8 @@ func doTestable(args []string) error {
 			conf.Build.GOROOT = *tgoroot
 		}
 	}
-	fmt.Println("DEBUG GOPATH", conf.Build.GOPATH)
-	fmt.Println("DEBUG GOROOT", conf.Build.GOROOT)
+	//fmt.Println("DEBUG GOPATH", conf.Build.GOPATH)
+	//fmt.Println("DEBUG GOROOT", conf.Build.GOROOT)
 
 	if *testFlag {
 		conf.ImportWithTests(args[0]) // assumes you give the full cannonical name of the package to test
