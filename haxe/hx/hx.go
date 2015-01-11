@@ -9,7 +9,11 @@ package hx
 
 // CallbackFunc returns the Haxe-callable form of a Go function, or
 // if passed a string value, it gives the actual name of a Haxe function e.g. "Scheduler.timerEventHandler"
-func CallbackFunc(function interface{}) interface{} { return 0 }
+func CallbackFunc(function interface{}) interface{} { return nil }
+
+// Resource loads a file resource that was added through the -resource file@name haxe command line parameter;
+// if the file resource does not exist, an empty slice is returned.
+func Resource(s string) []byte { return []byte{} }
 
 // Code inserts the given constant Haxe code at this point.
 // ifLogic = a constant string giving the logic for wrapping Haxe complie time condition, ignored if "": #if (ifLogic) ... #end

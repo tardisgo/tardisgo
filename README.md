@@ -85,9 +85,16 @@ haxe -main tardis.Go --interp
 ... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
 
-There is a TARDIS Go only Haxe compilation flag for JS to control use of the dataview method of object access (this has a smaller memory footprint and allows unsafe pointers to be modelled more accurately, but goes slower than the standard method): 
+The default memory model is little-endian and allows unsafe pointers, but it is quite slow.
+
+If your code does not use unsafe pointers to re-use memory in different layouts, there is a Haxe compilation flag for "safe" mode (this is faster, but has a larger memory footprint and only allows some unsafe pointers to be modelled accurately): 
 ```
-haxe -main tardis.Go -D dataview -js tardisgo.js
+haxe -main tardis.Go -D safe --interp
+```
+
+There is also a Haxe compilation flag for JS to control use of the dataview method of object access (this has a similar memory footprint to the default method and allows unsafe pointers to be modelled accurately, but is slower than the default method on Node v0.10.26): 
+```
+haxe -main tardis.Go -D dataview -js tardis/tardisgo.js
 ```
 
 To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 

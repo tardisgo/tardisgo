@@ -13,6 +13,7 @@ import (
 	//"bytes"
 	"math"
 	"runtime"
+
 	"unsafe"
 
 	"github.com/tardisgo/tardisgo/haxe/hx"
@@ -1616,13 +1617,15 @@ func testUnsafe() { // adapted from http://stackoverflow.com/questions/19721008/
 	m := make([]int32, n)
 
 	// Use convoluted indirection to cast the first few bytes of the slice
-	// to an unsafe uintptr
-	mPtr := (*uintptr)(unsafe.Pointer(&m[0]))
+	// to an unsafe pointer
+	mPtr := unsafe.Pointer(&m[0])
 
 	// Check it worked
 	m[0] = 987
 	// (we have to recast the uintptr to a *int to examine it)
-	TEQint32("", m[0], *(*int32)(unsafe.Pointer(mPtr)))
+	TEQint32("", m[0], *(*int32)(mPtr))
+	TEQuint32("Fails if not in little-endian unsafe mode", 219, (uint32)(*(*uint8)(mPtr)))
+
 }
 
 type ObjKey [2]int

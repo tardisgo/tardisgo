@@ -17,6 +17,10 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		return "" // no need to generate code for the go init function
 	}
 
+	if fnToCall == "Resource" {
+		return "Slice.fromResource(" + l.IndirectValue(args[0], errorInfo) + ");"
+	}
+
 	if fnToCall == "CallbackFunc" {
 		// NOTE there will be a preceeding MakeInterface call that is made redundant by this code
 		if len(args) == 1 {

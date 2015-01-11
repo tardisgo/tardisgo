@@ -62,7 +62,7 @@ func init() {
 	var langVar langType
 	var langEntry pogo.LanguageEntry
 	langEntry.Language = langVar
-	langEntry.InstructionLimit = 2048     /* 4k works for cs, 2k required for java & cpp */
+	langEntry.InstructionLimit = 512      /* java is the most sensitive to this value */
 	langEntry.SubFnInstructionLimit = 256 /* 256 required for php */
 	langEntry.PackageConstVarName = "tardisgoHaxePackage"
 	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"

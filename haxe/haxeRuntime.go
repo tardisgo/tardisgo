@@ -198,8 +198,11 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		}
 	}
 	public static inline function floatDiv(x:Float,y:Float):Float {
-		//if(y==0.0) // divide by zero gives +/- infinity - so valid ... TODO check back to Go spec
-		//	Scheduler.panicFromHaxe("attempt to divide float value by 0"); 
+		#if php
+			if(y==0) // divide by zero gives +/- infinity - so valid ... TODO check back to Go spec
+				if(x>=0) return Math.POSITIVE_INFINITY;
+				else return Math.NEGATIVE_INFINITY;
+		#end
 		return x/y;
 	}
 	public static function floatMod(x:Float,y:Float):Float {
@@ -296,13 +299,14 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 class Object { // this implementation will improve with typed array access
 	// Simple! 1 address per byte, non-Int types are always on 4-byte
 	
+	private var dVec4:haxe.ds.Vector<Dynamic>; // on 4-byte boundaries 
 	#if (js && dataview)
-		private var dVec4:haxe.ds.Vector<Dynamic>; // on 4-byte boundaries 
 		private var arrayBuffer:js.html.ArrayBuffer;
 		private var dView:js.html.DataView;
-	#else
-		private var dVec4:haxe.ds.Vector<Dynamic>; 
+	#elseif safe
 		private var iVec:haxe.ds.Vector<Int>; 
+	#else // default position is to allow unsafe pointers, and therefore run slowly...
+		private var byts:haxe.io.Bytes;
 	#end
 	private var length:Int;
 	public var uniqueRef:Int; // to give pointers a unique numerical value
@@ -312,15 +316,24 @@ class Object { // this implementation will improve with typed array access
 		public static var memory = new Map<Int,Object>();
 	#end
 
-	public inline function new(byteSize:Int){ // size is in bytes
+	public function new(byteSize:Int,?bytes:haxe.io.Bytes){ // size is in bytes
+		dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); 
+		if(bytes!=null) byteSize = bytes.length;
 		#if (js && dataview)
-			dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); 
 			arrayBuffer = new js.html.ArrayBuffer(byteSize);
 			if(byteSize>0)
 				dView = new js.html.DataView(arrayBuffer,0,byteSize); // complains if size is 0, TODO review
-		#else
-			dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); 
+			if(bytes!=null)
+				for(i in 0 ... byteSize) 
+					set_uint8(i, bytes.get(i));
+		#elseif safe
 			iVec = new haxe.ds.Vector<Int>(byteSize);
+			if(bytes!=null)
+				for(i in 0 ... byteSize) 
+					iVec[i] = bytes.get(i);
+		#else
+			if(bytes==null)	byts = haxe.io.Bytes.alloc(byteSize);
+			else byts = bytes;
 		#end
 		length = byteSize;
 		uniqueCount += 1;
@@ -328,6 +341,20 @@ class Object { // this implementation will improve with typed array access
 		#if godebug
 			memory.set(uniqueRef,this);
 		#end
+	}
+	public function getBytes():haxe.io.Bytes {
+		#if (js && dataview)
+			var byts = haxe.io.Bytes.alloc(length);
+			for(i in 0 ... length) 
+				byts.set(i,get_uint8(i));
+		#elseif safe
+			var byts = haxe.io.Bytes.alloc(length);
+			for(i in 0 ... length) 
+				byts.set(i,iVec[i]);
+		#else
+			// the byts field already exists
+		#end
+		return byts;
 	}
 	public function clear():Object {
 		for(i in 0...this.length){
@@ -373,12 +400,15 @@ class Object { // this implementation will improve with typed array access
 					d+=1;
 				}
 			}
-		#else
+		#elseif safe
 			haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
 			haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
+		#else
+			haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
+			dest.byts.blit(destPos,src.byts,srcPos,size);
 		#end
 	}
-	public inline function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
+	public function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
 		var so:Object = new Object(size);
 		objBlit(this,from, so, 0, size); 
 		return so;
@@ -401,107 +431,132 @@ class Object { // this implementation will improve with typed array access
 	public inline function get_bool(i:Int):Bool { 
 		#if (js && dataview)
 			return dView.getUint8(i)==0?false:true;
-		#else
+		#elseif safe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) 
 				return r==null?false:(r==0?false:true); 
 			#else 
 				return r==0?false:true; 
 			#end
+		#else
+			return byts.get(i)==0?false:true;
 		#end
 	}
 	public inline function get_int8(i:Int):Int { 
 		#if (js && dataview)
 			return dView.getInt8(i);
-		#else
+		#elseif safe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#else
+			return Force.toInt8(byts.get(i));
 		#end
 	}
 	public inline function get_int16(i:Int):Int { 
 		#if (js && dataview)
-			return dView.getInt16(i);
-		#else
+			return dView.getInt16(i,true); // little-endian
+		#elseif safe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#else
+			return Force.toInt16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
 	}
 	public inline function get_int32(i:Int):Int {
 		#if (js && dataview)
-			return dView.getInt32(i);
-		#else
+			return dView.getInt32(i,true); // little-endian
+		#elseif safe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#else
+			return Force.toInt32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st			
 		#end
 	}
 	public inline function get_int64(i:Int):GOint64 {
-		// TODO optimize for dataview
-		var r:GOint64=get(i); 
-		return r==null?GOint64.ofInt(0):r;			
+		#if safe
+			var r:GOint64=get(i); 
+			return r==null?GOint64.ofInt(0):r;			
+		#else
+			return Force.toInt64(GOint64.make(get_uint32(i+4),get_uint32(i)));
+		#end
 	} 
 	public inline function get_uint8(i:Int):Int { 
 		#if (js && dataview)
 			return dView.getUint8(i);
-		#else
+		#elseif safe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#else 
+			return Force.toUint8(byts.get(i));
 		#end
 	}
 	public inline function get_uint16(i:Int):Int {
 		#if (js && dataview)
-			return dView.getUint16(i);
-		#else
+			return dView.getUint16(i,true); // little-endian
+		#elseif safe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#else
+			return Force.toUint16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
 	}
 	public inline function get_uint32(i:Int):Int {
 		#if (js && dataview)
-			return dView.getUint32(i);
-		#else
+			return dView.getUint32(i,true); // little-endian
+		#elseif safe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+		#else
+			return Force.toUint32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st
 		#end
 	}
 	public inline function get_uint64(i:Int):GOint64 { 
-		// TODO optimize for dataview
-		var r:GOint64=get(i); 
-		return r==null?GOint64.ofInt(0):r;			
+		#if safe
+			var r:GOint64=get(i); 
+			return r==null?GOint64.ofInt(0):r;			
+		#else
+			return Force.toUint64(GOint64.make(get_uint32(i+4),get_uint32(i)));
+		#end
 	} 
 	public inline function get_uintptr(i:Int):Dynamic { // uintptr holds Haxe objects
+		// TODO consider some type of read-from-mem if Dynamic type is Int 
 		return get(i); 
 	} 
 	public inline function get_float32(i:Int):Float { 
 		#if (js && dataview)
-			return dView.getFloat32(i);
-		#else
+			return dView.getFloat32(i,true); // little-endian
+		#elseif safe
 			var r:Float=get(i); 
 			#if (js || php || neko ) 
 				return r==null?0.0:r; 
 			#else 
 				return r; 
 			#end
+		#else 
+			return byts.getFloat(i);
 		#end
 	}
 	public inline function get_float64(i:Int):Float { 
 		#if (js && dataview)
-			return dView.getFloat64(i);
-		#else
+			return dView.getFloat64(i,true); // little-endian
+		#elseif safe
 			var r:Float=get(i); 
 			#if (js || php || neko ) 
 				return r==null?0.0:r; 
 			#else 
 				return r;
 			#end 
+		#else
+			return byts.getDouble(i);		
 		#end
 	}
 	public inline function get_complex64(i:Int):Complex {
-		// TODO optimize for dataview
+		// TODO optimize for dataview & unsafe
 		var r:Complex=get(i); 
 		return r==null?new Complex(0.0,0.0):r;			
 	}
 	public inline function get_complex128(i:Int):Complex { 
-		// TODO optimize for dataview
+		// TODO optimize for dataview & unsafe
 		var r:Complex=get(i); 
 		return r==null?new Complex(0.0,0.0):r;			
 	}
@@ -510,86 +565,127 @@ class Object { // this implementation will improve with typed array access
 		#if (js || php || neko ) return r==null?"":r; #else return r; #end
 	}
 	public inline function set(i:Int,v:Dynamic):Void { 
-		dVec4[i>>2]=v;
+		dVec4[i>>2]=v; // TODO special processing if Int?
 	}
 	public inline function set_bool(i:Int,v:Bool):Void { 
 		#if (js && dataview)
 			dView.setUint8(i,v?1:0);
+		#elseif safe
+			iVec[i]=v?1:0;
 		#else
-			iVec[i]=v?1:0; 
+			byts.set(i,v?1:0); 
 		#end
 	} 
 	public inline function set_int8(i:Int,v:Int):Void { 
 		#if (js && dataview)
 			dView.setInt8(i,v);
+		#elseif safe
+			iVec[i]=v;
 		#else
-			iVec[i]=v; 
+			byts.set(i,v&0xff); 
 		#end
 	}
 	public inline function set_int16(i:Int,v:Int):Void { 
 		#if (js && dataview)
-			dView.setInt16(i,v);
+			dView.setInt16(i,v,true); // little-endian
+		#elseif safe
+			iVec[i]=v;
 		#else
-			iVec[i]=v; 
+			set_int8(i,v);
+			set_int8(i+1,v>>8);
 		#end
 	}
 	public inline function set_int32(i:Int,v:Int):Void { 
 		#if (js && dataview)
-			dView.setInt32(i,v);
+			dView.setInt32(i,v,true); // little-endian
+		#elseif safe
+			iVec[i]=v;
 		#else
-			iVec[i]=v; 
+			set_int16(i,v);
+			set_int16(i+2,v>>16); 
 		#end
 	}
 	public inline function set_int64(i:Int,v:GOint64):Void { 
-		set(i,v); 
+		#if safe
+			set(i,v);
+		#else
+			set_uint32(i,GOint64.getLow(v));
+			set_uint32(i+4,GOint64.getHigh(v));
+		#end
 	} 
 	public inline function set_uint8(i:Int,v:Int):Void { 
 		#if (js && dataview)
 			dView.setUint8(i,v);
+		#elseif safe
+			iVec[i]=v;
 		#else
-			iVec[i]=v; 
+			byts.set(i,v&0xff);
 		#end
 	}
 	public inline function set_uint16(i:Int,v:Int):Void { 
 		#if (js && dataview)
-			dView.setUint16(i,v);
+			dView.setUint16(i,v,true); // little-endian
+		#elseif safe
+			iVec[i]=v;
 		#else
-			iVec[i]=v; 
+			set_uint8(i,v); 
+			set_uint8(i+1,v>>8); 
 		#end
 	}
 	public inline function set_uint32(i:Int,v:Int):Void { 
 		#if (js && dataview)
-			dView.setUint32(i,v);
+			dView.setUint32(i,v,true); // little-endian
+		#elseif safe
+			iVec[i]=v;
 		#else
-			iVec[i]=v; 
+			set_uint16(i,v);
+			set_uint16(i+2,v>>16); 
 		#end
 	}
 	public inline function set_uint64(i:Int,v:GOint64):Void { 
-		set(i,v); 
+		#if safe
+			set(i,v);
+		#else
+			set_uint32(i,GOint64.getLow(v));
+			set_uint32(i+4,GOint64.getHigh(v));
+		#end
 	} 
 	public inline function set_uintptr(i:Int,v:Dynamic):Void { 
-		set(i,v); 
+		set(i,v);
+		if(Std.is(v,Int)) set_uint32(i,v); // write through to ordinary memory if the type is Int
 	}
 	public inline function set_float32(i:Int,v:Float):Void {
 		#if (js && dataview)
-			dView.setFloat32(i,v);
-		#else
-			set(i,v); 
+			dView.setFloat32(i,v,true); // little-endian
+		#elseif safe
+			set(i,v);
+		#else 
+			#if (cpp||neko)
+				byts.setFloat(i,v);
+			#else
+				set_uint32(i,Go_haxegoruntime_Float32bits.callFromRT(0,v));
+			#end 
 		#end	
 	}
 	public inline function set_float64(i:Int,v:Float):Void {
 	 	#if (js && dataview)
-			dView.setFloat64(i,v);
+			dView.setFloat64(i,v,true); // little-endian
+		#elseif safe
+			set(i,v);
 		#else
-			set(i,v); 
+			#if (cpp||neko)
+				byts.setDouble(i,v);
+			#else
+				set_uint64(i,Go_haxegoruntime_Float64bits.callFromRT(0,v));
+			#end 
 		#end	
 	}
 	
 	public inline function set_complex64(i:Int,v:Complex):Void { 
-		set(i,v); 
+		set(i,v); // TODO review
 	} 
 	public inline function set_complex128(i:Int,v:Complex):Void { 
-		set(i,v); 
+		set(i,v); // TODO review
 	} 
 	public inline function set_string(i:Int,v:String):Void { 
 		set(i,v); 
@@ -744,6 +840,12 @@ class Slice {
 		}
 		length = end-start;
 	} 
+	public static function fromResource(name:String):Slice {
+		var res = haxe.Resource.getBytes(name);
+		var obj = res==null?new Object(0):new Object(res.length,res);
+		var ptr = new Pointer(obj);
+		return new Slice(ptr,0,-1,res==null?0:res.length,1); // []byte
+	}
 	public function subSlice(low:Int, high:Int):Slice {
 		if(high==-1) high = length; //default upper bound is the length of the current slice
 		return new Slice(baseArray,low+start,high+start,capacity+low+start,itemSize);
@@ -1088,6 +1190,13 @@ abstract HaxeInt64abs(HaxeInt64Typedef)
 from HaxeInt64Typedef to HaxeInt64Typedef 
 { 
 inline function new(v:HaxeInt64Typedef) this=v;
+
+public static inline function getLow(v:HaxeInt64abs):Int {
+	return HaxeInt64Typedef.getLow(v);
+}
+public static inline function getHigh(v:HaxeInt64abs):Int {
+	return HaxeInt64Typedef.getHigh(v);
+}
 
 public static inline function toInt(v:HaxeInt64abs):Int {
 
@@ -2096,43 +2205,3 @@ public static inline function wrapnilchk(p:Pointer):Pointer {
 
 
 `
-
-/*
-class GOstring { // TODO this class is a work-in-progress
-	public var v:Array<Int>;
-	public var length(get, null):Int;
-  	function get_length():Int {
-    	return v.length;
-  	}
-	public inline function new(p:Array<Int>) {
-		v = p;
-	}
-	public static function fromCharCode(n:Int):GOstring {
-		return new GOstring([n]);
-	}
-	public static function fromString(s:String):GOstring {
-		// TODO
-		return new GOstring([0]);
-	}
-	public function toString():String {
-		var ret:String="";
-		if ( "字".length==1 ) { // v needs to be translated to UTF16
-			// TODO v0
-			var v1:Slice=Go_haxegoruntime_UTF8toRunes.callFromRT(gr,v0);
-			var sl:Slice=Go_haxegoruntime_RunesToUTF16.callFromRT(gr,v1);
-			for(i in 0...sl.len()) {
-				ret += String.fromCharCode( sl.itemAddr(i).load_uint16() );
-			}
-			return ret;
-		}
-		for(i in 0...v.length){
-			ret += String.fromCharCode( v[i] );
-		}
-		return ret;
-	}
-	public function charCodeAt(n:Int):Null<Int> {
-		return v[n];
-	}
-	//... as string
-}
-*/

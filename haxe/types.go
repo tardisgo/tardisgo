@@ -54,6 +54,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.LangType() types.UntypedInt is ambiguous"))
 				return "UNTYPED_INT" // NOTE: if this value were ever to be used, it would cause a Haxe compilation error
 			case types.UnsafePointer:
+				pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("Unsafe Pointer"))
 				if retInitVal {
 					return "null" // NOTE ALL pointers are unsafe
 				}
@@ -289,8 +290,8 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 		}
 	case "UnsafePointer":
-		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("converting a value to be an Unsafe Pointer may not work!"))
-		return register + "=" + l.IndirectValue(v, errorInfo) + ";" // ALL Pointers are unsafe
+		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("converting a pointer to an Unsafe Pointer"))
+		return register + "=" + l.IndirectValue(v, errorInfo) + ";" // ALL Pointers are unsafe ?
 	default:
 		if strings.HasPrefix(srcTyp, "Array<") {
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - No way to convert to %s from %s ", langType, srcTyp))

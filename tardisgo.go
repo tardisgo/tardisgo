@@ -376,9 +376,14 @@ var targets = [][][]string{
 		[]string{"time", "node", "tardis/tardisgo.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardis/tardisgo-dv.js"},
-		[]string{"echo", `"Node/JS (using dataview):"`},
-		[]string{"time", "node", "tardis/tardisgo-dv.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardis/tardisgo-dataview.js"},
+		[]string{"echo", `"Node/JS (using dataview mode):"`},
+		[]string{"time", "node", "tardis/tardisgo-dataview.js"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "safe", "-js", "tardis/tardisgo-safe.js"},
+		[]string{"echo", `"Node/JS (using safe mode):"`},
+		[]string{"time", "node", "tardis/tardisgo-safe.js"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardis/tardisgo.swf"},
@@ -386,14 +391,14 @@ var targets = [][][]string{
 		[]string{"open", "tardis/tardisgo.swf"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo"},
-		[]string{"echo", `"PHP:"`},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo", "-D", "safe"},
+		[]string{"echo", `"PHP (using safe mode):"`},
 		[]string{"time", "php", "tardis/php/index.php"},
 	},
 	[][]string{
 		[]string{"echo", ``}, // Output from this line is ignored
-		[]string{"echo", `"Neko (haxe --interp):"`},
-		[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
+		[]string{"echo", `"Neko (haxe --interp using safe mode):"`},
+		[]string{"time", "haxe", "-main", "tardis.Go", "-D", "safe", "--interp"},
 	},
 }
 
