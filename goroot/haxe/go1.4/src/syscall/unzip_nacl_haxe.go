@@ -9,6 +9,8 @@
 
 package syscall
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 const (
 	maxCodeLen = 16    // max length of Huffman code
 	maxHist    = 32768 // max history required
@@ -525,7 +527,32 @@ func zget2(b string) int {
 	return int(b[0]) | int(b[1])<<8
 }
 
-func unzip(data string) {
+func UnzipFS(nam string) {
+	log := "syscall.UnzipFS() unzip file: " + nam + "\n"
+	if len(nam) > 5 && nam[len(nam)-4:] == ".zip" {
+		log += unzip(string(hx.Resource(nam)))
+	} else {
+		log += "syscall.UnzipFS() not a .zip file - ignored\n"
+	}
+	// TODO append to the log file if it exists, to allow multiple UnzipFS calls to be logged properly
+	//fd, err := Open(nam, O_CREATE|O_EXCL, 0666) // replaced with code below to avoid init loop
+	f, err := fs.open("/unzipfs.log", O_CREATE|O_WRONLY, 0666|S_IFREG)
+	fd := newFD(f)
+	// end code replacement
+	if err != nil {
+		println("information: syscall.UnzipFS() unable to syscall.Open() /unzipfs.log : " + err.Error())
+	} else {
+		defer Close(fd)
+		sz, err := Write(fd, []byte(log))
+		if err != nil || sz != len(log) {
+			println("information: syscall.UnzipFS() bad syscall.Write() (size or error) for /unzipfs.log" +
+				" : " + err.Error())
+		}
+	}
+}
+
+func unzip(data string) string {
+	log := ""
 	const (
 		zecheader   = 0x06054b50
 		zcheader    = 0x02014b50
@@ -565,7 +592,7 @@ func unzip(data string) {
 		//	46+namelen+xlen+fclen - next header
 		//
 		if zget4(hdr) != zcheader {
-			println("fs unzip: bad magic")
+			log += "fs unzip: bad magic\n"
 			break
 		}
 		meth := zget2(hdr[10:])
@@ -602,8 +629,8 @@ func unzip(data string) {
 			zget2(buf[8:]) != meth ||
 			zget2(buf[26:]) != namelen ||
 			buf[30:30+namelen] != name {
-			println("fs unzip: inconsistent zip file")
-			return
+			log += "fs unzip: inconsistent zip file\n"
+			return log
 		}
 		xlen = zget2(buf[28:])
 
@@ -620,8 +647,8 @@ func unzip(data string) {
 			buf = data[off : off+csize]
 			fdata = inflate(buf)
 			if len(fdata) != size {
-				println("fs unzip: inconsistent size in zip file")
-				return
+				log += "fs unzip: inconsistent size in zip file\n"
+				return log
 			}
 		}
 
@@ -637,12 +664,14 @@ func unzip(data string) {
 			}
 		}
 
+		log += "syscall.unzip() file: " + name + "\n"
 		if err := create(name, xattr, zipToTime(mdate, mtime), fdata); err != nil {
-			print("fs unzip: create ", name, ": ", err.Error(), "\n")
+			log += "fs unzip: create " + name + " : " + err.Error() + "\n"
 		}
 	}
 
 	chdirEnv()
+	return log
 }
 
 func zipToTime(date, time int) int64 {

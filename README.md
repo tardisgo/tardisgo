@@ -42,19 +42,18 @@ Some standard Go library packages do not call any runtime C or assembler functio
  errors, unicode, unicode/utf16.
 
 Currently the only the standard packages that pass their tests are:
-- "container/heap"
-- "container/list"
-- "container/ring"
+- "container/heap", "container/list", "container/ring"
+- "path"
 - "sort"
-- "unicode/utf8"
+- "unicode", "unicode/utf8"
 
-Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "os", "reflect" or other low-level packages are not implemented. Package "runtime" is part-implemented.
+Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "reflect" or other low-level packages are not implemented. Packages "runtime","os" & "syscall" are part-implemented, using a partial implementation of the nacl runtime (currently including debug messages).
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
 The code is developed and tested on OS X 10.9.5, using Go 1.4 and Haxe 3.1.3. The CI tests run on 64-bit Ubuntu. 
 
-No other platforms are currently regression tested, although the project has been run on Ubuntu 32-bit and Windows 7 32-bit. Compilation to the C# target fails on Win-7 and PHP is flakey (but you probably knew that).
+No other platforms are currently regression tested, although the project has been run on Ubuntu 32-bit and Windows 7 32-bit. Compilation to the C# target is suspect on Win-7 and PHP is flakey (but you probably knew that).
 
 ## Installation and use:
  
@@ -94,8 +93,24 @@ haxe -main tardis.Go -D safe --interp
 
 There is also a Haxe compilation flag for JS to control use of the dataview method of object access (this has a similar memory footprint to the default method and allows unsafe pointers to be modelled accurately, but is slower than the default method on Node v0.10.26): 
 ```
-haxe -main tardis.Go -D dataview -js tardis/tardisgo.js
+haxe -main tardis.Go -D dataview -js tardis/go-dv.js
+node < tardis/go-dv.js
 ```
+
+While on the subject of JS, the closure compiler seems to work using "ADVANCED_OPTIMIZATIONS" to significantly reduce the size of the generated code.
+
+The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/b.txt" thus (for example in JS):
+```
+tardisgo your_code_using_package_os.go
+haxe -main tardis.Go -js tardis/go.js -resource testdata/config.xml@/myapp/static/config.xml
+node < tardis/go.js
+```
+To add more than one file, use multiple -resource flags (the haxe ".hxml" compiler paramater file format can be helpful here). The files are stored as part of the executable code, in a target-specific way. The only resources that will be loaded are those named with a leading "/". A log file of the load process can be found at "/fsinit.log" in the in-memory file-system.
+
+To load a zipped file system (very slow to un-zip, but useful for testing) use go code
+`syscall.UnzipFS("myfs.zip")` 
+and include 
+`-resource myfs.zip` on the haxe command line.
 
 To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
 
@@ -107,10 +122,11 @@ haxe -main tardis.Go -dce full -D godebug -cpp tardis/cpp
 ``` 
 To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). 
 
-To run cross-target command-line tests as quickly as possible, the "-testall" flag  concurrently runs the Haxe compiler and executes the resulting code for all supported targets (with compiler output suppressed and results appearing in the order they complete, with an execution time):
+To run cross-target command-line tests as quickly as possible, the "-runall" flag  concurrently runs the Haxe compiler and executes the resulting code for all supported targets (with compiler output suppressed and results appearing in the order they complete, with an execution time):
 ```
-tardisgo -testall myprogram.go
+tardisgo -runall myprogram.go
 ```
+When using the -runall flag with the -test flag, if the file "tgotestfs.zip" exists in the current directory, it will be added as a haxe resource and its contents auto-loaded into the in-memory file system.
 
 If you can't work-out what is going on prior to a panic, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
 

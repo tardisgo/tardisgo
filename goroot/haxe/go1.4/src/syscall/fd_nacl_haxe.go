@@ -11,6 +11,8 @@ package syscall
 
 import (
 	"sync"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
 // files is the table indexed by a file descriptor.
@@ -231,7 +233,16 @@ func (f *naclFile) read(b []byte) (int, error) {
 }
 
 // implemented in package runtime, to add time header on playground
-func naclWrite(fd int, b []byte) int
+func naclWrite(fd int, b []byte) int {
+	switch fd {
+	case 1, 2: // stdout,stderr
+		hx.Call("", "Console.naclWrite", 1, string(b))
+		return len(b)
+	default:
+		panic("syscall.naclWrite(" + hx.CallString("", "Std.string", 1, fd) + "," + string(b) + ")")
+		return 0
+	}
+}
 
 func (f *naclFile) write(b []byte) (int, error) {
 	n := naclWrite(f.naclFD, b)

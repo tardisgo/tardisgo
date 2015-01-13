@@ -1,7 +1,10 @@
 package testing
 
-import "fmt"
-import "runtime"
+import (
+	"fmt"
+	"runtime"
+	"time"
+)
 
 func header(s string) {
 	_, file, line, _ := runtime.Caller(2)
@@ -87,11 +90,32 @@ type InternalExample InternalTest
 
 func AllocsPerRun(runs int, f func()) (avg float64) { return 0 }
 
+type BenchmarkResult struct {
+	N         int           // The number of iterations.
+	T         time.Duration // The total time taken.
+	Bytes     int64         // Bytes processed in one iteration.
+	MemAllocs uint64        // The total number of memory allocations.
+	MemBytes  uint64        // The total number of bytes allocated.
+}
+
+func Benchmark(f func(b *B)) BenchmarkResult { return BenchmarkResult{} }
+
+func (r BenchmarkResult) AllocedBytesPerOp() int64 { return 0 }
+
+func (r BenchmarkResult) AllocsPerOp() int64 { return 0 }
+
+func (r BenchmarkResult) MemString() string { return "" }
+
+func (r BenchmarkResult) NsPerOp() int64 { return 0 }
+
+func (r BenchmarkResult) String() string { return "" }
+
 // An internal function but exported because it is cross-package; part of the implementation
 // of the "go test" command.
 func Main(matchString func(pat, str string) (bool, error), tests []InternalTest, benchmarks []InternalBenchmark, examples []InternalExample) {
 	//os.Exit(MainStart(matchString, tests, benchmarks, examples).Run())
 	fmt.Println("testing.Main")
+	runtime.UnzipTestFS()
 	var t T
 	for _, f := range tests {
 		fmt.Println(f.Name)

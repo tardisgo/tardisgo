@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"unicode"
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
@@ -92,6 +93,7 @@ type LanguageEntry struct {
 	PackageConstVarName   string       // The special constant name to specify a Package/Module name in the target language.
 	HeaderConstVarName    string       // The special constant name for a target-specific header.
 	Goruntime             string       // The location of the core implementation go runtime code for this target language.
+	TestFS                string       // the location of the test zipped file system, if present
 }
 
 // LanguageList holds the languages that can be targeted. Hey, I hope we do get up to 10 target languages!!
@@ -125,12 +127,16 @@ func writeFiles() {
 }
 
 // MakeID cleans-up Go names to replace characters outside (_,0-9,a-z,A-Z) with a decimal value surrounded by underlines, with special handling of '.' and '*'.
+// It also doubles-up uppercase letters, because file names are made from these names and OSX is case insensitive.
 func MakeID(s string) (r string) {
 	var b []rune
 	b = []rune(s)
 	for i := range b {
 		if b[i] == '_' || ((b[i] >= 'a') && (b[i] <= 'z')) || ((b[i] >= 'A') && (b[i] <= 'Z')) || ((b[i] >= '0') && (b[i] <= '9')) {
 			r += string(b[i])
+			if unicode.IsUpper(b[i]) {
+				r += string(b[i])
+			}
 		} else {
 			switch b[i] {
 			case '.':

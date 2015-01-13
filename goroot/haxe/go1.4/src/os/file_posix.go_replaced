@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func sigpipe() { panic("os.sigpipe()") } // implemented in package runtime
+func sigpipe() // implemented in package runtime
 
 // Readlink returns the destination of the named symbolic link.
 // If there is an error, it will be of type *PathError.

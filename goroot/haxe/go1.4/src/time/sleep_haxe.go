@@ -8,14 +8,15 @@ package time
 
 import ( // import is an Haxe addition
 	"runtime"
-	. "github.com/tardisgo/gohaxelib/_cross"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
 // Sleep pauses the current goroutine for at least the duration d.
 // A negative or zero duration causes Sleep to return immediately.
 var sleeping = false     // for testing only see interrupt()
 func Sleep(d Duration) { // function body is an Haxe addition
-	target := Xhaxe_Timer_stamp_0()
+	target := hx.CallFloat("", "haxe.Timer.stamp", 0)
 	target += d.Seconds()
 	sleeping = true
 	haxeWait(target, &sleeping)
@@ -25,7 +26,7 @@ func haxeWait(target float64, whileTrue *bool) {
 	// TODO(haxe): optimize to use the Timer call-back methods for the targets - flash, flash8, java, js, python
 loop:
 	runtime.Gosched()
-	now := Xhaxe_Timer_stamp_0()
+	now := hx.CallFloat("", "haxe.Timer.stamp", 0)
 	if now < target && *whileTrue {
 		goto loop
 	}
@@ -33,7 +34,7 @@ loop:
 
 // runtimeNano returns the current value of the runtime clock in nanoseconds.
 func runtimeNano() int64 { // function body is an Haxe addition
-	return int64(Xhaxe_Timer_stamp_0() * 1000)
+	return int64(hx.CallFloat("", "haxe.Timer.stamp", 0) * 1000)
 }
 
 // Interface to timers implemented in package runtime.

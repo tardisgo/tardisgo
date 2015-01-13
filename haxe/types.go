@@ -201,7 +201,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Slice":
 			switch v.(ssa.Value).Type().Underlying().(*types.Slice).Elem().Underlying().(*types.Basic).Kind() {
 			case types.Rune: // []rune
-				return "{var _r:Slice=Go_haxegoruntime_Runes2Raw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
+				return "{var _r:Slice=Go_haxegoruntime_RRunes2RRaw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
 					register + "=\"\";for(_i in 0..._r.len())" +
 					register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
 			case types.Byte: // []byte
@@ -211,11 +211,11 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 				return ""
 			}
 		case "Int": // make a string from a single rune
-			return "{var _r:Slice=Go_haxegoruntime_Rune2Raw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
+			return "{var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
 				register + "=\"\";for(_i in 0..._r.len())" +
 				register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
 		case "GOint64": // make a string from a single rune (held in 64 bits)
-			return "{var _r:Slice=Go_haxegoruntime_Rune2Raw.callFromRT(this._goroutine,GOint64.toInt(" + l.IndirectValue(v, errorInfo) + "));" +
+			return "{var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(this._goroutine,GOint64.toInt(" + l.IndirectValue(v, errorInfo) + "));" +
 				register + "=\"\";for(_i in 0..._r.len())" +
 				register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
 		case "Dynamic":
@@ -240,7 +240,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			//	`.charCodeAt(_i);(_c==null)?0:Std.int(_c)&0xff;})` + ");" +
 			//	register + "=Go_haxegoruntime_Raw2Runes.callFromRT(this._goroutine," + register + ");"
 			return register +
-				"=Go_haxegoruntime_UTF8toRunes.callFromRT(this._goroutine,Force.toUTF8slice(this._goroutine," +
+				"=Go_haxegoruntime_UUTTFF8toRRunes.callFromRT(this._goroutine,Force.toUTF8slice(this._goroutine," +
 				l.IndirectValue(v, errorInfo) + "));"
 		case types.Byte:
 			return register + "=Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"

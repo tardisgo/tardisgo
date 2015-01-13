@@ -77,7 +77,7 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	main += "var _sf=new Go_" + pkg.Object.Name() + `_init(gr,[]).run();` + "\n" //NOTE can't use callFromHaxe() as that would call this fn
 	main += "while(_sf._incomplete) Scheduler.runAll();\n"
 	main += "Scheduler.doneInit=true;\n"
-	main += `Go.haxegoruntime_ZiLen.store_uint32('字'.length);` // value required by haxegoruntime to know what type of strings we have
+	main += `Go.haxegoruntime_ZZiLLen.store_uint32('字'.length);` // value required by haxegoruntime to know what type of strings we have
 	main += "}\n"
 	// Haxe main function, only called in a go-only environment
 	main += "\npublic static function main() : Void {\n"

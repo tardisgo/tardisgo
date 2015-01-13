@@ -27,8 +27,7 @@ func (l langType) copy(register string, args []ssa.Value, errorInfo string) stri
 	if l.LangType(args[1].Type().Underlying(), false, errorInfo) == "String" {
 		source = "Force.toUTF8slice(this._goroutine," + source + ")" // if we have a string, we must convert it to a slice
 	}
-	code := l.IndirectValue(args[0], errorInfo) + ".copy(" + source + ")"
-	// TODO consider making this a runtime function
+	code := "Slice.copy(" + l.IndirectValue(args[0], errorInfo) + "," + source + ")"
 	return ret + code
 }
 

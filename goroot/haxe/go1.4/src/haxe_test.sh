@@ -1,15 +1,15 @@
 # run the working unit tests
-for onelevel in   sort
+for onelevel in path unicode sort
 do
 	echo "Unit Test:" $onelevel 
 	cd $onelevel
-	tardisgo -testall -test $onelevel
+	tardisgo -runall -test $onelevel
 	cd .. 
 done
 for twolevels in  unicode/utf8 container/heap container/list container/ring
 do
 	echo "Unit Test:" $twolevels 
 	cd $twolevels
-	tardisgo -testall -test $twolevels
+	tardisgo -runall -test $twolevels
 	cd ../.. 
 done

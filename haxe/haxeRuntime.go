@@ -15,6 +15,13 @@ package haxe
 var haxeruntime = `
 
 class Console {
+	public static inline function naclWrite(v:String){
+		#if ( cpp || cs || java || neko || php || python )
+			Sys.println(v);
+		#else
+			haxe.Log.trace(v);
+		#end
+	}
 	public static inline function println(v:Array<Dynamic>) {
 		#if ( cpp || cs || java || neko || php || python )
 			Sys.println(join(v));
@@ -119,15 +126,15 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}	
 	public static function toInt(v:Dynamic):Int { // get an Int from a Dynamic variable (uintptr is stored as Dynamic)
 		if (!Reflect.isObject(v))  			// simple type, so leave quickly and take defaults 
-			return v; 
+			return cast(v,Int); 
 		else
 			if(Std.is(v,Interface)) {
 				v=v.val; // it is in an interface, so get the value
 				if (!Reflect.isObject(v))  			// simple type from inside an interface, so take defaults 
-					return v; 
+					return toInt(v); 				// recurse to handle 64-bit or float 
 				else								// it should be an Int64 from inside an Interface
 					return GOint64.toInt(v);	
-			} else								// it should be an Int64 if not an interface
+			} else									// it should be an Int64 if not an interface
 				return GOint64.toInt(v);	
 	}
 	public static inline function toFloat(v:Float):Float {
@@ -262,8 +269,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				if(v.charCodeAt(i)>0xff) return v; // probably already encoded as UTF-16
 				sli.itemAddr(i).store_uint8(v.charCodeAt(i));
 			}
-			var slr = Go_haxegoruntime_UTF8toRunes.callFromRT(0,sli);
-			var slo = Go_haxegoruntime_RunesToUTF16.callFromRT(0,slr);
+			var slr = Go_haxegoruntime_UUTTFF8toRRunes.callFromRT(0,sli);
+			var slo = Go_haxegoruntime_RRunesTToUUTTFF16.callFromRT(0,slr);
 			v="";
 			for(i in 0...slo.len()) {
 				v += String.fromCharCode( slo.itemAddr(i).load_uint16() );
@@ -281,8 +288,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				sli.itemAddr(i).store_uint16(v.charCodeAt(i));
 			}
 			if(allSmall) return v; // no need to go through the whole procedure if no chars larger than 8-bit
-			var slr = Go_haxegoruntime_UTF16toRunes.callFromRT(0,sli);
-			var slo = Go_haxegoruntime_RunesToUTF8.callFromRT(0,slr);
+			var slr = Go_haxegoruntime_UUTTFF16toRRunes.callFromRT(0,sli);
+			var slo = Go_haxegoruntime_RRunesTToUUTTFF8.callFromRT(0,slr);
 			v="";
 			for(i in 0...slo.len()) {
 				v += String.fromCharCode( slo.itemAddr(i).load_uint8() );
@@ -332,8 +339,10 @@ class Object { // this implementation will improve with typed array access
 				for(i in 0 ... byteSize) 
 					iVec[i] = bytes.get(i);
 		#else
-			if(bytes==null)	byts = haxe.io.Bytes.alloc(byteSize);
-			else byts = bytes;
+			if(bytes==null)	{
+				byts = haxe.io.Bytes.alloc(byteSize);
+				//byts.fill(0,byteSize,0); 
+			} else byts = bytes;
 		#end
 		length = byteSize;
 		uniqueCount += 1;
@@ -375,6 +384,29 @@ class Object { // this implementation will improve with typed array access
 		return true;
 	}
 	private static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
+		//if(!Std.is(src,Object)) { 
+		//	Scheduler.panicFromHaxe("Object.objBlt() src parameter is not an Object - Value: "+Std.string(src)+" Type: "+Type.typeof(src));
+		//	return;
+		//}
+		//if(!Std.is(dest,Object)) { 
+		//	Scheduler.panicFromHaxe("Object.objBlt() dest parameter is not an Object - Value: "+Std.string(dest)+" Type: "+Type.typeof(dest));
+		//	return;
+		//}
+		if(srcPos<0 || srcPos>=src.length){
+			Scheduler.panicFromHaxe("Object.objBlt() srcPos out-of-range - Value: "+Std.string(srcPos));
+			return;			
+		}
+		if(destPos<0 || destPos>=dest.length){
+			Scheduler.panicFromHaxe("Object.objBlt() srcPos out-of-range - Value: "+Std.string(destPos));
+			return;			
+		}
+		if(size>(src.length-srcPos) ) size = src.length-srcPos ; // TODO review why this defensive code is needed
+		if(size<0 || size > (dest.length-destPos) || size>(src.length-srcPos) ) {
+			Scheduler.panicFromHaxe("Object.objBlt() size out-of-range - Value: "+Std.string(size)+
+				" DestSize: "+Std.string(dest.length-destPos)+
+				" SrcSize: "+Std.string(src.length-srcPos));
+			return;			
+		}
 		#if (js && dataview)
 			if((size&3==0)&&(srcPos&3==0)&&(destPos&3==0)) {
 				var i:Int=0;
@@ -414,12 +446,12 @@ class Object { // this implementation will improve with typed array access
 		return so;
 	}
 	public function set_object(size:Int, to:Int, from:Object):Void {
-		#if php
+		//#if php
 			if(!Std.is(from,Object)) { 
-				//Scheduler.panicFromHaxe("Object.set_object() from parameter is not an Object - Value: "+Std.string(from)+" Type: "+Type.typeof(from));
+				Scheduler.panicFromHaxe("Object.set_object() from parameter is not an Object - Value: "+Std.string(from)+" Type: "+Type.typeof(from));
 				return; // treat as null object (seen examples have been integer 0)
 			}
-		#end
+		//#end
 		objBlit(from,0,this,to,size);
 	}
 	public inline function copy():Object{
@@ -663,7 +695,7 @@ class Object { // this implementation will improve with typed array access
 			#if (cpp||neko)
 				byts.setFloat(i,v);
 			#else
-				set_uint32(i,Go_haxegoruntime_Float32bits.callFromRT(0,v));
+				set_uint32(i,Go_haxegoruntime_FFloat32bits.callFromRT(0,v));
 			#end 
 		#end	
 	}
@@ -676,7 +708,7 @@ class Object { // this implementation will improve with typed array access
 			#if (cpp||neko)
 				byts.setDouble(i,v);
 			#else
-				set_uint64(i,Go_haxegoruntime_Float64bits.callFromRT(0,v));
+				set_uint64(i,Go_haxegoruntime_FFloat64bits.callFromRT(0,v));
 			#end 
 		#end	
 	}
@@ -851,6 +883,7 @@ class Slice {
 		return new Slice(baseArray,low+start,high+start,capacity+low+start,itemSize);
 	}
 	public function append(newEnt:Slice):Slice{
+		if(newEnt==null) return this;
 		// ignore capacity filling optimization for now TODO
 		var newObj:Object = new Object((length+newEnt.len())*itemSize);
 		for(i in 0...length) 
@@ -859,24 +892,26 @@ class Slice {
 			newObj.set_object(itemSize,length*itemSize+i*itemSize,newEnt.itemAddr(i).load_object(itemSize));
 		return new Slice(new Pointer(newObj),0,length+newEnt.len(),length+newEnt.len(),itemSize);
 	}
-	public function copy(source:Slice):Int{
-		var copySize:Int=this.cap();
+	public static function copy(target:Slice,source:Slice):Int{
+		if(target==null) return 0;
+		if(source==null) return 0;
+		var copySize:Int=target.cap();
 		if(source.len()<copySize) 
 			copySize=source.len(); 
-		if(this.baseArray==source.baseArray){ // copy within the same slice
-			if(this.start<=source.start){
+		if(target.baseArray==source.baseArray){ // copy within the same slice
+			if(target.start<=source.start){
 				for(i in 0...copySize)
-					this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
+					target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
 			}else{
 				var i = copySize-1;
 				while(i>=0){
-					this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
+					target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
 					i-=1;
 				}
 			}
 		}else{
 			for(i in 0...copySize)
-				this.itemAddr(i).store_object(itemSize,source.itemAddr(i).load_object(itemSize));
+				target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
 		}
 		return copySize;
 	}

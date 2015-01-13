@@ -4,6 +4,8 @@
 
 // Process etc.
 
+// +build !haxe
+
 package os
 
 import (

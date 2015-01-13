@@ -12,15 +12,23 @@
 //
 // TODO: Perhaps support symlinks, although they muck everything up.
 
+// +build haxe
+
 package syscall
 
 import (
 	"sync"
 	"unsafe"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
 // Provided by package runtime.
-func now() (sec int64, nsec int32)
+func now() (sec int64, nsec int32) {
+	haxeNow := hx.GetFloat("", "Date.now().getTime()")
+	secFloat := hx.CallFloat("", "Math.ffloor", 1, haxeNow)
+	return int64(secFloat), int32(1000000000 * (haxeNow - secFloat))
+}
 
 // An fsys is a file system.
 // Since there is no I/O (everything is in memory),
@@ -79,7 +87,81 @@ func newFsys() *fsys {
 }
 
 var fs = newFsys()
-var fsinit = func() {}
+
+var doHaxeInit = true // no need for mutex as haxe is not multi-threaded
+var fsinit = func() {
+	// Haxe specific
+	if doHaxeInit {
+		log := "syscall.fsinit() called\n"
+		doHaxeInit = false
+		names := hx.GetDynamic("", "haxe.Resource.listNames()")
+		l := hx.FgetInt("", names, "", "length")
+		for n := 0; n < l; n++ {
+			nam := hx.MethString("", names, "", "shift", 0)
+
+			if len(nam) == 0 || nam[0] != '/' {
+				log += "syscall.fsinit() file ignored, no leading '/' : " + nam + "\n"
+			} else {
+				bits := []int{}
+				for i, c := range nam {
+					if c == '/' {
+						bits = append(bits, i)
+					}
+				}
+				if len(bits) > 1 {
+					for l := 1; l < len(bits); l++ {
+						subPath := nam[:bits[l]]
+						err := Mkdir(subPath, 0777)
+						if err != nil && err.Error() != "File exists" {
+							log += "syscall.fsinit() unable to syscall.Mkdir() for path " +
+								subPath + " : " + err.Error() + "\n"
+						} else {
+							if err == nil {
+								log += "syscall.fsinit() loaded file: " + subPath + "/\n"
+							}
+						}
+					}
+				}
+				//fd, err := Open(nam, O_CREATE|O_EXCL, 0666) // replaced with code below to avoid init loop
+				f, err := fs.open(nam, O_CREATE|O_WRONLY, 0666|S_IFREG)
+				fd := newFD(f)
+				// end code replacement
+				if err != nil {
+					log += "syscall.fsinit() unable to syscall.Open() for " +
+						nam + " : " + err.Error() + "\n"
+				} else {
+					defer Close(fd)
+					b := hx.Resource(nam)
+					if b == nil || len(b) == 0 {
+						log += "syscall.fsinit() hx.Resource() file empty for: " + nam + "\n"
+					} else {
+						sz, err := Write(fd, b)
+						if err != nil || sz != len(b) {
+							log += "syscall.fsinit() bad syscall.Write() (size or error) for " +
+								nam + " : " + err.Error() + "\n"
+						} else {
+							log += "syscall.fsinit() loaded file: " + nam + "\n"
+						}
+					}
+				}
+			}
+		}
+		//fd, err := Open(nam, O_CREATE|O_EXCL, 0666) // replaced with code below to avoid init loop
+		f, err := fs.open("/fsinit.log", O_CREATE|O_WRONLY, 0666|S_IFREG)
+		fd := newFD(f)
+		// end code replacement
+		if err != nil {
+			println("information: syscall.fsinit() unable to syscall.Open() /fsinit.log : " + err.Error())
+		} else {
+			defer Close(fd)
+			sz, err := Write(fd, []byte(log))
+			if err != nil || sz != len(log) {
+				println("information: syscall.fsinit() bad syscall.Write() (size or error) for /fsinit.log" +
+					" : " + err.Error())
+			}
+		}
+	}
+}
 
 func init() {
 	// do not trigger loading of zipped file system here

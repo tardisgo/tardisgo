@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"reflect"
 	"strings"
+	"unicode"
 
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
@@ -346,7 +347,11 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 					//case 1: // TODO optimization possible using register replacement but does not currenty work for: a,b=b,a+b, so code removed
 					default:
 						if usesGr {
-							init = " #if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
+							if init == "null" {
+								init = "" // in JS null is the default anyway
+							} else {
+								init = " #if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
+							}
 						} else {
 							init = "=" + init // when not using goroutines, they all need initializing
 						}
@@ -484,7 +489,7 @@ func (l langType) Phi(register string, phiEntries []int, valEntries []interface{
 }
 
 func (l langType) LangName(p, o string) string {
-	return pogo.MakeID(p) + "_" + pogo.MakeID(o) //+ "_" + makeHash(pogo.MakeID(o))
+	return pogo.MakeID(p) + "_" + pogo.MakeID(o)
 }
 
 // Returns the textual version of Value, possibly emmitting an error
@@ -904,9 +909,15 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		//
 		// Go library complex function rewriting
 		//
-		case "runtime_Breakpoint":
+		case "runtime_BBreakpoint":
 			nextReturnAddress-- //decrement to set new return address for next call generation
 			return "this.breakpoint();"
+		case "runtime_UUnzipTTestFFSS":
+			nextReturnAddress-- //decrement to set new return address for next call generation
+			if pogo.LanguageList[langIdx].TestFS != "" {
+				return `Go_syscall_UUnzipFFSS.callFromHaxe("` + pogo.LanguageList[langIdx].TestFS + `");`
+			}
+			return ""
 		//case "math_Inf":
 		//	nextReturnAddress-- //decrement to set new return address for next call generation
 		//	return register + "=(" + l.IndirectValue(args[0], errorInfo) + ">=0?Math.POSITIVE_INFINITY:Math.NEGATIVE_INFINITY);"
@@ -933,6 +944,22 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			if strings.HasPrefix(pn, "_") && // in a package that starts with "_"
 				!strings.HasPrefix(fnToCall, "_t") { // and not a temp var TODO this may not always be accurate
 				//fmt.Println("start _HAXELIB SPECIAL PROCESSING", pn, fnToCall)
+
+				// remove double uppercase characters in name
+				ftc := ""
+				skip := false
+				for _, c := range fnToCall {
+					if skip {
+						skip = false
+					} else {
+						ftc += string(c)
+						if unicode.IsUpper(c) {
+							skip = true
+						}
+					}
+				}
+				fnToCall = ftc // fnToCall does not now contain doubled uppercase chars
+
 				nextReturnAddress--                     // decrement to set new return address for next call generation
 				isBuiltin = true                        // pretend we are in a builtin function to avoid passing 1st param as bindings
 				isHaxeAPI = true                        // we are calling a Haxe native function
@@ -1299,8 +1326,8 @@ func newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize stri
 func (l langType) MakeSlice(reg string, v interface{}, errorInfo string) string {
 	typeElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), false, errorInfo)
 	initElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), true, errorInfo)
-	length := l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo)   // lengths can't be 64 bit
-	capacity := l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo) // capacities can't be 64 bit
+	length := "Force.toInt(" + l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo) + ")"   // lengths can't be 64 bit
+	capacity := "Force.toInt(" + l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo) + ")" // capacities can't be 64 bit
 	itemSize := "1" + arrayOffsetCalc(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying())
 	return reg + "=" + newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize) + `;`
 }
@@ -1330,7 +1357,7 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 	}
 	switch x.(ssa.Value).Type().Underlying().(type) {
 	case *types.Slice:
-		return register + "=" + xString + `.subSlice(` + lvString + `,` + hvString + `);`
+		return register + "=" + xString + "==null?null:" + xString + `.subSlice(` + lvString + `,` + hvString + `);`
 	case *types.Pointer:
 		eleSz := "1" + arrayOffsetCalc(x.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying())
 		return register + "=new Slice(" + xString + `,` + lvString + `,` + hvString + "," +
@@ -1488,7 +1515,7 @@ func (l langType) Next(register string, v interface{}, isString bool, errorInfo 
 		return register + "={var _thisK:Int=" + l.IndirectValue(v, errorInfo) + ".k;" +
 			"if(" + l.IndirectValue(v, errorInfo) + ".k>=" + l.IndirectValue(v, errorInfo) + ".v.len()){r0:false,r1:0,r2:0};" +
 			"else {" +
-			"var _dr:{r0:Int,r1:Int}=Go_utf8_DecodeRune.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) +
+			"var _dr:{r0:Int,r1:Int}=Go_utf8_DDecodeRRune.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) +
 			".v.subSlice(_thisK,-1));" +
 			l.IndirectValue(v, errorInfo) + ".k+=_dr.r1;" +
 			"{r0:true,r1:cast(_thisK,Int),r2:cast(_dr.r0,Int)};}};"
@@ -1575,6 +1602,10 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 	if strings.HasPrefix(init, "new") || strings.HasPrefix(init, "{") || strings.HasPrefix(init, "GOint64") {
 		init = "null"
 	}
-	init = "#if js =" + init + " #end " // to allow V8 optimisation
+	if init == "null" {
+		init = "" // in JS null is the default
+	} else {
+		init = "#if js =" + init + " #end " // to allow V8 optimisation
+	}
 	return "var _" + v.Name() + ":" + typ + " " + init + ";"
 }

@@ -8,27 +8,12 @@
 package main
 
 import (
-	//"math"
-	//"math/big" // does not currently complile - infinite loop
-	//"bytes"
 	"math"
 	"runtime"
-
+	"unicode/utf8"
 	"unsafe"
 
 	"github.com/tardisgo/tardisgo/haxe/hx"
-
-	//"runtime"
-	//"strconv"
-	//"strings"
-	//"sync" // keep these two for now...
-	//"sync/atomic"
-	"unicode/utf8"
-
-	// final one at end to match the constant declaration
-	//_ "github.com/tardisgo/tardisgo/golibruntime"
-	//_ "github.com/tardisgo/tardisgo/golibruntime/sync"
-	//_ "github.com/tardisgo/tardisgo/golibruntime/sync/atomic"
 )
 
 //const tardisgoLibRuntimePath = "github.com/tardisgo/tardisgo/golibruntime"
@@ -1685,7 +1670,7 @@ func main() {
 	testObjMap()
 	//aGrWG.Wait()
 	TEQint32(""+" testManyGoroutines() (NOT sync/atomic) counter:", aGrCtr, 0)
-	if runtime.GOOS == "haxe" {
+	if runtime.GOOS == "nacl" { // really a haxe emulation of nacl
 		TEQ("", hx.CodeInt("", "42;"), int(42))
 		TEQ("", hx.CodeString("", "'test';"), "test")
 		TEQ(""+"Num Haxe GR post-wait", runtime.NumGoroutine(), 1)

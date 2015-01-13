@@ -26,8 +26,12 @@ type runtimeTimer struct {
 	seq    uintptr
 }
 
-func startTimer(*runtimeTimer)
-func stopTimer(*runtimeTimer) bool
+func startTimer(*runtimeTimer) {
+	panic("syscall.startTimer()")
+}
+func stopTimer(*runtimeTimer) bool {
+	panic("syscall.stopTimer()")
+}
 
 type timer struct {
 	expired bool

@@ -15,13 +15,16 @@ import (
 func init() {
 }
 
+// Haxe specific
+func UnzipTestFS() {} // this will be overwritten by the compiler
+
 // Constant values
 
 const Compiler = "TARDISgo"
 
 var GOARCH string = hx.CallString("", "Go.Platform", 0) // this is a const in the main Go installation
 
-const GOOS string = "haxe"
+const GOOS string = "nacl" // of course it is only an emulation of nacl...
 
 var MemProfileRate int = 512 * 1024 // TODO not currently used
 
@@ -38,8 +41,7 @@ func BlockProfile(p []BlockProfileRecord) (n int, ok bool) {
 	return
 }
 
-func Breakpoint() { // this will be overwritten by the compiler
-}
+func Breakpoint() {} // this will be overwritten by the compiler
 
 func CPUProfile() []byte {
 	panic("TODO:runtime.CPUProfile")

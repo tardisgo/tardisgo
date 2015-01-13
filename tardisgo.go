@@ -48,6 +48,9 @@ N	build [N]aive SSA form: don't replace local loads/stores with registers.
 `)
 
 var testFlag = flag.Bool("test", false, "Loads test code (*_test.go) for imported packages.")
+var LoadTestZipFS = false
+
+const TestFS = "tgotestfs.zip"
 
 var runFlag = flag.Bool("run", false, "Invokes the SSA interpreter on the program.")
 
@@ -58,7 +61,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go addition
-var allFlag = flag.Bool("testall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
+var allFlag = flag.Bool("runall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
 var debugFlag = flag.Bool("debug", false, "Instrument the code to enable debugging, add comments, and give more meaningful information during a stack dump (warning: increased code size)")
 var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
 var buidTags = flag.String("tags", "", "build tags separated by spaces")
@@ -135,8 +138,8 @@ func doTestable(args []string) error {
 
 	if !(*runFlag) {
 		wordSize = 4               // TARDIS Go addition to force default int size to 32 bits
-		conf.Build.GOARCH = "haxe" // or haxe? TARDIS Go addition - 32-bit int
-		conf.Build.GOOS = "haxe"   // or haxe? TARDIS Go addition - simplest OS-specific code to emulate?
+		conf.Build.GOARCH = "haxe" // TARDIS Go addition - 32-bit int
+		conf.Build.GOOS = "nacl"   // or haxe? TARDIS Go addition - simplest OS-specific code to emulate?
 	}
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
@@ -296,6 +299,14 @@ func doTestable(args []string) error {
 			if main == nil {
 				return fmt.Errorf("no tests")
 			}
+			fd, err := os.Open(TestFS)
+			fd.Close()
+			if err == nil {
+				LoadTestZipFS = true
+				for l := range pogo.LanguageList {
+					pogo.LanguageList[l].TestFS = TestFS
+				}
+			}
 		} else {
 			// Otherwise, run main.main.
 			for _, pkg := range pkgs {
@@ -366,29 +377,29 @@ var targets = [][][]string{
 	},
 	// TODO Seldom works, so remove?
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardis/tardisgo.n"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardis/go.n"},
 		[]string{"echo", `"Neko:"`},
-		[]string{"time", "neko", "tardis/tardisgo.n"},
+		[]string{"time", "neko", "tardis/go.n"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardis/tardisgo.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
-		[]string{"time", "node", "tardis/tardisgo.js"},
+		[]string{"time", "node", "tardis/go.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardis/tardisgo-dataview.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardis/go-dv.js"},
 		[]string{"echo", `"Node/JS (using dataview mode):"`},
-		[]string{"time", "node", "tardis/tardisgo-dataview.js"},
+		[]string{"time", "node", "tardis/go-dv.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "safe", "-js", "tardis/tardisgo-safe.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "safe", "-js", "tardis/go-sf.js"},
 		[]string{"echo", `"Node/JS (using safe mode):"`},
-		[]string{"time", "node", "tardis/tardisgo-safe.js"},
+		[]string{"time", "node", "tardis/go-sf.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardis/tardisgo.swf"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardis/go.swf"},
 		[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
-		[]string{"open", "tardis/tardisgo.swf"},
+		[]string{"open", "tardis/go.swf"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo", "-D", "safe"},
@@ -423,6 +434,10 @@ func doTarget(cl [][]string, results chan resChan) {
 					res += "TARDISgo error - executable not found: " + exe + "\n"
 					exe = "" // nothing to execute
 				}
+			}
+			if (exe == "haxe" || (exe == "time" && c[1] == "haxe")) && LoadTestZipFS {
+				c = append(c, "-resource")
+				c = append(c, TestFS)
 			}
 			if exe != "" {
 				out, err := exec.Command(exe, c[1:]...).CombinedOutput()

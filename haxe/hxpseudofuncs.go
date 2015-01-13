@@ -17,11 +17,18 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		return "" // no need to generate code for the go init function
 	}
 
-	if fnToCall == "Resource" {
+	if fnToCall == "RResource" {
 		return "Slice.fromResource(" + l.IndirectValue(args[0], errorInfo) + ");"
 	}
 
-	if fnToCall == "CallbackFunc" {
+	if fnToCall == "IIsNNull" {
+		return l.IndirectValue(args[0], errorInfo) + "==null;"
+	}
+	if fnToCall == "NNull" {
+		return "null;"
+	}
+
+	if fnToCall == "CCallbackFFunc" {
 		// NOTE there will be a preceeding MakeInterface call that is made redundant by this code
 		if len(args) == 1 {
 			goMI, ok := args[0].(*ssa.MakeInterface)
@@ -70,24 +77,25 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		wrapEnd = " #else " + defVal + "; #end "
 	}
 
-	if strings.HasSuffix(fnToCall, "String") && !strings.HasPrefix(fnToCall, "Fset") && !strings.HasPrefix(fnToCall, "Set") {
+	if strings.HasSuffix(fnToCall, "SString") && !strings.HasPrefix(fnToCall, "Fset") && !strings.HasPrefix(fnToCall, "Set") {
 		wrapStart += " Force.fromHaxeString({"
 		wrapEnd = "});" + wrapEnd
 	}
 
-	if strings.HasSuffix(fnToCall, "Iface") {
+	if strings.HasSuffix(fnToCall, "IIface") {
 		argOff = 2
 		wrapStart += "new Interface(TypeInfo.getId(\"" + tgoString(l.IndirectValue(args[1], errorInfo), errorInfo) + "\"),{"
 		wrapEnd = "});" + wrapEnd
 	}
 	code := ""
-	if strings.HasPrefix(fnToCall, "New") {
+	if strings.HasPrefix(fnToCall, "NNew") {
 		code = "new "
 	}
 	code += strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) // trim quotes if it has any
-	if strings.HasPrefix(fnToCall, "Call") || strings.HasPrefix(fnToCall, "Meth") || strings.HasPrefix(fnToCall, "New") {
+	if strings.HasPrefix(fnToCall, "CCall") ||
+		strings.HasPrefix(fnToCall, "MMeth") || strings.HasPrefix(fnToCall, "NNew") {
 		argOff++
-		if strings.HasPrefix(fnToCall, "Meth") {
+		if strings.HasPrefix(fnToCall, "MMeth") {
 			haxeType := tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo)
 			if len(haxeType) > 0 {
 				code = "cast(" + code + "," + haxeType + ")"
@@ -115,16 +123,16 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		}
 		code += ");"
 	}
-	if strings.HasPrefix(fnToCall, "Get") {
+	if strings.HasPrefix(fnToCall, "GGet") {
 		code += ";"
 		usesArgs = false
 	}
-	if strings.HasPrefix(fnToCall, "Set") {
+	if strings.HasPrefix(fnToCall, "SSet") {
 		argOff++
 		code = code + "=" + l.IndirectValue(args[argOff], errorInfo) + ";"
 		usesArgs = false
 	}
-	if strings.HasPrefix(fnToCall, "Fget") {
+	if strings.HasPrefix(fnToCall, "FFget") {
 		argOff++
 		if l.IndirectValue(args[argOff], errorInfo) != `""` {
 			code = "cast(" + code + "," + tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"
@@ -132,7 +140,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		code += "." + tgoString(l.IndirectValue(args[argOff+1], errorInfo), errorInfo) + "; "
 		usesArgs = false
 	}
-	if strings.HasPrefix(fnToCall, "Fset") {
+	if strings.HasPrefix(fnToCall, "FFset") {
 		argOff++
 		if l.IndirectValue(args[argOff], errorInfo) != `""` {
 			code = "cast(" + code + "," + tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"

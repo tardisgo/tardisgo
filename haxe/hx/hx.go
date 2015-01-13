@@ -11,9 +11,14 @@ package hx
 // if passed a string value, it gives the actual name of a Haxe function e.g. "Scheduler.timerEventHandler"
 func CallbackFunc(function interface{}) interface{} { return nil }
 
-// Resource loads a file resource that was added through the -resource file@name haxe command line parameter;
+// Resource loads a file resource that was added through the
+// -resource host/file/path/a.dat@/target/file/path/b.dat haxe command line parameter;
 // if the file resource does not exist, an empty slice is returned.
 func Resource(s string) []byte { return []byte{} }
+
+// IsNull returns if the haxe Dynamic variable is null
+func IsNull(x uintptr) bool { return false }
+func Null() uintptr         { return 0 }
 
 // Code inserts the given constant Haxe code at this point.
 // ifLogic = a constant string giving the logic for wrapping Haxe complie time condition, ignored if "": #if (ifLogic) ... #end
