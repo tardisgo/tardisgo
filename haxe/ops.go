@@ -38,7 +38,7 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 		//if strings.HasPrefix(lt, "Pointer") {
 		//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
 		//}
-		return iVal + ".load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */", goTyp)
+		return "Pointer.check(" + iVal + ").load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */", goTyp)
 		//}
 	case "-":
 		if l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) == "Complex" {

@@ -555,6 +555,50 @@ func testMap() { // and map-like constucts
 	delete(noteFrequency, "Test")
 	_, isok = noteFrequency["Test"]
 	TEQ("", false, isok)
+
+	if true { // just to get a new scope
+		// frequencies in Hz for equal-tempered scale (A4 = 440Hz)
+		noteFrequency2 := map[float64]string{
+			16.35: "C0", 18.35: "D0", 20.60: "E0", 21.83: "F0",
+			24.50: "G0", 27.50: "A0", 30.87: "B0",
+		}
+		noteFrequency2[42.42] = "Test"
+		TEQ("", len(noteFrequency2), 8)
+		for k, v := range noteFrequency2 {
+			r := ""
+			switch k {
+			case 16.35:
+				r = "C0"
+			case 18.35:
+				r = "D0"
+			case 20.60:
+				r = "E0"
+			case 21.83:
+				r = "F0"
+			case 24.50:
+				r = "G0"
+			case 27.50:
+				r = "A0"
+			case 30.87:
+				r = "B0"
+			case 42.42:
+				r = "Test"
+			default:
+				r = "NOT FOUND"
+			}
+			if !TEQ(""+" Value itterator in map", v, r) {
+				break
+			}
+		}
+		x, isok := noteFrequency2[42.42]
+		TEQ("", "Test", x)
+		TEQ("", true, isok)
+		_, notok := noteFrequency2[-42]
+		TEQ("", false, notok)
+		delete(noteFrequency2, 42.42)
+		_, isok = noteFrequency2[43.42]
+		TEQ("", false, isok)
+	}
 }
 
 type MyFloat float64

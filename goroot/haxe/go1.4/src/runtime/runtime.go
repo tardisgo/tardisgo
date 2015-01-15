@@ -203,7 +203,7 @@ type Func struct {
 
 func FuncForPC(pc uintptr) *Func {
 	//FuncForPC returns a *Func describing the function that contains the given program counter address, or else nil.
-	return &Func{}
+	return nil
 }
 
 func (f *Func) Entry() uintptr {

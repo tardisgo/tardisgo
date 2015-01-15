@@ -93,15 +93,15 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			return "Channel<" + l.LangType(t.(*types.Chan).Elem(), false, errorInfo) + ">"
 		case *types.Map:
 			key := l.LangType(t.(*types.Map).Key(), false, errorInfo)
-			if key == "Object" {
-				key = "String" // objects as keys must be serialized into strings to get the correct results
+			if key != "Int" {
+				key = "String" // everything except Int as keys must be serialized into strings
 			}
 			if retInitVal {
-				return "new Map<" + key + "," +
-					l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">()"
+				return "new Map<" + key + ",{key:" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + ",val:" +
+					l.LangType(t.(*types.Map).Elem(), false, errorInfo) + "}>()"
 			}
-			return "Map<" + key + "," +
-				l.LangType(t.(*types.Map).Elem(), false, errorInfo) + ">"
+			return "Map<" + key + ",{key:" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + ",val:" +
+				l.LangType(t.(*types.Map).Elem(), false, errorInfo) + "}>"
 		case *types.Slice:
 			if retInitVal {
 				return "new Slice(new Pointer(" + //l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
@@ -312,6 +312,7 @@ func (l langType) MakeInterface(register string, regTyp types.Type, v interface{
 }
 
 func (l langType) ChangeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string {
+	pogo.LogTypeUse(regTyp) // make sure it is in the DB
 	return register + `=Interface.change(` + pogo.LogTypeUse(v.(ssa.Value).Type() /*NOT underlying()*/) + `,` +
 		l.IndirectValue(v, errorInfo) + ");"
 }
@@ -379,7 +380,7 @@ func (l langType) TypeAssert(register string, v ssa.Value, AssertedType types.Ty
 	return register + `=Interface.assert(` + pogo.LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
 }
 
-func getHaxeClass(fullname string) string {
+func getHaxeClass(fullname string) string { // NOTE capital letter de-doubling not handled here
 	if fullname[0] != '*' { // pointers can't be Haxe types
 		bits := strings.Split(fullname, "/")
 		s := bits[len(bits)-1] // right-most bit contains the package name & type name
@@ -406,6 +407,13 @@ func (l langType) EmitTypeInfo() string {
 	pte := pogo.TypesEncountered
 	pteKeys := pogo.TypesEncountered.Keys()
 
+	typesByID := make([]types.Type, pogo.NextTypeID)
+	for k := range pteKeys {
+		v := pte.At(pteKeys[k]).(int)
+		typesByID[v] = pteKeys[k]
+	}
+
+	// TODO review if this is  required
 	ret += "public static function isHaxeClass(id:Int):Bool {\nswitch(id){" + "\n"
 	for k := range pteKeys {
 		v := pte.At(pteKeys[k])
@@ -419,20 +427,73 @@ func (l langType) EmitTypeInfo() string {
 	ret += `default: return false;}}` + "\n"
 
 	ret += "public static function getName(id:Int):String {\nswitch(id){" + "\n"
-	for k := range pteKeys {
-		v := pte.At(pteKeys[k])
-		ret += "case " + fmt.Sprintf("%d", v) + `: return "` + pteKeys[k].String() + `";` + "\n"
+	for k, v := range typesByID {
+		s := ""
+		hadbackslash := false
+		content := strings.Trim(v.String(), `"`)
+		for _, c := range content {
+			if hadbackslash {
+				hadbackslash = false
+				s += string(c)
+			} else {
+				switch c {
+				case '"': // the reason we are here - orphan ""
+					s += "\\\""
+				case '\\':
+					hadbackslash = true
+					s += string(c)
+				default:
+					s += string(c)
+				}
+			}
+		}
+		ret += "case " + fmt.Sprintf("%d", k) + `: return ` +
+			haxeStringConst(`"`+s+`"`, "CompilerInternal:haxe.EmitTypeInfo()") +
+			`;` + "\n"
 	}
 	ret += `default: return "UNKNOWN";}}` + "\n"
 
 	ret += "public static function typeString(i:Interface):String {\nreturn getName(i.typ);\n}\n"
 
-	ret += "public static function getId(name:String):Int {\nswitch(name){" + "\n"
+	ret += "static var typIDs:Map<String,Int> = ["
+	deDup := make(map[string]bool)
 	for k := range pteKeys {
 		v := pte.At(pteKeys[k])
-		ret += `case "` + pteKeys[k].String() + `": return ` + fmt.Sprintf("%d", v) + `;` + "\n"
+		s := ""
+		hadbackslash := false
+		content := strings.Trim(pteKeys[k].String(), `"`)
+		for _, c := range content {
+			if hadbackslash {
+				hadbackslash = false
+				s += string(c)
+			} else {
+				switch c {
+				case '"': // the reason we are here - orphan ""
+					s += "\\\""
+				case '\\':
+					hadbackslash = true
+					s += string(c)
+				default:
+					s += string(c)
+				}
+			}
+		}
+		nam := haxeStringConst("`"+s+"`", "CompilerInternal:haxe.EmitTypeInfo()")
+		if len(nam) != 0 {
+			if deDup[nam] { // have one already!!
+				nam = fmt.Sprintf("%s (duplicate type name! this id=%d)\"", nam[:len(nam)-1], v)
+			} else {
+				deDup[nam] = true
+			}
+		} else {
+			nam = fmt.Sprintf("(empty type name! this id=%d)\"", v)
+		}
+		ret += ` ` + nam + ` => ` + fmt.Sprintf("%d", v) + `,` + "\n"
 	}
-	ret += "default: return -1;}}\n"
+	ret += "];\n"
+	ret += "public static function getId(name:String):Int {\n"
+	ret += "\tvar t=typIDs[name];\n"
+	ret += "\treturn t==null?-1:t;\n}\n"
 
 	//emulation of: func IsAssignableTo(V, T Type) bool
 	ret += "public static function isAssignableTo(v:Int,t:Int):Bool {\nif(v==t) return true;\nswitch(v){" + "\n"
@@ -482,7 +543,11 @@ func (l langType) EmitTypeInfo() string {
 	for T := range pteKeys {
 		t := pte.At(pteKeys[T])
 		ret += `case ` + fmt.Sprintf("%d", t) + `: return `
-		ret += l.LangType(pteKeys[T], true, "EmitTypeInfo()") + ";\n"
+		z := l.LangType(pteKeys[T], true, "EmitTypeInfo()")
+		if z == "" {
+			z = "null"
+		}
+		ret += z + ";\n"
 	}
 	ret += "default: return null;}}\n"
 

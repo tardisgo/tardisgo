@@ -12,24 +12,24 @@ import (
 )
 
 var builtinOverloadMap = map[string]string{
-	//Go Math functions
-	//built into Haxe:
-	//"math_Abs":  "Math.abs",
-	//"math_Acos": "Math.acos",
-	//"math_Asin": "Math.asin",
-	//"math_Atan": "Math.atan",
-	//"math_Ceil": "Math.fceil",
-	//"math_Cos": "Math.cos",
-	//"math_Exp":   "Math.exp", // use Go version to make tests work
-	//"math_Floor": "Math.ffloor",
-	//"math_Log":  "Math.log",
-	//"math_Sin":  "Math.sin",
-	//"math_Sqrt": "Math.sqrt",
-	//"math_Tan":  "Math.tan",
+//Go Math functions
+//built into Haxe:
+//"math_Abs":  "Math.abs",
+//"math_Acos": "Math.acos",
+//"math_Asin": "Math.asin",
+//"math_Atan": "Math.atan",
+//"math_Ceil": "Math.fceil",
+//"math_Cos": "Math.cos",
+//"math_Exp":   "Math.exp", // use Go version to make tests work
+//"math_Floor": "Math.ffloor",
+//"math_Log":  "Math.log",
+//"math_Sin":  "Math.sin",
+//"math_Sqrt": "Math.sqrt",
+//"math_Tan":  "Math.tan",
 
-	//Type of an interface value
-	//runtime
-	"runtime_typestring": "TypeInfo.typeString",
+//Type of an interface value
+//runtime
+//"runtime_typestring": "TypeInfo.typeString",
 }
 
 var fnOverloadMap = map[string]string{

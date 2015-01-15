@@ -5,6 +5,7 @@
 package haxe
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -56,22 +57,6 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	main += "\npublic static function init() : Void {\ndoneInit=true;\nvar gr:Int=Scheduler.makeGoroutine();\n" // first goroutine number is always 0
 	main += `if(gr!=0) throw "non-zero goroutine number in init";` + "\n"                                       // first goroutine number is always 0, NOTE using throw as panic not setup
 
-	//NOTE HACK start
-	/*
-		ap := pkg.Prog.AllPackages()
-		for p := range ap {
-			// fmt.Println("DEBUG: ", ap[p].Object.Name())
-			if ap[p].Object.Name() == "runtime" {
-				var memStats runtime.MemStats // see magic variable setting required below
-				// this magic number required to init the runtime module, may change in future versions
-				// see go/tip/go/src/pkg/runtime/mem.go:68
-				main += fmt.Sprintf("Go.runtime_sizeof_C_MStats.store(%d);\n", unsafe.Sizeof(memStats))
-				break
-			}
-		}
-	*/
-	//NOTE HACK end
-
 	main += "var _sfgr=new Go_haxegoruntime_init(gr,[]).run();\n" //haxegoruntime.init() NOTE can't use callFromHaxe() as that would call this fn
 	main += "while(_sfgr._incomplete) Scheduler.runAll();\n"
 	main += "var _sf=new Go_" + pkg.Object.Name() + `_init(gr,[]).run();` + "\n" //NOTE can't use callFromHaxe() as that would call this fn
@@ -121,10 +106,10 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	return main + pos + "} // end Go class"
 }
 
-func haxeStringConst(s string, position string) string { // TODO add conversions for UTF16
-	s, err := strconv.Unquote(s)
+func haxeStringConst(sconst string, position string) string { // TODO add conversions for UTF16
+	s, err := strconv.Unquote(sconst)
 	if err != nil {
-		pogo.LogError(position, "Haxe", err)
+		pogo.LogError(position, "Haxe", errors.New(err.Error()+" : "+sconst))
 		return ""
 	}
 

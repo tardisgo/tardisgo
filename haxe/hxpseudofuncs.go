@@ -118,7 +118,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 				if i > 0 {
 					code += ","
 				}
-				code += fmt.Sprintf("Force.toHaxeParam(_a.itemAddr(%d).load().val)", i)
+				code += fmt.Sprintf("Force.toHaxeParam({var b=_a.itemAddr(%d).load();b==null?null:b.val;})", i)
 			}
 		}
 		code += ");"

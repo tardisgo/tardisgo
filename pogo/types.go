@@ -13,16 +13,20 @@ import (
 )
 
 // IsValidInPogo exists to screen out any types that the system does not handle correctly.
-// Currently it should say everything is valid. TODO review if still required in this form.
+// Currently it should say everything is valid.
+// TODO review if still required in this form.
 func IsValidInPogo(et types.Type, posStr string) bool {
 	switch et.(type) {
 	case *types.Basic:
 		switch et.(*types.Basic).Kind() {
-		case types.Bool, types.UntypedBool, types.String, types.UntypedString, types.Float64, types.Float32, types.UntypedFloat,
-			types.Int, types.Int8, types.Int16, types.Int32, types.UntypedInt, types.UntypedRune,
+		case types.Bool, types.String, types.Float64, types.Float32,
+			types.Int, types.Int8, types.Int16, types.Int32,
 			types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Int64, types.Uint64,
-			types.Complex64, types.Complex128, types.UntypedComplex,
+			types.Complex64, types.Complex128,
 			types.Uintptr, types.UnsafePointer:
+			return true
+		case types.UntypedInt, types.UntypedRune, types.UntypedBool,
+			types.UntypedString, types.UntypedFloat, types.UntypedComplex:
 			return true
 		default:
 			if et.(*types.Basic).String() == "invalid type" { // the type of unused map value itterators!
@@ -47,7 +51,7 @@ func IsValidInPogo(et types.Type, posStr string) bool {
 var TypesEncountered typeutil.Map
 
 // NextTypeID is used to give each type we come across its own ID.
-var NextTypeID = 0
+var NextTypeID = 0 // also give the number if entries in the map
 
 // LogTypeUse : As the code generator encounters new types it logs them here, returning a string of the ID for insertion into the code.
 func LogTypeUse(t types.Type) string {
@@ -74,6 +78,16 @@ func TypesWithMethodSets() (sets []types.Type) {
 
 // Wrapper for target language emitTypeInfo()
 func emitTypeInfo() {
+	/* TODO are belt-and-braces required here?
+	for _, pkg := range rootProgram.AllPackages() {
+		for _, mem := range pkg.Members {
+			t, ok := mem.Type().(*types.Named)
+			if ok {
+				LogTypeUse(t)
+			}
+		}
+	}
+	*/
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].EmitTypeInfo())
 }

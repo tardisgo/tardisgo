@@ -632,7 +632,7 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 }
 
 func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
-	return l.IndirectValue(v1, errorInfo) + ".store" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) +
+	return "Pointer.check(" + l.IndirectValue(v1, errorInfo) + ").store" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) +
 		l.IndirectValue(v2, errorInfo) + ");" +
 		" /* " + v2.(ssa.Value).Type().Underlying().String() + " */ "
 }
@@ -882,7 +882,9 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			}
 			*/
 		case "delete":
-			return register + l.IndirectValue(args[0], errorInfo) + ".remove(" + l.IndirectValue(args[1], errorInfo) + ");"
+			return register + l.IndirectValue(args[0], errorInfo) + ".remove(" +
+				serializeKey(l.IndirectValue(args[1], errorInfo),
+					l.LangType(args[1].Type().Underlying(), false, errorInfo)) + ");"
 		case "append":
 			return register + l.append(args, errorInfo) + ";"
 		case "copy": //TODO rework & test
@@ -1442,29 +1444,37 @@ func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
 	return reg + "=" + l.LangType(v.(*ssa.MakeMap).Type().Underlying(), true, errorInfo) + `;`
 }
 
-func (l langType) MapUpdate(Map, Key, Value interface{}, errorInfo string) string {
-	key := l.IndirectValue(Key, errorInfo)
-	if l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo) == "Object" {
-		key += ".toString()" // object keys must be serialized
+func serializeKey(val, haxeTyp string) string {
+	switch haxeTyp {
+	case "Int", "String":
+		return val
+	case "Pointer":
+		return val + "==null?\"\":" + val + ".toUniqueVal()"
+	case "Object", "GOint64", "Complex", "Interface":
+		return val + "==null?\"\":" + val + ".toString()"
+		//TODO more here?
+	default:
+		return "Std.string(" + val + ")"
 	}
+}
+
+func (l langType) MapUpdate(Map, Key, Value interface{}, errorInfo string) string {
+	skey := serializeKey(l.IndirectValue(Key, errorInfo),
+		l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 	ret := l.IndirectValue(Map, errorInfo) + ".set("
-	ret += key + ","
-	ret += l.IndirectValue(Value, errorInfo) + ");"
+	ret += skey + ",{key:" + l.IndirectValue(Key, errorInfo) + ",val:"
+	ret += l.IndirectValue(Value, errorInfo) + "});"
 	return ret
 }
 
 func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorInfo string) string {
 	keyString := l.IndirectValue(Key, errorInfo)
-	if l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo) == "Object" {
-		keyString += ".toString()" // object keys must be serialized
-	}
+	// check if we are looking up in a string
 	if l.LangType(Map.(ssa.Value).Type().Underlying(), false, errorInfo) == "String" {
 		switch Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 		case types.Int64, types.Uint64:
 			keyString = keyString + ".toInt()"
 		}
-		//sliceCode := "Force.toUTF8slice(this._goroutine," + l.IndirectValue(Map, errorInfo) + ")"
-		//valueCode := sliceCode + ".itemAddr(" + keyString + ").load_uint8()"
 		valueCode := l.IndirectValue(Map, errorInfo) + ".charCodeAt(" + keyString + ")"
 		if commaOk {
 			return reg + "=(" + valueCode + "==null) ?" +
@@ -1474,11 +1484,13 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 			"{Scheduler.ioor();0;}:Std.int(" + valueCode + ");"
 	}
 	// assume it is a Map
+	keyString = serializeKey(keyString, l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
+
 	li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
 	if strings.HasPrefix(li, "new ") {
 		li = "null" // no need for a full object declaration in this context
 	}
-	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")"
+	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ").val"
 	ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
 	switch ltEle {
 	case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
@@ -1501,12 +1513,21 @@ func (l langType) Range(reg string, v interface{}, errorInfo string) string {
 	case "String":
 		return reg + "={k:0,v:Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ")" + "};"
 	default: // assume it is a Map {k: key itterator,m: the map,z: zero value of an entry}
+		keyTyp := l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo)
+		if keyTyp != "Int" {
+			keyTyp = "String"
+		}
 		return reg + "={k:" + l.IndirectValue(v, errorInfo) + ".keys(),m:" + l.IndirectValue(v, errorInfo) +
-			",z:" + l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo) +
-			`,f:function(m:` + l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) + ",k:" +
-			l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo) + "):" +
-			l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo) +
-			"{return m.get(k);}" +
+			",zk:" + l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), true, errorInfo) +
+			",zv:" + l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo) +
+			//`,fk:function(m:` + l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) + ",k:" +
+			//keyTyp + "):" +
+			//l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo) +
+			//"{return m.get(" + "k" + ").key;}" +
+			//`,fv:function(m:` + l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) + ",k:" +
+			//keyTyp + "):" +
+			//l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo) +
+			//"{return m.get(" + "k" + ").val;}" +
 			`};`
 	}
 }
@@ -1523,9 +1544,10 @@ func (l langType) Next(register string, v interface{}, isString bool, errorInfo 
 	// otherwise it is a map itterator
 	return register + "={var _hn:Bool=" + l.IndirectValue(v, errorInfo) + ".k.hasNext();\n" +
 		"if(_hn){var _nxt=" + l.IndirectValue(v, errorInfo) + ".k.next();\n" +
-		"{r0:true,r1:_nxt,r2:" + l.IndirectValue(v, errorInfo) + ".f(" +
-		l.IndirectValue(v, errorInfo) + ".m,_nxt)};\n" +
-		"}else{{r0:false,r1:null,r2:" + l.IndirectValue(v, errorInfo) + ".z};\n}};"
+		//"$type(" + l.IndirectValue(v, errorInfo) + ".m);\n" +
+		"{r0:true,r1:cast(" + l.IndirectValue(v, errorInfo) + ".m,Map<String,Dynamic>).get(_nxt).key," +
+		"r2:cast(" + l.IndirectValue(v, errorInfo) + ".m,Map<String,Dynamic>).get(_nxt).val};\n" +
+		"}else{{r0:false,r1:" + l.IndirectValue(v, errorInfo) + ".zk,r2:" + l.IndirectValue(v, errorInfo) + ".zv};\n}};"
 }
 
 func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) string {

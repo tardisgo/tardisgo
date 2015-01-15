@@ -75,7 +75,6 @@ class Console {
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 class Force { // TODO maybe this should not be a separate haxe class, as no non-Go code needs access to it
-
 	public static inline function toUint8(v:Int):Int {
 		return v & 0xFF;
 	}	
@@ -384,6 +383,7 @@ class Object { // this implementation will improve with typed array access
 		return true;
 	}
 	private static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
+		if(size==0) return;
 		//if(!Std.is(src,Object)) { 
 		//	Scheduler.panicFromHaxe("Object.objBlt() src parameter is not an Object - Value: "+Std.string(src)+" Type: "+Type.typeof(src));
 		//	return;
@@ -748,6 +748,10 @@ class Pointer {
 		obj = from; 
 		off = 0;
 	}
+	public static function check(p:Pointer):Pointer {
+		if(p==null) Scheduler.panicFromHaxe("nil pointer de-reference");
+		return p;
+	}
 	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
 		if(p1==p2) return true; // simple case of being the same haxe object
 		if(p1==null || p2==null) return false; // one of them is null (if above handles both null)
@@ -993,7 +997,7 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 	}
 }
 
-class Interface{ // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix tgo //TODO tidy names 
+class Interface { // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix tgo //TODO tidy names 
 	public var typ:Int; // the possibly interface type that has been cast to
 	public var val:Dynamic;
 
@@ -1003,7 +1007,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 	}
 	public function toString():String {
 		if(val==null)
-			return "Interface{nil:"+TypeInfo.getName(typ)+"}"; // ??? Can this path ever be reached ???
+			return "Interface{nil:"+TypeInfo.getName(typ)+"}";
 		else
 			return "Interface{"+val+":"+TypeInfo.getName(typ)+"}";
 	}
@@ -1018,7 +1022,7 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 		if(Std.is(v,Bool))
 			return new Interface(TypeInfo.getId("bool"),v); 
 		if(Std.is(v,Int))
-			return new Interface(TypeInfo.getId("int"),v); // ??? UInt ??? 
+			return new Interface(TypeInfo.getId("int"),v); 
 		if(Std.is(v,Float))
 			return new Interface(TypeInfo.getId("float64"),v); 
 		if(Std.is(v,String))
@@ -1028,11 +1032,10 @@ class Interface{ // "interface" is a keyword in PHP but solved using compiler fl
 	}
 	public static function change(t:Int,i:Interface):Interface {
 		if(i==null)	
-			if(TypeInfo.isConcrete(t)) 
+			if(TypeInfo.isConcrete(t))  
 				return new Interface(t,TypeInfo.zeroValue(t)); 
 			else {
-				Scheduler.panicFromHaxe( "can't change the Interface of a nil value to Interface type: " +TypeInfo.getName(t));  
-				return new Interface(t,TypeInfo.zeroValue(t));	 //dummy value as we have hit the panic button
+				return null; // e.g. error(nil) 
 			}
 		else 
 			if(Std.is(i,Interface)) 	
@@ -1209,6 +1212,9 @@ public static inline function eq(x:Complex,y:Complex):Bool { // "=="
 }
 public static inline function neq(x:Complex,y:Complex):Bool { // "!="
 	return (x.real != y.real) || (x.imag != y.imag);
+}
+public static function toString(x:Complex):String {
+	return Std.string(x.real)+"+"+Std.string(x.imag)+"i";
 }
 }
 
