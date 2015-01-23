@@ -40,7 +40,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // this file copied from Package math - provides implementation and documentation of math functions overloaded by TARDIS Go->Haxe transpiler
 package haxegoruntime
 
-import "github.com/tardisgo/tardisgo/haxe/hx"
+import (
+	"unsafe"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
+)
+
+const ( // from package math
+	uvnan    = 0x7FF8000000000001
+	uvinf    = 0x7FF0000000000000
+	uvneginf = 0xFFF0000000000000
+)
+
+//from GopherJS
+var zero float64 = 0
+var posInf = hx.GetFloat("", "Math.POSITIVE_INFINITY") // 1 / zero
+var negInf = hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
+var nan = hx.GetFloat("", "Math.NaN")                  //0 / zero
+
+func init() { // to avoid DCE
+	if false {
+		_ = Float32bits(0)
+		_ = Float32frombits(0)
+		_ = Float64bits(0)
+		_ = Float64frombits(0)
+	}
+}
 
 // Code below adapted from https://github.com/gopherjs/gopherjs/blob/master/bitcasts/bitcasts.go
 
@@ -50,50 +75,57 @@ import "github.com/tardisgo/tardisgo/haxe/hx"
 // Float32bits returns the IEEE 754 binary representation of f.
 //func Float32bits(f float32) uint32 { return *(*uint32)(unsafe.Pointer(&f)) }
 func Float32bits(f float32) uint32 {
-	//var Zero = 0.0
-	//var NegZero = -Zero
-	//var NaN = Zero / Zero
-	if f == 0 {
-		// TODO review correctness of next 3 lines
-		if f == 0 && float64(1/f) == hx.GetFloat("", "Math.NEGATIVE_INFINITY") /*1/f == float32(1/NegZero)*/ {
-			return 1 << 31
+
+	if hx.GetBool("", "Object.nativeFloats") {
+		var t float32 = f
+		return *(*uint32)(unsafe.Pointer(&t))
+	}
+
+	if float64(f) == hx.GetFloat("", "0") { // to avoid recursion(0) { //js.InternalObject(f) == js.InternalObject(0) {
+		tv := hx.GetFloat("", "1") / float64(f)
+		if tv < 0 && !hx.CallBool("", "Math.isFinite", 1, tv) { //js.InternalObject(1/f) == js.InternalObject(negInf) {
+			return 1 << 31 //-0
 		}
 		return 0
 	}
-	if f != f { // NaN
+	if float64(f) != float64(f) { //js.InternalObject(f) != js.InternalObject(f) { // NaN
 		return 2143289344
 	}
 
 	s := uint32(0)
-	if f < 0 {
+	if float64(f) < hx.GetFloat("", "0") { // must use float64 to avoid recusion on the comparison NOTE ditto below...
 		s = 1 << 31
 		f = -f
 	}
 
 	e := uint32(127 + 23)
-	for f >= 1<<24 {
-		f /= 2
-		if e == (1<<8)-1 {
+	for float64(f) >= float64(int64(1<<24)) {
+		f /= float32(hx.GetFloat("", "2"))
+		e++
+		if e == uint32((1<<8)-1) {
+			if float64(f) >= hx.GetFloat("", "1<<23") {
+				f = float32(posInf)
+			}
 			break
 		}
-		e++
 	}
-	for f < 1<<23 {
+	for float64(f) < float64(int64(1<<23)) {
 		e--
 		if e == 0 {
 			break
 		}
-		f *= 2
+		f *= float32(hx.GetFloat("", "2"))
 	}
 
+	//r := js.Global.Call("$mod", f, 2).Float()
 	// below is code to simulate: r := mth.Mod(float64(f), 2)
-	if f < 0 {
-		panic("glrFloat32bits")
+	if float64(f) < hx.GetFloat("", "0") {
+		panic("haxegoruntime.Float32bits")
 	}
-	t := float64(f) / 2
-	r := float64(f) - (2 * t)
+	t := float64(f) / hx.GetFloat("", "2")
+	r := float64(f) - (hx.GetFloat("", "2") * t)
 	// end simulate code
-	if (r > 0.5 && r < 1) || r >= 1.5 { // round to nearest even
+	if (r > hx.GetFloat("", "0.5") && r < hx.GetFloat("", "1")) || r >= hx.GetFloat("", "1.5") { // round to nearest even
 		f++
 	}
 
@@ -104,27 +136,22 @@ func Float32bits(f float32) uint32 {
 // to the IEEE 754 binary representation b.
 // func Float32frombits(b uint32) float32 { return *(*float32)(unsafe.Pointer(&b)) }
 func Float32frombits(b uint32) float32 {
-	//var Zero = 0.0
-	//var NegZero = -Zero
-	//var NaN = Zero / Zero
-	var NaN = hx.GetFloat("", "Math.NaN") //Zero / Zero
+	if hx.GetBool("", "Object.nativeFloats") {
+		var t uint32 = b
+		return *(*float32)(unsafe.Pointer(&t))
+	}
 	s := float32(+1)
 	if b&(1<<31) != 0 {
 		s = -1
 	}
-	e := (b >> 23) & (1<<8 - 1)
-	m := b & (1<<23 - 1)
+	e := (b >> 23) & uint32((1<<8)-1)
+	m := b & uint32((1<<23)-1)
 
-	if e == (1<<8)-1 {
+	if e == uint32((1<<8)-1) {
 		if m == 0 {
-			if s < 0 {
-				return float32(hx.GetFloat("", "Math.NEGATIVE_INFINITY")) //s / 0
-			} else {
-				return float32(hx.GetFloat("", "Math.POSITIVE_INFINITY")) //s / 0
-			}
-			//		return float32(Inf(float64(s))) //s / 0 // Inf
+			return s / 0 // Inf
 		}
-		return float32(NaN)
+		return float32(nan)
 	}
 	if e != 0 {
 		m += 1 << 23
@@ -133,19 +160,23 @@ func Float32frombits(b uint32) float32 {
 		e = 1
 	}
 
-	//return float32(mth.Ldexp(float64(m), int(e)-127-23)) * s
-	return float32(float64(m)*pow2(int(e)-1023-52)) * s
+	return float32(Ldexp(float64(m), int(e)-127-23)) * s
 }
 
 // Float64bits returns the IEEE 754 binary representation of f.
 //func Float64bits(f float64) uint64 { return *(*uint64)(unsafe.Pointer(&f)) }
 func Float64bits(f float64) uint64 {
-	//var Zero = 0.0
-	//var NegZero = -Zero
-	//var NaN = Zero / Zero
-	if f == 0 {
-		// TODO review correctness of next 3 lines due to div by zero error
-		if f == 0 && (1/f) == hx.GetFloat("", "Math.NEGATIVE_INFINITY") /*1/f == 1/NegZero*/ {
+
+	if hx.GetBool("", "Object.nativeFloats") {
+		var t float64 = f
+		return *(*uint64)(unsafe.Pointer(&t))
+	}
+
+	// below from GopherJS
+	if f == hx.GetFloat("", "0") {
+		tv := hx.GetFloat("", "1") / float64(f)
+		if tv < 0 && !hx.CallBool("", "Math.isFinite", 1, tv) { //js.InternalObject(1/f) == js.InternalObject(negInf) {
+			//if hx.GetFloat("", "1")/f == negInf {
 			return 1 << 63
 		}
 		return 0
@@ -155,25 +186,25 @@ func Float64bits(f float64) uint64 {
 	}
 
 	s := uint64(0)
-	if f < 0 {
+	if f < hx.GetFloat("", "0") {
 		s = 1 << 63
 		f = -f
 	}
 
 	e := uint32(1023 + 52)
-	for f >= 1<<53 {
-		f /= 2
-		if e == (1<<11)-1 {
+	for f >= float64(int64(1<<53)) {
+		f /= hx.GetFloat("", "2")
+		e++
+		if e == uint32((1<<11)-1) {
 			break
 		}
-		e++
 	}
-	for f < 1<<52 {
+	for f < float64(int64(1<<52)) {
 		e--
 		if e == 0 {
 			break
 		}
-		f *= 2
+		f *= hx.GetFloat("", "2")
 	}
 
 	return s | uint64(e)<<52 | (uint64(f) &^ (1 << 52))
@@ -183,25 +214,39 @@ func Float64bits(f float64) uint64 {
 // the IEEE 754 binary representation b.
 //func Float64frombits(b uint64) float64 { return *(*float64)(unsafe.Pointer(&b)) }
 func Float64frombits(b uint64) float64 {
-	//var Zero = 0.0
-	//var NegZero = -Zero
-	var NaN = hx.GetFloat("", "Math.NaN") //Zero / Zero
-	s := float64(+1)
-	if b&(1<<63) != 0 {
-		s = -1
+	if hx.GetBool("", "Object.nativeFloats") {
+		var t uint64 = b
+		return *(*float64)(unsafe.Pointer(&t))
 	}
-	e := (b >> 52) & (1<<11 - 1)
-	m := b & (1<<52 - 1)
+	// first handle the special cases
+	switch b {
+	case uvnan:
+		return nan
+	case uvnan | 1<<63:
+		return nan * -1 // -NaN
+	case uvinf:
+		return posInf
+	case uvneginf:
+		return negInf
+	case 0:
+		return 0
+	case 1 << 63:
+		return zero * -1 // -0
+	}
 
-	if e == (1<<11)-1 {
+	// below from GopherJS
+	s := hx.GetFloat("", "1")
+	if b&(1<<63) != 0 {
+		s = hx.GetFloat("", "-1")
+	}
+	e := (b >> 52) & uint64((1<<11)-1)
+	m := b & uint64((1<<52)-1)
+
+	if e == uint64((1<<11)-1) {
 		if m == 0 {
-			if s < 0 {
-				return hx.GetFloat("", "Math.NEGATIVE_INFINITY") //s / 0
-			} else {
-				return hx.GetFloat("", "Math.POSITIVE_INFINITY") //s / 0
-			}
+			return s / hx.GetFloat("", "0")
 		}
-		return NaN
+		return nan
 	}
 	if e != 0 {
 		m += 1 << 52
@@ -210,30 +255,18 @@ func Float64frombits(b uint64) float64 {
 		e = 1
 	}
 
-	//return mth.Ldexp(float64(m), int(e)-1023-52) * s
-	return float64(m) * pow2(int(e)-1023-52) * s
+	return Ldexp(float64(m), int(e)-1023-52) * s
 }
 
-func pow2(c int) float64 { // doing this the long way because calling Go Math funcs causes infinate loop
-	return hx.CallFloat("", "Math.pow", 2, float64(2.0), float64(c))
+func Ldexp(frac float64, exp int) float64 { // adapted from GopherJS
+	if frac == 0 {
+		return frac
+	}
+	if exp >= 1024 {
+		return frac * hx.CallFloat("", "Math.pow", 2, 2, 1023) * hx.CallFloat("", "Math.pow", 2, 2, exp-1023)
+	}
+	if exp <= -1024 {
+		return frac * hx.CallFloat("", "Math.pow", 2, 2, -1023) * hx.CallFloat("", "Math.pow", 2, 2, exp+1023)
+	}
+	return frac * hx.CallFloat("", "Math.pow", 2, 2, exp)
 }
-
-/* Was:
-package math
-
-import "unsafe"
-
-// Float32bits returns the IEEE 754 binary representation of f.
-func Float32bits(f float32) uint32 { return *(*uint32)(unsafe.Pointer(&f)) }
-
-// Float32frombits returns the floating point number corresponding
-// to the IEEE 754 binary representation b.
-func Float32frombits(b uint32) float32 { return *(*float32)(unsafe.Pointer(&b)) }
-
-// Float64bits returns the IEEE 754 binary representation of f.
-func Float64bits(f float64) uint64 { return *(*uint64)(unsafe.Pointer(&f)) }
-
-// Float64frombits returns the floating point number corresponding
-// the IEEE 754 binary representation b.
-func Float64frombits(b uint64) float64 { return *(*float64)(unsafe.Pointer(&b)) }
-*/

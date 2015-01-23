@@ -336,7 +336,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 				if strings.HasPrefix(init, "{") || strings.HasPrefix(init, "new Pointer") ||
 					//strings.HasPrefix(init, "new UnsafePointer") ||
 					strings.HasPrefix(init, "new Object") || strings.HasPrefix(init, "new Slice") ||
-					strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new Map") ||
+					strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new GOmap") ||
 					strings.HasPrefix(init, "new Complex") || strings.HasPrefix(init, "GOint64.make") { // stop unnecessary initialisation
 					// all SSA registers are actually assigned to before use, so minimal initialisation is required, except for maps
 					init = "null"
@@ -554,30 +554,43 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 }
 func (l langType) FieldAddr(register string, v interface{}, errorInfo string) string {
 	if register != "" {
+		ptr := l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo)
+		if pogo.DebugFlag {
+			ptr = "Pointer.check(" + ptr + ")"
+		}
 		fld := v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field)
 		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
 		return fmt.Sprintf(`%s=%s.fieldAddr( /*%d : %s */ %d );`, register,
-			l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo),
-			v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
+			ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
 	}
 	return ""
+}
+
+func wrapForce_toInt(v string, k types.BasicKind) string {
+	switch k {
+	case types.Int64, types.Uint64, types.UntypedInt,
+		types.Float32, types.Float64, types.UntypedFloat,
+		types.Uintptr:
+		return "Force.toInt(" + v + ")" // TODO make this type-specific
+	}
+	return v
 }
 
 func (l langType) IndexAddr(register string, v interface{}, errorInfo string) string {
 	if register == "" {
 		return "" // we can't make an address if there is nowhere to put it...
 	}
-	idxString := l.IndirectValue(v.(*ssa.IndexAddr).Index, errorInfo)
-	switch v.(*ssa.IndexAddr).Index.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
-	case types.Int64, types.Uint64:
-		idxString = idxString + ".toInt()"
-	}
+	idxString := wrapForce_toInt(l.IndirectValue(v.(*ssa.IndexAddr).Index, errorInfo),
+		v.(*ssa.IndexAddr).Index.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	switch v.(*ssa.IndexAddr).X.Type().Underlying().(type) {
 	case *types.Pointer:
+		ptr := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
+		if pogo.DebugFlag {
+			ptr = "Pointer.check(" + ptr + ")"
+		}
 		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
 		return fmt.Sprintf(`%s=%s.addr(%s%s);`, register,
-			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
-			idxString, arrayOffsetCalc(ele))
+			ptr, idxString, arrayOffsetCalc(ele))
 	case *types.Slice:
 		return fmt.Sprintf(`%s=%s.itemAddr(%s);`, register,
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
@@ -623,6 +636,8 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 			return ""
 		case types.Uintptr: // held as the Dynamic type in Haxe
 			return "" + v + "" // TODO review correct thing to do here
+		case types.Float32:
+			return "Force.toFloat32(" + v + ")"
 		default:
 			return v
 		}
@@ -632,7 +647,11 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 }
 
 func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
-	return "Pointer.check(" + l.IndirectValue(v1, errorInfo) + ").store" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) +
+	ptr := l.IndirectValue(v1, errorInfo)
+	if pogo.DebugFlag {
+		ptr = "Pointer.check(" + ptr + ")"
+	}
+	return ptr + ".store" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) +
 		l.IndirectValue(v2, errorInfo) + ");" +
 		" /* " + v2.(ssa.Value).Type().Underlying().String() + " */ "
 }
@@ -861,10 +880,14 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			case *types.Array: // assume len
 				return register + l.IndirectValue(args[0], errorInfo /*, false*/) + ".length;"
 			case *types.Map: // assume len(map) - requires counting the itterator
-				return register + l.IndirectValue(args[0], errorInfo) + "==null?0:{var _l:Int=0;" + // TODO remove two uses of same variable
+				return register + l.IndirectValue(args[0], errorInfo) + "==null?0:" +
+					l.IndirectValue(args[0], errorInfo) + ".len();"
+				/*
+					"{var _l:Int=0;" + // TODO remove two uses of same variable
 					"var _it=" + l.IndirectValue(args[0], errorInfo) + ".iterator();" +
 					"while(_it.hasNext()) {_l++; _it.next();};" +
 					"_l;};"
+				*/
 			case *types.Basic: // assume string as anything else would have produced an error previously
 				return register + "Force.toUTF8length(this._goroutine," + l.IndirectValue(args[0], errorInfo /*, false*/) + ");"
 			default: // TODO handle other types?
@@ -1267,7 +1290,20 @@ func doCall(register, callCode string, usesGr bool) string {
 
 func allocNewObject(t types.Type) string {
 	typ := t.Underlying().(*types.Pointer).Elem().Underlying()
-	return fmt.Sprintf("new Object(%d)", haxeStdSizes.Sizeof(typ))
+	switch typ.(type) {
+	case *types.Array:
+		ao := haxeStdSizes.Alignof(typ.(*types.Array).Elem().Underlying())
+		so := haxeStdSizes.Sizeof(typ.(*types.Array).Elem().Underlying())
+		for so%ao != 0 {
+			so++
+		}
+		return fmt.Sprintf("new Object(%d) /* Array: %s */",
+			typ.(*types.Array).Len()*so, typ.String())
+	default:
+		return fmt.Sprintf("new Object(%d) /* %s */",
+			haxeStdSizes.Sizeof(typ),
+			typ.String())
+	}
 }
 
 func (l langType) Alloc(reg string, heap bool, v interface{}, errorInfo string) string {
@@ -1328,8 +1364,10 @@ func newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize stri
 func (l langType) MakeSlice(reg string, v interface{}, errorInfo string) string {
 	typeElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), false, errorInfo)
 	initElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), true, errorInfo)
-	length := "Force.toInt(" + l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo) + ")"   // lengths can't be 64 bit
-	capacity := "Force.toInt(" + l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo) + ")" // capacities can't be 64 bit
+	length := wrapForce_toInt(l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo),
+		v.(*ssa.MakeSlice).Len.Type().Underlying().(*types.Basic).Kind()) // lengths can't be 64 bit
+	capacity := wrapForce_toInt(l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo),
+		v.(*ssa.MakeSlice).Len.Type().Underlying().(*types.Basic).Kind()) // capacities can't be 64 bit
 	itemSize := "1" + arrayOffsetCalc(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying())
 	return reg + "=" + newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize) + `;`
 }
@@ -1343,19 +1381,13 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 	}
 	lvString := "0"
 	if lv != nil {
-		lvString = l.IndirectValue(lv, errorInfo)
-		switch lv.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
-		case types.Int64, types.Uint64:
-			lvString = "GOint64.toInt(" + lvString + ")"
-		}
+		lvString = wrapForce_toInt(l.IndirectValue(lv, errorInfo),
+			lv.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	}
 	hvString := "-1"
 	if hv != nil {
-		hvString = l.IndirectValue(hv, errorInfo)
-		switch hv.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
-		case types.Int64, types.Uint64:
-			hvString = "GOint64.toInt(" + hvString + ")"
-		}
+		hvString = wrapForce_toInt(l.IndirectValue(hv, errorInfo),
+			hv.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	}
 	switch x.(ssa.Value).Type().Underlying().(type) {
 	case *types.Slice:
@@ -1380,16 +1412,16 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 	}
 }
 
-//TODO test that index values are not 64 bit
 func (l langType) Index(register string, v1, v2 interface{}, errorInfo string) string {
+	keyString := wrapForce_toInt(l.IndirectValue(v2, errorInfo),
+		v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	typ := v1.(ssa.Value).Type().Underlying().(*types.Array).Elem().Underlying()
 	return register + "=" + //l.IndirectValue(v1, errorInfo) + "[" + l.IndirectValue(v2, errorInfo) + "];" + // assign value
 		fmt.Sprintf("%s.get%s%s%s)",
 			l.IndirectValue(v1, errorInfo),
 			loadStoreSuffix(typ, true),
-			l.IndirectValue(v2, errorInfo),
+			keyString,
 			arrayOffsetCalc(typ)) + ";"
-
 }
 
 //TODO review parameters required
@@ -1428,7 +1460,7 @@ func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) str
 		}
 		switch l.LangType(tPtr, false, errorInfo) {
 		case "Slice":
-			lStr += xStr + ".len()"
+			lStr += xStr + "==null?0:" + xStr + ".len()"
 		case "Object":
 			lStr += fmt.Sprintf("%d", tPtr.(*types.Array).Len())
 		}
@@ -1446,7 +1478,7 @@ func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
 
 func serializeKey(val, haxeTyp string) string {
 	switch haxeTyp {
-	case "Int", "String":
+	case /*"Int",*/ "String":
 		return val
 	case "Pointer":
 		return val + "==null?\"\":" + val + ".toUniqueVal()"
@@ -1462,8 +1494,8 @@ func (l langType) MapUpdate(Map, Key, Value interface{}, errorInfo string) strin
 	skey := serializeKey(l.IndirectValue(Key, errorInfo),
 		l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 	ret := l.IndirectValue(Map, errorInfo) + ".set("
-	ret += skey + ",{key:" + l.IndirectValue(Key, errorInfo) + ",val:"
-	ret += l.IndirectValue(Value, errorInfo) + "});"
+	ret += skey + "," + l.IndirectValue(Key, errorInfo) + ","
+	ret += l.IndirectValue(Value, errorInfo) + ");"
 	return ret
 }
 
@@ -1471,17 +1503,16 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	keyString := l.IndirectValue(Key, errorInfo)
 	// check if we are looking up in a string
 	if l.LangType(Map.(ssa.Value).Type().Underlying(), false, errorInfo) == "String" {
-		switch Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
-		case types.Int64, types.Uint64:
-			keyString = keyString + ".toInt()"
-		}
-		valueCode := l.IndirectValue(Map, errorInfo) + ".charCodeAt(" + keyString + ")"
+		keyString = wrapForce_toInt(keyString, Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+		valueCode := l.IndirectValue(Map, errorInfo) //+ ".charCodeAt(" + keyString + ")"
 		if commaOk {
-			return reg + "=(" + valueCode + "==null) ?" +
-				"{r0:0,r1:false}:{r0:Std.int(" + valueCode + "),r1:true};"
+			return reg + "=Force.stringAtOK(" + valueCode + "," + keyString + ");"
+			//return reg + "=(" + valueCode + "==null) ?" +
+			//	"{r0:0,r1:false}:{r0:Std.int(" + valueCode + "),r1:true};"
 		}
-		return reg + "=(" + valueCode + "==null) ?" +
-			"{Scheduler.ioor();0;}:Std.int(" + valueCode + ");"
+		return reg + "=Force.stringAt(" + valueCode + "," + keyString + ");"
+		//return reg + "=(" + valueCode + "==null) ?" +
+		//	"{Scheduler.ioor();0;}:Std.int(" + valueCode + ");"
 	}
 	// assume it is a Map
 	keyString = serializeKey(keyString, l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
@@ -1490,7 +1521,7 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	if strings.HasPrefix(li, "new ") {
 		li = "null" // no need for a full object declaration in this context
 	}
-	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ").val"
+	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")" //.val
 	ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
 	switch ltEle {
 	case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
@@ -1504,50 +1535,66 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 }
 
 func (l langType) Extract(reg string, tuple interface{}, index int, errorInfo string) string {
-	return reg + "=" + l.IndirectValue(tuple, errorInfo) + ".r" + fmt.Sprintf("%d", index) + ";"
+	tp := l.IndirectValue(tuple, errorInfo)
+	if pogo.DebugFlag {
+		tp = "Force.checkTuple(" + tp + ")"
+	}
+	return reg + "=" + tp + ".r" + fmt.Sprintf("%d", index) + ";"
 }
 
 func (l langType) Range(reg string, v interface{}, errorInfo string) string {
 
 	switch l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) {
 	case "String":
-		return reg + "={k:0,v:Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ")" + "};"
+		return reg + "=new GOstringRange(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
+		//return reg + "={k:0,v:Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ")" + "};"
 	default: // assume it is a Map {k: key itterator,m: the map,z: zero value of an entry}
-		keyTyp := l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo)
-		if keyTyp != "Int" {
-			keyTyp = "String"
-		}
-		return reg + "={k:" + l.IndirectValue(v, errorInfo) + ".keys(),m:" + l.IndirectValue(v, errorInfo) +
-			",zk:" + l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), true, errorInfo) +
-			",zv:" + l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo) +
-			//`,fk:function(m:` + l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) + ",k:" +
-			//keyTyp + "):" +
-			//l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo) +
-			//"{return m.get(" + "k" + ").key;}" +
-			//`,fv:function(m:` + l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) + ",k:" +
-			//keyTyp + "):" +
-			//l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo) +
-			//"{return m.get(" + "k" + ").val;}" +
-			`};`
+		return reg + "=cast(" + l.IndirectValue(v, errorInfo) + ",GOmap).range();"
+		/*
+			keyTyp := l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo)
+			if keyTyp != "Int" {
+				keyTyp = "String"
+			}
+			return reg + "={k:" + l.IndirectValue(v, errorInfo) + ".keys(),m:" + l.IndirectValue(v, errorInfo) +
+				",zk:" + l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), true, errorInfo) +
+				",zv:" + l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo) +
+
+				//`,fk:function(m:` + l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) + ",k:" +
+				//keyTyp + "):" +
+				//l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo) +
+				//"{return m.get(" + "k" + ").key;}" +
+				//`,fv:function(m:` + l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) + ",k:" +
+				//keyTyp + "):" +
+				//l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo) +
+				//"{return m.get(" + "k" + ").val;}" +
+
+				`};`
+		*/
 	}
 }
 func (l langType) Next(register string, v interface{}, isString bool, errorInfo string) string {
 	if isString {
-		return register + "={var _thisK:Int=" + l.IndirectValue(v, errorInfo) + ".k;" +
-			"if(" + l.IndirectValue(v, errorInfo) + ".k>=" + l.IndirectValue(v, errorInfo) + ".v.len()){r0:false,r1:0,r2:0};" +
-			"else {" +
-			"var _dr:{r0:Int,r1:Int}=Go_utf8_DDecodeRRune.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) +
-			".v.subSlice(_thisK,-1));" +
-			l.IndirectValue(v, errorInfo) + ".k+=_dr.r1;" +
-			"{r0:true,r1:cast(_thisK,Int),r2:cast(_dr.r0,Int)};}};"
+		return register + "=cast(" + l.IndirectValue(v, errorInfo) + ",GOstringRange).next();"
+		/*
+			return register + "={var _thisK:Int=" + l.IndirectValue(v, errorInfo) + ".k;" +
+				"if(" + l.IndirectValue(v, errorInfo) + ".k>=" + l.IndirectValue(v, errorInfo) + ".v.len()){r0:false,r1:0,r2:0};" +
+				"else {" +
+				"var _dr:{r0:Int,r1:Int}=Go_utf8_DDecodeRRune.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) +
+				".v.subSlice(_thisK,-1));" +
+				l.IndirectValue(v, errorInfo) + ".k+=_dr.r1;" +
+				"{r0:true,r1:cast(_thisK,Int),r2:cast(_dr.r0,Int)};}};"
+		*/
 	}
 	// otherwise it is a map itterator
-	return register + "={var _hn:Bool=" + l.IndirectValue(v, errorInfo) + ".k.hasNext();\n" +
-		"if(_hn){var _nxt=" + l.IndirectValue(v, errorInfo) + ".k.next();\n" +
-		//"$type(" + l.IndirectValue(v, errorInfo) + ".m);\n" +
-		"{r0:true,r1:cast(" + l.IndirectValue(v, errorInfo) + ".m,Map<String,Dynamic>).get(_nxt).key," +
-		"r2:cast(" + l.IndirectValue(v, errorInfo) + ".m,Map<String,Dynamic>).get(_nxt).val};\n" +
-		"}else{{r0:false,r1:" + l.IndirectValue(v, errorInfo) + ".zk,r2:" + l.IndirectValue(v, errorInfo) + ".zv};\n}};"
+	return register + "=cast(" + l.IndirectValue(v, errorInfo) + ",GOmapRange).next();"
+	/*
+		return register + "={var _hn:Bool=" + l.IndirectValue(v, errorInfo) + ".k.hasNext();\n" +
+			"if(_hn){var _nxt=" + l.IndirectValue(v, errorInfo) + ".k.next();\n" +
+			//"$type(" + l.IndirectValue(v, errorInfo) + ".m);\n" +
+			"{r0:true,r1:" + l.IndirectValue(v, errorInfo) + ".m.get(_nxt).key," +
+			"r2:" + l.IndirectValue(v, errorInfo) + ".m.get(_nxt).val};\n" +
+			"}else{{r0:false,r1:" + l.IndirectValue(v, errorInfo) + ".zk,r2:" + l.IndirectValue(v, errorInfo) + ".zv};\n}};"
+	*/
 }
 
 func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) string {
@@ -1601,13 +1648,17 @@ func (l langType) EmitInvoke(register string, isGo, isDefer, usesGr bool, callCo
 
 func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 	if !mustSplitCode {
-		return "{"
+		return "try {"
 	}
-	return fmt.Sprintf("private function SubFn%d():Void {", id)
+	return fmt.Sprintf("private function SubFn%d():Void { try {", id)
 }
 
-func (l langType) SubFnEnd(id int) string {
-	return fmt.Sprintf("}// end SubFn%d", id)
+func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
+	ret := fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
+	if mustSplitCode {
+		ret += ";}"
+	}
+	return ret
 }
 
 func (l langType) SubFnCall(id int) string {

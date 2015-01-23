@@ -6,6 +6,8 @@
 
 package math
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 // Modf returns integer and fractional floating-point numbers
 // that sum to f.  Both values have the same sign as f.
 //
@@ -13,8 +15,16 @@ package math
 //	Modf(±Inf) = ±Inf, NaN
 //	Modf(NaN) = NaN, NaN
 func Modf(f float64) (int float64, frac float64) {
+	// approach inspired by GopherJS, see that project for copyright etc
+	//if f == posInf || f == negInf {
+	if !hx.CallBool("", "Math.isFinite", 1, f) {
+		return f, hx.GetFloat("", "Math.NaN")
+	}
+	frac = Mod(f, 1)
+	return f - frac, frac
+}
 
-	//func modf(f float64) (int float64, frac float64) {
+func modf(f float64) (int float64, frac float64) {
 	if f < 1 {
 		if f < 0 {
 			int, frac = Modf(-f)

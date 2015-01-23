@@ -12,7 +12,7 @@ func (l langType) append(args []ssa.Value, errorInfo string) string {
 		source = "Force.toUTF8slice(this._goroutine," + source + ")" // if we have a string, we must convert it to a slice
 	}
 	target := l.IndirectValue(args[0], errorInfo)
-	ret := target + "==null?" + source + ":" + target + ".append(" + source + ")"
+	ret := "Slice.append(" + target + "," + source + ")"
 	//fmt.Printf("APPEND DEBUG: %s - %+v - %s\n", ulSize, args, ret)
 
 	return ret

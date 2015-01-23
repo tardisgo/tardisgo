@@ -3,6 +3,7 @@ package testing
 import (
 	"fmt"
 	"runtime"
+	"sort"
 	"time"
 )
 
@@ -117,9 +118,18 @@ func Main(matchString func(pat, str string) (bool, error), tests []InternalTest,
 	fmt.Println("testing.Main")
 	runtime.UnzipTestFS()
 	var t T
+	names := []string{}
 	for _, f := range tests {
-		fmt.Println(f.Name)
-		f.F(&t)
+		names = append(names, f.Name)
+	}
+	sort.Strings(names)
+	for _, n := range names {
+		for _, f := range tests {
+			if n == f.Name {
+				println("\nExecuting test:", n)
+				f.F(&t)
+			}
+		}
 	}
 }
 

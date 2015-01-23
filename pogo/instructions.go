@@ -172,7 +172,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 			emitComment(comment)
 		} else {
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].UnOp(register, instruction.(*ssa.UnOp).Op.String(), *operands[0],
+				LanguageList[l].UnOp(register, instrVal.Type(), instruction.(*ssa.UnOp).Op.String(), *operands[0],
 					instruction.(*ssa.UnOp).CommaOk, errorInfo)+
 					LanguageList[l].Comment(comment))
 		}
@@ -183,7 +183,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		} else {
 			op := instruction.(*ssa.BinOp).Op.String()
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].BinOp(register, op, *operands[0], *operands[1], errorInfo)+
+				LanguageList[l].BinOp(register, instrVal.Type(), op, *operands[0], *operands[1], errorInfo)+
 					LanguageList[l].Comment(comment))
 		}
 

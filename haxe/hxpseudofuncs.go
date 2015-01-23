@@ -13,22 +13,22 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	//fmt.Println("DEBUG l.hxPseudoFuncs()", fnToCall, args, errorInfo)
 	fnToCall = strings.TrimPrefix(fnToCall, "hx_")
 
-	if fnToCall == "init" {
+	switch fnToCall {
+	case "init":
 		return "" // no need to generate code for the go init function
-	}
-
-	if fnToCall == "RResource" {
+	case "RResource":
 		return "Slice.fromResource(" + l.IndirectValue(args[0], errorInfo) + ");"
-	}
-
-	if fnToCall == "IIsNNull" {
+	case "MMalloc":
+		return "new Pointer(new Object(Force.toInt(" + l.IndirectValue(args[0], errorInfo) + ")));"
+	case "IIsNNull":
 		return l.IndirectValue(args[0], errorInfo) + "==null;"
-	}
-	if fnToCall == "NNull" {
+	case "NNull":
 		return "null;"
-	}
-
-	if fnToCall == "CCallbackFFunc" {
+	case "CComplex":
+		return "cast(" + l.IndirectValue(args[0], errorInfo) + ",Complex);"
+	case "IInt64":
+		return "cast(" + l.IndirectValue(args[0], errorInfo) + ",GOint64);"
+	case "CCallbackFFunc":
 		// NOTE there will be a preceeding MakeInterface call that is made redundant by this code
 		if len(args) == 1 {
 			goMI, ok := args[0].(*ssa.MakeInterface)
@@ -118,7 +118,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 				if i > 0 {
 					code += ","
 				}
-				code += fmt.Sprintf("Force.toHaxeParam({var b=_a.itemAddr(%d).load();b==null?null:b.val;})", i)
+				code += fmt.Sprintf("Force.toHaxeParam(_a.itemAddr(%d).load())", i)
 			}
 		}
 		code += ");"

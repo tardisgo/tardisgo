@@ -7,6 +7,8 @@
 //
 package hx
 
+import "unsafe"
+
 // CallbackFunc returns the Haxe-callable form of a Go function, or
 // if passed a string value, it gives the actual name of a Haxe function e.g. "Scheduler.timerEventHandler"
 func CallbackFunc(function interface{}) interface{} { return nil }
@@ -16,9 +18,20 @@ func CallbackFunc(function interface{}) interface{} { return nil }
 // if the file resource does not exist, an empty slice is returned.
 func Resource(s string) []byte { return []byte{} }
 
+// Malloc allocates a memory Object and returns an unsafe pointer to it
+func Malloc(size uintptr) unsafe.Pointer { return nil }
+
 // IsNull returns if the haxe Dynamic variable is null
 func IsNull(x uintptr) bool { return false }
-func Null() uintptr         { return 0 }
+
+// Null returns a haxe Dynamic null value
+func Null() uintptr { return 0 }
+
+// Complex provides a cast from haxe Dynamic type
+func Complex(x uintptr) complex128 { return 0 + 0i }
+
+// Int64 provides a cast from haxe Dynamic type
+func Int64(x uintptr) int64 { return 0 }
 
 // Code inserts the given constant Haxe code at this point.
 // ifLogic = a constant string giving the logic for wrapping Haxe complie time condition, ignored if "": #if (ifLogic) ... #end

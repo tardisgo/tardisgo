@@ -6,6 +6,8 @@
 
 package math
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 // Ldexp is the inverse of Frexp.
 // It returns frac × 2**exp.
 //
@@ -15,7 +17,21 @@ package math
 //	Ldexp(NaN, exp) = NaN
 func Ldexp(frac float64, exp int) float64 {
 
-	//func ldexp(frac float64, exp int) float64 {
+	// this inspired by the GopherJS project, see there for copyright etc
+	if frac == 0 {
+		return frac
+	}
+	if exp >= 1024 {
+		return frac * hx.CallFloat("", "Math.pow", 2, 2, 1023) * hx.CallFloat("", "Math.pow", 2, 2, exp-1023)
+	}
+	if exp <= -1024 {
+		return frac * hx.CallFloat("", "Math.pow", 2, 2, -1023) * hx.CallFloat("", "Math.pow", 2, 2, exp+1023)
+	}
+	return frac * hx.CallFloat("", "Math.pow", 2, 2, exp)
+}
+
+func ldexp(frac float64, exp int) float64 {
+
 	// special cases
 	switch {
 	case frac == 0:

@@ -316,7 +316,7 @@ func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode 
 		}
 	}
 	peephole(fn.Blocks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end])
-	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf))
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf, int(LatestValidPosHash), mustSplitCode))
 }
 
 // Emit the start of a function.

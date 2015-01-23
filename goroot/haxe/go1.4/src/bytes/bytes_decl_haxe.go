@@ -70,7 +70,7 @@ func Compare(a, b []byte) int {
 		if len(b) == 0 {
 			return 0
 		}
-		return 1
+		return -1
 	}
 	if b == nil {
 		if len(a) == 0 {

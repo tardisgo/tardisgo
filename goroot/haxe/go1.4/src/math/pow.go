@@ -4,6 +4,8 @@
 
 package math
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 func isOddInt(x float64) bool {
 	xi, xf := Modf(x)
 	return xf == 0 && int64(xi)&1 == 1
@@ -36,6 +38,22 @@ func isOddInt(x float64) bool {
 //	Pow(-Inf, y) = Pow(-0, -y)
 //	Pow(x, y) = NaN for finite x < 0 and finite non-integer y
 func Pow(x, y float64) float64 {
+	// follow GopherJS approach for copyright etc see that project
+	/*
+		if x == 1 || (x == -1 && (y == posInf || y == negInf)) {
+			return 1
+		}
+		return math.Call("pow", x, y).Float()
+	*/
+	if x == 1 || (x == -1 && !hx.CallBool("", "Math.isFinite", 1, y) && (y < SmallestNonzeroFloat64 || y > MaxFloat64)) {
+		return 1
+	}
+	if x == -1 && IsNaN(y) {
+		return NaN()
+	}
+	return hx.CallFloat("", "Math.pow", 2, x, y)
+}
+func pow(x, y float64) float64 {
 	switch {
 	case y == 0 || x == 1:
 		return 1

@@ -144,7 +144,7 @@ func doTestable(args []string) error {
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
 
-	conf.TypeChecker.Sizes = &types.StdSizes{
+	conf.TypeChecker.Sizes = &types.StdSizes{ // must equal haxeStdSizes when (!*runFlag)
 		MaxAlign: 8,
 		WordSize: wordSize,
 	}
@@ -375,26 +375,15 @@ var targets = [][][]string{
 		[]string{"echo", `"CS:"`},
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
-	// TODO Seldom works, so remove?
-	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-neko", "tardis/go.n"},
-		[]string{"echo", `"Neko:"`},
-		[]string{"time", "neko", "tardis/go.n"},
-	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "dataview", "-js", "tardis/go-dv.js"},
-		[]string{"echo", `"Node/JS (using dataview mode):"`},
-		[]string{"time", "node", "tardis/go-dv.js"},
-	},
-	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "safe", "-js", "tardis/go-sf.js"},
-		[]string{"echo", `"Node/JS (using safe mode):"`},
-		[]string{"time", "node", "tardis/go-sf.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+		[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
+		[]string{"time", "node", "tardis/go-fu.js"},
 	},
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardis/go.swf"},
@@ -402,14 +391,21 @@ var targets = [][][]string{
 		[]string{"open", "tardis/go.swf"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo", "-D", "safe"},
-		[]string{"echo", `"PHP (using safe mode):"`},
+		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo"},
+		[]string{"echo", `"PHP:"`},
 		[]string{"time", "php", "tardis/php/index.php"},
 	},
+	// TODO Seldom works, so removed
+	//[][]string{
+	//	[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "safe", "-neko", "tardis/go.n"},
+	//	[]string{"echo", `"Neko (using safe mode):"`},
+	//	[]string{"time", "neko", "tardis/go.n"},
+	//},
+	// only really useful for testing, so can be run from the command line
 	[][]string{
 		[]string{"echo", ``}, // Output from this line is ignored
-		[]string{"echo", `"Neko (haxe --interp using safe mode):"`},
-		[]string{"time", "haxe", "-main", "tardis.Go", "-D", "safe", "--interp"},
+		[]string{"echo", `"Neko (haxe --interp):"`},
+		[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
 	},
 }
 

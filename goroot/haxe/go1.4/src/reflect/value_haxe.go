@@ -1,3 +1,5 @@
+// modifications Copyright 2015 Elliott Stoneham
+
 // Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -231,6 +233,7 @@ func (f flag) mustBeAssignable() {
 // or slice element in order to call a method that requires a
 // pointer receiver.
 func (v Value) Addr() Value {
+	panic("reflect.Addr not yet implemented")
 	if v.flag&flagAddr == 0 {
 		panic("reflect.Value.Addr of unaddressable value")
 	}
@@ -247,6 +250,7 @@ func (v Value) Bool() bool {
 // Bytes returns v's underlying value.
 // It panics if v's underlying value is not a slice of bytes.
 func (v Value) Bytes() []byte {
+	panic("reflect.Bytes not yet implemented")
 	v.mustBe(Slice)
 	if v.typ.Elem().Kind() != Uint8 {
 		panic("reflect.Value.Bytes of non-byte slice")
@@ -272,6 +276,7 @@ func (v Value) runes() []rune {
 // a field of an addressable struct, or the result of dereferencing a pointer.
 // If CanAddr returns false, calling Addr will panic.
 func (v Value) CanAddr() bool {
+	panic("reflect.CanAddr not yet implemented")
 	return v.flag&flagAddr != 0
 }
 
@@ -281,6 +286,7 @@ func (v Value) CanAddr() bool {
 // If CanSet returns false, calling Set or any type-specific
 // setter (e.g., SetBool, SetInt64) will panic.
 func (v Value) CanSet() bool {
+	panic("reflect.CanSet not yet implemented")
 	return v.flag&(flagAddr|flagRO) == flagAddr
 }
 
@@ -293,6 +299,7 @@ func (v Value) CanSet() bool {
 // If v is a variadic function, Call creates the variadic slice parameter
 // itself, copying in the corresponding values.
 func (v Value) Call(in []Value) []Value {
+	panic("reflect.Call not yet implemented")
 	v.mustBe(Func)
 	v.mustBeExported()
 	return v.call("Call", in)
@@ -306,6 +313,7 @@ func (v Value) Call(in []Value) []Value {
 // As in Go, each input argument must be assignable to the
 // type of the function's corresponding input parameter.
 func (v Value) CallSlice(in []Value) []Value {
+	panic("reflect.CallSlice not yet implemented")
 	v.mustBe(Func)
 	v.mustBeExported()
 	return v.call("CallSlice", in)
@@ -632,6 +640,7 @@ func funcName(f func([]Value) []Value) string {
 // Cap returns v's capacity.
 // It panics if v's Kind is not Array, Chan, or Slice.
 func (v Value) Cap() int {
+	panic("reflect.Cap not yet implemented")
 	k := v.kind()
 	switch k {
 	case Array:
@@ -648,6 +657,7 @@ func (v Value) Cap() int {
 // Close closes the channel v.
 // It panics if v's Kind is not Chan.
 func (v Value) Close() {
+	panic("reflect.Close not yet implemented")
 	v.mustBe(Chan)
 	v.mustBeExported()
 	chanclose(v.pointer())
@@ -671,6 +681,7 @@ func (v Value) Complex() complex128 {
 // It panics if v's Kind is not Interface or Ptr.
 // It returns the zero Value if v is nil.
 func (v Value) Elem() Value {
+	panic("reflect.value.Elem not yet implemented")
 	k := v.kind()
 	switch k {
 	case Interface:
@@ -708,6 +719,7 @@ func (v Value) Elem() Value {
 // Field returns the i'th field of the struct v.
 // It panics if v's Kind is not Struct or i is out of range.
 func (v Value) Field(i int) Value {
+	panic("reflect.value.Field not yet implemented")
 	if v.kind() != Struct {
 		panic(&ValueError{"reflect.Value.Field", v.kind()})
 	}
@@ -736,6 +748,7 @@ func (v Value) Field(i int) Value {
 // FieldByIndex returns the nested field corresponding to index.
 // It panics if v's Kind is not struct.
 func (v Value) FieldByIndex(index []int) Value {
+	panic("reflect.value.FieldByIndex not yet implemented")
 	if len(index) == 1 {
 		return v.Field(index[0])
 	}
@@ -758,6 +771,7 @@ func (v Value) FieldByIndex(index []int) Value {
 // It returns the zero Value if no field was found.
 // It panics if v's Kind is not struct.
 func (v Value) FieldByName(name string) Value {
+	panic("reflect.value.FieldByName not yet implemented")
 	v.mustBe(Struct)
 	if f, ok := v.typ.FieldByName(name); ok {
 		return v.FieldByIndex(f.Index)
@@ -770,6 +784,7 @@ func (v Value) FieldByName(name string) Value {
 // It panics if v's Kind is not struct.
 // It returns the zero Value if no field was found.
 func (v Value) FieldByNameFunc(match func(string) bool) Value {
+	panic("reflect.value.FieldByNameFunc not yet implemented")
 	if f, ok := v.typ.FieldByNameFunc(match); ok {
 		return v.FieldByIndex(f.Index)
 	}
@@ -794,6 +809,7 @@ var uint8Type = TypeOf(uint8(0)).(*rtype)
 // Index returns v's i'th element.
 // It panics if v's Kind is not Array, Slice, or String or i is out of range.
 func (v Value) Index(i int) Value {
+	panic("reflect.value.Index not yet implemented")
 	switch v.kind() {
 	case Array:
 		tt := (*arrayType)(unsafe.Pointer(v.typ))
@@ -859,6 +875,7 @@ func (v Value) Int() int64 {
 
 // CanInterface returns true if Interface can be used without panicking.
 func (v Value) CanInterface() bool {
+	panic("reflect.value.CanInterface not yet implemented")
 	if v.flag == 0 {
 		panic(&ValueError{"reflect.Value.CanInterface", Invalid})
 	}
@@ -871,6 +888,7 @@ func (v Value) CanInterface() bool {
 // It panics if the Value was obtained by accessing
 // unexported struct fields.
 func (v Value) Interface() (i interface{}) {
+	panic("reflect.value.Interface not yet implemented")
 	return valueInterface(v, true)
 }
 
@@ -907,6 +925,7 @@ func valueInterface(v Value, safe bool) interface{} {
 // InterfaceData returns the interface v's value as a uintptr pair.
 // It panics if v's Kind is not Interface.
 func (v Value) InterfaceData() [2]uintptr {
+	panic("reflect.value.InterfaceData not yet implemented")
 	// TODO: deprecate this
 	v.mustBe(Interface)
 	// We treat this as a read operation, so we allow
@@ -925,6 +944,7 @@ func (v Value) InterfaceData() [2]uintptr {
 // i==nil will be true but v.IsNil will panic as v will be the zero
 // Value.
 func (v Value) IsNil() bool {
+	panic("reflect.value.IsNil not yet implemented")
 	k := v.kind()
 	switch k {
 	case Chan, Func, Map, Ptr:
@@ -950,6 +970,7 @@ func (v Value) IsNil() bool {
 // Most functions and methods never return an invalid value.
 // If one does, its documentation states the conditions explicitly.
 func (v Value) IsValid() bool {
+	panic("reflect.value.IsValid not yet implemented")
 	return v.flag != 0
 }
 
@@ -962,6 +983,7 @@ func (v Value) Kind() Kind {
 // Len returns v's length.
 // It panics if v's Kind is not Array, Chan, Map, Slice, or String.
 func (v Value) Len() int {
+	panic("reflect.value.Len not yet implemented")
 	k := v.kind()
 	switch k {
 	case Array:
@@ -986,6 +1008,7 @@ func (v Value) Len() int {
 // It returns the zero Value if key is not found in the map or if v represents a nil map.
 // As in Go, the key's value must be assignable to the map's key type.
 func (v Value) MapIndex(key Value) Value {
+	panic("reflect.value.MapIndex not yet implemented")
 	v.mustBe(Map)
 	tt := (*mapType)(unsafe.Pointer(v.typ))
 
@@ -1027,6 +1050,7 @@ func (v Value) MapIndex(key Value) Value {
 // It panics if v's Kind is not Map.
 // It returns an empty slice if v represents a nil map.
 func (v Value) MapKeys() []Value {
+	panic("reflect.value.MapKeys not yet implemented")
 	v.mustBe(Map)
 	tt := (*mapType)(unsafe.Pointer(v.typ))
 	keyType := tt.key
@@ -1068,6 +1092,7 @@ func (v Value) MapKeys() []Value {
 // a receiver; the returned function will always use v as the receiver.
 // Method panics if i is out of range or if v is a nil interface value.
 func (v Value) Method(i int) Value {
+	panic("reflect.value.Method not yet implemented")
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.Method", Invalid})
 	}
@@ -1085,6 +1110,7 @@ func (v Value) Method(i int) Value {
 
 // NumMethod returns the number of methods in the value's method set.
 func (v Value) NumMethod() int {
+	panic("reflect.value.NumMethod not yet implemented")
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.NumMethod", Invalid})
 	}
@@ -1100,6 +1126,7 @@ func (v Value) NumMethod() int {
 // a receiver; the returned function will always use v as the receiver.
 // It returns the zero Value if no method was found.
 func (v Value) MethodByName(name string) Value {
+	panic("reflect.value.MethodByName not yet implemented")
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.MethodByName", Invalid})
 	}
@@ -1116,6 +1143,7 @@ func (v Value) MethodByName(name string) Value {
 // NumField returns the number of fields in the struct v.
 // It panics if v's Kind is not Struct.
 func (v Value) NumField() int {
+	panic("reflect.value.NumField not yet implemented")
 	v.mustBe(Struct)
 	tt := (*structType)(unsafe.Pointer(v.typ))
 	return len(tt.fields)
@@ -1195,6 +1223,11 @@ func (v Value) OverflowUint(x uint64) bool {
 // element of the slice.  If the slice is nil the returned value
 // is 0.  If the slice is empty but non-nil the return value is non-zero.
 func (v Value) Pointer() uintptr {
+	switch v.kind() {
+	case Ptr, UnsafePointer:
+		return uintptr(v.pointer())
+	}
+	panic("reflect.value.Pointer not yet implemented")
 	// TODO: deprecate
 	k := v.kind()
 	switch k {
@@ -1231,6 +1264,7 @@ func (v Value) Pointer() uintptr {
 // The boolean value ok is true if the value x corresponds to a send
 // on the channel, false if it is a zero value received because the channel is closed.
 func (v Value) Recv() (x Value, ok bool) {
+	panic("reflect.value.Recv not yet implemented")
 	v.mustBe(Chan)
 	v.mustBeExported()
 	return v.recv(false)
@@ -1264,6 +1298,7 @@ func (v Value) recv(nb bool) (val Value, ok bool) {
 // It panics if v's kind is not Chan or if x's type is not the same type as v's element type.
 // As in Go, x's value must be assignable to the channel's element type.
 func (v Value) Send(x Value) {
+	panic("reflect.value.Send not yet implemented")
 	v.mustBe(Chan)
 	v.mustBeExported()
 	v.send(x, false)
@@ -1291,6 +1326,7 @@ func (v Value) send(x Value, nb bool) (selected bool) {
 // It panics if CanSet returns false.
 // As in Go, x's value must be assignable to v's type.
 func (v Value) Set(x Value) {
+	panic("reflect.value.Set not yet implemented")
 	v.mustBeAssignable()
 	x.mustBeExported() // do not let unexported x leak
 	var target unsafe.Pointer
@@ -1308,6 +1344,7 @@ func (v Value) Set(x Value) {
 // SetBool sets v's underlying value.
 // It panics if v's Kind is not Bool or if CanSet() is false.
 func (v Value) SetBool(x bool) {
+	panic("reflect.value.SetBool not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(Bool)
 	*(*bool)(v.ptr) = x
@@ -1316,6 +1353,7 @@ func (v Value) SetBool(x bool) {
 // SetBytes sets v's underlying value.
 // It panics if v's underlying value is not a slice of bytes.
 func (v Value) SetBytes(x []byte) {
+	panic("reflect.value.SetBytes not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(Slice)
 	if v.typ.Elem().Kind() != Uint8 {
@@ -1338,6 +1376,7 @@ func (v Value) setRunes(x []rune) {
 // SetComplex sets v's underlying value to x.
 // It panics if v's Kind is not Complex64 or Complex128, or if CanSet() is false.
 func (v Value) SetComplex(x complex128) {
+	panic("reflect.value.SetComplex not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1352,6 +1391,7 @@ func (v Value) SetComplex(x complex128) {
 // SetFloat sets v's underlying value to x.
 // It panics if v's Kind is not Float32 or Float64, or if CanSet() is false.
 func (v Value) SetFloat(x float64) {
+	panic("reflect.value.SetFloat not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1366,6 +1406,7 @@ func (v Value) SetFloat(x float64) {
 // SetInt sets v's underlying value to x.
 // It panics if v's Kind is not Int, Int8, Int16, Int32, or Int64, or if CanSet() is false.
 func (v Value) SetInt(x int64) {
+	panic("reflect.value.SetInt not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1387,6 +1428,7 @@ func (v Value) SetInt(x int64) {
 // It panics if v's Kind is not Slice or if n is negative or
 // greater than the capacity of the slice.
 func (v Value) SetLen(n int) {
+	panic("reflect.value.SetLEN not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(Slice)
 	s := (*sliceHeader)(v.ptr)
@@ -1400,6 +1442,7 @@ func (v Value) SetLen(n int) {
 // It panics if v's Kind is not Slice or if n is smaller than the length or
 // greater than the capacity of the slice.
 func (v Value) SetCap(n int) {
+	panic("reflect.value.SetCap not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(Slice)
 	s := (*sliceHeader)(v.ptr)
@@ -1416,6 +1459,7 @@ func (v Value) SetCap(n int) {
 // As in Go, key's value must be assignable to the map's key type,
 // and val's value must be assignable to the map's value type.
 func (v Value) SetMapIndex(key, val Value) {
+	panic("reflect.value.SetMapIndex not yet implemented")
 	v.mustBe(Map)
 	v.mustBeExported()
 	key.mustBeExported()
@@ -1445,6 +1489,7 @@ func (v Value) SetMapIndex(key, val Value) {
 // SetUint sets v's underlying value to x.
 // It panics if v's Kind is not Uint, Uintptr, Uint8, Uint16, Uint32, or Uint64, or if CanSet() is false.
 func (v Value) SetUint(x uint64) {
+	panic("reflect.value.SetUint not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1467,6 +1512,7 @@ func (v Value) SetUint(x uint64) {
 // SetPointer sets the unsafe.Pointer value v to x.
 // It panics if v's Kind is not UnsafePointer.
 func (v Value) SetPointer(x unsafe.Pointer) {
+	panic("reflect.value.SetPointer not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(UnsafePointer)
 	*(*unsafe.Pointer)(v.ptr) = x
@@ -1475,6 +1521,7 @@ func (v Value) SetPointer(x unsafe.Pointer) {
 // SetString sets v's underlying value to x.
 // It panics if v's Kind is not String or if CanSet() is false.
 func (v Value) SetString(x string) {
+	panic("reflect.value.SetString not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(String)
 	*(*string)(v.ptr) = x
@@ -1484,6 +1531,7 @@ func (v Value) SetString(x string) {
 // It panics if v's Kind is not Array, Slice or String, or if v is an unaddressable array,
 // or if the indexes are out of bounds.
 func (v Value) Slice(i, j int) Value {
+	panic("reflect.value.Slice not yet implemented")
 	var (
 		cap  int
 		typ  *sliceType
@@ -1543,6 +1591,7 @@ func (v Value) Slice(i, j int) Value {
 // It panics if v's Kind is not Array or Slice, or if v is an unaddressable array,
 // or if the indexes are out of bounds.
 func (v Value) Slice3(i, j, k int) Value {
+	panic("reflect.value.Slice3 not yet implemented")
 	var (
 		cap  int
 		typ  *sliceType
@@ -1613,6 +1662,7 @@ func (v Value) String() string {
 // If the receive cannot finish without blocking, x is the zero Value and ok is false.
 // If the channel is closed, x is the zero value for the channel's element type and ok is false.
 func (v Value) TryRecv() (x Value, ok bool) {
+	panic("reflect.value.TryRecv not yet implemented")
 	v.mustBe(Chan)
 	v.mustBeExported()
 	return v.recv(true)
@@ -1623,6 +1673,7 @@ func (v Value) TryRecv() (x Value, ok bool) {
 // It returns true if the value was sent, false otherwise.
 // As in Go, x's value must be assignable to the channel's element type.
 func (v Value) TrySend(x Value) bool {
+	panic("reflect.value.TrySend not yet implemented")
 	v.mustBe(Chan)
 	v.mustBeExported()
 	return v.send(x, true)
@@ -1638,6 +1689,7 @@ func (v Value) Type() Type {
 		// Easy case
 		return v.typ
 	}
+	panic("reflect.value.Type for methods etc not yet implemented")
 
 	// Method value.
 	// v.typ describes the receiver, not the method type.
@@ -1686,6 +1738,7 @@ func (v Value) Uint() uint64 {
 // It is for advanced clients that also import the "unsafe" package.
 // It panics if v is not addressable.
 func (v Value) UnsafeAddr() uintptr {
+	panic("reflect.value.UnsafeAddr not yet implemented")
 	// TODO: deprecate
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.UnsafeAddr", Invalid})
@@ -1769,6 +1822,7 @@ func grow(s Value, extra int) (Value, int, int) {
 // Append appends the values x to a slice s and returns the resulting slice.
 // As in Go, each x's value must be assignable to the slice's element type.
 func Append(s Value, x ...Value) Value {
+	panic("reflect.Append not yet implemented")
 	s.mustBe(Slice)
 	s, i0, i1 := grow(s, len(x))
 	for i, j := i0, 0; i < i1; i, j = i+1, j+1 {
@@ -1780,6 +1834,7 @@ func Append(s Value, x ...Value) Value {
 // AppendSlice appends a slice t to a slice s and returns the resulting slice.
 // The slices s and t must have the same element type.
 func AppendSlice(s, t Value) Value {
+	panic("reflect.AppendSlice not yet implemented")
 	s.mustBe(Slice)
 	t.mustBe(Slice)
 	typesMustMatch("reflect.AppendSlice", s.Type().Elem(), t.Type().Elem())
@@ -1794,6 +1849,7 @@ func AppendSlice(s, t Value) Value {
 // Dst and src each must have kind Slice or Array, and
 // dst and src must have the same element type.
 func Copy(dst, src Value) int {
+	panic("reflect.Copy not yet implemented")
 	dk := dst.kind()
 	if dk != Array && dk != Slice {
 		panic(&ValueError{"reflect.Copy", dk})
@@ -1898,6 +1954,7 @@ type SelectCase struct {
 // boolean indicating whether the value corresponds to a send on the channel
 // (as opposed to a zero value received because the channel is closed).
 func Select(cases []SelectCase) (chosen int, recv Value, recvOK bool) {
+	panic("reflect.Select not yet implemented")
 	// NOTE: Do not trust that caller is not modifying cases data underfoot.
 	// The range is safe because the caller cannot modify our copy of the len
 	// and each iteration makes its own copy of the value c.
@@ -1999,6 +2056,7 @@ func unsafe_NewArray(*rtype, int) unsafe.Pointer {
 // MakeSlice creates a new zero-initialized slice value
 // for the specified slice type, length, and capacity.
 func MakeSlice(typ Type, len, cap int) Value {
+	panic("reflect.MakeSlice not yet implemented")
 	if typ.Kind() != Slice {
 		panic("reflect.MakeSlice of non-slice type")
 	}
@@ -2018,6 +2076,7 @@ func MakeSlice(typ Type, len, cap int) Value {
 
 // MakeChan creates a new channel with the specified type and buffer size.
 func MakeChan(typ Type, buffer int) Value {
+	panic("reflect.MakeChan not yet implemented")
 	if typ.Kind() != Chan {
 		panic("reflect.MakeChan of non-chan type")
 	}
@@ -2033,6 +2092,7 @@ func MakeChan(typ Type, buffer int) Value {
 
 // MakeMap creates a new map of the specified type.
 func MakeMap(typ Type) Value {
+	panic("reflect.MakeMap not yet implemented")
 	if typ.Kind() != Map {
 		panic("reflect.MakeMap of non-map type")
 	}
@@ -2044,6 +2104,7 @@ func MakeMap(typ Type) Value {
 // If v is a nil pointer, Indirect returns a zero Value.
 // If v is not a pointer, Indirect returns v.
 func Indirect(v Value) Value {
+	panic("reflect.Indirect not yet implemented")
 	if v.Kind() != Ptr {
 		return v
 	}
@@ -2073,6 +2134,7 @@ func ValueOf(i interface{}) Value {
 // For example, Zero(TypeOf(42)) returns a Value with Kind Int and value 0.
 // The returned value is neither addressable nor settable.
 func Zero(typ Type) Value {
+	panic("reflect.Zero not yet implemented")
 	if typ == nil {
 		panic("reflect: Zero(nil)")
 	}
@@ -2087,6 +2149,7 @@ func Zero(typ Type) Value {
 // New returns a Value representing a pointer to a new zero value
 // for the specified type.  That is, the returned Value's Type is PtrTo(typ).
 func New(typ Type) Value {
+	panic("reflect.New not yet implemented")
 	if typ == nil {
 		panic("reflect: New(nil)")
 	}
@@ -2098,6 +2161,7 @@ func New(typ Type) Value {
 // NewAt returns a Value representing a pointer to a value of the
 // specified type, using p as that pointer.
 func NewAt(typ Type, p unsafe.Pointer) Value {
+	panic("reflect.NewAt not yet implemented")
 	fl := flag(Ptr)
 	return Value{typ.common().ptrTo(), p, fl}
 }
@@ -2140,6 +2204,7 @@ func (v Value) assignTo(context string, dst *rtype, target unsafe.Pointer) Value
 // If the usual Go conversion rules do not allow conversion
 // of the value v to type t, Convert panics.
 func (v Value) Convert(t Type) Value {
+	panic("reflect.Convert not yet implemented")
 	if v.flag&flagMethod != 0 {
 		v = makeMethodValue("Convert", v)
 	}

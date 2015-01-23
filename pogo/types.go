@@ -51,7 +51,7 @@ func IsValidInPogo(et types.Type, posStr string) bool {
 var TypesEncountered typeutil.Map
 
 // NextTypeID is used to give each type we come across its own ID.
-var NextTypeID = 0 // also give the number if entries in the map
+var NextTypeID = 1 // entry zero is invalid
 
 // LogTypeUse : As the code generator encounters new types it logs them here, returning a string of the ID for insertion into the code.
 func LogTypeUse(t types.Type) string {
@@ -78,15 +78,17 @@ func TypesWithMethodSets() (sets []types.Type) {
 
 // Wrapper for target language emitTypeInfo()
 func emitTypeInfo() {
-	/* TODO are belt-and-braces required here?
-	for _, pkg := range rootProgram.AllPackages() {
-		for _, mem := range pkg.Members {
-			t, ok := mem.Type().(*types.Named)
-			if ok {
-				LogTypeUse(t)
+	// TODO review if this is required
+	/*
+		// belt-and-braces are required here to make sure we capture every type
+		for _, pkg := range rootProgram.AllPackages() {
+			for _, mem := range pkg.Members {
+				t, ok := mem.Type().(*types.Named)
+				if ok {
+					LogTypeUse(t)
+				}
 			}
 		}
-	}
 	*/
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].EmitTypeInfo())

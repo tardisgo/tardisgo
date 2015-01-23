@@ -446,6 +446,7 @@ func (t *uncommonType) uncommon() *uncommonType {
 }
 
 func (t *uncommonType) PkgPath() string {
+	panic("reflect.PkgPath not yet implemented")
 	if t == nil || t.pkgPath == nil {
 		return ""
 	}
@@ -476,15 +477,22 @@ func (t *rtype) Bits() int {
 
 func (t *rtype) Align() int { return int(t.align) }
 
-func (t *rtype) FieldAlign() int { return int(t.fieldAlign) }
+func (t *rtype) FieldAlign() int {
+	panic("reflect.FieldAlign not yet implemented")
+	return int(t.fieldAlign)
+}
 
 func (t *rtype) Kind() Kind { return Kind(t.kind & kindMask) }
 
-func (t *rtype) pointers() bool { return t.kind&kindNoPointers == 0 }
+func (t *rtype) pointers() bool {
+	panic("reflect.pointers not yet implemented")
+	return t.kind&kindNoPointers == 0
+}
 
 func (t *rtype) common() *rtype { return t }
 
 func (t *uncommonType) Method(i int) (m Method) {
+	panic("reflect.Method not yet implemented")
 	if t == nil || i < 0 || i >= len(t.methods) {
 		panic("reflect: Method index out of range")
 	}
@@ -506,6 +514,7 @@ func (t *uncommonType) Method(i int) (m Method) {
 }
 
 func (t *uncommonType) NumMethod() int {
+	panic("reflect.NumMethod not yet implemented")
 	if t == nil {
 		return 0
 	}
@@ -513,6 +522,7 @@ func (t *uncommonType) NumMethod() int {
 }
 
 func (t *uncommonType) MethodByName(name string) (m Method, ok bool) {
+	panic("reflect.MethodByName not yet implemented")
 	if t == nil {
 		return
 	}
@@ -530,6 +540,7 @@ func (t *uncommonType) MethodByName(name string) (m Method, ok bool) {
 // as efficient as they could be: they have commonType
 // as the receiver instead of *rtype.
 func (t *rtype) NumMethod() int {
+	panic("reflect.NumMethod not yet implemented")
 	if t.Kind() == Interface {
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.NumMethod()
@@ -538,6 +549,7 @@ func (t *rtype) NumMethod() int {
 }
 
 func (t *rtype) Method(i int) (m Method) {
+	panic("reflect.Method not yet implemented")
 	if t.Kind() == Interface {
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.Method(i)
@@ -546,6 +558,7 @@ func (t *rtype) Method(i int) (m Method) {
 }
 
 func (t *rtype) MethodByName(name string) (m Method, ok bool) {
+	panic("reflect.MethodByName not yet implemented")
 	if t.Kind() == Interface {
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.MethodByName(name)
@@ -562,6 +575,7 @@ func (t *rtype) Name() string {
 }
 
 func (t *rtype) ChanDir() ChanDir {
+	panic("reflect.ChanDir not yet implemented")
 	if t.Kind() != Chan {
 		panic("reflect: ChanDir of non-chan type")
 	}
@@ -570,6 +584,7 @@ func (t *rtype) ChanDir() ChanDir {
 }
 
 func (t *rtype) IsVariadic() bool {
+	panic("reflect.IsVariadic not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: IsVariadic of non-func type")
 	}
@@ -578,6 +593,7 @@ func (t *rtype) IsVariadic() bool {
 }
 
 func (t *rtype) Elem() Type {
+	panic("reflect.Elem not yet implemented")
 	switch t.Kind() {
 	case Array:
 		tt := (*arrayType)(unsafe.Pointer(t))
@@ -599,6 +615,7 @@ func (t *rtype) Elem() Type {
 }
 
 func (t *rtype) Field(i int) StructField {
+	panic("reflect.Field not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: Field of non-struct type")
 	}
@@ -607,6 +624,7 @@ func (t *rtype) Field(i int) StructField {
 }
 
 func (t *rtype) FieldByIndex(index []int) StructField {
+	panic("reflect.FieldByIndex not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: FieldByIndex of non-struct type")
 	}
@@ -615,6 +633,7 @@ func (t *rtype) FieldByIndex(index []int) StructField {
 }
 
 func (t *rtype) FieldByName(name string) (StructField, bool) {
+	panic("reflect.FieldByName not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: FieldByName of non-struct type")
 	}
@@ -623,6 +642,7 @@ func (t *rtype) FieldByName(name string) (StructField, bool) {
 }
 
 func (t *rtype) FieldByNameFunc(match func(string) bool) (StructField, bool) {
+	panic("reflect.FieldByNameFunc not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: FieldByNameFunc of non-struct type")
 	}
@@ -631,6 +651,7 @@ func (t *rtype) FieldByNameFunc(match func(string) bool) (StructField, bool) {
 }
 
 func (t *rtype) In(i int) Type {
+	panic("reflect.In not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: In of non-func type")
 	}
@@ -639,6 +660,7 @@ func (t *rtype) In(i int) Type {
 }
 
 func (t *rtype) Key() Type {
+	panic("reflect.Key not yet implemented")
 	if t.Kind() != Map {
 		panic("reflect: Key of non-map type")
 	}
@@ -647,6 +669,7 @@ func (t *rtype) Key() Type {
 }
 
 func (t *rtype) Len() int {
+	panic("reflect.Len not yet implemented")
 	if t.Kind() != Array {
 		panic("reflect: Len of non-array type")
 	}
@@ -655,6 +678,7 @@ func (t *rtype) Len() int {
 }
 
 func (t *rtype) NumField() int {
+	panic("reflect.NumField not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: NumField of non-struct type")
 	}
@@ -663,6 +687,7 @@ func (t *rtype) NumField() int {
 }
 
 func (t *rtype) NumIn() int {
+	panic("reflect.NumIn not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: NumIn of non-func type")
 	}
@@ -671,6 +696,7 @@ func (t *rtype) NumIn() int {
 }
 
 func (t *rtype) NumOut() int {
+	panic("reflect.NumOut not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: NumOut of non-func type")
 	}
@@ -679,6 +705,7 @@ func (t *rtype) NumOut() int {
 }
 
 func (t *rtype) Out(i int) Type {
+	panic("reflect.Out not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: Out of non-func type")
 	}
@@ -700,6 +727,7 @@ func (d ChanDir) String() string {
 
 // Method returns the i'th method in the type's method set.
 func (t *interfaceType) Method(i int) (m Method) {
+	panic("reflect.Method not yet implemented")
 	if i < 0 || i >= len(t.methods) {
 		return
 	}
@@ -714,10 +742,14 @@ func (t *interfaceType) Method(i int) (m Method) {
 }
 
 // NumMethod returns the number of interface methods in the type's method set.
-func (t *interfaceType) NumMethod() int { return len(t.methods) }
+func (t *interfaceType) NumMethod() int {
+	panic("reflect.NumMethod not yet implemented")
+	return len(t.methods)
+}
 
 // MethodByName method with the given name in the type's method set.
 func (t *interfaceType) MethodByName(name string) (m Method, ok bool) {
+	panic("reflect.MethodByName not yet implemented")
 	if t == nil {
 		return
 	}
@@ -762,6 +794,7 @@ type StructTag string
 // If the tag does not have the conventional format, the value
 // returned by Get is unspecified.
 func (tag StructTag) Get(key string) string {
+	panic("reflect.Get not yet implemented")
 	for tag != "" {
 		// skip leading space
 		i := 0
@@ -809,6 +842,7 @@ func (tag StructTag) Get(key string) string {
 
 // Field returns the i'th struct field.
 func (t *structType) Field(i int) (f StructField) {
+	panic("reflect.Field not yet implemented")
 	if i < 0 || i >= len(t.fields) {
 		return
 	}
@@ -848,6 +882,7 @@ func (t *structType) Field(i int) (f StructField) {
 
 // FieldByIndex returns the nested field corresponding to index.
 func (t *structType) FieldByIndex(index []int) (f StructField) {
+	panic("reflect.FieldByIndex not yet implemented")
 	f.Type = toType(&t.rtype)
 	for i, x := range index {
 		if i > 0 {
@@ -871,6 +906,7 @@ type fieldScan struct {
 // FieldByNameFunc returns the struct field with a name that satisfies the
 // match function and a boolean to indicate if the field was found.
 func (t *structType) FieldByNameFunc(match func(string) bool) (result StructField, ok bool) {
+	panic("reflect.FieldByNameFunc not yet implemented")
 	// This uses the same condition that the Go language does: there must be a unique instance
 	// of the match at a given depth level. If there are multiple instances of a match at the
 	// same depth, they annihilate each other and inhibit any possible match at a lower level.
@@ -981,6 +1017,7 @@ func (t *structType) FieldByNameFunc(match func(string) bool) (result StructFiel
 // FieldByName returns the struct field with the given name
 // and a boolean to indicate if the field was found.
 func (t *structType) FieldByName(name string) (f StructField, present bool) {
+	panic("reflect.FieldByName not yet implemented")
 	// Quick check for top-level name, or struct without anonymous fields.
 	hasAnon := false
 	if name != "" {
@@ -1021,6 +1058,7 @@ func PtrTo(t Type) Type {
 }
 
 func (t *rtype) ptrTo() *rtype {
+	panic("reflect.PtrTo not yet implemented")
 	if p := t.ptrToThis; p != nil {
 		return p
 	}
@@ -1085,6 +1123,7 @@ func fnv1(x uint32, list ...byte) uint32 {
 }
 
 func (t *rtype) Implements(u Type) bool {
+	panic("reflect.Implements not yet implemented")
 	if u == nil {
 		panic("reflect: nil type passed to Type.Implements")
 	}
@@ -1095,6 +1134,7 @@ func (t *rtype) Implements(u Type) bool {
 }
 
 func (t *rtype) AssignableTo(u Type) bool {
+	panic("reflect.AssignableTo not yet implemented")
 	if u == nil {
 		panic("reflect: nil type passed to Type.AssignableTo")
 	}
@@ -1103,6 +1143,7 @@ func (t *rtype) AssignableTo(u Type) bool {
 }
 
 func (t *rtype) ConvertibleTo(u Type) bool {
+	panic("reflect.ConvertableTo not yet implemented")
 	if u == nil {
 		panic("reflect: nil type passed to Type.ConvertibleTo")
 	}
@@ -1111,6 +1152,7 @@ func (t *rtype) ConvertibleTo(u Type) bool {
 }
 
 func (t *rtype) Comparable() bool {
+	panic("reflect.Comparable not yet implemented")
 	return t.alg != nil && t.alg.equal != nil
 }
 
@@ -1385,6 +1427,7 @@ func cachePut(k cacheKey, t *rtype) Type {
 // The gc runtime imposes a limit of 64 kB on channel element types.
 // If t's size is equal to or exceeds this limit, ChanOf panics.
 func ChanOf(dir ChanDir, t Type) Type {
+	panic("reflect.ChanOf not yet implemented")
 	typ := t.(*rtype)
 
 	// Look in cache.
@@ -1444,6 +1487,8 @@ func ismapkey(*rtype) bool { panic("reflect.ismapkey() not yet implemented in ha
 // If the key type is not a valid map key type (that is, if it does
 // not implement Go's == operator), MapOf panics.
 func MapOf(key, elem Type) Type {
+	panic("reflect.MapOf not yet implemented")
+
 	ktyp := key.(*rtype)
 	etyp := elem.(*rtype)
 
@@ -1650,6 +1695,8 @@ func bucketOf(ktyp, etyp *rtype) *rtype {
 // SliceOf returns the slice type with element type t.
 // For example, if t represents int, SliceOf(t) represents []int.
 func SliceOf(t Type) Type {
+	panic("reflect.SliceOf not yet implemented")
+
 	typ := t.(*rtype)
 
 	// Look in cache.

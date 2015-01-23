@@ -84,17 +84,11 @@ haxe -main tardis.Go --interp
 ... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
 
-The default memory model is little-endian and allows unsafe pointers, but it is quite slow.
-
-If your code does not use unsafe pointers to re-use memory in different layouts, there is a Haxe compilation flag for "safe" mode (this is faster, but has a larger memory footprint and only allows some unsafe pointers to be modelled accurately): 
+The default memory model is fast, but requires more memory than you might expect (an int per byte) and only allows some unsafe pointer usages. If your code uses unsafe pointers to re-use memory as different types (say writing a float64 but reading back a uint64), there is a Haxe compilation flag for "fullunsafe" mode (this is slower, but has a smaller memory footprint and allows most unsafe pointers to be modelled accurately). In JS fullunsafe uses the dataview method of object access, for other targets it simulates memory access. Fullunsafe is little-endian only at present. For example: 
 ```
-haxe -main tardis.Go -D safe --interp
-```
-
-There is also a Haxe compilation flag for JS to control use of the dataview method of object access (this has a similar memory footprint to the default method and allows unsafe pointers to be modelled accurately, but is slower than the default method on Node v0.10.26): 
-```
-haxe -main tardis.Go -D dataview -js tardis/go-dv.js
-node < tardis/go-dv.js
+tardisgo mycode.go
+haxe -main tardis.Go -D fullunsafe -js tardis/go-fu.js
+node < tardis/go-fu.js
 ```
 
 While on the subject of JS, the closure compiler seems to work using "ADVANCED_OPTIMIZATIONS" to significantly reduce the size of the generated code.

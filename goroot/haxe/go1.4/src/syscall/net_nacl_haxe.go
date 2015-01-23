@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 // A simulated network for use within NaCl.
 // The simulation is not particularly tied to NaCl,
 // but other systems have real networks.

@@ -12,11 +12,15 @@ import (
 	"golang.org/x/tools/go/types"
 )
 
-func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo string) string {
+func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK bool, errorInfo string) string {
 	useInt64 := false
 	lt := l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo)
 	if lt == "GOint64" {
 		useInt64 = true
+	}
+	rt := l.LangType(regTyp.Underlying(), false, errorInfo)
+	if lt != rt && op != "<-" && op != "*" {
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): result type %s != source type %s", rt, lt))
 	}
 
 	// neko target platform requires special handling because in makes whole-number Float into Int without asking
@@ -38,7 +42,10 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 		//if strings.HasPrefix(lt, "Pointer") {
 		//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
 		//}
-		return "Pointer.check(" + iVal + ").load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */", goTyp)
+		if pogo.DebugFlag {
+			iVal = "Pointer.check(" + iVal + ")"
+		}
+		return iVal + ".load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */", goTyp)
 		//}
 	case "-":
 		if l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) == "Complex" {
@@ -81,18 +88,29 @@ func (l langType) codeUnOp(op string, v interface{}, CommaOK bool, errorInfo str
 	}
 }
 
-func (l langType) UnOp(register, op string, v interface{}, CommaOK bool, errorInfo string) string {
+func (l langType) UnOp(register string, regTyp types.Type, op string, v interface{}, CommaOK bool, errorInfo string) string {
 	if op == "<-" { // wait for a channel to be ready
 		return l.Select(false, register, v, CommaOK, errorInfo)
 	}
-	return register + "=" + l.codeUnOp(op, v, CommaOK, errorInfo) + ";"
+	return register + "=" + l.codeUnOp(regTyp, op, v, CommaOK, errorInfo) + ";"
 }
 
-func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) string {
+func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, errorInfo string) string {
 	ret := ""
 	useInt64 := false
 	v1LangType := l.LangType(v1.(ssa.Value).Type().Underlying(), false, errorInfo)
 	v2LangType := l.LangType(v2.(ssa.Value).Type().Underlying(), false, errorInfo)
+	if v1LangType != v2LangType && !(v1LangType == "Int" && v2LangType == "GOint64") && !(op == "<<" || op == ">>") {
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): haxe types not equal: %s %s %s",
+			v1LangType, op, v2LangType))
+		return ""
+	}
+	rt := l.LangType(regTyp.Underlying(), false, errorInfo)
+	if v1LangType != rt && rt != "Bool" {
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): result type %s != 1st operand type %s",
+			rt, v1LangType))
+	}
+
 	v1string := l.IndirectValue(v1, errorInfo)
 	v2string := l.IndirectValue(v2, errorInfo)
 	if v1LangType == "GOint64" {
@@ -105,13 +123,13 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 	case "Float":
 		v1string = "Force.toFloat(" + v1string + ")"
 	case "Dynamic": // assume it is a uintptr, so integer arithmetic is required
-		v1string = "(" + v1string + "|0)"
+		v1string = "Force.toInt(" + v1string + ")"
 	}
 	switch v2LangType {
 	case "Float":
 		v2string = "Force.toFloat(" + v2string + ")"
 	case "Dynamic": // assume it is a uintptr, so integer arithmetic is required
-		v2string = "(" + v2string + "|0)"
+		v2string = "Force.toInt(" + v2string + ")"
 	}
 
 	if v1LangType == "Complex" {
@@ -171,6 +189,10 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 				isSignedStr = "false"
 			}
 
+			if op == "<<" || op == ">>" {
+				v2string = wrapForce_toInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+			}
+
 			switch op { // roughly in the order of the GOint64 api spec
 			case "+":
 				ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
@@ -191,15 +213,9 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 				ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
 					"GOint64.or("+v1string+","+v2string+")", errorInfo)
 			case "<<":
-				if v2LangType == "GOint64" {
-					v2string = "GOint64.toInt(" + v2string + ")"
-				}
 				ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
 					"GOint64.shl("+v1string+","+v2string+")", errorInfo)
 			case ">>":
-				if v2LangType == "GOint64" {
-					v2string = "GOint64.toInt(" + v2string + ")"
-				}
 				if isSignedStr == "true" {
 					ret = l.intTypeCoersion(v1.(ssa.Value).Type().Underlying(),
 						"GOint64.shr("+v1string+","+v2string+")", errorInfo) // GOint64.shr does sign extension
@@ -229,6 +245,10 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 			}
 
 		} else {
+			switch v2LangType {
+			case "GOint64":
+				v2string = "GOint64.toInt(" + v2string + ")"
+			}
 			switch op { // standard case, use Haxe operators
 			case "==", "!=", "<", ">", "<=", ">=": // no integer coersion, boolian results
 				switch v1.(ssa.Value).Type().Underlying().(type) {
@@ -236,15 +256,29 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 					if (v1.(ssa.Value).Type().Underlying().(*types.Basic).Info() & types.IsUnsigned) != 0 {
 						ret = "(Force.uintCompare(" + v1string + "," + v2string + ")" + op + "0)"
 					} else {
-						ret = "(" + v1string + op + v2string + ")"
+						switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
+						case types.Float32:
+							// make sure we only compare the float32 bits
+							ret = "(" +
+								"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
+								v1string + "))" + op +
+								"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
+								v2string + "))" + ")"
+						//	ret = "(Force.floatCompare(" +
+						//		"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
+						//		v1string + "))," +
+						//		"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
+						//		v2string + "))" + ")" + op + "0)"
+						//case types.Float64:
+						//	ret = "(Force.floatCompare(" + v1string + "," + v2string + ")" + op + "0)"
+						default:
+							ret = "(" + v1string + op + v2string + ")"
+						}
 					}
 				default:
 					ret = "(" + v1string + op + v2string + ")"
 				}
 			case ">>", "<<":
-				if v2LangType == "GOint64" {
-					v2string = "GOint64.toInt(" + v2string + ")"
-				}
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned bit shift
 					if op == ">>" {
@@ -299,6 +333,6 @@ func (l langType) codeBinOp(op string, v1, v2 interface{}, errorInfo string) str
 	}
 }
 
-func (l langType) BinOp(register, op string, v1, v2 interface{}, errorInfo string) string {
-	return register + "=" + l.codeBinOp(op, v1, v2, errorInfo) + ";"
+func (l langType) BinOp(register string, regTyp types.Type, op string, v1, v2 interface{}, errorInfo string) string {
+	return register + "=" + l.codeBinOp(regTyp, op, v1, v2, errorInfo) + ";"
 }

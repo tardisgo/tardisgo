@@ -58,7 +58,8 @@ func MemProfile(p []MemProfileRecord, inuseZero bool) (n int, ok bool) {
 }
 
 func ReadMemStats(m *MemStats) {
-	panic("TODO:runtime.ReadMemStats")
+	//panic("TODO:runtime.ReadMemStats")
+	// bytes testing calls this, so no-op
 }
 func ThreadCreateProfile(p []StackRecord) (n int, ok bool) {
 	panic("TODO:runtime.ThreadCreateProfile")

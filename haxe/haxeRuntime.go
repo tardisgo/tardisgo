@@ -17,7 +17,7 @@ var haxeruntime = `
 class Console {
 	public static inline function naclWrite(v:String){
 		#if ( cpp || cs || java || neko || php || python )
-			Sys.println(v);
+			Sys.print(v);
 		#else
 			haxe.Log.trace(v);
 		#end
@@ -124,30 +124,56 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return v;
 	}	
 	public static function toInt(v:Dynamic):Int { // get an Int from a Dynamic variable (uintptr is stored as Dynamic)
-		if (!Reflect.isObject(v))  			// simple type, so leave quickly and take defaults 
-			return cast(v,Int); 
-		else
+		if(v==null) return 0;
+		if (Reflect.isObject(v)) 
 			if(Std.is(v,Interface)) {
-				v=v.val; // it is in an interface, so get the value
-				if (!Reflect.isObject(v))  			// simple type from inside an interface, so take defaults 
-					return toInt(v); 				// recurse to handle 64-bit or float 
-				else								// it should be an Int64 from inside an Interface
-					return GOint64.toInt(v);	
-			} else									// it should be an Int64 if not an interface
+				v=v.val; 						// it is in an interface, so get the value
+				return toInt(v); 				// recurse to handle 64-bit or float or uintptr
+			} else								// it should be an Int64 if not an interface
 				return GOint64.toInt(v);	
+		else
+			if(Std.is(v,Int))
+				return v;
+			else
+				if(Std.is(v,Float)) 			
+					return v>=0?Math.floor(v):Math.ceil(v);
+				else
+					return cast(v,Int);			// cast required for uintptr/Dynamic
 	}
 	public static inline function toFloat(v:Float):Float {
 		// neko target platform requires special handling because it auto-converts whole-number Float into Int without asking
 		// see: https://github.com/HaxeFoundation/haxe/issues/1282 which was marked as closed, but was not fixed as at 2013.9.6
 		#if neko
-			if(Std.is(v,Int))
+			if(Std.is(v,Int)) {
 				return v + 2.2251e-308; // add the smallest value possible for a 64-bit float to ensure neko doesn't still think it is an int
-			else
+			} else
 				return v;
 		#else
 			return v;
 		#end
 	}	
+	static var f32temp = new Object(4);
+	public static function toFloat32(v:Float):Float {
+		if(Object.nativeFloats) {
+			f32temp.set_float32(0,v);
+			return f32temp.get_float32(0);
+		}else{
+			return toFloat32safe(v);
+		}
+	}
+	public static function toFloat32safe(v:Float):Float {
+		#if (cpp || neko)
+			var byts = haxe.io.Bytes.alloc(4);
+			byts.setFloat(0,v);
+			return byts.getFloat(0);
+		#else
+			var MaxFloat32:Float = 3.40282346638528859811704183484516925440e+38 ; // 2**127 * (2**24 - 1) / 2**23
+	    	if(v<-MaxFloat32) return Math.NEGATIVE_INFINITY;
+			if(v>MaxFloat32) return Math.POSITIVE_INFINITY;
+			// TODO needs more here...
+			return v;
+		#end
+	}
 	public static function uintCompare(x:Int,y:Int):Int { // +ve if uint(x)>unint(y), 0 equal, else -ve 
 			if(x==y) return 0; // simple case first for speed TODO is it faster with this in or out?
 			if(x>=0) {
@@ -217,8 +243,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return x%y;
 	}
 
-	public static inline function toUTF8length(gr:Int,s:String):Int {
-			return s.length;
+	public static function toUTF8length(gr:Int,s:String):Int {
+		//if(!Std.is(s,String)) return 0; 
+		return s.length;
 	}
 	// return the UTF8 version of a string in a Slice
 	public static function toUTF8slice(gr:Int,s:String):Slice {
@@ -239,10 +266,11 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}
 	public static function toRawString(gr:Int,sl:Slice):String {
 		var ret:String="";
-		for(i in 0...sl.len()) {
-			var x = sl.itemAddr(i).load_uint8();
-			ret += String.fromCharCode( x );
-		}
+		if(sl!=null)
+			for(i in 0...sl.len()) {
+				var x = sl.itemAddr(i).load_uint8();
+				ret += String.fromCharCode( x );
+			}
 		return ret;
 	}
 
@@ -253,6 +281,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				return v.val.buildCallbackFn();
 			}else{
 				v = v.val;
+				return toHaxeParam(v);
 			}
 		}
 		if(Std.is(v,String)){
@@ -297,24 +326,61 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return v;
 	}
 
+	public static function checkTuple(t:Dynamic):Dynamic {
+		if(t==null) Scheduler.panicFromHaxe("tuple returned from function or range is null");
+		return t;
+	}
+
+	static var i2f = new Object(8);
+	public static function float64const(i:GOint64,f:Float):Float{
+		if(Object.nativeFloats) {
+			i2f.set_int64(0,i);
+			var r=i2f.get_float64(0);
+			//trace("i2f",r);
+			return r;
+		}
+		return f;
+	}
+
+	public static function stringAt(s:String,i:Int):Int{
+		var c = s.charCodeAt(i);
+		if(c==null) 
+			Scheduler.panicFromHaxe("string index out of range");
+		return cast(c,Int)&0xFF;
+	}
+	public static function stringAtOK(s:String,i:Int):Dynamic {
+		var c = s.charCodeAt(i);
+		if(c==null)
+			return {r0:0,r1:false};
+		else 
+			return {r0:cast(c,Int)&0xff,r1:true};
+	}
 }
 
 // Object code
 // a single type of Go object
 @:keep
 class Object { // this implementation will improve with typed array access
-	// Simple! 1 address per byte, non-Int types are always on 4-byte
-	
+	#if (js && fullunsafe) 
+		public static var nativeFloats:Bool=true; 
+	#elseif !fullunsafe
+		public static var nativeFloats:Bool=false; 
+	#elseif (cpp || neko)
+		public static var nativeFloats:Bool=true; 	
+	#else
+		public static var nativeFloats:Bool=false; 	
+	#end
+
 	private var dVec4:haxe.ds.Vector<Dynamic>; // on 4-byte boundaries 
-	#if (js && dataview)
+	#if (js && fullunsafe) // native memory access (nearly)
 		private var arrayBuffer:js.html.ArrayBuffer;
 		private var dView:js.html.DataView;
-	#elseif safe
+	#elseif !fullunsafe	// Simple! 1 address per byte, non-Int types are always on 4-byte
 		private var iVec:haxe.ds.Vector<Int>; 
 	#else // default position is to allow unsafe pointers, and therefore run slowly...
 		private var byts:haxe.io.Bytes;
 	#end
-	private var length:Int;
+	public var length:Int;
 	public var uniqueRef:Int; // to give pointers a unique numerical value
 
 	private static var uniqueCount:Int=0;
@@ -325,14 +391,14 @@ class Object { // this implementation will improve with typed array access
 	public function new(byteSize:Int,?bytes:haxe.io.Bytes){ // size is in bytes
 		dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); 
 		if(bytes!=null) byteSize = bytes.length;
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			arrayBuffer = new js.html.ArrayBuffer(byteSize);
 			if(byteSize>0)
 				dView = new js.html.DataView(arrayBuffer,0,byteSize); // complains if size is 0, TODO review
 			if(bytes!=null)
 				for(i in 0 ... byteSize) 
 					set_uint8(i, bytes.get(i));
-		#elseif safe
+		#elseif !fullunsafe
 			iVec = new haxe.ds.Vector<Int>(byteSize);
 			if(bytes!=null)
 				for(i in 0 ... byteSize) 
@@ -351,11 +417,11 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public function getBytes():haxe.io.Bytes {
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			var byts = haxe.io.Bytes.alloc(length);
 			for(i in 0 ... length) 
 				byts.set(i,get_uint8(i));
-		#elseif safe
+		#elseif !fullunsafe
 			var byts = haxe.io.Bytes.alloc(length);
 			for(i in 0 ... length) 
 				byts.set(i,iVec[i]);
@@ -384,20 +450,22 @@ class Object { // this implementation will improve with typed array access
 	}
 	private static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
 		if(size==0) return;
-		//if(!Std.is(src,Object)) { 
-		//	Scheduler.panicFromHaxe("Object.objBlt() src parameter is not an Object - Value: "+Std.string(src)+" Type: "+Type.typeof(src));
-		//	return;
-		//}
-		//if(!Std.is(dest,Object)) { 
-		//	Scheduler.panicFromHaxe("Object.objBlt() dest parameter is not an Object - Value: "+Std.string(dest)+" Type: "+Type.typeof(dest));
-		//	return;
-		//}
+		if(!Std.is(src,Object)) { 
+			Scheduler.panicFromHaxe("Object.objBlt() src parameter is not an Object - Value: "+Std.string(src)+" Type: "+Type.typeof(src));
+			return;
+		}
+		if(!Std.is(dest,Object)) { 
+			Scheduler.panicFromHaxe("Object.objBlt() dest parameter is not an Object - Value: "+Std.string(dest)+" Type: "+Type.typeof(dest));
+			return;
+		}
 		if(srcPos<0 || srcPos>=src.length){
-			Scheduler.panicFromHaxe("Object.objBlt() srcPos out-of-range - Value: "+Std.string(srcPos));
+			Scheduler.panicFromHaxe("Object.objBlt() srcPos out-of-range - Value= "+Std.string(srcPos)+
+				" src.length= "+Std.string(src.length));
 			return;			
 		}
 		if(destPos<0 || destPos>=dest.length){
-			Scheduler.panicFromHaxe("Object.objBlt() srcPos out-of-range - Value: "+Std.string(destPos));
+			Scheduler.panicFromHaxe("Object.objBlt() destPos out-of-range - Value= "+Std.string(destPos)+
+				" dest.length= "+Std.string(dest.length));
 			return;			
 		}
 		if(size>(src.length-srcPos) ) size = src.length-srcPos ; // TODO review why this defensive code is needed
@@ -407,7 +475,7 @@ class Object { // this implementation will improve with typed array access
 				" SrcSize: "+Std.string(src.length-srcPos));
 			return;			
 		}
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			if((size&3==0)&&(srcPos&3==0)&&(destPos&3==0)) {
 				var i:Int=0;
 				var s:Int=srcPos;
@@ -432,7 +500,7 @@ class Object { // this implementation will improve with typed array access
 					d+=1;
 				}
 			}
-		#elseif safe
+		#elseif !fullunsafe
 			haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
 			haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
 		#else
@@ -461,9 +529,9 @@ class Object { // this implementation will improve with typed array access
 			return dVec4[i>>2];
 	}
 	public inline function get_bool(i:Int):Bool { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			return dView.getUint8(i)==0?false:true;
-		#elseif safe
+		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) 
 				return r==null?false:(r==0?false:true); 
@@ -475,9 +543,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_int8(i:Int):Int { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			return dView.getInt8(i);
-		#elseif safe
+		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
 		#else
@@ -485,9 +553,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_int16(i:Int):Int { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			return dView.getInt16(i,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
 		#else
@@ -495,9 +563,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_int32(i:Int):Int {
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			return dView.getInt32(i,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
 		#else
@@ -505,7 +573,7 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_int64(i:Int):GOint64 {
-		#if safe
+		#if !fullunsafe
 			var r:GOint64=get(i); 
 			return r==null?GOint64.ofInt(0):r;			
 		#else
@@ -513,9 +581,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	} 
 	public inline function get_uint8(i:Int):Int { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			return dView.getUint8(i);
-		#elseif safe
+		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
 		#else 
@@ -523,9 +591,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_uint16(i:Int):Int {
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			return dView.getUint16(i,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
 		#else
@@ -533,9 +601,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_uint32(i:Int):Int {
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			return dView.getUint32(i,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
 		#else
@@ -543,7 +611,7 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_uint64(i:Int):GOint64 { 
-		#if safe
+		#if !fullunsafe
 			var r:GOint64=get(i); 
 			return r==null?GOint64.ofInt(0):r;			
 		#else
@@ -554,32 +622,38 @@ class Object { // this implementation will improve with typed array access
 		// TODO consider some type of read-from-mem if Dynamic type is Int 
 		return get(i); 
 	} 
-	public inline function get_float32(i:Int):Float { 
-		#if (js && dataview)
-			return dView.getFloat32(i,true); // little-endian
-		#elseif safe
-			var r:Float=get(i); 
-			#if (js || php || neko ) 
-				return r==null?0.0:r; 
-			#else 
-				return r; 
-			#end
+	public function get_float32(i:Int):Float { 
+		var r:Float=get(i)==null?0.0:get(i); 
+		#if (js && fullunsafe)
+			var d:Float = dView.getFloat32(i,true); // little-endian
+		#elseif !fullunsafe
+			return r; 
 		#else 
-			return byts.getFloat(i);
+			var d:Float = byts.getFloat(i); // Go_haxegoruntime_FFloat32frombits.callFromRT(0,get_uint32(i)); 
+		#end
+		#if fullunsafe
+			if( ( Math.isNaN(r) && Math.isNaN(d) ) || 
+				( !Math.isFinite(r) && !Math.isFinite(d) ) || 
+				( r==0.0 && d==0.0) ) // to handle -0 
+				return r;
+			return d;
 		#end
 	}
-	public inline function get_float64(i:Int):Float { 
-		#if (js && dataview)
-			return dView.getFloat64(i,true); // little-endian
-		#elseif safe
-			var r:Float=get(i); 
-			#if (js || php || neko ) 
-				return r==null?0.0:r; 
-			#else 
-				return r;
-			#end 
+	public function get_float64(i:Int):Float { 
+		var r:Float=get(i)==null?0.0:get(i); 
+		#if (js && fullunsafe)
+			var d:Float = dView.getFloat64(i,true); // little-endian
+		#elseif !fullunsafe
+			return r;
 		#else
-			return byts.getDouble(i);		
+			var d:Float = byts.getDouble(i); // Go_haxegoruntime_FFloat64frombits.callFromRT(0,get_uint64(i)); 		
+		#end
+		#if fullunsafe
+			if( ( Math.isNaN(r) && Math.isNaN(d) ) || 
+				( !Math.isFinite(r) && !Math.isFinite(d) ) ||
+				( r==0.0 && d==0.0) ) // to handle -0 
+				return r;
+			return d;
 		#end
 	}
 	public inline function get_complex64(i:Int):Complex {
@@ -600,27 +674,27 @@ class Object { // this implementation will improve with typed array access
 		dVec4[i>>2]=v; // TODO special processing if Int?
 	}
 	public inline function set_bool(i:Int,v:Bool):Void { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			dView.setUint8(i,v?1:0);
-		#elseif safe
+		#elseif !fullunsafe
 			iVec[i]=v?1:0;
 		#else
 			byts.set(i,v?1:0); 
 		#end
 	} 
 	public inline function set_int8(i:Int,v:Int):Void { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			dView.setInt8(i,v);
-		#elseif safe
+		#elseif !fullunsafe
 			iVec[i]=v;
 		#else
 			byts.set(i,v&0xff); 
 		#end
 	}
 	public inline function set_int16(i:Int,v:Int):Void { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			dView.setInt16(i,v,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			iVec[i]=v;
 		#else
 			set_int8(i,v);
@@ -628,9 +702,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function set_int32(i:Int,v:Int):Void { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			dView.setInt32(i,v,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			iVec[i]=v;
 		#else
 			set_int16(i,v);
@@ -638,7 +712,7 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function set_int64(i:Int,v:GOint64):Void { 
-		#if safe
+		#if !fullunsafe
 			set(i,v);
 		#else
 			set_uint32(i,GOint64.getLow(v));
@@ -646,18 +720,18 @@ class Object { // this implementation will improve with typed array access
 		#end
 	} 
 	public inline function set_uint8(i:Int,v:Int):Void { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			dView.setUint8(i,v);
-		#elseif safe
+		#elseif !fullunsafe
 			iVec[i]=v;
 		#else
 			byts.set(i,v&0xff);
 		#end
 	}
 	public inline function set_uint16(i:Int,v:Int):Void { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			dView.setUint16(i,v,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			iVec[i]=v;
 		#else
 			set_uint8(i,v); 
@@ -665,9 +739,9 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function set_uint32(i:Int,v:Int):Void { 
-		#if (js && dataview)
+		#if (js && fullunsafe)
 			dView.setUint32(i,v,true); // little-endian
-		#elseif safe
+		#elseif !fullunsafe
 			iVec[i]=v;
 		#else
 			set_uint16(i,v);
@@ -675,7 +749,7 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function set_uint64(i:Int,v:GOint64):Void { 
-		#if safe
+		#if !fullunsafe
 			set(i,v);
 		#else
 			set_uint32(i,GOint64.getLow(v));
@@ -687,10 +761,11 @@ class Object { // this implementation will improve with typed array access
 		if(Std.is(v,Int)) set_uint32(i,v); // write through to ordinary memory if the type is Int
 	}
 	public inline function set_float32(i:Int,v:Float):Void {
-		#if (js && dataview)
+		set(i,Force.toFloat32safe(v)); // for NaN compatability
+		#if (js && fullunsafe)
 			dView.setFloat32(i,v,true); // little-endian
-		#elseif safe
-			set(i,v);
+		#elseif !fullunsafe
+			//set(i,Force.toFloat32safe(v));
 		#else 
 			#if (cpp||neko)
 				byts.setFloat(i,v);
@@ -700,10 +775,11 @@ class Object { // this implementation will improve with typed array access
 		#end	
 	}
 	public inline function set_float64(i:Int,v:Float):Void {
-	 	#if (js && dataview)
+		set(i,v); // for NaN compatability
+	 	#if (js && fullunsafe)
 			dView.setFloat64(i,v,true); // little-endian
-		#elseif safe
-			set(i,v);
+		#elseif !fullunsafe
+			// set(i,v);
 		#else
 			#if (cpp||neko)
 				byts.setDouble(i,v);
@@ -745,8 +821,13 @@ class Pointer {
 	private var off:Int; // the offset into the object, if any 
 
 	public inline function new(from:Object){
+		if(from==null) Scheduler.panicFromHaxe("new Pointer from nil object");
 		obj = from; 
 		off = 0;
+	}
+	public inline function len(){
+		if(obj==null) return 0;
+		return obj.length-off;
 	}
 	public static function check(p:Pointer):Pointer {
 		if(p==null) Scheduler.panicFromHaxe("nil pointer de-reference");
@@ -856,8 +937,12 @@ class Slice {
 	private var start:Int;
 	private var end:Int;
 	private var capacity:Int;
-	public var length:Int; // could make this a function access, but it never changes (?) and is used a lot
-	
+
+	public var length(get, null):Int;
+	function get_length():Int {
+		return end-start;
+	}
+
 	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) {
 		baseArray = fromArray;
 		itemSize = isz;
@@ -867,14 +952,16 @@ class Slice {
 			capacity = 0;
 		} else {
 			if( low<0 ) Scheduler.panicFromHaxe( "new Slice() low bound -ve"); 
-			capacity = ularraysz - low; // the capacity of what remains of the array
+			var ulCap = Math.floor(baseArray.len()/itemSize);
+			if( ulCap < ularraysz) Scheduler.panicFromHaxe( "new Slice() internal error: underlying array capacity="+ulCap+
+				" less than stated slice capacity="+ularraysz); // slices of existing data will have ulCap greater 
+			capacity = ularraysz; // the capacity of the array
 			if(high==-1) high = ularraysz; //default upper bound is the capacity of the underlying array
 			if( high > ularraysz ) Scheduler.panicFromHaxe("new Slice() high bound exceeds underlying array length"); 
 			if( low>high ) Scheduler.panicFromHaxe("new Slice() low bound exceeds high bound"); 
 			start = low;
 			end = high;
 		}
-		length = end-start;
 	} 
 	public static function fromResource(name:String):Slice {
 		var res = haxe.Resource.getBytes(name);
@@ -884,22 +971,34 @@ class Slice {
 	}
 	public function subSlice(low:Int, high:Int):Slice {
 		if(high==-1) high = length; //default upper bound is the length of the current slice
-		return new Slice(baseArray,low+start,high+start,capacity+low+start,itemSize);
+		return new Slice(baseArray,low+start,high+start,capacity,itemSize);
 	}
-	public function append(newEnt:Slice):Slice{
-		if(newEnt==null) return this;
-		// ignore capacity filling optimization for now TODO
-		var newObj:Object = new Object((length+newEnt.len())*itemSize);
-		for(i in 0...length) 
-			newObj.set_object(itemSize,i*itemSize,this.itemAddr(i).load_object(itemSize));
-		for(i in 0...newEnt.len())
-			newObj.set_object(itemSize,length*itemSize+i*itemSize,newEnt.itemAddr(i).load_object(itemSize));
-		return new Slice(new Pointer(newObj),0,length+newEnt.len(),length+newEnt.len(),itemSize);
+	public static function append(oldEnt:Slice,newEnt:Slice):Slice{
+		if(oldEnt==null) return newEnt;
+		if(newEnt==null || newEnt.len()==0) return oldEnt;
+		if(oldEnt.itemSize!=newEnt.itemSize)
+			Scheduler.panicFromHaxe("new Slice() internal error: itemSizes do not match");
+		if(oldEnt.baseArray!=null && oldEnt.cap()>=(oldEnt.len()+newEnt.len())){
+			var offset=oldEnt.len();
+			for(i in 0...newEnt.len()){
+				oldEnt.end++;
+				oldEnt.itemAddr(offset+i).store_object(oldEnt.itemSize,newEnt.itemAddr(i).load_object(newEnt.itemSize));
+			}
+			return oldEnt;
+		}else{
+			var newObj:Object = new Object((oldEnt.length+newEnt.len())*oldEnt.itemSize);
+			for(i in 0...oldEnt.length) 
+				newObj.set_object(oldEnt.itemSize,i*oldEnt.itemSize,oldEnt.itemAddr(i).load_object(oldEnt.itemSize));
+			for(i in 0...newEnt.len())
+				newObj.set_object(oldEnt.itemSize,
+					oldEnt.length*oldEnt.itemSize+i*oldEnt.itemSize,newEnt.itemAddr(i).load_object(oldEnt.itemSize));
+			return new Slice(new Pointer(newObj),0,oldEnt.length+newEnt.len(),oldEnt.length+newEnt.len(),oldEnt.itemSize);
+		}
 	}
 	public static function copy(target:Slice,source:Slice):Int{
 		if(target==null) return 0;
 		if(source==null) return 0;
-		var copySize:Int=target.cap();
+		var copySize:Int=target.len();
 		if(source.len()<copySize) 
 			copySize=source.len(); 
 		if(target.baseArray==source.baseArray){ // copy within the same slice
@@ -927,21 +1026,30 @@ class Slice {
 	//	//if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for setAt()");
 	//	baseArray.addr(idx+start).store(v); // this code relies on the object reference passing back
 	//}
-	public inline function len():Int {
+	public function len():Int {
+		if(length!=end-start)  Scheduler.panicFromHaxe("Slice internal error: length!=end-start");
 		return length;
 	}
-	public inline function cap():Int {
+	public function cap():Int {
+		// TODO remove when stable
+		if(baseArray==null){
+			if(capacity!=0) Scheduler.panicFromHaxe("Slice interal error: BaseArray==null but capacity="+capacity);
+		}else{
+			var ulCap = Math.floor(baseArray.len()/itemSize);
+			if(capacity>ulCap) // slices of existing data will have ulCap greater 
+				Scheduler.panicFromHaxe("Slice interal error: capacity="+capacity+" but underlying capacity="+ulCap);
+		}
 		return capacity-start;
 	}
-	public inline function itemAddr(idx:Int):Pointer {
-		//if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for addr()");
+	public function itemAddr(idx:Int):Pointer {
+		if (idx<0 || idx>=len()) Scheduler.panicFromHaxe("Slice index out of range");
 		return baseArray.addr((idx+start)*itemSize);
 	}
 	public function toString():String {
-		var ret:String = "Slice{"+start+","+end+",[";
+		var ret:String = "Slice{[";
 		if(baseArray!=null) 
-			for(i in 0...(start+capacity) ) {
-				if(i!=0) ret += ",";
+			for(i in start...end) {
+				if(i!=start) ret += ",";
 				ret+=baseArray.addr(i*itemSize).toString(itemSize); // only works for basic types
 			}
 		return ret+"]}";
@@ -1300,7 +1408,7 @@ public static function ofFloat(v):HaxeInt64abs { // float to signed int64 (TODO 
 			v = -v;
 		} 
 		if(v<2147483647.0) { // optimization: if just a small integer, don't do the full conversion code below
-			if(isNegVal) 	return new HaxeInt64abs(HaxeInt64Typedef.neg(HaxeInt64Typedef.ofInt(Math.ceil(v))));
+			if(isNegVal) 	return new HaxeInt64abs(HaxeInt64Typedef.neg(HaxeInt64Typedef.ofInt(Math.floor(v)))); // ceil?
 			else			return new HaxeInt64abs(HaxeInt64Typedef.ofInt(Math.floor(v)));
 		}
 		if(v>9223372036854775807.0) { // number too big to encode in 63 bits 
@@ -1542,12 +1650,16 @@ class Int64 {
 	}
 
 	@:extern static inline function i32(i) {
+		return 
+		#if !(cpp || java || cs || flash) 
+			i==null?0:
+		#end
 		#if (js || flash8)
-			return i | 0;
+			i | 0;
 		#elseif php
-			return i32php(i); // handle overflow of 32-bit integers correctly 
+			i32php(i); // handle overflow of 32-bit integers correctly 
 		#else
-			return i;
+			i;
 		#end
 	}
 
@@ -1738,7 +1850,7 @@ class Int64 {
 	}
 
 	public static inline function compare( a : Int64, b : Int64 ) : Int {
-		var v = i32(a.high - b.high); 
+		var v = i32(i32(a.high) - i32(b.high)); 
 		return if( v != 0 ) v else uicompare(a.low,b.low);
 	}
 
@@ -2199,7 +2311,7 @@ public static function panic(gr:Int,err:Interface){
 	if(gr>=grStacks.length||gr<0)
 		throw "Scheduler.panic() invalid goroutine";
 	if(grInPanic[gr]) { // if we are already in a panic, not much we can do...
-		trace("HELP! Scheduler.panic() panic within panic for goroutine "+Std.string(gr)+" message: "+err.toString());		
+		//trace("Scheduler.panic() panic within panic for goroutine "+Std.string(gr)+" message: "+err.toString());		
 	}else{
 		grInPanic[gr]=true;
 		grPanicMsg[gr]=err;
@@ -2215,6 +2327,8 @@ public static function panic(gr:Int,err:Interface){
 public static function recover(gr:Int):Interface{
 	if(gr>=grStacks.length||gr<0)
 		throw "Scheduler.recover() invalid goroutine";
+	if(grInPanic[gr]==false)
+		return null;
 	grInPanic[gr]=false;
 	return grPanicMsg[gr];
 }
@@ -2232,6 +2346,11 @@ public static function bbi() {
 public static function ioor() {
 	panicFromHaxe("index out of range");
 }
+public static function htc(c:Dynamic,pos:Int) {
+	panicFromHaxe("Haxe try-catch exception <"+Std.string(c)+"> position "+Std.string(pos)+
+		" at or before: "+Go.CPos(pos)+
+		"\n(tip: for more information here use debug mode to instrument the code)");
+}
 public static inline function wraprangechk(val:Int,sz:Int) {
 	if((val<0)||(val>=sz)) ioor();
 }
@@ -2242,6 +2361,88 @@ public static inline function wrapnilchk(p:Pointer):Pointer {
 	if(p==null) unp();
 	return p;
 }
+}
+
+class GOmap {
+	public var baseMap:Map<String,{key:Dynamic,val:Dynamic}>;
+	public var kz:Dynamic;
+	public var vz:Dynamic;
+
+	public function new (kDef:Dynamic,vDef:Dynamic) {
+		baseMap = new Map<String,{key:Dynamic,val:Dynamic}>();
+		kz = kDef;
+		vz = vDef;
+	}
+
+	public function set(sKey:String,realKey:Dynamic,value:Dynamic){
+		baseMap.set(sKey,{key:realKey,val:value});
+	}
+
+	public function get(sKey:String):Dynamic {
+		return baseMap.get(sKey).val;
+	}
+
+	public function exists(sKey:String):Bool {
+		return baseMap.exists(sKey);
+	}
+
+	public function remove(s:String){
+		baseMap.remove(s);
+	}
+
+	public function len():Int {
+		var _l:Int=0;
+		var _it=baseMap.iterator();
+		while(_it.hasNext()) {_l++; _it.next();};
+		return _l;
+	}
+
+	public function range():GOmapRange {
+		return new GOmapRange(baseMap.keys(),this);
+	}
+}
+
+class GOmapRange {
+	private var k:Iterator<String>;
+	private var m:GOmap;
+
+	public function new(kv:Iterator<String>, mv:GOmap){
+		k=kv;
+		m=mv;
+	}
+
+	public function next():{r0:Bool,r1:Dynamic,r2:Dynamic} {
+		var _hn:Bool=k.hasNext();
+		if(_hn){
+			var _nxt=k.next();
+			return {r0:true,r1:m.baseMap.get(_nxt).key,r2:m.baseMap.get(_nxt).val};
+		}else{
+			return {r0:false,r1:m.kz,r2:m.vz};
+		}
+	}
+}
+
+class GOstringRange {
+	private var g:Int;
+	private var k:Int;
+	private var v:Slice;
+
+	public function new(gr:Int,s:String){
+		g=gr;
+		k=0;
+		v=Force.toUTF8slice(gr,s);
+	}
+
+	public function next():{r0:Bool,r1:Int,r2:Int} {
+		var _thisK:Int=k;
+		if(k>=v.len())
+			return {r0:false,r1:0,r2:0};
+		else {
+			var _dr:{r0:Int,r1:Int}=Go_utf8_DDecodeRRune.callFromRT(g,v.subSlice(_thisK,-1));
+			k+=_dr.r1;
+			return {r0:true,r1:_thisK,r2:_dr.r0};
+		}
+	}
 }
 
 

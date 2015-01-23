@@ -6,15 +6,17 @@
 
 package math
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 // Floor returns the greatest integer value less than or equal to x.
 //
 // Special cases are:
 //	Floor(±0) = ±0
 //	Floor(±Inf) = ±Inf
 //	Floor(NaN) = NaN
-func Floor(x float64) float64 {
+func Floor(x float64) float64 { return hx.CallFloat("", "Math.ffloor", 1, x) }
 
-	//func floor(x float64) float64 {
+func floor(x float64) float64 {
 	if x == 0 || IsNaN(x) || IsInf(x, 0) {
 		return x
 	}
@@ -35,9 +37,9 @@ func Floor(x float64) float64 {
 //	Ceil(±0) = ±0
 //	Ceil(±Inf) = ±Inf
 //	Ceil(NaN) = NaN
-func Ceil(x float64) float64 {
+func Ceil(x float64) float64 { return hx.CallFloat("", "Math.fceil", 1, x) }
 
-	//func ceil(x float64) float64 {
+func ceil(x float64) float64 {
 	return -Floor(-x)
 }
 

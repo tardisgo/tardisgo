@@ -7,6 +7,7 @@ package haxe
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -106,7 +107,7 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	return main + pos + "} // end Go class"
 }
 
-func haxeStringConst(sconst string, position string) string { // TODO add conversions for UTF16
+func haxeStringConst(sconst string, position string) string {
 	s, err := strconv.Unquote(sconst)
 	if err != nil {
 		pogo.LogError(position, "Haxe", errors.New(err.Error()+" : "+sconst))
@@ -160,6 +161,93 @@ func haxeStringConst(sconst string, position string) string { // TODO add conver
 
 }
 
+func constFloat64(lit ssa.Const, bits int, position string) string {
+	var f float64
+	var f32 float32
+	sigBits := uint(53)
+	if bits == 32 {
+		sigBits = 24
+	}
+	f, _ /*f64ok*/ = exact.Float64Val(lit.Value)
+	f32, _ /*f32ok*/ = exact.Float32Val(lit.Value)
+	if bits == 32 {
+		f = float64(f32)
+	}
+	haxeVal := pogo.FloatVal(lit.Value, bits, position)
+	if math.IsInf(f, +1) {
+		haxeVal = "Math.POSITIVE_INFINITY"
+	} else {
+		if math.IsInf(f, -1) {
+			haxeVal = "Math.NEGATIVE_INFINITY"
+		} else {
+			if math.IsNaN(f) { // must come after infinity checks
+				haxeVal = "Math.NaN"
+			} else {
+				// there is a problem with haxe constant processing for some floats
+				// try to be as exact as the host can be ... but also concise
+				if float64(int64(f)) != f { // not a simple integer
+					frac, exp := math.Frexp(f)
+					intPart := int64(frac * float64(uint64(1)<<sigBits))
+					expPart := exp - int(sigBits)
+					if float64(intPart) == frac*float64(uint64(1)<<sigBits) &&
+						expPart >= -1022 && expPart <= 1023 {
+						//it is an integer in the correct range
+						haxeVal = fmt.Sprintf("(%d*Math.pow(2,%d))", intPart, expPart) // NOTE: need the Math.pow to avoid haxe constant folding
+					}
+					/*
+						val := exact.MakeFloat64(frac)
+						num := exact.Num(val)
+						den := exact.Denom(val)
+						n64i, nok := exact.Int64Val(num)
+						d64i, dok := exact.Int64Val(den)
+						res := float64(n64i) * math.Pow(2, float64(exp)) / float64(d64i)
+						if !math.IsNaN(res) && !math.IsInf(res, +1) && !math.IsInf(res, -1) { //drop through
+							if nok && dok {
+								nh, nl := pogo.IntVal(num, position)
+								dh, dl := pogo.IntVal(den, position)
+								n := fmt.Sprintf("%d", nl)
+								if n64i < 0 {
+									n = "(" + n + ")"
+								}
+								if nh != 0 && nh != -1 {
+									n = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(nh), uint32(nl))
+								}
+								if float64(d64i) == math.Pow(2, float64(exp)) {
+									haxeVal = n // divisor and multiplier the same
+								} else {
+									d := fmt.Sprintf("%d", dl)
+									if dh != 0 && dh != -1 {
+										d = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(dh), uint32(dl))
+									}
+									if n64i == 1 {
+										n = "" // no point multiplying by 1
+									} else {
+										n = n + "*"
+									}
+									if d64i == 1 {
+										d = "" // no point in dividing by 1
+									} else {
+										d = "/" + d
+									}
+									haxeVal = fmt.Sprintf("(%sMath.pow(2,%d)%s)", n, exp, d) // NOTE: need the Math.pow to avoid haxe constant folding
+								}
+							}
+						}
+					*/
+				}
+			}
+		}
+	}
+	return haxeVal
+	/*
+		bits64 := *(*uint64)(unsafe.Pointer(&f))
+		bitVal := exact.MakeUint64(bits64)
+		h, l := pogo.IntVal(bitVal, position)
+		bitStr := fmt.Sprintf("GOint64.make(0x%x,0x%x)", uint32(h), uint32(l))
+		return "Force.float64const(" + bitStr + "," + haxeVal + ")"
+	*/
+}
+
 func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 	if lit.Value == nil {
 		return "Dynamic", "null"
@@ -179,43 +267,79 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 			pogo.LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown string type"))
 		}
 	case exact.Float:
-		return "Float", pogo.Float64Val(lit.Value, position)
+		switch lit.Type().Underlying().(*types.Basic).Kind() {
+		case types.Float32:
+			return "Float", constFloat64(lit, 32, position)
+		default:
+			return "Float", constFloat64(lit, 64, position)
+		}
 	case exact.Int:
 		h, l := pogo.IntVal(lit.Value, position)
 		switch lit.Type().Underlying().(*types.Basic).Kind() {
-		case types.Int64, types.Uint64:
-			return "GOint64", fmt.Sprintf("GOint64.make(0x%x,0x%x)", uint32(h), uint32(l))
-		case types.Float32, types.Float64, types.UntypedFloat:
-			return "Float", pogo.Float64Val(lit.Value, position)
-		case types.Complex64, types.Complex128:
-			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.Float64Val(lit.Value, position))
+		case types.Int64:
+			return "GOint64", fmt.Sprintf("Force.toInt64(GOint64.make(0x%x,0x%x))", uint32(h), uint32(l))
+		case types.Uint64:
+			return "GOint64", fmt.Sprintf("Force.toUint64(GOint64.make(0x%x,0x%x))", uint32(h), uint32(l))
+		case types.Float32:
+			return "Float", constFloat64(lit, 32, position)
+		case types.Float64, types.UntypedFloat:
+			return "Float", constFloat64(lit, 64, position)
+		case types.Complex64:
+			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.FloatVal(lit.Value, 32, position))
+		case types.Complex128:
+			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.FloatVal(lit.Value, 64, position))
 		default:
 			if h != 0 && h != -1 {
-				pogo.LogWarning(position, "Haxe", fmt.Errorf("integer constant value > 32 bits, rendered as 64-bit : %v", lit.Value))
-				return "GOint64", fmt.Sprintf("GOint64.make(0x%x,0x%x)", uint32(h), uint32(l))
+				pogo.LogWarning(position, "Haxe", fmt.Errorf("integer constant value > 32 bits : %v", lit.Value))
 			}
+			ret := ""
 			switch lit.Type().Underlying().(*types.Basic).Kind() {
-			case types.Uint, types.Uint32, types.Uint16, types.Uint8:
+			case types.Uint, types.Uint32, types.Uintptr:
+				q := uint32(l)
+				ret = fmt.Sprintf(
+					" #if js untyped __js__(\"0x%x\") #elseif php untyped __php__(\"0x%x\") #else 0x%x #end ",
+					q, q, q)
+			case types.Uint16:
+				q := uint16(l)
+				ret = fmt.Sprintf(" 0x%x ", q)
+			case types.Uint8: // types.Byte
+				q := uint8(l)
+				ret = fmt.Sprintf(" 0x%x ", q)
+			case types.Int, types.Int32, types.UntypedRune, types.UntypedInt: // types.Rune
 				if l < 0 {
-					q := uint64(l) & 0xFFFFFFFF
-					return "Int", fmt.Sprintf(
-						" #if js untyped __js__(\"0x%x\") #elseif php untyped __php__(\"0x%x\") #else 0x%x #end ",
-						q, q, q)
+					ret = fmt.Sprintf("(%d)", int32(l))
+				} else {
+					ret = fmt.Sprintf("%d", int32(l))
 				}
-				return "Int", fmt.Sprintf(" (%d) ", l)
+			case types.Int16:
+				if l < 0 {
+					ret = fmt.Sprintf("(%d)", int16(l))
+				} else {
+					ret = fmt.Sprintf("%d", int16(l))
+				}
+			case types.Int8:
+				if l < 0 {
+					ret = fmt.Sprintf("(%d)", int8(l))
+				} else {
+					ret = fmt.Sprintf("%d", int8(l))
+				}
 			default:
-				if l < 0 {
-					return "Int", fmt.Sprintf("(%d)", l)
-				}
-				return "Int", fmt.Sprintf("%d", l)
+				panic("haxe.Const() unhandled integer constant for: " +
+					lit.Type().Underlying().(*types.Basic).String())
 			}
+			return "Int", ret
 		}
 	case exact.Unknown: // not sure we should ever get here!
 		return "Dynamic", "null"
 	case exact.Complex:
 		realV, _ := exact.Float64Val(exact.Real(lit.Value))
 		imagV, _ := exact.Float64Val(exact.Imag(lit.Value))
-		return "Complex", fmt.Sprintf("new Complex(%g,%g)", realV, imagV)
+		switch lit.Type().Underlying().(*types.Basic).Kind() {
+		case types.Complex64:
+			return "Complex", fmt.Sprintf("new Complex(%g,%g)", float32(realV), float32(imagV))
+		default:
+			return "Complex", fmt.Sprintf("new Complex(%g,%g)", realV, imagV)
+		}
 	default:
 		pogo.LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown constant type: %v", lit.Value.Kind()))
 	}

@@ -8,7 +8,6 @@
 package main
 
 import (
-	"math"
 	"runtime"
 	"unicode/utf8"
 	"unsafe"
@@ -360,14 +359,11 @@ func testStruct() {
 	}
 }
 func Sqrt(x float64) float64 {
-	return math.Sqrt(x)
-	/* to reduce the trace size
 	z := x
 	for i := 0; i < 1000; i++ {
 		z -= (z*z - x) / (2.0 * x)
 	}
 	return z
-	*/
 }
 
 func testFloat() { // and also slices!
@@ -898,15 +894,20 @@ func testIntOverflow() { //TODO add int64
 	//TEQint64(""+" NaN ->int64 conversion", int64(math.NaN()), -9223372036854775808)
 	//TEQuint64(""+" NaN ->uint64 conversion (error on php)", uint64(math.NaN()), 9223372036854775808)
 
-	myPi := float64(7)
+	myPi := float64(3)
 	myPi64 := int64(myPi)
 	myPu64 := uint64(myPi)
 	limit := float64(1 << 52)
+	loops := 0
 	for myPi < limit {
+		loops++
 		a := TEQint64(""+" +ve float->int64 conversion  ", int64(myPi), myPi64)
 		b := TEQint64(""+" -ve float->int64 conversion  ", int64(-myPi), -myPi64)
 		c := TEQuint64(""+" float->uint64 conversion  ", uint64(myPi), myPu64)
-		if a == false || b == false || c == false {
+		d := TEQfloat(""+" int64->Float conversion  ", myPi, float64(myPi64), 0)
+		e := TEQfloat(""+" uint64->Float conversion  ", myPi, float64(myPu64), 0)
+		if a == false || b == false || c == false || d == false || e == false {
+			println("i64 loops=", loops, "myPi=", myPi, "myPi64=", myPi64, "myPu64=", myPu64)
 			break
 		}
 		myPi *= myPi
@@ -1303,7 +1304,9 @@ func testInterfaceMethods() {
 	TEQfloat(""+"testInterfaceMethods():y.Abs()", y.Abs(), float64(5), 0.000001)
 	TEQfloat(""+"testInterfaceMethods():*Vertex.Scale(10)", a.Scale(10), float64(50), 0.000001)
 	//println(y)
-	TEQfloat(""+"testInterfaceMethods():y.Scale(10)", y.Scale(10), float64(500), 0.01)
+	TEQfloat(""+"testInterfaceMethods():y.Scale(10)", y.Scale(10),
+		float64(653.351098686295472), 0.01) // crazey number because Sqrt fn is an approximisation
+	//println(y)
 
 	// a=vt // a Vertex, does NOT
 
@@ -1653,8 +1656,48 @@ func testUnsafe() { // adapted from http://stackoverflow.com/questions/19721008/
 	m[0] = 987
 	// (we have to recast the uintptr to a *int to examine it)
 	TEQint32("", m[0], *(*int32)(mPtr))
-	TEQuint32("Fails if not in little-endian unsafe mode", 219, (uint32)(*(*uint8)(mPtr)))
+	if hx.GetBool("", "Object.nativeFloats") {
+		TEQuint32("Only works in fullunsafe mode", 219, (uint32)(*(*uint8)(mPtr)))
+	}
+}
 
+func tc64(f float64) float64 {
+	return hx.CallFloat("", "Go_haxegoruntime_FFloat64frombits.callFromHaxe", 1,
+		hx.CallDynamic("", "Go_haxegoruntime_FFloat64bits.callFromHaxe", 1, f))
+}
+
+const (
+	SmallestNormalFloat64   = 2.2250738585072014e-308 // 2**-1022
+	LargestSubnormalFloat64 = SmallestNormalFloat64 - SmallestNonzeroFloat64
+
+	MaxFloat32             = 3.40282346638528859811704183484516925440e+38  // 2**127 * (2**24 - 1) / 2**23
+	SmallestNonzeroFloat32 = 1.401298464324817070923729583289916131280e-45 // 1 / 2**(127 - 1 + 23)
+
+	MaxFloat64             = 1.797693134862315708145274237317043567981e+308 // 2**1023 * (2**53 - 1) / 2**52
+	SmallestNonzeroFloat64 = 4.940656458412465441765687928682213723651e-324 // 1 / 2**(1023 - 1 + 52)
+)
+
+func testFloatConv() {
+	if runtime.GOARCH != "neko" {
+		TEQ("SmallestNormalFloat64", SmallestNormalFloat64, tc64(SmallestNormalFloat64))
+		TEQ("LargestSubnormalFloat64", LargestSubnormalFloat64, tc64(LargestSubnormalFloat64))
+		TEQ("MaxFloat32", MaxFloat32, tc64(MaxFloat32))
+		TEQ("SmallestNonzeroFloat32", SmallestNonzeroFloat32, tc64(SmallestNonzeroFloat32))
+		TEQ("MaxFloat64", MaxFloat64, tc64(MaxFloat64))
+		TEQ("SmallestNonzeroFloat64", SmallestNonzeroFloat64, tc64(SmallestNonzeroFloat64))
+		TEQ("42.42", 42.42, tc64(42.42))
+		pi := tc64(hx.GetFloat("", "Math.POSITIVE_INFINITY"))
+		if pi <= MaxFloat64 {
+			println("testFloatConv() POSITIVE_INFINITY invalid")
+		}
+		ni := tc64(hx.GetFloat("", "Math.NEGATIVE_INFINITY"))
+		if ni >= SmallestNonzeroFloat64 {
+			println("testFloatConv() NEGATIVE_INFINITY invalid")
+		}
+		if hx.GetFloat("", "Math.NaN") == tc64(hx.GetFloat("", "Math.NaN")) {
+			println("testFloatConv() NaN == NaN")
+		}
+	}
 }
 
 type ObjKey [2]int
@@ -1712,6 +1755,7 @@ func main() {
 	testEmbed()
 	testUnsafe()
 	testObjMap()
+	testFloatConv()
 	//aGrWG.Wait()
 	TEQint32(""+" testManyGoroutines() (NOT sync/atomic) counter:", aGrCtr, 0)
 	if runtime.GOOS == "nacl" { // really a haxe emulation of nacl

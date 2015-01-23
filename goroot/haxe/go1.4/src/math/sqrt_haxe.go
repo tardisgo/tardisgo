@@ -6,6 +6,8 @@
 
 package math
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 // The original C code and the long comment below are
 // from FreeBSD's /usr/src/lib/msun/src/e_sqrt.c and
 // came with this notice.  The go code is a simplified
@@ -91,9 +93,9 @@ package math
 //	Sqrt(±0) = ±0
 //	Sqrt(x < 0) = NaN
 //	Sqrt(NaN) = NaN
-func Sqrt(x float64) float64 {
+func Sqrt(x float64) float64 { return hx.CallFloat("", "Math.sqrt", 1, x) }
 
-	//func sqrt(x float64) float64 {
+func sqrt(x float64) float64 {
 	// special cases
 	switch {
 	case x == 0 || IsNaN(x) || IsInf(x, 1):

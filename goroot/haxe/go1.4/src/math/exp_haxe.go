@@ -6,6 +6,8 @@
 
 package math
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 // Exp returns e**x, the base-e exponential of x.
 //
 // Special cases are:
@@ -13,8 +15,9 @@ package math
 //	Exp(NaN) = NaN
 // Very large values overflow to 0 or +Inf.
 // Very small values underflow to 1.
-func Exp(x float64) float64 {
+func Exp(x float64) float64 { return hx.CallFloat("", "Math.exp", 1, x) }
 
+func exp(x float64) float64 {
 	// The original C code, the long comment, and the constants
 	// below are from FreeBSD's /usr/src/lib/msun/src/e_exp.c
 	// and came with this notice.  The go code is a simplified

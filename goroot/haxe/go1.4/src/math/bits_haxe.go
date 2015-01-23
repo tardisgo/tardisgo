@@ -42,7 +42,10 @@ func IsNaN(f float64) (is bool) {
 	// To avoid the floating-point hardware, could use:
 	//	x := Float64bits(f);
 	//	return uint32(x>>shift)&mask == mask && x != uvinf && x != uvneginf
+
 	return f != f
+
+	//return hx.CallBool("", "Math.isNaN", 1, f) // TODO simple comparison may be faster, but this allows for platform specifics
 }
 
 // IsInf reports whether f is an infinity, according to sign.
@@ -54,7 +57,22 @@ func IsInf(f float64, sign int) bool {
 	// To avoid the floating-point hardware, could use:
 	//	x := Float64bits(f);
 	//	return sign >= 0 && x == uvinf || sign <= 0 && x == uvneginf;
+
 	return sign >= 0 && f > MaxFloat64 || sign <= 0 && f < -MaxFloat64
+
+	// Having trouble encoding MaxFloat64 reliably in Haxe, so rewritten below
+	/*
+		if hx.CallBool("", "Math.isFinite", 1, f) {
+			return false
+		}
+		if sign == 0 {
+			return true
+		}
+		if sign > 0 {
+			return f > 0
+		}
+		return sign < 0
+	*/
 }
 
 // normalize returns a normal number y and exponent exp

@@ -6,6 +6,8 @@
 
 package math
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 /*
 	Floating-point arctangent.
 */
@@ -94,9 +96,9 @@ func satan(x float64) float64 {
 // Special cases are:
 //      Atan(±0) = ±0
 //      Atan(±Inf) = ±Pi/2
-func Atan(x float64) float64 {
+func Atan(x float64) float64 { return hx.CallFloat("", "Math.atan", 1, x) }
 
-	//func atan(x float64) float64 {
+func atan(x float64) float64 {
 	if x == 0 {
 		return x
 	}

@@ -92,16 +92,24 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			}
 			return "Channel<" + l.LangType(t.(*types.Chan).Elem(), false, errorInfo) + ">"
 		case *types.Map:
-			key := l.LangType(t.(*types.Map).Key(), false, errorInfo)
-			if key != "Int" {
-				key = "String" // everything except Int as keys must be serialized into strings
-			}
 			if retInitVal {
-				return "new Map<" + key + ",{key:" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + ",val:" +
-					l.LangType(t.(*types.Map).Elem(), false, errorInfo) + "}>()"
+				return "new GOmap(" +
+					l.LangType(t.(*types.Map).Key(), true, errorInfo) + "," +
+					l.LangType(t.(*types.Map).Elem(), true, errorInfo) + ")"
 			}
-			return "Map<" + key + ",{key:" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + ",val:" +
-				l.LangType(t.(*types.Map).Elem(), false, errorInfo) + "}>"
+			return "GOmap"
+			/*
+				key := l.LangType(t.(*types.Map).Key(), false, errorInfo)
+				if key != "Int" {
+					key = "String" // everything except Int as keys must be serialized into strings
+				}
+				if retInitVal {
+					return "new Map<" + key + ",{key:" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + ",val:" +
+						l.LangType(t.(*types.Map).Elem(), false, errorInfo) + "}>()"
+				}
+				return "Map<" + key + ",{key:" + l.LangType(t.(*types.Map).Key(), false, errorInfo) + ",val:" +
+					l.LangType(t.(*types.Map).Elem(), false, errorInfo) + "}>"
+			*/
 		case *types.Slice:
 			if retInitVal {
 				return "new Slice(new Pointer(" + //l.LangType(t.(*types.Slice).Elem(), false, errorInfo) +
@@ -185,7 +193,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 
 func (l langType) Convert(register, langType string, destType types.Type, v interface{}, errorInfo string) string {
 	srcTyp := l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo)
-	if srcTyp == langType { // no cast required because the Haxe type is the same
+	if srcTyp == langType && langType != "Float" { // no cast required because the Haxe type is the same
 		return register + "=" + l.IndirectValue(v, errorInfo) + ";"
 	}
 	switch langType { // target Haxe type
@@ -286,6 +294,13 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 				return register + "=GOint64.toUFloat(GOint64.make(0," + l.IndirectValue(v, errorInfo) + "));"
 			}
 			return register + "=" + l.IndirectValue(v, errorInfo) + ";" // just the default conversion to float required
+		case "Float":
+			if v.(ssa.Value).Type().Underlying().(*types.Basic).Kind() == types.Float64 &&
+				destType.Underlying().(*types.Basic).Kind() == types.Float32 {
+				return register + "=Force.toFloat32(" +
+					l.IndirectValue(v, errorInfo) + ");" // need to truncate to float32
+			}
+			return register + "=" + l.IndirectValue(v, errorInfo) + ";" // just the default assignment
 		default:
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 		}
@@ -400,10 +415,109 @@ func getHaxeClass(fullname string) string { // NOTE capital letter de-doubling n
 	return ""
 }
 
+func preprocessTypeName(v string) string {
+	s := ""
+	hadbackslash := false
+	content := strings.Trim(v, `"`)
+	for _, c := range content {
+		if hadbackslash {
+			hadbackslash = false
+			s += string(c)
+		} else {
+			switch c {
+			case '"': // the reason we are here - orphan ""
+				s += "\\\""
+			case '\\':
+				hadbackslash = true
+				s += string(c)
+			default:
+				s += string(c)
+			}
+		}
+	}
+	return s
+}
+
+func getTypeInfo(t types.Type, tname string) (fieldAlign int, kind reflect.Kind, name string) {
+	if tname != "" {
+		name = tname
+	}
+	switch t.(type) {
+	case *types.Basic:
+		tb := t.(*types.Basic)
+		switch tb.Kind() {
+		case types.Bool:
+			kind = reflect.Bool
+		case types.Int:
+			kind = reflect.Int
+		case types.Int8:
+			kind = reflect.Int8
+		case types.Int16:
+			kind = reflect.Int16
+		case types.Int32:
+			kind = reflect.Int32
+		case types.Int64:
+			kind = reflect.Int64
+		case types.Uint:
+			kind = reflect.Uint
+		case types.Uint8:
+			kind = reflect.Uint8
+		case types.Uint16:
+			kind = reflect.Uint16
+		case types.Uint32:
+			kind = reflect.Uint32
+		case types.Uint64:
+			kind = reflect.Uint64
+		case types.Uintptr:
+			kind = reflect.Uintptr
+		case types.Float32:
+			kind = reflect.Float32
+		case types.Float64:
+			kind = reflect.Float64
+		case types.Complex64:
+			kind = reflect.Complex64
+		case types.Complex128:
+			kind = reflect.Complex128
+		case types.UnsafePointer:
+			kind = reflect.UnsafePointer
+		case types.String:
+			kind = reflect.String
+		default:
+			panic("pogo.getTypeinfo() unhandled basic type")
+		}
+
+	case *types.Array:
+		kind = reflect.Array
+	case *types.Chan:
+		kind = reflect.Chan
+	case *types.Signature:
+		kind = reflect.Func
+	case *types.Interface:
+		kind = reflect.Interface
+	case *types.Map:
+		kind = reflect.Map
+	case *types.Pointer:
+		kind = reflect.Ptr
+	case *types.Slice:
+		kind = reflect.Slice
+	case *types.Struct:
+		kind = reflect.Struct
+	case *types.Named:
+		if tname == "" {
+			tname = t.(*types.Named).Obj().Name() // only do this for the top-level type name
+		}
+		return getTypeInfo(t.Underlying(), tname)
+	default:
+		panic(fmt.Sprintf("pogo.getTypeinfo() unhandled type: %T", t))
+
+	}
+	return
+}
+
 func (l langType) EmitTypeInfo() string {
 	var ret string
 
-	ret += "class TypeInfo{\n"
+	ret += fmt.Sprintf("class TypeInfo{\npublic static var nextTypeID=%d;\n", pogo.NextTypeID)
 	pte := pogo.TypesEncountered
 	pteKeys := pogo.TypesEncountered.Keys()
 
@@ -412,6 +526,44 @@ func (l langType) EmitTypeInfo() string {
 		v := pte.At(pteKeys[k]).(int)
 		typesByID[v] = pteKeys[k]
 	}
+
+	ret += "public static var typesByID:Array<{ // mirrors reflect.rtype etc\n"
+	ret += "\tisValid:Bool,\n"
+	ret += "\tsize:Int,\n"
+	ret += "\talign:Int,\n"
+	ret += "\tfieldAlign:Int,\n"
+	ret += "\tkind:Int,\n"
+	ret += "\tstringForm:String,\n"
+	ret += "\tname:String,\n"
+	ret += "\t//pkgPath:String,\n"
+	ret += "\t//ptrToThis:Int,\n"
+	ret += "\t//zero:Dynamic\n"
+	ret += "}>=[\n"
+	for _, t := range typesByID {
+		if t == nil {
+			ret += "{\n"
+			ret += fmt.Sprintf("\tisValid: false,\n")
+			ret += fmt.Sprintf("\tsize: %d,\n", 0)
+			ret += fmt.Sprintf("\talign: %d,\n", 0)
+			ret += fmt.Sprintf("\tfieldAlign: %d,\n", 0)
+			ret += fmt.Sprintf("\tkind: %d,\n", 0)
+			ret += fmt.Sprintf("\tstringForm: %s,\n", `""`)
+			ret += fmt.Sprintf("\tname: %s,\n", `""`)
+			ret += "},\n"
+		} else {
+			fieldAlign, kind, name := getTypeInfo(t, "")
+			ret += "{\n"
+			ret += fmt.Sprintf("\tisValid: true,\n")
+			ret += fmt.Sprintf("\tsize: %d,\n", haxeStdSizes.Sizeof(t))
+			ret += fmt.Sprintf("\talign: %d,\n", haxeStdSizes.Alignof(t))
+			ret += fmt.Sprintf("\tfieldAlign: %d,\n", fieldAlign)
+			ret += fmt.Sprintf("\tkind: %d,\n", kind)
+			ret += fmt.Sprintf("\tstringForm: %s,\n", haxeStringConst(`"`+preprocessTypeName(t.String())+`"`, "CompilerInternal:haxe.EmitTypeInfo()"))
+			ret += fmt.Sprintf("\tname: %s,\n", haxeStringConst(`"`+name+`"`, "CompilerInternal:haxe.EmitTypeInfo()"))
+			ret += "},\n"
+		}
+	}
+	ret += "];\n"
 
 	// TODO review if this is  required
 	ret += "public static function isHaxeClass(id:Int):Bool {\nswitch(id){" + "\n"
@@ -426,32 +578,13 @@ func (l langType) EmitTypeInfo() string {
 	}
 	ret += `default: return false;}}` + "\n"
 
-	ret += "public static function getName(id:Int):String {\nswitch(id){" + "\n"
-	for k, v := range typesByID {
-		s := ""
-		hadbackslash := false
-		content := strings.Trim(v.String(), `"`)
-		for _, c := range content {
-			if hadbackslash {
-				hadbackslash = false
-				s += string(c)
-			} else {
-				switch c {
-				case '"': // the reason we are here - orphan ""
-					s += "\\\""
-				case '\\':
-					hadbackslash = true
-					s += string(c)
-				default:
-					s += string(c)
-				}
-			}
-		}
-		ret += "case " + fmt.Sprintf("%d", k) + `: return ` +
-			haxeStringConst(`"`+s+`"`, "CompilerInternal:haxe.EmitTypeInfo()") +
-			`;` + "\n"
-	}
-	ret += `default: return "UNKNOWN";}}` + "\n"
+	ret += "public static function getName(id:Int):String {\n\tif(id<0||id>=nextTypeID)return \"UNKNOWN\";" + "\n"
+	//for k, v := range typesByID {
+	//	ret += "case " + fmt.Sprintf("%d", k) + `: return ` +
+	//		haxeStringConst(`"`+preprocessTypeName(v.String())+`"`, "CompilerInternal:haxe.EmitTypeInfo()") +
+	//		`;` + "\n"
+	//}
+	ret += "\t" + `return typesByID[id].stringForm;` + "\n}\n"
 
 	ret += "public static function typeString(i:Interface):String {\nreturn getName(i.typ);\n}\n"
 
@@ -459,41 +592,22 @@ func (l langType) EmitTypeInfo() string {
 	deDup := make(map[string]bool)
 	for k := range pteKeys {
 		v := pte.At(pteKeys[k])
-		s := ""
-		hadbackslash := false
-		content := strings.Trim(pteKeys[k].String(), `"`)
-		for _, c := range content {
-			if hadbackslash {
-				hadbackslash = false
-				s += string(c)
-			} else {
-				switch c {
-				case '"': // the reason we are here - orphan ""
-					s += "\\\""
-				case '\\':
-					hadbackslash = true
-					s += string(c)
-				default:
-					s += string(c)
-				}
-			}
-		}
-		nam := haxeStringConst("`"+s+"`", "CompilerInternal:haxe.EmitTypeInfo()")
+		nam := haxeStringConst("`"+preprocessTypeName(pteKeys[k].String())+"`", "CompilerInternal:haxe.EmitTypeInfo()")
 		if len(nam) != 0 {
 			if deDup[nam] { // have one already!!
 				nam = fmt.Sprintf("%s (duplicate type name! this id=%d)\"", nam[:len(nam)-1], v)
 			} else {
 				deDup[nam] = true
 			}
-		} else {
-			nam = fmt.Sprintf("(empty type name! this id=%d)\"", v)
+			ret += ` ` + nam + ` => ` + fmt.Sprintf("%d", v) + `,` + "\n"
 		}
-		ret += ` ` + nam + ` => ` + fmt.Sprintf("%d", v) + `,` + "\n"
 	}
 	ret += "];\n"
 	ret += "public static function getId(name:String):Int {\n"
-	ret += "\tvar t=typIDs[name];\n"
-	ret += "\treturn t==null?-1:t;\n}\n"
+	ret += "\tvar t:Int;\n"
+	ret += "\ttry { t=typIDs[name];\n"
+	ret += "\t} catch(x:Dynamic) { trace(\"DEBUG: TraceInfo.getId()\",name,x); t=-1; } ;\n"
+	ret += "\treturn t;\n}\n"
 
 	//emulation of: func IsAssignableTo(V, T Type) bool
 	ret += "public static function isAssignableTo(v:Int,t:Int):Bool {\nif(v==t) return true;\nswitch(v){" + "\n"

@@ -11,9 +11,6 @@ import (
 
 	"golang.org/x/tools/go/exact"
 	"golang.org/x/tools/go/ssa"
-
-	// TARDIS Go included runtime libraries, so that they get installed and the SSA code can go and load their binary form
-	_ "github.com/tardisgo/tardisgo/haxe/haxegoruntime"
 )
 
 // global variables to save having to pass them about (TODO these, and other, status vars should be in a structure)
