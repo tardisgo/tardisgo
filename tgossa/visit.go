@@ -63,7 +63,7 @@ func (visit *visitor) program(isOvl isOverloaded) {
 			}
 		}
 	}
-	for _, T := range visit.prog.TypesWithMethodSets() {
+	for _, T := range visit.prog.RuntimeTypes() {
 		mset := visit.prog.MethodSets.MethodSet(T)
 		for i, n := 0, mset.Len(); i < n; i++ {
 			mf := visit.prog.Method(mset.At(i))

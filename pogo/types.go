@@ -67,7 +67,7 @@ func LogTypeUse(t types.Type) string {
 
 // TypesWithMethodSets in a utility function to only return seen types
 func TypesWithMethodSets() (sets []types.Type) {
-	typs := rootProgram.TypesWithMethodSets()
+	typs := rootProgram.RuntimeTypes()
 	for _, t := range typs {
 		if TypesEncountered.At(t) != nil {
 			sets = append(sets, t)
