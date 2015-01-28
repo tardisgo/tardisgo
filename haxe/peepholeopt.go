@@ -31,7 +31,7 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 		for _, cod := range code[1:] {
 			switch cod.(type) {
 			case *ssa.Index:
-				idx := wrapForce_toInt(l.IndirectValue(cod.(*ssa.Index).Index, errorInfo),
+				idx := wrapForce_toUInt(l.IndirectValue(cod.(*ssa.Index).Index, errorInfo),
 					cod.(*ssa.Index).Index.Type().Underlying().(*types.Basic).Kind())
 				ret += fmt.Sprintf(".addr(%s%s)",
 					idx,

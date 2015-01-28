@@ -542,6 +542,7 @@ func (t *uncommonType) MethodByName(name string) (m Method, ok bool) {
 func (t *rtype) NumMethod() int {
 	panic("reflect.NumMethod not yet implemented")
 	if t.Kind() == Interface {
+		panic("reflect.NumMethod unhandled *interface ")
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.NumMethod()
 	}
@@ -549,7 +550,7 @@ func (t *rtype) NumMethod() int {
 }
 
 func (t *rtype) Method(i int) (m Method) {
-	panic("reflect.Method not yet implemented")
+	panic("reflect.Method not yet implemented - *interfce")
 	if t.Kind() == Interface {
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.Method(i)
@@ -558,7 +559,7 @@ func (t *rtype) Method(i int) (m Method) {
 }
 
 func (t *rtype) MethodByName(name string) (m Method, ok bool) {
-	panic("reflect.MethodByName not yet implemented")
+	panic("reflect.MethodByName not yet implemented - *interface")
 	if t.Kind() == Interface {
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.MethodByName(name)
@@ -593,15 +594,16 @@ func (t *rtype) IsVariadic() bool {
 }
 
 func (t *rtype) Elem() Type {
-	panic("reflect.Elem not yet implemented")
 	switch t.Kind() {
 	case Array:
 		tt := (*arrayType)(unsafe.Pointer(t))
 		return toType(tt.elem)
 	case Chan:
+		panic("reflect.Elem not yet implemented")
 		tt := (*chanType)(unsafe.Pointer(t))
 		return toType(tt.elem)
 	case Map:
+		panic("reflect.Elem not yet implemented")
 		tt := (*mapType)(unsafe.Pointer(t))
 		return toType(tt.elem)
 	case Ptr:

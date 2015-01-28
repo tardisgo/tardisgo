@@ -130,7 +130,11 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				v=v.val; 						// it is in an interface, so get the value
 				return toInt(v); 				// recurse to handle 64-bit or float or uintptr
 			} else								// it should be an Int64 if not an interface
-				return GOint64.toInt(v);	
+				if(Std.is(v,Pointer)) {
+					Scheduler.panicFromHaxe("attempt to do Pointer arithmetic"); 
+					return 0;
+				}else
+					return GOint64.toInt(v);	
 		else
 			if(Std.is(v,Int))
 				return v;
@@ -723,7 +727,7 @@ class Object { // this implementation will improve with typed array access
 		#if (js && fullunsafe)
 			dView.setUint8(i,v);
 		#elseif !fullunsafe
-			iVec[i]=v;
+			iVec[i]=v&0xff;
 		#else
 			byts.set(i,v&0xff);
 		#end
@@ -732,7 +736,7 @@ class Object { // this implementation will improve with typed array access
 		#if (js && fullunsafe)
 			dView.setUint16(i,v,true); // little-endian
 		#elseif !fullunsafe
-			iVec[i]=v;
+			iVec[i]=v&0xffff;
 		#else
 			set_uint8(i,v); 
 			set_uint8(i+1,v>>8); 
@@ -742,7 +746,7 @@ class Object { // this implementation will improve with typed array access
 		#if (js && fullunsafe)
 			dView.setUint32(i,v,true); // little-endian
 		#elseif !fullunsafe
-			iVec[i]=v;
+			iVec[i]=Force.toUint32(v);
 		#else
 			set_uint16(i,v);
 			set_uint16(i+2,v>>16); 
@@ -936,7 +940,7 @@ class Slice {
 	public var itemSize:Int; // for the size of each item in bytes 
 	private var start:Int;
 	private var end:Int;
-	private var capacity:Int;
+	private var capacity:Int; // in items
 
 	public var length(get, null):Int;
 	function get_length():Int {
@@ -1156,23 +1160,27 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 				return new Interface(t,TypeInfo.zeroValue(t));	 //dummy value as we have hit the panic button
 			}
 	}
-	public static function isEqual(a:Interface,b:Interface):Bool {		// TODO ensure this very wide definition of equality is OK 
-		// TODO add code to deal with overloaded types?
+	public static function isEqual(a:Interface,b:Interface):Bool {		
+	// TODO ensure this very wide definition of equality is OK 
+	// TODO is another special case required for Slice/Object?
 		if(a==null) 
 			if(b==null) return true;
 			else 		return false;
 		if(b==null)		
 			return false;
 		if(! (TypeInfo.isIdentical(a.typ,b.typ)||TypeInfo.isAssignableTo(a.typ,b.typ)||	TypeInfo.isAssignableTo(b.typ,a.typ)) ) 
-			return false;
-		else
-			if(a.val==b.val) 
-				return true; // simple equality
-			else // could still be equal underneath a pointer    //TODO is another special case required for Slice?
-				if(Std.is(a.val,Pointer) && Std.is(b.val,Pointer))
-					return a.val.isEqual(b.val);
-				else
-					return false;	
+			return false;	
+		if(a.val==b.val) 
+			return true; // simple equality
+		if(Reflect.isObject(a.val) && Reflect.isObject(b.val)){
+			if(Std.is(a.val,Pointer) && Std.is(b.val,Pointer))
+				return Pointer.isEqual(a.val,b.val); // could still be equal within a Pointer type     
+			if(Std.is(a.val,Interface) && Std.is(b.val,Interface))
+				return isEqual(a.val,b.val); // recurse for interfaces     
+			// assume GOint64 - Std.is() does not work for abstract types
+			return GOint64.compare(a.val,b.val)==0;
+		}
+		return false;	
 	}			
 	/* from the SSA documentation:
 	If AssertedType is a concrete type, TypeAssert checks whether the dynamic type in Interface X is equal to it, and if so, 
@@ -1349,19 +1357,22 @@ public static inline function getHigh(v:HaxeInt64abs):Int {
 
 public static inline function toInt(v:HaxeInt64abs):Int {
 
-/* TODO re-optimize to use cs and java base i64 types once all working
-	#if java 
-		return HaxeInt64Typedef.toInt(v); // NOTE: java version just returns low 32 bits
-	#else
-*/
+// TODO re-optimize to use cs and java base i64 types once all working
+//	#if java 
+//		return HaxeInt64Typedef.toInt(v); // NOTE: java version just returns low 32 bits
+//	#else
+//
 		return HaxeInt64Typedef.getLow(v); // NOTE: does not throw an error if value overflows Int
 
-/* TODO re-optimize to use cs and java base i64 types once all working
-	#end
-*/
+// TODO re-optimize to use cs and java base i64 types once all working
+//	#end
+
 }
 public static inline function ofInt(v:Int):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.ofInt(v));
+}
+public static inline function ofUInt(v:Int):HaxeInt64abs {
+	return make(0,v);
 }
 public static function toFloat(vp:HaxeInt64abs):Float{ // signed int64 to float (TODO auto-cast of Unsigned pos problem)
 		//TODO native versions for java & cs
@@ -1372,15 +1383,7 @@ public static function toFloat(vp:HaxeInt64abs):Float{ // signed int64 to float 
 			isNegVal=true;
 			v=neg(v);	
 		}
-		var ret:Float=0.0;
-		var multiplier:Float=1.0;
-		var one:HaxeInt64abs=make(0,1);
-		for(i in 0...63) { // TODO improve speed by calculating more than 1 bit at a time
-			if(!isZero(and(v,one)))
-				ret += multiplier;
-			multiplier *= 2.0;
-			v=ushr(v,1);
-		}
+		var ret:Float=toUFloat(v);
 		if(isNegVal) return -ret;
 		return ret;
 }
@@ -1390,7 +1393,7 @@ public static function toUFloat(vp:HaxeInt64abs):Float{ // unsigned int64 to flo
 		var ret:Float=0.0;
 		var multiplier:Float=1.0;
 		var one:HaxeInt64abs=make(0,1);
-		for(i in 0...64) { // TODO improve speed by calculating more than 1 bit at a time
+		for(i in 0...64) { 
 			if(!isZero(and(v,one)))
 	 			ret += multiplier;
 			multiplier *= 2.0;
@@ -1415,14 +1418,7 @@ public static function ofFloat(v):HaxeInt64abs { // float to signed int64 (TODO 
 			if(isNegVal)	return new HaxeInt64abs(HaxeInt64Typedef.make(0x80000000,0)); 			// largest -ve number
 			else			return new HaxeInt64abs(HaxeInt64Typedef.make(0x7fffffff,0xffffffff)); 	// largest +ve number
 		}
-		var f32:Float = 4294967296.0 ; // the number of combinations in 32-bits
-		var f16:Float = 65536.0; // the number of combinations in 16-bits
-		var high:Int = Math.floor(v/f32); 
-		var lowFloat:Float= Math.ffloor(v-(high*f32)) ;
-		var lowTop16:Int = Math.floor(lowFloat/f16) ;
-		var lowBot16:Int = Math.floor(lowFloat-(lowTop16*f16)) ;
-		var res:HaxeInt64Typedef = HaxeInt64Typedef.make(high,lowBot16);
-		res = HaxeInt64Typedef.or(res,HaxeInt64Typedef.shl(HaxeInt64Typedef.make(0,lowTop16),16));
+		var res:HaxeInt64Typedef = ofUFloat(v);
 		if(isNegVal) return new HaxeInt64abs(HaxeInt64Typedef.neg(res));
 		return new HaxeInt64abs(res);
 }
@@ -1438,13 +1434,16 @@ public static function ofUFloat(v):HaxeInt64abs { // float to un-signed int64
 		}
 		var f32:Float = 4294967296.0 ; // the number of combinations in 32-bits
 		var f16:Float = 65536.0; // the number of combinations in 16-bits
-		var high:Int = Math.floor(v/f32); 
-		var lowFloat:Float= Math.ffloor(v-(high*f32)) ;
-		var lowTop16:Int = Math.floor(lowFloat/f16) ;
-		var lowBot16:Int = Math.floor(lowFloat-(lowTop16*f16)) ;
-		var res:HaxeInt64Typedef = HaxeInt64Typedef.make(high,lowBot16);
-		res = HaxeInt64Typedef.or(res,HaxeInt64Typedef.shl(HaxeInt64Typedef.make(0,lowTop16),16));
-		return new HaxeInt64abs(res);
+		v = Math.ffloor(v); // remove any fractional part
+		var high:Float = Math.ffloor(v/f32);
+		var highTop16:Float = Math.ffloor(high/f16);
+		var highBot16:Float = high-(highTop16*f16);
+		var highBits:Int = Math.floor(highTop16)<<16 | Math.floor(highBot16);
+		var low:Float = v-(high*f32);
+		var lowTop16:Float = Math.ffloor(low/f16);
+		var lowBot16:Float = low-(lowTop16*f16);
+		var lowBits:Int = Math.floor(lowTop16)<<16 | Math.floor(lowBot16);
+		return HaxeInt64Typedef.make(highBits,lowBits);
 }
 public static inline function make(h:Int,l:Int):HaxeInt64abs {
 		return new HaxeInt64abs(HaxeInt64Typedef.make(h,l));
@@ -1552,8 +1551,7 @@ public static inline function compare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
 	return HaxeInt64Typedef.compare(x,y);
 }
 public static function ucompare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
-	#if ( java || cs )
-		// unsigned compare library code does not work properly for these platforms 
+	// unsigned compare library code does not work properly for all platforms 
 		if(HaxeInt64Typedef.isZero(x)) {
 			if(HaxeInt64Typedef.isZero(y)) {
 				return 0;
@@ -1573,13 +1571,13 @@ public static function ucompare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
 		}else { // x -ve
 			if(!HaxeInt64Typedef.isNeg(y)){ // -ve x larger than +ve y
 				return 1;
-			}else{ // both are -ve so the normal comparison
-				return HaxeInt64Typedef.compare(x,y); //eg -1::-7 gives -1--7 = +6 meaning -1 > -7 which is correct for unsigned
+			}else{ // both are -ve so the normal comparison works ok
+				return HaxeInt64Typedef.compare(x,y); 
 			}
 		}
-	#else
-	 	return HaxeInt64Typedef.ucompare(x,y);
-	#end
+	//#else
+	// 	return HaxeInt64Typedef.ucompare(x,y);
+	//#end
 }
 }
 
@@ -1908,10 +1906,12 @@ public function setLatest(ph:Int,blk:Int){ // this can be done inline, but gener
 }
 
 public inline function breakpoint(){
-	#if godebug
+	#if (godebug && (cpp || neko))
 		trace("GODEBUG: runtime.Breakpoint()");
 		_debugBP.set(_latestPH,true); // set a constant debug trap
 		setPH(_latestPH); // run the debugger
+	#else
+		//trace("GODEBUG: runtime.Breakpoint() to run debugger (cpp/neko only) use: haxe -D godebug");
 	#end
 }
 
@@ -2020,13 +2020,19 @@ public function setPH(ph:Int){
 						}
 					case "D","d":
 						fb[0]=Scheduler.stackDump();					
-					case "X","x":
+					case "P","p":
+						Scheduler.panicFromHaxe("panic from debugger");					
+						fb[0]="Panicing from debugger to exit program";
 						_debugBP=new Map<Int,Bool>();
 						_debugBP.set(-1,true); // unreachable break-point
-						fb[0]="exiting debugger";
+						stay=false;
+					case "X","x":
+						//_debugBP=new Map<Int,Bool>();
+						//_debugBP.set(-1,true); // unreachable break-point
+						fb[0]="eXecute program";
 						stay=false;
 					default:
-						fb[0]="commands: B=BrakePointList, S/R=Set/RemoveBP name line, C=ClearAllBP, L=Local name, G=Global name, M=Memory id offset, D=stackDump, X=eXit debugger";
+						fb[0]="commands: blank=step, B=BrakePointList, S/R=Set/RemoveBP name line, C=ClearAllBP, L=Local name, G=Global name, M=Memory id offset, D=stackDump, X=eXecute program, P=Panic (^C does not work)";
 					}
 					Console.println(fb);
 				}

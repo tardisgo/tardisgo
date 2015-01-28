@@ -84,7 +84,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 
 	if strings.HasSuffix(fnToCall, "IIface") {
 		argOff = 2
-		wrapStart += "new Interface(TypeInfo.getId(\"" + tgoString(l.IndirectValue(args[1], errorInfo), errorInfo) + "\"),{"
+		wrapStart += "new Interface(TypeInfo.getId(" + l.IndirectValue(args[1], errorInfo) + "),{"
 		wrapEnd = "});" + wrapEnd
 	}
 	code := ""

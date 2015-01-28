@@ -2,9 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 // Deep equality test via reflection
 
 package reflect
+
+import "unsafe"
 
 // During deepValueEqual, must keep track of checks that are
 // in progress.  The comparison algorithm assumes that all
@@ -75,7 +79,7 @@ func deepValueEqual(v1, v2 Value, visited map[visit]bool, depth int) bool {
 		if v1.Len() != v2.Len() {
 			return false
 		}
-		if v1.Pointer() == v2.Pointer() {
+		if unsafe.Pointer(v1.Pointer()) == unsafe.Pointer(v2.Pointer()) {
 			return true
 		}
 		for i := 0; i < v1.Len(); i++ {
@@ -105,7 +109,7 @@ func deepValueEqual(v1, v2 Value, visited map[visit]bool, depth int) bool {
 		if v1.Len() != v2.Len() {
 			return false
 		}
-		if v1.Pointer() == v2.Pointer() {
+		if unsafe.Pointer(v1.Pointer()) == unsafe.Pointer(v2.Pointer()) {
 			return true
 		}
 		for _, k := range v1.MapKeys() {

@@ -7,6 +7,7 @@ package pogo
 import (
 	"fmt"
 	"go/token"
+	"strconv"
 
 	"golang.org/x/tools/go/exact"
 	"golang.org/x/tools/go/ssa"
@@ -44,10 +45,7 @@ func FloatVal(eVal exact.Value, bits int, posStr string) string {
 	if !isExact {
 		LogWarning(posStr, "inexact", fmt.Errorf("constant value %g cannot be accurately represented in float64", fVal))
 	}
-	ret := fmt.Sprintf("%g", fVal)
-	if bits == 32 {
-		ret = fmt.Sprintf("%g", float32(fVal))
-	}
+	ret := strconv.FormatFloat(fVal, byte('g'), -1, bits)
 	if fVal < 0.0 {
 		return fmt.Sprintf("(%s)", ret)
 	}

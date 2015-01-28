@@ -30,9 +30,12 @@ func fieldOffset(str *types.Struct, fldNum int) int64 {
 }
 
 func arrayOffsetCalc(ele types.Type) string {
-	ent := types.NewVar(0, nil, "___temp", ele)
-	fieldList := []*types.Var{ent, ent}
-	off := haxeStdSizes.Offsetsof(fieldList)[1] // to allow for word alignment
+	/*
+		ent := types.NewVar(0, nil, "___temp", ele)
+		fieldList := []*types.Var{ent, ent}
+		off := haxeStdSizes.Offsetsof(fieldList)[1] // to allow for word alignment
+	*/
+	off := haxeStdSizes.Sizeof(ele) // ?? or should it be the code above ?
 	if off == 1 {
 		return ""
 	}
@@ -566,12 +569,14 @@ func (l langType) FieldAddr(register string, v interface{}, errorInfo string) st
 	return ""
 }
 
-func wrapForce_toInt(v string, k types.BasicKind) string {
+func wrapForce_toUInt(v string, k types.BasicKind) string {
 	switch k {
-	case types.Int64, types.Uint64, types.UntypedInt,
-		types.Float32, types.Float64, types.UntypedFloat,
-		types.Uintptr:
-		return "Force.toInt(" + v + ")" // TODO make this type-specific
+	case types.Uintptr:
+		return "Force.toInt(" + v + ")"
+	case types.Int64, types.Uint64:
+		return "GOint64.toInt(" + v + ")"
+	case types.Float32, types.Float64, types.UntypedFloat:
+		return "(" + v + "<=0?0:Math.floor(" + v + "))"
 	}
 	return v
 }
@@ -580,7 +585,7 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 	if register == "" {
 		return "" // we can't make an address if there is nowhere to put it...
 	}
-	idxString := wrapForce_toInt(l.IndirectValue(v.(*ssa.IndexAddr).Index, errorInfo),
+	idxString := wrapForce_toUInt(l.IndirectValue(v.(*ssa.IndexAddr).Index, errorInfo),
 		v.(*ssa.IndexAddr).Index.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	switch v.(*ssa.IndexAddr).X.Type().Underlying().(type) {
 	case *types.Pointer:
@@ -873,21 +878,15 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			switch args[0].Type().Underlying().(type) {
 			case *types.Chan, *types.Slice:
 				if fnToCall == "len" {
-					return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:_v.len();});"
+					return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:(_v.len());});"
 				}
 				// cap
-				return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:_v.cap();});"
-			case *types.Array: // assume len
+				return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:(_v.cap());});"
+			case *types.Array: // assume len (same as cap anyway)
 				return register + l.IndirectValue(args[0], errorInfo /*, false*/) + ".length;"
-			case *types.Map: // assume len(map) - requires counting the itterator
-				return register + l.IndirectValue(args[0], errorInfo) + "==null?0:" +
-					l.IndirectValue(args[0], errorInfo) + ".len();"
-				/*
-					"{var _l:Int=0;" + // TODO remove two uses of same variable
-					"var _it=" + l.IndirectValue(args[0], errorInfo) + ".iterator();" +
-					"while(_it.hasNext()) {_l++; _it.next();};" +
-					"_l;};"
-				*/
+			case *types.Map: // assume len(map)
+				return register + l.IndirectValue(args[0], errorInfo) + "==null?0:(" +
+					l.IndirectValue(args[0], errorInfo) + ".len());"
 			case *types.Basic: // assume string as anything else would have produced an error previously
 				return register + "Force.toUTF8length(this._goroutine," + l.IndirectValue(args[0], errorInfo /*, false*/) + ");"
 			default: // TODO handle other types?
@@ -1291,14 +1290,17 @@ func doCall(register, callCode string, usesGr bool) string {
 func allocNewObject(t types.Type) string {
 	typ := t.Underlying().(*types.Pointer).Elem().Underlying()
 	switch typ.(type) {
-	case *types.Array:
-		ao := haxeStdSizes.Alignof(typ.(*types.Array).Elem().Underlying())
-		so := haxeStdSizes.Sizeof(typ.(*types.Array).Elem().Underlying())
-		for so%ao != 0 {
-			so++
-		}
-		return fmt.Sprintf("new Object(%d) /* Array: %s */",
-			typ.(*types.Array).Len()*so, typ.String())
+
+	// this should not be required...
+	//case *types.Array:
+	//	ao := haxeStdSizes.Alignof(typ.(*types.Array).Elem().Underlying())
+	//	so := haxeStdSizes.Sizeof(typ.(*types.Array).Elem().Underlying())
+	//	for so%ao != 0 {
+	//		so++
+	//	}
+	//	return fmt.Sprintf("new Object(%d) /* Array: %s */",
+	//		typ.(*types.Array).Len()*so, typ.String())
+
 	default:
 		return fmt.Sprintf("new Object(%d) /* %s */",
 			haxeStdSizes.Sizeof(typ),
@@ -1364,10 +1366,10 @@ func newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize stri
 func (l langType) MakeSlice(reg string, v interface{}, errorInfo string) string {
 	typeElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), false, errorInfo)
 	initElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), true, errorInfo)
-	length := wrapForce_toInt(l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo),
+	length := wrapForce_toUInt(l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo),
 		v.(*ssa.MakeSlice).Len.Type().Underlying().(*types.Basic).Kind()) // lengths can't be 64 bit
-	capacity := wrapForce_toInt(l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo),
-		v.(*ssa.MakeSlice).Len.Type().Underlying().(*types.Basic).Kind()) // capacities can't be 64 bit
+	capacity := wrapForce_toUInt(l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo),
+		v.(*ssa.MakeSlice).Cap.Type().Underlying().(*types.Basic).Kind()) // capacities can't be 64 bit
 	itemSize := "1" + arrayOffsetCalc(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying())
 	return reg + "=" + newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize) + `;`
 }
@@ -1381,17 +1383,17 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 	}
 	lvString := "0"
 	if lv != nil {
-		lvString = wrapForce_toInt(l.IndirectValue(lv, errorInfo),
+		lvString = wrapForce_toUInt(l.IndirectValue(lv, errorInfo),
 			lv.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	}
 	hvString := "-1"
 	if hv != nil {
-		hvString = wrapForce_toInt(l.IndirectValue(hv, errorInfo),
+		hvString = wrapForce_toUInt(l.IndirectValue(hv, errorInfo),
 			hv.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	}
 	switch x.(ssa.Value).Type().Underlying().(type) {
 	case *types.Slice:
-		return register + "=" + xString + "==null?null:" + xString + `.subSlice(` + lvString + `,` + hvString + `);`
+		return register + "=" + xString + "==null?null:(" + xString + `.subSlice(` + lvString + `,` + hvString + `));`
 	case *types.Pointer:
 		eleSz := "1" + arrayOffsetCalc(x.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying())
 		return register + "=new Slice(" + xString + `,` + lvString + `,` + hvString + "," +
@@ -1413,7 +1415,7 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 }
 
 func (l langType) Index(register string, v1, v2 interface{}, errorInfo string) string {
-	keyString := wrapForce_toInt(l.IndirectValue(v2, errorInfo),
+	keyString := wrapForce_toUInt(l.IndirectValue(v2, errorInfo),
 		v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	typ := v1.(ssa.Value).Type().Underlying().(*types.Array).Elem().Underlying()
 	return register + "=" + //l.IndirectValue(v1, errorInfo) + "[" + l.IndirectValue(v2, errorInfo) + "];" + // assign value
@@ -1503,7 +1505,7 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	keyString := l.IndirectValue(Key, errorInfo)
 	// check if we are looking up in a string
 	if l.LangType(Map.(ssa.Value).Type().Underlying(), false, errorInfo) == "String" {
-		keyString = wrapForce_toInt(keyString, Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+		keyString = wrapForce_toUInt(keyString, Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 		valueCode := l.IndirectValue(Map, errorInfo) //+ ".charCodeAt(" + keyString + ")"
 		if commaOk {
 			return reg + "=Force.stringAtOK(" + valueCode + "," + keyString + ");"

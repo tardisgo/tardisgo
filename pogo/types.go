@@ -76,20 +76,40 @@ func TypesWithMethodSets() (sets []types.Type) {
 	return sets
 }
 
+func catchReferencedTypes(et types.Type) {
+	LogTypeUse(et)
+	//LogTypeUse(types.NewPointer(et))
+	switch et.(type) {
+	case *types.Named:
+		catchReferencedTypes(et.Underlying())
+	case *types.Array:
+		catchReferencedTypes(et.(*types.Array).Elem())
+		//catchReferencedTypes(types.NewSlice(et.(*types.Array).Elem()))
+	case *types.Pointer:
+		catchReferencedTypes(et.(*types.Pointer).Elem())
+	case *types.Slice:
+		catchReferencedTypes(et.(*types.Slice).Elem())
+	}
+}
+
 // Wrapper for target language emitTypeInfo()
 func emitTypeInfo() {
-	// TODO review if this is required
+
+	// belt-and-braces could be used here to make sure we capture every type, needed for reflect
+	// but this makes the generated code too large for Java & C++
 	/*
-		// belt-and-braces are required here to make sure we capture every type
 		for _, pkg := range rootProgram.AllPackages() {
 			for _, mem := range pkg.Members {
-				t, ok := mem.Type().(*types.Named)
-				if ok {
-					LogTypeUse(t)
-				}
+				catchReferencedTypes(mem.Type())
 			}
 		}
 	*/
+
+	// ...so just get the full info on the types we've seen
+	for _, t := range TypesEncountered.Keys() {
+		catchReferencedTypes(t)
+	}
+
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].EmitTypeInfo())
 }

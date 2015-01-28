@@ -880,6 +880,9 @@ func testIntOverflow() { //TODO add int64
 	TEQfloat("", float64(fiveI64), 5.0, 0.1)
 	TEQfloat("", float64(int32_mostNeg), float64(-2147483648.0), 0.1)
 
+	TEQint64(""+" big -ve int64 division",
+		int64_mostNeg/int64(100000), int64(-9223372036854775808)/int64(100000))
+
 	TEQfloat(""+" PHP error",
 		float64(int64_mostNeg/int64(100000)), float64(int64(-9223372036854775808)/int64(100000)), float64(1.0))
 	TEQfloat(""+" PHP error ",
@@ -913,6 +916,16 @@ func testIntOverflow() { //TODO add int64
 		myPi *= myPi
 		myPi64 *= myPi64
 		myPu64 *= myPu64
+	}
+
+	itter := 0
+	for u := uint64(1); itter < 53; u = u<<1 + 1 {
+		f := float64(u)
+		fu := uint64(f)
+		if u != fu {
+			println("uint64/float64 conversion error", itter, u, f, fu, u == fu)
+		}
+		itter++
 	}
 }
 
@@ -1656,14 +1669,22 @@ func testUnsafe() { // adapted from http://stackoverflow.com/questions/19721008/
 	m[0] = 987
 	// (we have to recast the uintptr to a *int to examine it)
 	TEQint32("", m[0], *(*int32)(mPtr))
+
 	if hx.GetBool("", "Object.nativeFloats") {
 		TEQuint32("Only works in fullunsafe mode", 219, (uint32)(*(*uint8)(mPtr)))
 	}
+
+	// error on pointer arithmetic
+	//uip := uintptr(mPtr)
+	//uip++
 }
 
 func tc64(f float64) float64 {
-	return hx.CallFloat("", "Go_haxegoruntime_FFloat64frombits.callFromHaxe", 1,
-		hx.CallDynamic("", "Go_haxegoruntime_FFloat64bits.callFromHaxe", 1, f))
+	if runtime.GOOS == "nacl" {
+		return hx.CallFloat("", "Go_haxegoruntime_FFloat64frombits.callFromHaxe", 1,
+			hx.CallDynamic("", "Go_haxegoruntime_FFloat64bits.callFromHaxe", 1, f))
+	}
+	return f
 }
 
 const (
@@ -1686,16 +1707,18 @@ func testFloatConv() {
 		TEQ("MaxFloat64", MaxFloat64, tc64(MaxFloat64))
 		TEQ("SmallestNonzeroFloat64", SmallestNonzeroFloat64, tc64(SmallestNonzeroFloat64))
 		TEQ("42.42", 42.42, tc64(42.42))
-		pi := tc64(hx.GetFloat("", "Math.POSITIVE_INFINITY"))
-		if pi <= MaxFloat64 {
-			println("testFloatConv() POSITIVE_INFINITY invalid")
-		}
-		ni := tc64(hx.GetFloat("", "Math.NEGATIVE_INFINITY"))
-		if ni >= SmallestNonzeroFloat64 {
-			println("testFloatConv() NEGATIVE_INFINITY invalid")
-		}
-		if hx.GetFloat("", "Math.NaN") == tc64(hx.GetFloat("", "Math.NaN")) {
-			println("testFloatConv() NaN == NaN")
+		if runtime.GOOS == "nacl" {
+			pi := tc64(hx.GetFloat("", "Math.POSITIVE_INFINITY"))
+			if pi <= MaxFloat64 {
+				println("testFloatConv() POSITIVE_INFINITY invalid")
+			}
+			ni := tc64(hx.GetFloat("", "Math.NEGATIVE_INFINITY"))
+			if ni >= SmallestNonzeroFloat64 {
+				println("testFloatConv() NEGATIVE_INFINITY invalid")
+			}
+			if hx.GetFloat("", "Math.NaN") == tc64(hx.GetFloat("", "Math.NaN")) {
+				println("testFloatConv() NaN == NaN")
+			}
 		}
 	}
 }
@@ -1764,7 +1787,8 @@ func main() {
 		TEQ(""+"Num Haxe GR post-wait", runtime.NumGoroutine(), 1)
 		//panic("show GRs active")
 	} else {
-		TEQ(""+"Num Haxe GR post-wait", runtime.NumGoroutine(), 0)
+		//println(runtime.NumGoroutine())
+		TEQ(""+"Num Haxe GR post-wait", runtime.NumGoroutine(), 3)
 	}
 	//println("End test running in: " + runtime.GOARCH)
 	//println("再见！Previous two chinese characters should say goodbye! (testing unicode output)")

@@ -62,7 +62,7 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 				return l.intTypeCoersion(v.(ssa.Value).Type().Underlying(),
 					"GOint64.xor("+l.IndirectValue(v, errorInfo)+",GOint64.make(-1,-1))", errorInfo)
 			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): unhandled Int64 op: %s", op))
+				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): unhandled Int64 un-op: %s", op))
 				return ""
 			}
 		} else {
@@ -70,7 +70,9 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 			switch v.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 			case types.Uintptr: // although held as Dynamic, uintpointers are integers when doing calculations
 				valStr = "Force.toInt(" + valStr + ")"
-			case types.Float32, types.Float64:
+			case types.Float32:
+				valStr = "Force.toFloat32(" + valStr + ")"
+			case types.Float64:
 				valStr = "Force.toFloat(" + valStr + ")"
 			}
 			switch op {
@@ -190,7 +192,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 			}
 
 			if op == "<<" || op == ">>" {
-				v2string = wrapForce_toInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 			}
 
 			switch op { // roughly in the order of the GOint64 api spec

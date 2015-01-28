@@ -28,24 +28,23 @@ Target long-term use-cases (once the generated code and runtime environment is m
 For more background and on-line examples see the links from: http://tardisgo.github.io/
 
 ## Project status: a working proof of concept
-####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED, UNSTABLE API
+####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED, UNSTABLE API, DEBUG MESSAGES
 
-All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet supported. 
+All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to give up control.  
 
 Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If the standard package is not mentioned in the notes below, please assume it does not work. 
 
-For testing purposes, the "fmt" and "testing" packages are currently emulated in an ugly and part-working way.
-
-Some standard Go library packages do not call any runtime C or assembler functions and will probably work OK (though their tests still need to be rewritten and run to validate their correctness), these include:
- errors, unicode, unicode/utf16.
+The "testing" packages is currently emulated in an ugly and part-working way. The "fmt" package is only partially working.
 
 Currently the only the standard packages that pass their tests are:
 - "container/heap", "container/list", "container/ring"
+- "encoding/ascii85", "encoding/base32", "encoding/base64", "encoding/hex"
+- "math/cmplx" (not in PHP or Neko)
 - "path"
 - "sort"
-- "unicode", "unicode/utf8"
+- "unicode", "unicode/utf8", "unicode/utf16"
 
 Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "reflect" or other low-level packages are not implemented. Packages "runtime","os" & "syscall" are part-implemented, using a partial implementation of the nacl runtime (currently including debug messages).
 
@@ -84,7 +83,7 @@ haxe -main tardis.Go --interp
 ... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
 
-The default memory model is fast, but requires more memory than you might expect (an int per byte) and only allows some unsafe pointer usages. If your code uses unsafe pointers to re-use memory as different types (say writing a float64 but reading back a uint64), there is a Haxe compilation flag for "fullunsafe" mode (this is slower, but has a smaller memory footprint and allows most unsafe pointers to be modelled accurately). In JS fullunsafe uses the dataview method of object access, for other targets it simulates memory access. Fullunsafe is little-endian only at present. For example: 
+The default memory model is fast, but requires more memory than you might expect (an int per byte) and only allows some unsafe pointer usages. If your code uses unsafe pointers to re-use memory as different types (say writing a float64 but reading back a uint64), there is a Haxe compilation flag for "fullunsafe" mode (this is slower, but has a smaller memory footprint and allows most unsafe pointers to be modelled accurately). In JS fullunsafe uses the dataview method of object access, for other targets it simulates memory access. Fullunsafe is little-endian only at present and pointer aritmetic (via uintptr) will panic. A command line example: 
 ```
 tardisgo mycode.go
 haxe -main tardis.Go -D fullunsafe -js tardis/go-fu.js
@@ -93,7 +92,7 @@ node < tardis/go-fu.js
 
 While on the subject of JS, the closure compiler seems to work using "ADVANCED_OPTIMIZATIONS" to significantly reduce the size of the generated code.
 
-The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/b.txt" thus (for example in JS):
+The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/a.txt" thus (for example in JS):
 ```
 tardisgo your_code_using_package_os.go
 haxe -main tardis.Go -js tardis/go.js -resource testdata/config.xml@/myapp/static/config.xml
@@ -108,7 +107,7 @@ and include
 
 To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
 
-Use the "-debug=true" tardisgo compilation flag to instrument the code and add automated comments to the Haxe. When you experience a panic in this mode the latest Go source code line information and local variables appears in the stack dump. For the C++ & Neko (--interp) targets, a very simple debugger is also available by using the "-D godebug" Haxe flag, for example to use it in C++ type:
+Use the "-debug" tardisgo compilation flag to instrument the code and add automated comments to the Haxe. When you experience a panic in this mode the latest Go source code line information and local variables appears in the stack dump. For the C++ & Neko (--interp) targets, a very simple debugger is also available by using the "-D godebug" Haxe flag, for example to use it in C++ type:
 ```
 tardisgo -debug=true myprogram.go
 haxe -main tardis.Go -dce full -D godebug -cpp tardis/cpp
