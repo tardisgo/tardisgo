@@ -343,12 +343,12 @@ func (l langType) ChangeType(register string, regTyp interface{}, v interface{},
 	switch v.(ssa.Value).(type) {
 	case *ssa.Function:
 		rx := v.(*ssa.Function).Signature.Recv()
-		pf := ""
+		pf := "unknown"
 		if rx != nil { // it is not the name of a normal function, but that of a method, so append the method description
 			pf = rx.Type().String() // NOTE no underlying()
 		} else {
 			if v.(*ssa.Function).Pkg != nil {
-				pf = v.(*ssa.Function).Pkg.Object.Name()
+				pf = v.(*ssa.Function).Pkg.Object.Path() // was .Name()
 			}
 		}
 		return register + "=" +
@@ -770,7 +770,8 @@ func (l langType) EmitTypeInfo() string {
 						line = `case "` + funcObj.Name() + `": return `
 						//haxeClass := getHaxeClass(ms.At(m).Recv().String())
 						//if haxeClass == "" {
-						fnToCall := l.LangName(ms.At(m).Recv().String(),
+						fnToCall := l.LangName(
+							ms.At(m).Obj().Pkg().String()+":"+ms.At(m).Recv().String(),
 							funcObj.Name())
 						line += `Go_` + fnToCall + `.call` + "; "
 						//} else {

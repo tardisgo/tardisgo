@@ -9,9 +9,11 @@ import (
 	"golang.org/x/tools/go/ssa"
 )
 
+const pseudoFnPrefix = "github_dot_com_47_tardisgo_47_tardisgo_47_haxe_47_hx_"
+
 func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo string) string {
 	//fmt.Println("DEBUG l.hxPseudoFuncs()", fnToCall, args, errorInfo)
-	fnToCall = strings.TrimPrefix(fnToCall, "hx_")
+	fnToCall = strings.TrimPrefix(fnToCall, pseudoFnPrefix)
 
 	switch fnToCall {
 	case "init":

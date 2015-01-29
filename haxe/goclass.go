@@ -60,14 +60,14 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 
 	main += "var _sfgr=new Go_haxegoruntime_init(gr,[]).run();\n" //haxegoruntime.init() NOTE can't use callFromHaxe() as that would call this fn
 	main += "while(_sfgr._incomplete) Scheduler.runAll();\n"
-	main += "var _sf=new Go_" + pkg.Object.Name() + `_init(gr,[]).run();` + "\n" //NOTE can't use callFromHaxe() as that would call this fn
+	main += "var _sf=new Go_" + l.LangName(pkg.Object.Path() /* was .Name()*/, "init") + `(gr,[]).run();` + "\n" //NOTE can't use callFromHaxe() as that would call this fn
 	main += "while(_sf._incomplete) Scheduler.runAll();\n"
 	main += "Scheduler.doneInit=true;\n"
 	main += `Go.haxegoruntime_ZZiLLen.store_uint32('字'.length);` // value required by haxegoruntime to know what type of strings we have
 	main += "}\n"
 	// Haxe main function, only called in a go-only environment
 	main += "\npublic static function main() : Void {\n"
-	main += "Go_" + pkg.Object.Name() + `_main.callFromHaxe();` + "\n"
+	main += "Go_" + l.LangName(pkg.Object.Path() /* was .Name() */, "main") + `.callFromHaxe();` + "\n"
 	main += "}\n"
 
 	pos := "public static function CPos(pos:Int):String {\nvar prefix:String=\"\";\n"

@@ -22,8 +22,8 @@ func emitNamedConstants() {
 			if mem.Token() == token.CONST {
 				lit := mem.(*ssa.NamedConst).Value
 				posStr := CodePosition(lit.Pos())
-				pName := mem.(*ssa.NamedConst).Object().Pkg().Name()
-				switch lit.Value.Kind() { // non language specific validation
+				pName := mem.(*ssa.NamedConst).Object().Pkg().Path() // was .Name()
+				switch lit.Value.Kind() {                            // non language specific validation
 				case exact.Bool, exact.String, exact.Float, exact.Int, exact.Complex: //OK
 					isPublic := mem.Object().Exported()
 					if isPublic { // constants will be inserted inline, these declarations of public constants are for exteral use in target language

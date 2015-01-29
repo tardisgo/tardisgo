@@ -64,11 +64,11 @@ func emitGoClass(mainPkg *ssa.Package) {
 const pogoHeader = "tardisgoHeader"
 
 // special constant name used in TARDIS Go to say where the runtime for the go standard libraries is located
-const pogoLibRuntimePath = "tardisgoLibRuntimePath"
+//const pogoLibRuntimePath = "tardisgoLibRuntimePath"
 
 // LibRuntimePath is required to stop the init function in runtime replacement functions being generated.
 // NOTE default value can be overwritten if required using the name in pogoLibRuntimePath see above in the code
-var LibRuntimePath = "github.com/tardisgo/tardisgo/golibruntime"
+//var LibRuntimePath = "github.com/tardisgo/tardisgo/golibruntime"
 
 // emit the standard file header for target language
 func emitFileStart() {
@@ -115,19 +115,19 @@ func emitFileStart() {
 						LogError(CodePosition(lit.Pos()), "pogo",
 							fmt.Errorf("special targetPackage constant not a string"))
 					}
-				case pogoLibRuntimePath:
-					lit := mem.(*ssa.NamedConst).Value
-					switch lit.Value.Kind() {
-					case exact.String:
-						lrp, err := strconv.Unquote(lit.Value.String())
-						if err != nil {
-							LogError(CodePosition(lit.Pos())+"Special LibRuntimePath constant ", "pogo", err)
-						}
-						LibRuntimePath = lrp
-					default:
-						LogError(CodePosition(lit.Pos()), "pogo",
-							fmt.Errorf("special targetPackage constant not a string"))
-					}
+					//case pogoLibRuntimePath:
+					//	lit := mem.(*ssa.NamedConst).Value
+					//	switch lit.Value.Kind() {
+					//	case exact.String:
+					//		lrp, err := strconv.Unquote(lit.Value.String())
+					//		if err != nil {
+					//			LogError(CodePosition(lit.Pos())+"Special LibRuntimePath constant ", "pogo", err)
+					//		}
+					//		LibRuntimePath = lrp
+					//	default:
+					//		LogError(CodePosition(lit.Pos()), "pogo",
+					//			fmt.Errorf("special targetPackage constant not a string"))
+					//	}
 				}
 			}
 		}

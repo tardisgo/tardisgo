@@ -2444,7 +2444,7 @@ class GOstringRange {
 		if(k>=v.len())
 			return {r0:false,r1:0,r2:0};
 		else {
-			var _dr:{r0:Int,r1:Int}=Go_utf8_DDecodeRRune.callFromRT(g,v.subSlice(_thisK,-1));
+			var _dr:{r0:Int,r1:Int}=Go_unicode_47_utf8_DDecodeRRune.callFromRT(g,v.subSlice(_thisK,-1));
 			k+=_dr.r1;
 			return {r0:true,r1:_thisK,r2:_dr.r0};
 		}

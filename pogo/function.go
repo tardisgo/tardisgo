@@ -41,6 +41,17 @@ func emitFunctions() {
 			}
 		}
 	*/
+
+	var dupCheck = make(map[string]*ssa.Function)
+	for f := range fnMap {
+		p, n := GetFnNameParts(f)
+		_, exists := dupCheck[p+"."+n]
+		if exists {
+			panic("duplicate function name: " + p + "." + n)
+		}
+		dupCheck[p+"."+n] = f
+	}
+
 	for f := range fnMap {
 		if !IsOverloaded(f) {
 			emitFunc(f)
@@ -54,20 +65,20 @@ func IsOverloaded(f *ssa.Function) bool {
 	if rx == nil { // ordinary function
 		if f.Pkg != nil {
 			if f.Pkg.Object != nil {
-				pn = f.Pkg.Object.Name()
+				pn = f.Pkg.Object.Path() //was .Name()
 			}
 		} else {
 			if f.Object() != nil {
 				if f.Object().Pkg() != nil {
-					pn = f.Object().Pkg().Name()
+					pn = f.Object().Pkg().Path() //was .Name()
 				}
 			}
 		}
 	} else { // determine the package information from the type description
 		typ := rx.Type()
 		ts := typ.String()
-		if ts[0:1] == "*" {
-			ts = ts[1:] // loose the leading star
+		if ts[0] == '*' {
+			ts = ts[1:]
 		}
 		tss := strings.Split(ts, ".")
 		if len(tss) >= 2 {
@@ -75,12 +86,12 @@ func IsOverloaded(f *ssa.Function) bool {
 		} else {
 			ts = tss[0] // no dot!
 		}
-		tss = strings.Split(ts, "/") // TODO check this also works in Windows
-		ts = tss[len(tss)-1]         // take the last part of the path
-		//fmt.Printf("DEBUG function method: fn, typ, pathEnd = %s %s %s\n", f, typ, ts)
 		pn = ts
 	}
-
+	tss := strings.Split(pn, "/") // TODO check this also works in Windows
+	ts := tss[len(tss)-1]         // take the last part of the path
+	pn = ts                       // TODO this is incorrect, but not currently a problem as there is no function overloading
+	//println("DEBUG package name: " + pn)
 	if LanguageList[TargetLang].FunctionOverloaded(pn, f.Name()) ||
 		strings.HasPrefix(pn, "_") { // the package is not in the target language, signaled by a leading underscore and
 		return true
@@ -319,21 +330,26 @@ func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode 
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf, int(LatestValidPosHash), mustSplitCode))
 }
 
+func GetFnNameParts(fn *ssa.Function) (pack, nam string) {
+	mName := fn.Name()
+	pName := "unknown" // TODO review why this code appears to duplicate that at the start of emitFunctions()
+	if fn.Pkg != nil {
+		if fn.Pkg.Object != nil {
+			pName = fn.Pkg.Object.Path() // was .Name()
+		}
+	}
+	if fn.Signature.Recv() != nil { // we have a method
+		pName = fn.Signature.Recv().Pkg().String() + ":" + fn.Signature.Recv().Type().String() // note no underlying()
+		//pName = LanguageList[l].PackageOverloadReplace(pName)
+	}
+	return pName, mName
+}
+
 // Emit the start of a function.
 func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool, mustSplitCode bool) {
 	l := TargetLang
 	posStr := CodePosition(fn.Pos())
-	pName := "unknown" // TODO review why this code appears to duplicate that at the start of emitFunctions()
-	if fn.Pkg != nil {
-		if fn.Pkg.Object != nil {
-			pName = fn.Pkg.Object.Name()
-		}
-	}
-	mName := fn.Name()
-	if fn.Signature.Recv() != nil { // we have a method
-		pName = fn.Signature.Recv().Type().String() // note no underlying()
-		//pName = LanguageList[l].PackageOverloadReplace(pName)
-	}
+	pName, mName := GetFnNameParts(fn)
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
 	fmt.Fprintln(&LanguageList[l].buffer,
 		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap))
@@ -375,11 +391,11 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 	} else if callInfo.StaticCallee() != nil {
 		pName := "unknown"
 		if callInfo.Signature().Recv() != nil {
-			pName = callInfo.Signature().Recv().Type().String() // no use of Underlying() here
+			pName = callInfo.Signature().Recv().Pkg().String() + ":" + callInfo.Signature().Recv().Type().String() // no use of Underlying() here
 		} else {
 			pkg := callInfo.StaticCallee().Package()
 			if pkg != nil {
-				pName = pkg.Object.Name()
+				pName = pkg.Object.Path() // was .Name()
 			}
 		}
 		fnToCall = LanguageList[l].LangName(pName, callInfo.StaticCallee().Name())

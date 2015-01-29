@@ -148,9 +148,6 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 			case *ssa.Builtin: // no builtin functions can be defer'ed - TODO: the spec does allow this in some circumstances
 				LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be defer'ed"))
 			default:
-				//if grMap[instruction.(*ssa.Defer).Parent()] != true {
-				//	panic("attempt to use defer from a function does not use goroutines at " + errorInfo)
-				//}
 				emitCall(false, false, true, grMap[instruction.(*ssa.Defer).Parent()],
 					register, instruction.(*ssa.Defer).Call, errorInfo, comment)
 			}

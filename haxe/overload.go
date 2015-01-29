@@ -92,12 +92,12 @@ func (l langType) FuncName(fnx *ssa.Function) string {
 		}
 		if fn.Pkg != nil {
 			if fn.Pkg.Object != nil {
-				pn = fn.Pkg.Object.Name()
+				pn = fn.Pkg.Object.Path() // was .Name()
 			}
 		} else {
 			if fn.Object() != nil {
 				if fn.Object().Pkg() != nil {
-					pn = fn.Object().Pkg().Name()
+					pn = fn.Object().Pkg().Path() // was .Name()
 				}
 			}
 		}

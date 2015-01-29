@@ -70,7 +70,7 @@ func init() {
 	langEntry.SubFnInstructionLimit = 256 /* 256 required for php */
 	langEntry.PackageConstVarName = "tardisgoHaxePackage"
 	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"
-	langEntry.Goruntime = "github.com/tardisgo/tardisgo/haxe/haxegoruntime" // a string containing the location of the core language runtime functions delivered in Go
+	langEntry.Goruntime = "haxegoruntime" // a string containing the location of the core language runtime functions delivered in Go
 
 	langIdx = len(pogo.LanguageList)
 	pogo.LanguageList = append(pogo.LanguageList, langEntry)
@@ -140,8 +140,17 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		currentfnName, l.Comment(position))
 
 	//Create the stack frame variables
+	hadBlank := false
 	for p := range fn.Params {
-		ret += "var " + "p_" + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position) + ";\n"
+		prefix := "p_"
+		if hadBlank && fn.Params[p].Name() == "_" {
+			prefix += fmt.Sprintf("%d", p)
+		}
+		ret += "var " + prefix + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type(), /*.Underlying()*/
+			false, fn.Params[p].Name()+position) + ";\n"
+		if fn.Params[p].Name() == "_" {
+			hadBlank = true
+		}
 	}
 	ret += "public function new(gr:Int,"
 	ret += "_bds:Dynamic" //bindings
@@ -150,10 +159,18 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
+	hadBlank = false
 	for p := range fn.Params {
-		ret += "this.p_" + pogo.MakeID(fn.Params[p].Name()) + "=p_" + pogo.MakeID(fn.Params[p].Name()) + ";\n"
+		prefix := "this.p_"
+		if hadBlank && fn.Params[p].Name() == "_" {
+			prefix += fmt.Sprintf("%d", p)
+		}
+		ret += prefix + pogo.MakeID(fn.Params[p].Name()) + "=p_" + pogo.MakeID(fn.Params[p].Name()) + ";\n"
 		if pogo.DebugFlag {
 			ret += `this._debugVars.set("` + fn.Params[p].Name() + `",p_` + pogo.MakeID(fn.Params[p].Name()) + ");\n"
+		}
+		if fn.Params[p].Name() == "_" {
+			hadBlank = true
 		}
 	}
 	ret += emitTrace(`New:` + l.LangName(packageName, objectName))
@@ -504,7 +521,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	}
 	switch v.(type) {
 	case *ssa.Global:
-		return "Go." + l.LangName(v.(*ssa.Global).Pkg.Object.Name(), v.(*ssa.Global).Name())
+		return "Go." + l.LangName(v.(*ssa.Global).Pkg.Object.Path() /* was .Name()*/, v.(*ssa.Global).Name())
 	case *ssa.Alloc, *ssa.MakeSlice:
 		return pogo.RegisterName(v.(ssa.Value))
 	case *ssa.FieldAddr, *ssa.IndexAddr:
@@ -528,12 +545,12 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	case *ssa.Function:
 		pk := "unknown"
 		if v.(*ssa.Function).Signature.Recv() != nil { // it's a method
-			pn := v.(*ssa.Function).Signature.Recv().Pkg().Name()
+			pn := v.(*ssa.Function).Signature.Recv().Pkg().Path() // was .Name()
 			pk = pn + "." + v.(*ssa.Function).Signature.Recv().Name()
 		} else {
 			if v.(*ssa.Function).Pkg != nil {
 				if v.(*ssa.Function).Pkg.Object != nil {
-					pk = v.(*ssa.Function).Pkg.Object.Name()
+					pk = v.(*ssa.Function).Pkg.Object.Path() // was .Name()
 				}
 			}
 		}
@@ -844,7 +861,7 @@ func getPackagePath(cc *ssa.CallCommon) string {
 	if cc != nil {
 		if cc.Method != nil {
 			if cc.Method.Pkg() != nil {
-				pn = cc.Method.Pkg().Name()
+				pn = cc.Method.Pkg().Path() // was .Name()
 			}
 		} else {
 			if cc.StaticCallee() != nil {
@@ -853,7 +870,7 @@ func getPackagePath(cc *ssa.CallCommon) string {
 				} else {
 					if cc.StaticCallee().Object() != nil {
 						if cc.StaticCallee().Object().Pkg() != nil {
-							pn = cc.StaticCallee().Object().Pkg().Name()
+							pn = cc.StaticCallee().Object().Pkg().Path() // was .Name()
 						}
 					}
 				}
@@ -950,7 +967,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			//
 			// haxe interface pseudo-function re-writing
 			//
-			if strings.HasPrefix(fnToCall, "hx_") {
+			if strings.HasPrefix(fnToCall, pseudoFnPrefix) {
 				nextReturnAddress-- //decrement to set new return address for next call generation
 				if register != "" {
 					register += "="
