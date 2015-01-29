@@ -755,36 +755,52 @@ func (l langType) EmitTypeInfo() string {
 		if t != nil { // it is used?
 			ret += `case ` + fmt.Sprintf("%d", t) + `: switch(m){` + "\n"
 			ms := types.NewMethodSet(tta[T])
-			for m := 0; m < ms.Len(); m++ {
-				funcObj, ok := ms.At(m).Obj().(*types.Func)
-				pkgName := "unknown"
-				if ok && funcObj.Pkg() != nil {
-					line := ""
-					ss := strings.Split(funcObj.Pkg().Name(), "/")
-					pkgName = ss[len(ss)-1]
-					if strings.HasPrefix(pkgName, "_") { // exclude functions in haxe for now
-						// TODO NoOp for now... so haxe types cant be "Involked" when held in interface types
-						// *** need to deal with getters and setters
-						// *** also with calling parameters which are different for a Haxe API
-					} else {
-						line = `case "` + funcObj.Name() + `": return `
-						//haxeClass := getHaxeClass(ms.At(m).Recv().String())
-						//if haxeClass == "" {
-						fnToCall := l.LangName(
-							ms.At(m).Obj().Pkg().String()+":"+ms.At(m).Recv().String(),
-							funcObj.Name())
-						line += `Go_` + fnToCall + `.call` + "; "
-						//} else {
-						//	line += haxeClass + "." + funcObj.Name() + "; "
-						//}
+			deDup := make(map[string][]int)
+			for pass := 1; pass <= 2; pass++ {
+				for m := 0; m < ms.Len(); m++ {
+					funcObj, ok := ms.At(m).Obj().(*types.Func)
+					pkgName := "unknown"
+					if ok && funcObj.Pkg() != nil && ms.At(m).Recv() == tta[T] {
+						line := ""
+						ss := strings.Split(funcObj.Pkg().Name(), "/")
+						pkgName = ss[len(ss)-1]
+						if strings.HasPrefix(pkgName, "_") { // exclude functions in haxe for now
+							// TODO NoOp for now... so haxe types cant be "Involked" when held in interface types
+							// *** need to deal with getters and setters
+							// *** also with calling parameters which are different for a Haxe API
+						} else {
+							switch pass {
+							case 1:
+								idx, exists := deDup[funcObj.Name()]
+								if exists {
+									if len(idx) > len(ms.At(m).Index()) {
+										deDup[funcObj.Name()] = ms.At(m).Index()
+									}
+								} else {
+									deDup[funcObj.Name()] = ms.At(m).Index()
+								}
+							case 2:
+								idx, _ := deDup[funcObj.Name()]
+								if len(idx) != len(ms.At(m).Index()) {
+									line += "// Duplicate unused: "
+								}
+								line += `case "` + funcObj.Name() + `": return `
+								fnToCall := l.LangName(
+									ms.At(m).Obj().Pkg().String()+":"+ms.At(m).Recv().String(),
+									funcObj.Name())
+								line += `Go_` + fnToCall + `.call` + "; "
+							}
+						}
+						ret += line
 					}
-					ret += line
+					if pass == 2 {
+						ret += fmt.Sprintf("// %v %v %v %v\n",
+							ms.At(m).Obj().Name(),
+							ms.At(m).Kind(),
+							ms.At(m).Index(),
+							ms.At(m).Indirect())
+					}
 				}
-				ret += fmt.Sprintf("// %v %v %v %v\n",
-					ms.At(m).Obj().Name(),
-					ms.At(m).Kind(),
-					ms.At(m).Index(),
-					ms.At(m).Indirect())
 			}
 			ret += "default:}\n"
 		}
