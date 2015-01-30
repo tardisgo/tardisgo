@@ -5,7 +5,10 @@
 package haxe
 
 import (
+	"fmt"
 	"go/ast"
+
+	"unsafe"
 
 	"golang.org/x/tools/go/ssa"
 	//"fmt"
@@ -85,7 +88,7 @@ func (l langType) FuncName(fnx *ssa.Function) string {
 	if fnx.Signature.Recv() != nil {
 		pn = fnx.Signature.Recv().Type().String() // NOTE no use of underlying here
 	} else {
-		pn = "unknown"
+		pn = fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(fnx)))
 		fn := ssa.EnclosingFunction(fnx.Package(), []ast.Node{fnx.Syntax()})
 		if fn == nil {
 			fn = fnx

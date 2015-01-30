@@ -131,8 +131,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				return toInt(v); 				// recurse to handle 64-bit or float or uintptr
 			} else								// it should be an Int64 if not an interface
 				if(Std.is(v,Pointer)) {
-					Scheduler.panicFromHaxe("attempt to do Pointer arithmetic"); 
-					return 0;
+					//Scheduler.panicFromHaxe("attempt to do Pointer arithmetic"); 
+					return v.hashInt();
 				}else
 					return GOint64.toInt(v);	
 		else
@@ -833,9 +833,16 @@ class Pointer {
 		if(obj==null) return 0;
 		return obj.length-off;
 	}
-	public static function check(p:Pointer):Pointer {
+	public function hashInt():Int {
+		return (obj.uniqueRef&0xffff)<<16 | off&0xffff; // hash value for a pointer
+	}
+	public static function check(p:Dynamic):Pointer {
 		if(p==null) Scheduler.panicFromHaxe("nil pointer de-reference");
-		return p;
+		if(Std.is(p,Pointer)) return p;
+		if(Std.is(p,Int)) 
+			Scheduler.panicFromHaxe("TARDISgo/Haxe implementation cannot convert from uintptr to pointer");
+		Scheduler.panicFromHaxe("non-Pointer cannot be used as a pointer");
+		return null;
 	}
 	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
 		if(p1==p2) return true; // simple case of being the same haxe object

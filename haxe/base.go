@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"unicode"
+	"unsafe"
 
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
@@ -543,7 +544,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	case *ssa.FreeVar:
 		return `_bds.` + v.(*ssa.FreeVar).Name()
 	case *ssa.Function:
-		pk := "unknown"
+		pk := fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(v.(*ssa.Function))))
 		if v.(*ssa.Function).Signature.Recv() != nil { // it's a method
 			pn := v.(*ssa.Function).Signature.Recv().Pkg().Path() // was .Name()
 			pk = pn + "." + v.(*ssa.Function).Signature.Recv().Name()
@@ -858,6 +859,9 @@ func (l langType) Panic(v1 interface{}, errorInfo string, usesGr bool) string {
 func getPackagePath(cc *ssa.CallCommon) string {
 	// This code to find the package name
 	var pn string = "UNKNOWN" // package name
+	if cc.StaticCallee() != nil {
+		pn = fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(cc.StaticCallee())))
+	}
 	if cc != nil {
 		if cc.Method != nil {
 			if cc.Method.Pkg() != nil {
@@ -1492,12 +1496,15 @@ func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) str
 }
 
 func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
+	if reg == "" {
+		return ""
+	}
 	return reg + "=" + l.LangType(v.(*ssa.MakeMap).Type().Underlying(), true, errorInfo) + `;`
 }
 
 func serializeKey(val, haxeTyp string) string {
 	switch haxeTyp {
-	case /*"Int",*/ "String":
+	case "String":
 		return val
 	case "Pointer":
 		return val + "==null?\"\":" + val + ".toUniqueVal()"

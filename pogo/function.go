@@ -9,11 +9,11 @@ import (
 	"go/token"
 	"strings"
 	"unicode"
-
-	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
+	"unsafe"
 
 	"github.com/tardisgo/tardisgo/tgossa"
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the functions use goroutines/channels
@@ -45,9 +45,11 @@ func emitFunctions() {
 	var dupCheck = make(map[string]*ssa.Function)
 	for f := range fnMap {
 		p, n := GetFnNameParts(f)
-		_, exists := dupCheck[p+"."+n]
+		first, exists := dupCheck[p+"."+n]
 		if exists {
-			panic("duplicate function name: " + p + "." + n)
+			panic(fmt.Sprintf(
+				"duplicate function name: %s.%s\nparent orig %v new %v\n",
+				p, n, uintptr(unsafe.Pointer(first)), uintptr(unsafe.Pointer(f))))
 		}
 		dupCheck[p+"."+n] = f
 	}
@@ -332,7 +334,7 @@ func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode 
 
 func GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 	mName := fn.Name()
-	pName := "unknown" // TODO review why this code appears to duplicate that at the start of emitFunctions()
+	pName := fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(fn)))
 	if fn.Pkg != nil {
 		if fn.Pkg.Object != nil {
 			pName = fn.Pkg.Object.Path() // was .Name()
@@ -389,7 +391,7 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 		fnToCall = callInfo.Value.(*ssa.Builtin).Name()
 		usesGr = false
 	} else if callInfo.StaticCallee() != nil {
-		pName := "unknown"
+		pName := fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(callInfo.StaticCallee())))
 		if callInfo.Signature().Recv() != nil {
 			pName = callInfo.Signature().Recv().Pkg().String() + ":" + callInfo.Signature().Recv().Type().String() // no use of Underlying() here
 		} else {

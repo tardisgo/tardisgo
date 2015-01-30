@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"unsafe"
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
@@ -178,7 +179,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		return register + "=" + vInt + ";"
 	case "Pointer":
 		if srcTyp == "Dynamic" {
-			return register + "=" + l.IndirectValue(v, errorInfo) + ";"
+			return register + "="+l.IndirectValue(v, errorInfo)+"==null?null:Pointer.check(" + l.IndirectValue(v, errorInfo) + ");"
 		}
 		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - can only convert uintptr to unsafe.Pointer"))
 		return ""
@@ -343,7 +344,7 @@ func (l langType) ChangeType(register string, regTyp interface{}, v interface{},
 	switch v.(ssa.Value).(type) {
 	case *ssa.Function:
 		rx := v.(*ssa.Function).Signature.Recv()
-		pf := "unknown"
+		pf := fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(v.(*ssa.Function))))
 		if rx != nil { // it is not the name of a normal function, but that of a method, so append the method description
 			pf = rx.Type().String() // NOTE no underlying()
 		} else {
