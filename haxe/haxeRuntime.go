@@ -1879,6 +1879,7 @@ class Int64 {
 class StackFrameBasis
 {
 public var _Next:Int=0;
+public var _recoverNext:Null<Int>=null;
 public var _incomplete(default,null):Bool=true;
 public var _latestPH:Int=0;
 public var _latestBlock:Int=0;
@@ -2086,6 +2087,7 @@ public function runDefers(){
 interface StackFrame
 {
 public var _Next(default,null):Int;
+public var _recoverNext:Null<Int>;
 public var _incomplete(default,null):Bool;
 public var _latestPH:Int;
 public var _latestBlock:Int;
@@ -2200,15 +2202,17 @@ static inline function runOne(gr:Int,entryCount:Int){ // called from above to ca
 					throw "Panic in goroutine "+gr+"\n"+panicStackDump; // use stored stack dump
 				else {
 					var sf:StackFrame=grStacks[gr].pop();
-					while(!sf._deferStack.isEmpty()){ 
-						// NOTE this will run all of the defered code for a function, even if recover() is encountered
-						// TODO go back to recover code block in SSA function struct after a recover
+					while(!sf._deferStack.isEmpty() && grInPanic[gr]) { 
+						// NOTE this will run all of the defered code for a function, 
+						// NOTE if recover() is encountered it should set grInPanic[gr] to false.
 						// TODO consider merging code with RunDefers()
 						var def:StackFrame=sf._deferStack.pop();
+						//trace("DEBUG runOne panic defer:",def._functionName);
 						Scheduler.push(gr,def);
 						while(def._incomplete) 
 							runAll(); // with entryCount >1, so run as above 
 					}
+					//if(!grInPanic[gr]) trace("DEBUG runOne panic - recovered");
 				}
 			}
 		}
@@ -2324,7 +2328,7 @@ public static function panic(gr:Int,err:Interface){
 	if(gr>=grStacks.length||gr<0)
 		throw "Scheduler.panic() invalid goroutine";
 	if(grInPanic[gr]) { // if we are already in a panic, not much we can do...
-		//trace("Scheduler.panic() panic within panic for goroutine "+Std.string(gr)+" message: "+err.toString());		
+		trace("Scheduler.panic() panic within panic for goroutine "+Std.string(gr)+" message: "+err.toString());		
 	}else{
 		grInPanic[gr]=true;
 		grPanicMsg[gr]=err;
@@ -2342,8 +2346,18 @@ public static function recover(gr:Int):Interface{
 		throw "Scheduler.recover() invalid goroutine";
 	if(grInPanic[gr]==false)
 		return null;
+	#if godebug
+		trace("GODEBUG: recover in goroutine "+Std.string(gr)+" message: "+grPanicMsg[gr]);
+		var top = grStacks[gr].first();
+		if(top!=null)
+			cast(top,StackFrameBasis).breakpoint();
+	#end
 	grInPanic[gr]=false;
-	return grPanicMsg[gr];
+	var t = grPanicMsg[gr];
+	grPanicMsg[gr]=null;
+	var sfb = cast(grStacks[gr].first(),StackFrameBasis);
+	if(sfb._recoverNext != null) sfb._Next = sfb._recoverNext; // set the re-entry point
+	return t;
 }
 public static function panicFromHaxe(err:String) { 
 	if(currentGR>=grStacks.length||currentGR<0) 

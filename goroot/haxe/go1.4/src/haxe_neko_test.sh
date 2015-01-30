@@ -1,5 +1,5 @@
 # run the working unit tests using neko --interp
-for onelevel in path unicode sort
+for onelevel in path sort unicode 
 do
 	echo "Unit Test:" $onelevel 
 	cd $onelevel
@@ -7,7 +7,7 @@ do
 	haxe -main tardis.Go --interp
 	cd .. 
 done
-for twolevels in container/heap container/list container/ring encoding/ascii85 encoding/base32 encoding/base64 encoding/hex unicode/utf8 unicode/utf16 
+for twolevels in container/heap container/list container/ring encoding/ascii85 encoding/base32 encoding/base64 encoding/hex text/tabwriter unicode/utf8 unicode/utf16 
 do
 	echo "Unit Test:" $twolevels 
 	cd $twolevels

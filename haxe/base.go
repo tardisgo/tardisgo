@@ -174,6 +174,14 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 			hadBlank = true
 		}
 	}
+	if fn.Recover != nil {
+		for b := 0; b < len(fn.Blocks); b++ {
+			if fn.Recover == fn.Blocks[b] {
+				ret += fmt.Sprintf("this._recoverNext=%d;\n", b)
+				break
+			}
+		}
+	}
 	ret += emitTrace(`New:` + l.LangName(packageName, objectName))
 	ret += "Scheduler.push(gr,this);\n}\n"
 
@@ -853,6 +861,7 @@ func (l langType) Ret(values []*ssa.Value, errorInfo string) string {
 
 func (l langType) Panic(v1 interface{}, errorInfo string, usesGr bool) string {
 	ret := doCall("", "Scheduler.panic(this._goroutine,"+l.IndirectValue(v1, errorInfo)+");\n", usesGr)
+	ret += l.Ret(nil, errorInfo) // just in case we return to this point without _recoverNext being set & used
 	return ret
 }
 

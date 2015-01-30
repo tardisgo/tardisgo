@@ -44,6 +44,7 @@ Currently the only the standard packages that pass their tests are:
 - "math/cmplx" (not in PHP or Neko)
 - "path"
 - "sort"
+- "text/tabwriter"
 - "unicode", "unicode/utf8", "unicode/utf16"
 
 Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "reflect" or other low-level packages are not implemented. Packages "runtime","os" & "syscall" are part-implemented, using a partial implementation of the nacl runtime (currently including debug messages).
@@ -58,8 +59,9 @@ No other platforms are currently regression tested, although the project has bee
  
 Dependencies:
 ```
-go get golang.org/x/tools
+go get golang.org/x/tools/go
 ```
+Note, you will see an error: "imports golang.org/x/tools/go: no buildable Go source files in ..."
 
 TARDIS Go:
 ```
