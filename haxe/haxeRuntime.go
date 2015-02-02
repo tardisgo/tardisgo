@@ -233,17 +233,29 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return GOint64.toInt(GOint64.mod(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
 		}
 	}
+	private static var zero:Float=0.0;
 	public static inline function floatDiv(x:Float,y:Float):Float {
-		#if php
+		#if php 
+			// NOTE for php 0 != 0.0 !!!
 			if(y==0) // divide by zero gives +/- infinity - so valid ... TODO check back to Go spec
-				if(x>=0) return Math.POSITIVE_INFINITY;
-				else return Math.NEGATIVE_INFINITY;
+				if(x==0) return  Math.NaN; // NaN +/-
+				else
+					if(x>0) return Math.POSITIVE_INFINITY;
+					else return Math.NEGATIVE_INFINITY;
+			if(x==0)
+				if(y>0) return x; // return x incase -0, x==y==0.0 already handled above
+				else return return zero * -1.0; // should be -0
 		#end
 		return x/y;
 	}
 	public static function floatMod(x:Float,y:Float):Float {
 		if(y==0.0)
 			Scheduler.panicFromHaxe("attempt to modulo float value by 0"); 
+		#if php 
+			if(x==0)
+				if(y>=0) return x; // to allow for -0
+				else return return zero * -1.0; // should be -0
+		#end
 		return x%y;
 	}
 
@@ -259,7 +271,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				if(t==null) 
 					Scheduler.panicFromHaxe("Haxe runtime Force.toUTF8slice() unexpected null encountered");
 				else{
-					var x = Std.int(t);
+					var x = t & 0xff; // just to be sure
 					a[i] = x;
 				}
 		}
@@ -442,13 +454,39 @@ class Object { // this implementation will improve with typed array access
 		return this; // to allow use without a temp var
 	}
 	public function isEqual(off:Int,target:Object,tgtOff:Int):Bool { // TODO check if correct, used by interface{} value comparison
-		//trace("isEqual");
 		if((this.length-off)!=(target.length-tgtOff)) return false;
 		for(i in 0...(this.length-off)) {
-			if(this.get(i+off)!=target.get(i+tgtOff))
-				return false;
-			if(this.get_uint8(i+off)!=target.get_uint8(i+tgtOff))
-				return false;
+			if((i+off)&3==0){
+				var a:Dynamic=this.get(i+off);
+				var b:Dynamic=target.get(i+tgtOff);
+				if(a!=b){
+					if(Reflect.isObject(a)&&Reflect.isObject(b)) { // also deals with one being null
+						if(Std.is(a,Pointer)&&Std.is(b,Pointer)) {
+							if(!Pointer.isEqual(a,b) )
+								return false;
+						} else {
+							if(Std.is(a,Interface)&&Std.is(b,Interface)){
+								if(!Interface.isEqual(a,b))
+									return false;
+							} else {
+								if(Std.is(a,GOmap)||Std.is(b,GOmap))
+									return false; //maps are never equal
+								else
+									if(GOint64.compare(a,b)!=0) // Assume Goint64
+										return false;
+							}
+						}
+					} else
+						return false;
+				}
+			}
+ 			#if fullunsafe
+				if(this.get_uint8(i+off)!=target.get_uint8(i+tgtOff))
+					return false;
+			#else
+				if(this.get_uint32(i+off)!=target.get_uint32(i+tgtOff))
+					return false;
+			#end
 		}
 		return true;
 	}
@@ -671,8 +709,8 @@ class Object { // this implementation will improve with typed array access
 		return r==null?new Complex(0.0,0.0):r;			
 	}
 	public inline function get_string(i:Int):String { 
-		var r:String=get(i); 
-		#if (js || php || neko ) return r==null?"":r; #else return r; #end
+		var r=get(i); 
+		return r==null?"":Std.string(r);
 	}
 	public inline function set(i:Int,v:Dynamic):Void { 
 		dVec4[i>>2]=v; // TODO special processing if Int?

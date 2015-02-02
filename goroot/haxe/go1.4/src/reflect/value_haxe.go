@@ -687,11 +687,11 @@ func (v Value) Elem() Value {
 	k := v.kind()
 	switch k {
 	case Interface:
-		panic("reflect.value.Elem of interface{} not yet implemented")
 		var eface interface{}
 		if v.typ.NumMethod() == 0 {
 			eface = *(*interface{})(v.ptr)
 		} else {
+			panic("reflect.value.Elem of interface{} not yet implemented")
 			eface = (interface{})(*(*interface {
 				M()
 			})(v.ptr))
@@ -722,7 +722,7 @@ func (v Value) Elem() Value {
 // Field returns the i'th field of the struct v.
 // It panics if v's Kind is not Struct or i is out of range.
 func (v Value) Field(i int) Value {
-	panic("reflect.value.Field not yet implemented")
+	//panic("reflect.value.Field not yet implemented")
 	if v.kind() != Struct {
 		panic(&ValueError{"reflect.Value.Field", v.kind()})
 	}
@@ -744,7 +744,8 @@ func (v Value) Field(i int) Value {
 	// In the former case, we want v.ptr + offset.
 	// In the latter case, we must be have field.offset = 0,
 	// so v.ptr + field.offset is still okay.
-	ptr := unsafe.Pointer(uintptr(v.ptr) + field.offset)
+	//ptr:=unsafe.Pointer(uintptr(v.ptr) + field.offset)
+	ptr := unsafe.Pointer(hx.MethDynamic("", uintptr(v.ptr), "Pointer", "addr", 1, field.offset))
 	return Value{typ, ptr, fl}
 }
 
@@ -1153,7 +1154,7 @@ func (v Value) MethodByName(name string) Value {
 // NumField returns the number of fields in the struct v.
 // It panics if v's Kind is not Struct.
 func (v Value) NumField() int {
-	panic("reflect.value.NumField not yet implemented")
+	//panic("reflect.value.NumField not yet implemented")
 	v.mustBe(Struct)
 	tt := (*structType)(unsafe.Pointer(v.typ))
 	return len(tt.fields)
@@ -1774,7 +1775,7 @@ func (v Value) Uint() uint64 {
 // It is for advanced clients that also import the "unsafe" package.
 // It panics if v is not addressable.
 func (v Value) UnsafeAddr() uintptr {
-	panic("reflect.value.UnsafeAddr not yet implemented")
+	// panic("reflect.value.UnsafeAddr not yet implemented")
 	// TODO: deprecate
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.UnsafeAddr", Invalid})

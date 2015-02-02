@@ -46,18 +46,6 @@ func createHaxeType(id int) *rtype {
 
 	typInfo := hx.CodeDynamic("", "TypeInfo.typesByID[_a.itemAddr(0).load().val];", id)
 
-	/*
-		println("createHaxeType DEBUG trace:",
-			hx.CodeInt("", "_a.itemAddr(0).load().typ;", i),
-			hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i),
-			hx.FgetBool("", typInfo, "", "isValid"),
-			hx.FgetInt("", typInfo, "", "size"),
-			hx.FgetInt("", typInfo, "", "align"),
-			hx.FgetInt("", typInfo, "", "kind"),
-			hx.FgetString("", typInfo, "", "name"),
-			hx.FgetString("", typInfo, "", "stringForm"))
-	*/
-
 	if hx.IsNull(typInfo) {
 		panic("reflect.createHaxeType() null type info: " + hx.CallString("", "Std.string", 1, id))
 		return nil
@@ -139,16 +127,52 @@ func createHaxeType(id int) *rtype {
 		}
 		haxeIDmap[id] = unsafe.Pointer(&sliceT)
 
+	case Struct:
+		haxeFlds := hx.CodeDynamic("", "TypeInfo.structByID[_a.itemAddr(0).load().val];", id)
+		if hx.IsNull(haxeFlds) {
+			panic("reflect.createHaxeType() can't find struct type info for type: " + hx.CallString("", "Std.string", 1, id))
+		}
+		numFlds := hx.FgetInt("", haxeFlds, "", "length")
+		flds := make([]structField, numFlds)
+		for f := 0; f < numFlds; f++ {
+			fldInfo := hx.CodeDynamic("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", haxeFlds, f)
+			fStr := structField{}
+			name := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 0)
+			if name != "" {
+				fStr.name = &name
+			}
+			pkgPath := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 1)
+			if pkgPath != "" {
+				fStr.pkgPath = &pkgPath
+			}
+			fStr.typ = createHaxeType(
+				hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 2))
+			tag := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 3)
+			if tag != "" {
+				fStr.tag = &tag
+			}
+			fStr.offset = uintptr(hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 4))
+			flds[f] = fStr
+		}
+		structT := structType{
+			rtype:  basicT,
+			fields: flds,
+		}
+		haxeIDmap[id] = unsafe.Pointer(&structT)
+
+	case Interface:
+		interfaceT := interfaceType{
+			rtype:   basicT,
+			methods: make([]imethod, 0),
+		}
+		haxeIDmap[id] = unsafe.Pointer(&interfaceT)
+
 	case Chan:
 		panic("reflect.createHaxeType() not yet programmed Chan ")
 	case Func:
 		panic("reflect.createHaxeType() not yet programmed Func ")
-	case Interface:
-		panic("reflect.createHaxeType() not yet programmed Interface ")
 	case Map:
 		panic("reflect.createHaxeType() not yet programmed Map ")
-	case Struct:
-		panic("reflect.createHaxeType() not yet programmed Struct ")
 	}
 
 	return (*rtype)(haxeIDmap[id])
@@ -203,12 +227,12 @@ func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 	case String:
 		*(*string)(ret.word) = hx.CodeString("", "_a.itemAddr(0).load().val;", i)
 
-	case Array:
+	case Array, Struct:
 		hx.Code("",
 			"_a.itemAddr(1).load().val.store_object(_a.itemAddr(2).load().val,_a.itemAddr(0).load().val);",
 			i, ret.word, ret.typ.size)
 
-	case Slice:
+	case Slice, Interface:
 		hx.Code("",
 			"_a.itemAddr(1).load().val.store(_a.itemAddr(0).load().val);",
 			i, ret.word)
@@ -217,12 +241,8 @@ func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 		panic("reflect.haxeInterfaceUnpack() not yet programmed Chan ")
 	case Func:
 		panic("reflect.haxeInterfaceUnpack() not yet programmed Func ")
-	case Interface:
-		panic("reflect.haxeInterfaceUnpack() not yet programmed Interface ")
 	case Map:
 		panic("reflect.haxeInterfaceUnpack() not yet programmed Map ")
-	case Struct:
-		panic("reflect.haxeInterfaceUnpack() not yet programmed Struct ")
 	}
 
 	return ret

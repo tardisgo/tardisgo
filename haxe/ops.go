@@ -184,6 +184,17 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 			return ""
 		}
 
+	} else if v1LangType == "Object" {
+		switch op {
+		case "==":
+			return "(" + v1string + ".isEqual(0," + v2string + ",0))"
+		case "!=":
+			return "!(" + v1string + ".isEqual(0," + v2string + ",0))"
+		default:
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Object op: %s", op))
+			return ""
+		}
+
 	} else {
 		if useInt64 { // explicitly enumerate all of the Int64 functions
 			isSignedStr := "true"

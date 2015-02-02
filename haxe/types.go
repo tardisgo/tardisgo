@@ -556,6 +556,49 @@ func (l langType) EmitTypeInfo() string {
 
 	buildTBI()
 
+	ret += "public static var structByID:Map<Int,Array<Array<Dynamic>>> = [ 0=> [[]],\n"
+	ret += "// mirrors reflect.structType / reflect.structField\n"
+	ret += "//[0] name    *string // nil for embedded fields\n"
+	ret += "//[1] pkgPath *string // nil for exported Names; otherwise import path\n"
+	ret += "//[2] typ     *rtype  // type of field\n"
+	ret += "//[3] tag     *string // nil if no tag\n"
+	ret += "//[4] offset  uintptr // byte offset of field within struct\n"
+	for id, t := range typesByID {
+			switch t.(type) {
+		case *types.Named:
+			t = t.(*types.Named).Underlying()
+		}
+		 	switch t.(type) {
+		case *types.Struct:
+			fields := []*types.Var{}
+			for fld :=0; fld< t.(*types.Struct).NumFields(); fld++{
+				fldInfo := t.(*types.Struct).Field(fld)
+				if fldInfo.IsField(){
+					fields = append(fields,fldInfo)
+				}
+			}
+			offs:=haxeStdSizes.Offsetsof(fields)
+			ret += fmt.Sprintf("\t%d=>[ \n",id)
+			for fld :=0; fld< t.(*types.Struct).NumFields(); fld++{
+				fldInfo := t.(*types.Struct).Field(fld)
+				if fldInfo.IsField(){
+					ret += "\t\t[ "
+					ret += haxeStringConst(`"`+fldInfo.Name()+`"`, "CompilerInternal:haxe.EmitTypeInfo()")+", "
+					ret += haxeStringConst(`"`+fldInfo.Pkg().Path()+`"`, "CompilerInternal:haxe.EmitTypeInfo()")+", "
+					ret += fmt.Sprintf("%s, ",pogo.LogTypeUse(fldInfo.Type()) )
+					ret += haxeStringConst(`"`+t.(*types.Struct).Tag(fld)+`"`, "CompilerInternal:haxe.EmitTypeInfo()")+", "
+					ret += fmt.Sprintf("%d ",offs[fld] )
+					ret += "],\n"
+				}
+			}
+			ret += "\t],\n"
+		}
+	}
+	ret += "];\n"
+
+	buildTBI()
+
+
 	ret += "public static var arrayByID:Map<Int,{elem:Int,slice:Int,len:Int}> = [ 0=>{elem:0,slice:0,len:0}, \n"
 	for id, t := range typesByID {
 		var err error

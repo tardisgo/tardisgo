@@ -39,11 +39,14 @@ Some parts of the Go standard library work, as you can see in the [example TARDI
 The "testing" packages is currently emulated in an ugly and part-working way. The "fmt" package is only partially working.
 
 Currently the only the standard packages that pass their tests are:
+- "bytes"
 - "container/heap", "container/list", "container/ring"
 - "encoding/ascii85", "encoding/base32", "encoding/base64", "encoding/hex"
+- "errors"
 - "math/cmplx" (not in PHP or Neko)
 - "path"
 - "sort"
+- "strings"
 - "text/tabwriter"
 - "unicode", "unicode/utf8", "unicode/utf16"
 
@@ -117,11 +120,15 @@ haxe -main tardis.Go -dce full -D godebug -cpp tardis/cpp
 ``` 
 To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). 
 
-To run cross-target command-line tests as quickly as possible, the "-runall" flag  concurrently runs the Haxe compiler and executes the resulting code for all supported targets (with compiler output suppressed and results appearing in the order they complete, with an execution time):
+To run cross-target command-line tests as quickly as possible, the "-haxe X" flag concurrently runs the Haxe compiler and executes the resulting code as follows:
+- "-haxe all" - all supported targets 
+- "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview), where float32 is correctly handled
+- "-haxe interp" - only runs the haxe interpreter
+Compiler output is suppressed and results appear in the order they complete, with an execution time, for example:
 ```
-tardisgo -runall myprogram.go
+tardisgo -haxe all myprogram.go
 ```
-When using the -runall flag with the -test flag, if the file "tgotestfs.zip" exists in the current directory, it will be added as a haxe resource and its contents auto-loaded into the in-memory file system.
+When using the -haxe flag with the -test flag, if the file "tgotestfs.zip" exists in the current directory, it will be added as a haxe resource and its contents auto-loaded into the in-memory file system.
 
 If you can't work-out what is going on prior to a panic, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
 
@@ -146,7 +153,7 @@ If you transpile your own code using TARDIS Go, please report the bugs that you 
 
 The focus of short-term development is to get the Haxe implementation production ready. In particular, smooth interaction with external Haxe code is required to make the project useful for real work, [an experimental version of which is available](https://github.com/tardisgo/gohaxelib). 
 
-In speed terms, the planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for faster execution times by making less use of the Haxe "Dynamic" type to store values on the heap. (See the -dataview js haxe compilation flag for a partial implementation.)
+In speed terms, the planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for faster execution times by making less use of the Haxe "Dynamic" type to store values on the heap. See the -D fullunsafe haxe compilation flag for JS to see a partial implementation.
 
 Longer term development priorities:
 - For all Go standard libraries, report testing and implementation status

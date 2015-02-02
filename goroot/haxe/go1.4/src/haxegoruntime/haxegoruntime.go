@@ -59,9 +59,16 @@ func RunesToUTF8(r []rune) []byte {
 	var ret []byte
 	ret = make([]byte, 0)
 	for i := range r {
-		buf := make([]byte, utf8.RuneLen(r[i]))
-		utf8.EncodeRune(buf, r[i])
-		ret = append(ret, buf...)
+		l := utf8.RuneLen(r[i])
+		if l > 0 {
+			buf := make([]byte, l)
+			utf8.EncodeRune(buf, r[i])
+			ret = append(ret, buf...)
+		} else {
+			buf := make([]byte, utf8.RuneLen(utf8.RuneError))
+			utf8.EncodeRune(buf, utf8.RuneError)
+			ret = append(ret, buf...)
+		}
 	}
 	return ret
 }

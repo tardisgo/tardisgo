@@ -61,7 +61,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go addition
-var allFlag = flag.Bool("runall", false, "For all targets: invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only)")
+var allFlag = flag.String("haxe", "", "invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only): all=all targets, math=math-safe targets (cpp & js -D fullunsafe), interp=haxe interpreter")
 var debugFlag = flag.Bool("debug", false, "Instrument the code to enable debugging, add comments, and give more meaningful information during a stack dump (warning: increased code size)")
 var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
 var buidTags = flag.String("tags", "", "build tags separated by spaces")
@@ -336,14 +336,16 @@ func doTestable(args []string) error {
 		if err != nil {
 			return err
 		}
-		if *allFlag {
+		results := make(chan resChan)
+		switch *allFlag {
+		case "": // NoOp
+		case "all":
 			for _, dir := range dirs {
-				err := os.RemoveAll(dir) //
+				err := os.RemoveAll(dir)
 				if err != nil {
 					fmt.Println("Error deleting existing '" + dir + "' directory: " + err.Error())
 				}
 			}
-			results := make(chan resChan)
 			for _, cmd := range targets {
 				go doTarget(cmd, results)
 			}
@@ -352,6 +354,45 @@ func doTestable(args []string) error {
 				fmt.Println(r.output)
 				r.backChan <- true
 			}
+
+		case "math":
+			err := os.RemoveAll("tardis/cpp")
+			if err != nil {
+				fmt.Println("Error deleting existing '" + "tardis/cpp" + "' directory: " + err.Error())
+			}
+			mathCmds := [][][]string{
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "tardis/cpp"},
+					[]string{"echo", `"CPP:"`},
+					[]string{"time", "./tardis/cpp/Go"},
+				},
+				[][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
+					[]string{"time", "node", "tardis/go-fu.js"},
+				},
+			}
+			for _, cmd := range mathCmds {
+				go doTarget(cmd, results)
+			}
+			for _ = range mathCmds {
+				r := <-results
+				fmt.Println(r.output)
+				r.backChan <- true
+			}
+
+		case "interp":
+			go doTarget([][]string{
+				[]string{"echo", ``}, // Output from this line is ignored
+				[]string{"echo", `"Neko (haxe --interp):"`},
+				[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
+			}, results)
+			r := <-results
+			fmt.Println(r.output)
+			r.backChan <- true
+
+		default:
+			panic("invalid value for -haxe flag: " + *allFlag)
 		}
 	}
 	return nil

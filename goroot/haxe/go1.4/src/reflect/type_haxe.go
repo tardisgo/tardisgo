@@ -540,6 +540,7 @@ func (t *uncommonType) MethodByName(name string) (m Method, ok bool) {
 // as efficient as they could be: they have commonType
 // as the receiver instead of *rtype.
 func (t *rtype) NumMethod() int {
+	return 0 // TODO bodge for now...
 	panic("reflect.NumMethod not yet implemented")
 	if t.Kind() == Interface {
 		panic("reflect.NumMethod unhandled *interface ")
@@ -617,7 +618,7 @@ func (t *rtype) Elem() Type {
 }
 
 func (t *rtype) Field(i int) StructField {
-	panic("reflect.Field not yet implemented")
+	//panic("reflect.Field not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: Field of non-struct type")
 	}
@@ -671,7 +672,7 @@ func (t *rtype) Key() Type {
 }
 
 func (t *rtype) Len() int {
-	panic("reflect.Len not yet implemented")
+	//panic("reflect.Len not yet implemented")
 	if t.Kind() != Array {
 		panic("reflect: Len of non-array type")
 	}
@@ -680,7 +681,7 @@ func (t *rtype) Len() int {
 }
 
 func (t *rtype) NumField() int {
-	panic("reflect.NumField not yet implemented")
+	//panic("reflect.NumField not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: NumField of non-struct type")
 	}
@@ -844,7 +845,7 @@ func (tag StructTag) Get(key string) string {
 
 // Field returns the i'th struct field.
 func (t *structType) Field(i int) (f StructField) {
-	panic("reflect.Field not yet implemented")
+	//panic("reflect.Field not yet implemented")
 	if i < 0 || i >= len(t.fields) {
 		return
 	}

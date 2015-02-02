@@ -155,7 +155,7 @@ var canbackquotetests = []canBackquoteTest{
 func TestCanBackquote(t *testing.T) {
 	for _, tt := range canbackquotetests {
 		if out := CanBackquote(tt.in); out != tt.out {
-			t.Errorf("CanBackquote(%q) = %v, want %v", tt.in, out, tt.out)
+			t.Errorf("CanBackquote(%q) DEBUG:%v = %v, want %v", tt.in, []byte(tt.in), out, tt.out)
 		}
 	}
 }

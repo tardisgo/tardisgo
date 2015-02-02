@@ -76,8 +76,15 @@ func TypesWithMethodSets() (sets []types.Type) {
 	return sets
 }
 
+var catchReferencedTypesSeen = make(map[string]bool)
+
 func catchReferencedTypes(et types.Type) {
-	LogTypeUse(et)
+	id:=LogTypeUse(et)
+	_,seen := catchReferencedTypesSeen[id]
+	if seen {
+		return
+	}
+	catchReferencedTypesSeen[id]=true
 	//LogTypeUse(types.NewPointer(et))
 	switch et.(type) {
 	case *types.Named:
@@ -89,6 +96,12 @@ func catchReferencedTypes(et types.Type) {
 		catchReferencedTypes(et.(*types.Pointer).Elem())
 	case *types.Slice:
 		catchReferencedTypes(et.(*types.Slice).Elem())
+ 	case *types.Struct:
+		for f := 0; f< et.(*types.Struct).NumFields();f++ {
+			if et.(*types.Struct).Field(f).IsField() {
+				catchReferencedTypes(et.(*types.Struct).Field(f).Type() )
+			} 
+		}
 	}
 }
 
