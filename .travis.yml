@@ -8,6 +8,6 @@ before_install:
 
 install: 
   - go get -d -v . 
-  - go build -v .
+  - go install -v .
 
 script: go test -v .
