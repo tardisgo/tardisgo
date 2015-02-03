@@ -83,7 +83,8 @@ func stdLibTestGo(lib string) {
 }
 
 var libs = []string{
-	"bytes", "errors", "path", "strings", "sort", "unicode", "container/heap", "container/list",
+	// too long: "bytes", "sort",
+	"errors", "path", "strings", "unicode", "container/heap", "container/list",
 	"container/ring", "encoding/ascii85", "encoding/base32", "encoding/base64", "encoding/hex", "text/tabwriter",
 	"unicode/utf8", "unicode/utf16",
 }
