@@ -1651,8 +1651,11 @@ func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) strin
 func (l langType) EmitInvoke(register string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string {
 	val := callCommon.(ssa.CallCommon).Value
 	meth := callCommon.(ssa.CallCommon).Method.Name()
-
-	ret := "Interface.invoke(" + l.IndirectValue(val, errorInfo) + `,"` + meth + `",[`
+	ret := ""
+	if pogo.DebugFlag {
+		ret += l.IndirectValue(val, errorInfo) + "==null?Scheduler.unt():"
+	}
+	ret += "Interface.invoke(" + l.IndirectValue(val, errorInfo) + `,"` + meth + `",[`
 	if isGo {
 		ret += "Scheduler.makeGoroutine()"
 	} else {

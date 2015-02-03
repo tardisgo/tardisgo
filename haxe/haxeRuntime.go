@@ -2420,6 +2420,10 @@ public static function htc(c:Dynamic,pos:Int) {
 public static inline function wraprangechk(val:Int,sz:Int) {
 	if((val<0)||(val>=sz)) ioor();
 }
+public static function unt():Dynamic {
+		panicFromHaxe("nil interface target for method");	
+		return null;
+}
 static function unp() {
 		panicFromHaxe("unexpected nil pointer (ssa:wrapnilchk)");	
 }
