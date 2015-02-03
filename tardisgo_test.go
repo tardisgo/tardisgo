@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"os/exec"
-	"runtime"
 	"testing"
 )
 
@@ -64,7 +63,7 @@ func TestUnicodeUTF16(t *testing.T)    { stdLibTest(t, "unicode/utf16") }
 func TestSort(t *testing.T)  { stdLibTest(t, "sort") }
 func TestBytes(t *testing.T) { stdLibTest(t, "bytes") }
 */
-
+/*
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
@@ -103,3 +102,4 @@ func TestStdLib(t *testing.T) {
 		}
 	}
 }
+*/
