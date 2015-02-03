@@ -39,16 +39,16 @@ Some parts of the Go standard library work, as you can see in the [example TARDI
 The "testing" packages is currently emulated in an ugly and part-working way. The "fmt" package is only partially working.
 
 Currently the only the standard packages that pass their tests are:
-- "bytes"
-- "container/heap", "container/list", "container/ring"
-- "encoding/ascii85", "encoding/base32", "encoding/base64", "encoding/hex"
-- "errors"
-- "math/cmplx" (not in PHP or Neko)
-- "path"
-- "sort"
-- "strings"
-- "text/tabwriter"
-- "unicode", "unicode/utf8", "unicode/utf16"
+- bytes
+- container/heap, container/list, container/ring
+- encoding/ascii85, encoding/base32, encoding/base64, encoding/hex
+- errors
+- math/cmplx (not in PHP or Neko)
+- path
+- sort
+- strings
+- text/tabwriter
+- unicode, unicode/utf8, unicode/utf16
 
 Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "reflect" or other low-level packages are not implemented. Packages "runtime","os" & "syscall" are part-implemented, using a partial implementation of the nacl runtime (currently including debug messages).
 

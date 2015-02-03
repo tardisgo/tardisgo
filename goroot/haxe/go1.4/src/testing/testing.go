@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"sort"
 	"time"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
 func header(s string) {
@@ -43,30 +45,34 @@ func (c *common) Error(args ...interface{}) {
 	header("Error")
 	fmt.Println(args...)
 	runtime.Breakpoint()
+	hadError = true
 }
 
 func (c *common) Errorf(format string, args ...interface{}) {
 	header("Errorf")
 	fmt.Printf(format, args...)
 	runtime.Breakpoint()
+	hadError = true
 }
 func (c *common) Fatalf(format string, args ...interface{}) {
 	header("Fatalf")
 	fmt.Printf(format, args...)
 	runtime.Breakpoint()
+	badExit()
 }
 func (c *common) Logf(format string, args ...interface{}) {
 	header("Logf")
 	fmt.Printf(format, args...)
 	runtime.Breakpoint()
 }
-func (c *common) Fail()        { header("Fail"); runtime.Breakpoint() }
-func (c *common) FailNow()     { header("FailNow"); runtime.Breakpoint() }
+func (c *common) Fail()        { header("Fail"); runtime.Breakpoint(); badExit() }
+func (c *common) FailNow()     { header("FailNow"); runtime.Breakpoint(); badExit() }
 func (c *common) Failed() bool { return false }
 func (c *common) Fatal(args ...interface{}) {
 	header("Fatal")
 	fmt.Println(args...)
 	runtime.Breakpoint()
+	badExit()
 }
 func (c *common) Log(args ...interface{})  { header("Log"); fmt.Println(args...); runtime.Breakpoint() }
 func (t *common) Parallel()                {}
@@ -131,6 +137,16 @@ func Main(matchString func(pat, str string) (bool, error), tests []InternalTest,
 			}
 		}
 	}
+	if hadError {
+		badExit()
+	}
+	hx.Call("(cpp || cs || java || macro || neko || php || python)", "Sys.exit", 1, 0)
+}
+
+var hadError = false
+
+func badExit() {
+	hx.Call("(cpp || cs || java || macro || neko || php || python)", "Sys.exit", 1, 1)
 }
 
 func init() {

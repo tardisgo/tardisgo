@@ -446,7 +446,7 @@ func (t *uncommonType) uncommon() *uncommonType {
 }
 
 func (t *uncommonType) PkgPath() string {
-	panic("reflect.PkgPath not yet implemented")
+	//panic("reflect.PkgPath not yet implemented")
 	if t == nil || t.pkgPath == nil {
 		return ""
 	}
@@ -478,14 +478,14 @@ func (t *rtype) Bits() int {
 func (t *rtype) Align() int { return int(t.align) }
 
 func (t *rtype) FieldAlign() int {
-	panic("reflect.FieldAlign not yet implemented")
+	//panic("reflect.FieldAlign not yet implemented")
 	return int(t.fieldAlign)
 }
 
 func (t *rtype) Kind() Kind { return Kind(t.kind & kindMask) }
 
 func (t *rtype) pointers() bool {
-	panic("reflect.pointers not yet implemented")
+	//panic("reflect.pointers not yet implemented")
 	return t.kind&kindNoPointers == 0
 }
 
