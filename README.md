@@ -38,15 +38,12 @@ Some parts of the Go standard library work, as you can see in the [example TARDI
 
 The "testing" packages is currently emulated in an ugly and part-working way. The "fmt" package is only partially working.
 
-Currently the only the standard packages that pass their tests are:
-- bytes
+Currently the standard packages that fully pass their tests (see TravisCI test results) are:
 - container/heap, container/list, container/ring
 - encoding/ascii85, encoding/base32, encoding/base64, encoding/hex
 - errors
-- math/cmplx (not in PHP or Neko)
 - path
 - sort
-- strings
 - text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
 

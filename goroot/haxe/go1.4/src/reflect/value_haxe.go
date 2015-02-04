@@ -252,7 +252,7 @@ func (v Value) Bool() bool {
 // Bytes returns v's underlying value.
 // It panics if v's underlying value is not a slice of bytes.
 func (v Value) Bytes() []byte {
-	panic("reflect.Bytes not yet implemented")
+	//panic("reflect.Bytes not yet implemented")
 	v.mustBe(Slice)
 	if v.typ.Elem().Kind() != Uint8 {
 		panic("reflect.Value.Bytes of non-byte slice")

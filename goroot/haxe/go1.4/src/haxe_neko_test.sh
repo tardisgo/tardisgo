@@ -1,5 +1,5 @@
 # run the working unit tests using neko --interp
-for onelevel in bytes errors path sort strings unicode 
+for onelevel in errors path sort unicode 
 do
 	echo "========================================="
 	echo "Unit Test: " $onelevel 
