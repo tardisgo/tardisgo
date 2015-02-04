@@ -664,7 +664,7 @@ func (l langType) EmitTypeInfo() string {
 			ret += fmt.Sprintf(" true,")
 			ret += fmt.Sprintf(" %d,", haxeStdSizes.Sizeof(t))
 			ret += fmt.Sprintf(" %d,", haxeStdSizes.Alignof(t))
-			ret += fmt.Sprintf(" %d,", haxeStdSizes.Alignof(t)) // TODO check correct for fieldAlign
+			ret += fmt.Sprintf(" 1%s,", arrayOffsetCalc(t)) // TODO check correct for fieldAlign
 			ret += fmt.Sprintf(" %d,", kind)
 			ret += fmt.Sprintf(" %s,", haxeStringConst(`"`+preprocessTypeName(t.String())+`"`, "CompilerInternal:haxe.EmitTypeInfo()"))
 			ret += fmt.Sprintf(" %s,", haxeStringConst(`"`+name+`"`, "CompilerInternal:haxe.EmitTypeInfo()"))

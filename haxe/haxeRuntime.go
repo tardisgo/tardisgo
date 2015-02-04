@@ -233,6 +233,18 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return GOint64.toInt(GOint64.mod(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
 		}
 	}
+	public static function intMul(x:Int,y:Int,sv:Int):Int {
+		#if (js || php)
+			var z=GOint64.toInt(GOint64.mul(GOint64.make(0x0,x),GOint64.make(0x0,y)));
+			if(sv>0){ // signed mul as normal
+				return toInt32(z); // TODO review if this required
+			} else { // unsigned mul 
+				return toUint32(z); // required for overflowing mul
+			}
+		#else
+			return x * y;
+		#end
+	}
 	private static var zero:Float=0.0;
 	public static inline function floatDiv(x:Float,y:Float):Float {
 		#if php 
@@ -260,24 +272,18 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}
 
 	public static function toUTF8length(gr:Int,s:String):Int {
-		//if(!Std.is(s,String)) return 0; 
 		return s.length;
 	}
 	// return the UTF8 version of a string in a Slice
 	public static function toUTF8slice(gr:Int,s:String):Slice {
-		var a:Array<Int> = new Array<Int>();
+		var sl:Slice=new Slice(new Pointer(new Object(s.length)),0,-1,s.length,1);
 		for(i in 0...s.length){
 				var t:Null<Int>=s.charCodeAt(i) ;
 				if(t==null) 
 					Scheduler.panicFromHaxe("Haxe runtime Force.toUTF8slice() unexpected null encountered");
-				else{
-					var x = t & 0xff; // just to be sure
-					a[i] = x;
-				}
+				else
+					sl.itemAddr(i).store_uint8(t);
 		}
-		var sl:Slice=new Slice(new Pointer(new Object(a.length)),0,-1,a.length,1);
-		for(i in 0...a.length)
-			sl.itemAddr(i).store_uint8(a[i]);
 		return sl;
 	}
 	public static function toRawString(gr:Int,sl:Slice):String {
@@ -362,14 +368,14 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		var c = s.charCodeAt(i);
 		if(c==null) 
 			Scheduler.panicFromHaxe("string index out of range");
-		return cast(c,Int)&0xFF;
+		return c&0xFF;
 	}
 	public static function stringAtOK(s:String,i:Int):Dynamic {
 		var c = s.charCodeAt(i);
 		if(c==null)
 			return {r0:0,r1:false};
 		else 
-			return {r0:cast(c,Int)&0xff,r1:true};
+			return {r0:c&0xff,r1:true};
 	}
 }
 
@@ -1023,11 +1029,13 @@ class Slice {
 		return new Slice(baseArray,low+start,high+start,capacity,itemSize);
 	}
 	public static function append(oldEnt:Slice,newEnt:Slice):Slice{
-		if(oldEnt==null) return newEnt;
 		if(newEnt==null || newEnt.len()==0) return oldEnt;
+		if(oldEnt==null) { // must create a copy rather than just return the new one
+			oldEnt=new Slice(new Pointer(new Object(0)),0,-1,0,newEnt.itemSize); // trigger newObj code below
+		}
 		if(oldEnt.itemSize!=newEnt.itemSize)
 			Scheduler.panicFromHaxe("new Slice() internal error: itemSizes do not match");
-		if(oldEnt.baseArray!=null && oldEnt.cap()>=(oldEnt.len()+newEnt.len())){
+		if(oldEnt.cap()>=(oldEnt.len()+newEnt.len())){
 			var offset=oldEnt.len();
 			for(i in 0...newEnt.len()){
 				oldEnt.end++;

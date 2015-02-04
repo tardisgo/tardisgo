@@ -39,11 +39,14 @@ Some parts of the Go standard library work, as you can see in the [example TARDI
 The "testing" packages is currently emulated in an ugly and part-working way. The "fmt" package is only partially working.
 
 Currently the standard packages that fully pass their tests (see TravisCI test results) are:
+- bufio
+- bytes
 - container/heap, container/list, container/ring
 - encoding/ascii85, encoding/base32, encoding/base64, encoding/hex
 - errors
 - path
 - sort
+- strings
 - text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
 
@@ -82,7 +85,7 @@ Then to run the tardis/Go.hx file generated above, type the command line:
 ```
 haxe -main tardis.Go --interp
 ```
-... or whatever [Haxe compilation options](http://haxe.org/doc/compiler) you want to use. 
+... or whatever [Haxe compilation options](http://haxe.org/documentation/introduction/compiler-usage.html) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
 
 The default memory model is fast, but requires more memory than you might expect (an int per byte) and only allows some unsafe pointer usages. If your code uses unsafe pointers to re-use memory as different types (say writing a float64 but reading back a uint64), there is a Haxe compilation flag for "fullunsafe" mode (this is slower, but has a smaller memory footprint and allows most unsafe pointers to be modelled accurately). In JS fullunsafe uses the dataview method of object access, for other targets it simulates memory access. Fullunsafe is little-endian only at present and pointer aritmetic (via uintptr) will panic. A command line example: 

@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package bytes_test
 
 import (
 	. "bytes"
-	"math/rand"
 	"reflect"
 	"testing"
 	"unicode"
@@ -1190,6 +1191,8 @@ func TestContains(t *testing.T) {
 	}
 }
 
+/*
+
 var makeFieldsInput = func() []byte {
 	x := make([]byte, 1<<20)
 	// Input is ~10% space, ~10% 2-byte UTF-8, rest ASCII non-space.
@@ -1238,3 +1241,5 @@ func BenchmarkRepeat(b *testing.B) {
 		Repeat([]byte("-"), 80)
 	}
 }
+
+*/

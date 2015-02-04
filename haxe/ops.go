@@ -331,6 +331,22 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
 					ret = "(ERROR)"
 				}
+			case "*":
+				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
+				case types.Int8:
+					ret = "Force.intMul(" + v1string + "," + v2string + ", 1)"
+				case types.Int16:
+					ret = "Force.intMul(" + v1string + "," + v2string + ", 2)"
+				case types.UntypedInt, types.Int, types.Int32: // treat all unknown int types as int 32
+					ret = "Force.intMul(" + v1string + "," + v2string + ", 4)"
+				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned mod
+					ret = "Force.intMul(" + v1string + "," + v2string + ", 0)"
+				case types.UntypedFloat, types.Float32, types.Float64:
+					ret = "(" + v1string + "*" + v2string + ")"
+				default:
+					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
+					ret = "(ERROR)"
+				}
 
 			case "&^":
 				op = "&~" // Haxe has a different operator for bit-wise complement

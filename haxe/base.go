@@ -31,12 +31,10 @@ func fieldOffset(str *types.Struct, fldNum int) int64 {
 }
 
 func arrayOffsetCalc(ele types.Type) string {
-	/*
-		ent := types.NewVar(0, nil, "___temp", ele)
-		fieldList := []*types.Var{ent, ent}
-		off := haxeStdSizes.Offsetsof(fieldList)[1] // to allow for word alignment
-	*/
-	off := haxeStdSizes.Sizeof(ele) // ?? or should it be the code above ?
+	ent := types.NewVar(0, nil, "___temp", ele)
+	fieldList := []*types.Var{ent, ent}
+	off := haxeStdSizes.Offsetsof(fieldList)[1] // to allow for word alignment
+	//off := haxeStdSizes.Sizeof(ele) // ?? or should it be the code above ?
 	if off == 1 {
 		return ""
 	}
@@ -1322,14 +1320,14 @@ func allocNewObject(t types.Type) string {
 	switch typ.(type) {
 
 	// this should not be required...
-	//case *types.Array:
-	//	ao := haxeStdSizes.Alignof(typ.(*types.Array).Elem().Underlying())
-	//	so := haxeStdSizes.Sizeof(typ.(*types.Array).Elem().Underlying())
-	//	for so%ao != 0 {
-	//		so++
-	//	}
-	//	return fmt.Sprintf("new Object(%d) /* Array: %s */",
-	//		typ.(*types.Array).Len()*so, typ.String())
+	case *types.Array:
+		ao := haxeStdSizes.Alignof(typ.(*types.Array).Elem().Underlying())
+		so := haxeStdSizes.Sizeof(typ.(*types.Array).Elem().Underlying())
+		for so%ao != 0 {
+			so++
+		}
+		return fmt.Sprintf("new Object(%d) /* Array: %s */",
+			typ.(*types.Array).Len()*so, typ.String())
 
 	default:
 		return fmt.Sprintf("new Object(%d) /* %s */",
@@ -1427,16 +1425,13 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 	case *types.Pointer:
 		eleSz := "1" + arrayOffsetCalc(x.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying())
 		return register + "=new Slice(" + xString + `,` + lvString + `,` + hvString + "," +
-			//xString + ".len(" + eleSz + ")" +
 			fmt.Sprintf("%d", x.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Len()) +
 			"," + eleSz + `);`
 	case *types.Basic: // assume a string is in need of slicing...
-		//return register + "=Force.toRawString(this._goroutine,Force.toUTF8slice(this._goroutine," + xString +
-		//	`).subSlice(` + lvString + `,` + hvString + `)` + `);`
 		if hvString == "-1" {
-			return register + "=(" + xString + ").substr(" + lvString + ");"
+			hvString = "(" + xString + ").length"
 		}
-		return register + "=(" + xString + ").substr(" + lvString + "," + hvString + "-" + lvString + ");"
+		return register + "= (" + xString + ").substr(" + lvString + "," + hvString + "-" + lvString + ") ;"
 	default:
 		pogo.LogError(errorInfo, "Haxe",
 			fmt.Errorf("haxe.Slice() - unhandled type: %v", reflect.TypeOf(x.(ssa.Value).Type().Underlying())))

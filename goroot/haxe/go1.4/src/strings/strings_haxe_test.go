@@ -2,18 +2,18 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package strings_test
 
 import (
 	"bytes"
 	"io"
-	"math/rand"
 	"reflect"
 	. "strings"
 	"testing"
 	"unicode"
 	"unicode/utf8"
-	"unsafe"
 )
 
 func eq(a, b []string) bool {
@@ -471,10 +471,11 @@ func TestMap(t *testing.T) {
 	}
 	orig := "Input string that we expect not to be copied."
 	m = Map(identity, orig)
-	if (*reflect.StringHeader)(unsafe.Pointer(&orig)).Data !=
-		(*reflect.StringHeader)(unsafe.Pointer(&m)).Data {
-		t.Error("unexpected copy during identity map")
-	}
+	//Haxe does not store strings using StringHeader
+	//if (*reflect.StringHeader)(unsafe.Pointer(&orig)).Data !=
+	//	(*reflect.StringHeader)(unsafe.Pointer(&m)).Data {
+	//	t.Error("unexpected copy during identity map")
+	//}
 }
 
 func TestToUpper(t *testing.T) { runStringTests(t, ToUpper, "ToUpper", upperTests) }
@@ -1071,6 +1072,7 @@ func TestCount(t *testing.T) {
 	}
 }
 
+/*
 func makeBenchInputHard() string {
 	tokens := [...]string{
 		"<a>", "<p>", "<b>", "<strong>",
@@ -1202,3 +1204,4 @@ func BenchmarkRepeat(b *testing.B) {
 		Repeat("-", 80)
 	}
 }
+*/
