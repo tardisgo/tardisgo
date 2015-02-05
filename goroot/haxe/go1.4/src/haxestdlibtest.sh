@@ -2,7 +2,7 @@
 	echo "========================================="
 	echo "Unit Test: " $1
 	echo "========================================="
-	cd goroot/haxe/go1.4/src/$1
+	cd $1
 	tardisgo -test $1
 	if [ "$?" != "0" ]; then
 		exit $?
@@ -11,3 +11,5 @@
 	if [ "$?" != "0" ]; then
 		exit $?
 	fi
+	cd ..
+	

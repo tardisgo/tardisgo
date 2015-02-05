@@ -235,11 +235,10 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}
 	public static function intMul(x:Int,y:Int,sv:Int):Int {
 		#if (js || php)
-			var z=GOint64.toInt(GOint64.mul(GOint64.make(0x0,x),GOint64.make(0x0,y)));
 			if(sv>0){ // signed mul as normal
-				return toInt32(z); // TODO review if this required
+				return toInt32(GOint64.toInt(GOint64.mul(GOint64.ofInt(x),GOint64.ofInt(y)))); // TODO review if this required
 			} else { // unsigned mul 
-				return toUint32(z); // required for overflowing mul
+				return toUint32(GOint64.toInt(GOint64.mul(GOint64.ofUInt(x),GOint64.ofUInt(y)))); // required for overflowing mul
 			}
 		#else
 			return x * y;
