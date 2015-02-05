@@ -1,0 +1,767 @@
+=========================================
+Unit Test:  bufio
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestBadReader 
+
+Executing test: TestBlankLines 
+
+Executing test: TestBufferFull 
+
+Executing test: TestDontLoopForever 
+
+Executing test: TestEmptyLinesOK 
+
+Executing test: TestEmptyTokens 
+
+Executing test: TestErrAtEOF 
+
+Executing test: TestLineTooLong 
+
+Executing test: TestLinesAfterRead 
+
+Executing test: TestNegativeRead 
+
+Executing test: TestNewReaderSizeIdempotent 
+
+Executing test: TestNewWriterSizeIdempotent 
+
+Executing test: TestNonEOFWithEmptyRead 
+
+Executing test: TestPeek 
+
+Executing test: TestPeekThenUnreadRune 
+
+Executing test: TestReadAfterLines 
+
+Executing test: TestReadEmptyBuffer 
+
+Executing test: TestReadLine 
+
+Executing test: TestReadLineNewlines 
+
+Executing test: TestReadLineNonNilLineOrError 
+
+Executing test: TestReadRune 
+
+Executing test: TestReadWriteRune 
+
+Executing test: TestReader 
+
+Executing test: TestReaderClearError 
+
+Executing test: TestReaderReset 
+
+Executing test: TestReaderSimple 
+
+Executing test: TestReaderWriteTo 
+
+Executing test: TestReaderWriteToErrors 
+
+Executing test: TestScanByte 
+
+Executing test: TestScanLineEmptyFinalLine 
+
+Executing test: TestScanLineEmptyFinalLineWithCR 
+
+Executing test: TestScanLineNoNewline 
+
+Executing test: TestScanLineReturnButNoNewline 
+
+Executing test: TestScanLineTooLong 
+
+Executing test: TestScanLongLines 
+
+Executing test: TestScanRune 
+
+Executing test: TestScanWords 
+
+Executing test: TestScanWordsExcessiveWhiteSpace 
+
+Executing test: TestSpace 
+
+Executing test: TestSplitError 
+
+Executing test: TestUnreadByte 
+
+Executing test: TestUnreadByteMultiple 
+
+Executing test: TestUnreadByteOthers 
+
+Executing test: TestUnreadRune 
+
+Executing test: TestUnreadRuneAtEOF 
+
+Executing test: TestUnreadRuneError 
+
+Executing test: TestWriteErrors 
+
+Executing test: TestWriteString 
+
+Executing test: TestWriter 
+
+Executing test: TestWriterReadFrom 
+
+Executing test: TestWriterReadFromCounts 
+
+Executing test: TestWriterReadFromErrNoProgress 
+
+Executing test: TestWriterReadFromErrors 
+
+Executing test: TestWriterReadFromUntilEOF 
+
+Executing test: TestWriterReadFromWhileFull 
+
+Executing test: TestWriterReset 
+
+Executing test: TestZeroReader 
+=========================================
+Unit Test:  bytes
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestBasicOperations 
+
+Executing test: TestBufferGrowNegative 
+
+Executing test: TestBufferGrowth 
+
+Executing test: TestBufferTruncateNegative 
+
+Executing test: TestBufferTruncateOutOfRange 
+
+Executing test: TestCompare 
+
+Executing test: TestCompareBytes 
+
+Executing test: TestCompareIdenticalSlice 
+
+Executing test: TestContains 
+
+Executing test: TestEmptyReaderConcurrent 
+
+Executing test: TestEqual 
+
+Executing test: TestEqualExhaustive 
+
+Executing test: TestEqualFold 
+
+Executing test: TestExplode 
+
+Executing test: TestFields 
+
+Executing test: TestFieldsFunc 
+
+Executing test: TestGrow 
+
+Executing test: TestIndex 
+
+Executing test: TestIndexAny 
+
+Executing test: TestIndexByte 
+
+Executing test: TestIndexByteBig 
+
+Executing test: TestIndexFunc 
+
+Executing test: TestIndexRune 
+
+Executing test: TestLargeByteReads 
+
+Executing test: TestLargeByteWrites 
+
+Executing test: TestLargeStringReads 
+
+Executing test: TestLargeStringWrites 
+
+Executing test: TestLastIndex 
+
+Executing test: TestLastIndexAny 
+
+Executing test: TestMap 
+
+Executing test: TestMixedReadsAndWrites 
+
+Executing test: TestNewBuffer 
+
+Executing test: TestNewBufferString 
+
+Executing test: TestNext 
+
+Executing test: TestNil 
+
+Executing test: TestNotEqual 
+
+Executing test: TestReadAfterBigSeek 
+
+Executing test: TestReadBytes 
+
+Executing test: TestReadEmptyAtEOF 
+
+Executing test: TestReadFrom 
+
+Executing test: TestReadString 
+
+Executing test: TestReader 
+
+Executing test: TestReaderAt 
+
+Executing test: TestReaderAtConcurrent 
+
+Executing test: TestReaderCopyNothing 
+
+Executing test: TestReaderDoubleUnreadRune 
+
+Executing test: TestReaderLen 
+
+Executing test: TestReaderWriteTo 
+
+Executing test: TestRepeat 
+
+Executing test: TestReplace 
+
+Executing test: TestRuneIO 
+
+Executing test: TestRunes 
+
+Executing test: TestSplit 
+
+Executing test: TestSplitAfter 
+
+Executing test: TestTitle 
+
+Executing test: TestToLower 
+
+Executing test: TestToTitle 
+
+Executing test: TestToUpper 
+
+Executing test: TestTrim 
+
+Executing test: TestTrimFunc 
+
+Executing test: TestTrimSpace 
+
+Executing test: TestUnreadByte 
+
+Executing test: TestUnreadRuneError 
+
+Executing test: TestWriteTo 
+=========================================
+Unit Test:  errors
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestErrorMethod 
+
+Executing test: TestNewEqual 
+=========================================
+Unit Test:  path
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestBase 
+
+Executing test: TestClean 
+
+Executing test: TestCleanMallocs 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/path/path_test.go 77
+skipping malloc count in short mode
+
+Executing test: TestDir 
+
+Executing test: TestExt 
+
+Executing test: TestIsAbs 
+
+Executing test: TestJoin 
+
+Executing test: TestMatch 
+
+Executing test: TestSplit 
+=========================================
+Unit Test:  sort
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestAdversary 
+
+Executing test: TestCountSortOps 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Counting skipped as non-verbose mode.
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Sort        100 elements:         191 Swap,        597 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Sort        300 elements:         689 Swap,       2422 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Sort       1000 elements:        2701 Swap,      10590 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Sort       3000 elements:        9204 Swap,      39728 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Sort      10000 elements:       35194 Swap,     157232 Less
+Executing test: TestCountStableOps 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Counting skipped as non-verbose mode.
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Stable      100 elements:         872 Swap,        794 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Stable      300 elements:        3948 Swap,       3031 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Stable     1000 elements:       19743 Swap,      12345 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Stable     3000 elements:       82119 Swap,      43322 Less  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
+Stable    10000 elements:      348287 Swap,     165609 Less
+Executing test: TestFloat64s 
+
+Executing test: TestHeapsortBM 
+
+Executing test: TestInts 
+
+Executing test: TestReverseSortIntSlice 
+
+Executing test: TestSearch 
+
+Executing test: TestSearchEfficiency 
+
+Executing test: TestSearchExhaustive 
+
+Executing test: TestSearchWrappers 
+
+Executing test: TestSearchWrappersDontAlloc 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/search_test.go 130
+skipping malloc count in short mode
+
+Executing test: TestSortBM 
+
+Executing test: TestSortFloat64Slice 
+
+Executing test: TestSortIntSlice 
+
+Executing test: TestSortLarge_Random 
+
+Executing test: TestSortStringSlice 
+
+Executing test: TestStability 
+
+Executing test: TestStableBM 
+
+Executing test: TestStableInts 
+
+Executing test: TestStrings 
+=========================================
+Unit Test:  strings
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestCaseConsistency 
+
+Executing test: TestContains 
+
+Executing test: TestContainsAny 
+
+Executing test: TestContainsRune 
+
+Executing test: TestCount 
+
+Executing test: TestEmptyReaderConcurrent 
+
+Executing test: TestEqualFold 
+
+Executing test: TestExplode 
+
+Executing test: TestFields 
+
+Executing test: TestFieldsFunc 
+
+Executing test: TestFinderCreation 
+
+Executing test: TestFinderNext 
+
+Executing test: TestGenericTrieBuilding 
+
+Executing test: TestIndex 
+
+Executing test: TestIndexAny 
+
+Executing test: TestIndexFunc 
+
+Executing test: TestIndexRune 
+
+Executing test: TestLastIndex 
+
+Executing test: TestLastIndexAny 
+
+Executing test: TestMap 
+
+Executing test: TestPickAlgorithm 
+
+Executing test: TestReadAfterBigSeek 
+
+Executing test: TestReadByte 
+
+Executing test: TestReadRune 
+
+Executing test: TestReader 
+
+Executing test: TestReaderAt 
+
+Executing test: TestReaderAtConcurrent 
+
+Executing test: TestRepeat 
+
+Executing test: TestReplace 
+
+Executing test: TestReplacer 
+
+Executing test: TestRunes 
+
+Executing test: TestSpecialCase 
+
+Executing test: TestSplit 
+
+Executing test: TestSplitAfter 
+
+Executing test: TestTitle 
+
+Executing test: TestToLower 
+
+Executing test: TestToUpper 
+
+Executing test: TestTrim 
+
+Executing test: TestTrimFunc 
+
+Executing test: TestTrimSpace 
+
+Executing test: TestUnreadRuneError 
+
+Executing test: TestWriteStringError 
+
+Executing test: TestWriteTo 
+=========================================
+Unit Test:  unicode
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestCalibrate 
+
+Executing test: TestCategories 
+
+Executing test: TestDigit 
+
+Executing test: TestDigitOptimization 
+
+Executing test: TestIsControlLatin1 
+
+Executing test: TestIsGraphicLatin1 
+
+Executing test: TestIsLetter 
+
+Executing test: TestIsLetterLatin1 
+
+Executing test: TestIsLowerLatin1 
+
+Executing test: TestIsPrintLatin1 
+
+Executing test: TestIsPunctLatin1 
+
+Executing test: TestIsSpace 
+
+Executing test: TestIsSpaceLatin1 
+
+Executing test: TestIsSymbolLatin1 
+
+Executing test: TestIsUpper 
+
+Executing test: TestIsUpperLatin1 
+
+Executing test: TestLatinOffset 
+
+Executing test: TestLetterOptimizations 
+
+Executing test: TestNumberLatin1 
+
+Executing test: TestProperties 
+
+Executing test: TestScripts 
+
+Executing test: TestSimpleFold 
+
+Executing test: TestTo 
+
+Executing test: TestToLowerCase 
+
+Executing test: TestToTitleCase 
+
+Executing test: TestToUpperCase 
+
+Executing test: TestTurkishCase 
+=========================================
+Unit Test:  container/heap
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: Test 
+
+Executing test: TestFix 
+
+Executing test: TestInit0 
+
+Executing test: TestInit1 
+
+Executing test: TestRemove0 
+
+Executing test: TestRemove1 
+
+Executing test: TestRemove2 
+=========================================
+Unit Test:  container/list
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestExtending 
+
+Executing test: TestInsertAfterUnknownMark 
+
+Executing test: TestInsertBeforeUnknownMark 
+
+Executing test: TestIssue4103 
+
+Executing test: TestIssue6349 
+
+Executing test: TestList 
+
+Executing test: TestMove 
+
+Executing test: TestMoveUnkownMark 
+
+Executing test: TestRemove 
+
+Executing test: TestZeroList 
+=========================================
+Unit Test:  container/ring
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestCornerCases 
+
+Executing test: TestLink1 
+
+Executing test: TestLink2 
+
+Executing test: TestLink3 
+
+Executing test: TestLinkUnlink 
+
+Executing test: TestMoveEmptyRing 
+
+Executing test: TestNew 
+
+Executing test: TestUnlink 
+=========================================
+Unit Test:  encoding/ascii85
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestBig 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeCorrupt 
+
+Executing test: TestDecoder 
+
+Executing test: TestDecoderBuffering 
+
+Executing test: TestDecoderInternalWhitespace 
+
+Executing test: TestEncode 
+
+Executing test: TestEncoder 
+
+Executing test: TestEncoderBuffering 
+=========================================
+Unit Test:  encoding/base32
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestBig 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeCorrupt 
+
+Executing test: TestDecoder 
+
+Executing test: TestDecoderBuffering 
+
+Executing test: TestDecoderIssue4779 
+
+Executing test: TestEncode 
+
+Executing test: TestEncoder 
+
+Executing test: TestEncoderBuffering 
+
+Executing test: TestNewLineCharacters 
+=========================================
+Unit Test:  encoding/base64
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestBig 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeCorrupt 
+
+Executing test: TestDecoder 
+
+Executing test: TestDecoderBuffering 
+
+Executing test: TestDecoderIssue3577 
+
+Executing test: TestDecoderIssue4779 
+
+Executing test: TestDecoderIssue7733 
+
+Executing test: TestEncode 
+
+Executing test: TestEncoder 
+
+Executing test: TestEncoderBuffering 
+
+Executing test: TestNewLineCharacters 
+=========================================
+Unit Test:  encoding/hex
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeString 
+
+Executing test: TestDump 
+
+Executing test: TestDumper 
+
+Executing test: TestEncode 
+
+Executing test: TestEncodeToString 
+
+Executing test: TestInvalidErr 
+
+Executing test: TestInvalidStringErr 
+=========================================
+Unit Test:  text/tabwriter
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: Test 
+
+Executing test: TestPanicDuringFlush 
+
+Executing test: TestPanicDuringWrite 
+=========================================
+Unit Test:  unicode/utf8
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestConstants 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestDecodeSurrogateRune 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestFullRune 
+
+Executing test: TestIntConversion 
+
+Executing test: TestNegativeRune 
+
+Executing test: TestRuneCount 
+
+Executing test: TestRuneLen 
+
+Executing test: TestSequencing 
+
+Executing test: TestValid 
+
+Executing test: TestValidRune 
+=========================================
+Unit Test:  unicode/utf16
+=========================================
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestConstants 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestEncode 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestIsSurrogate 
+=====================
+All Unit Tests Passed
+=====================

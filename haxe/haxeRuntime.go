@@ -147,6 +147,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static inline function toFloat(v:Float):Float {
 		// neko target platform requires special handling because it auto-converts whole-number Float into Int without asking
 		// see: https://github.com/HaxeFoundation/haxe/issues/1282 which was marked as closed, but was not fixed as at 2013.9.6
+		// NOTE: this issue means that the neko/--interp is useless for testing anything math-based
 		#if neko
 			if(Std.is(v,Int)) {
 				return v + 2.2251e-308; // add the smallest value possible for a 64-bit float to ensure neko doesn't still think it is an int

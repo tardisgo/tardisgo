@@ -38,7 +38,7 @@ Some parts of the Go standard library work, as you can see in the [example TARDI
 
 The "testing" packages is currently emulated in an ugly and part-working way. The "fmt" package is only partially working.
 
-Currently the standard packages that fully pass their tests are:
+Currently the standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/test.log) are:
 - bufio
 - bytes
 - container/heap, container/list, container/ring
