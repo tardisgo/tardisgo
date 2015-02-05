@@ -34,11 +34,9 @@ All of the core [Go language specification](http://golang.org/ref/spec) is imple
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to give up control.  
 
-Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk has not been  tested or implemented yet. If the standard package is not mentioned in the notes below, please assume it does not work. 
+Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk have not been tested or implemented yet. If a standard package is not mentioned in the notes below, please assume it does not work. 
 
-The "testing" packages is currently emulated in an ugly and part-working way. The "fmt" package is only partially working.
-
-Currently the standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/test.log) are:
+The "testing" packages is emulated in an ugly and part-working way. Currently the standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/haxetests.log) are:
 - bufio
 - bytes
 - container/heap, container/list, container/ring
@@ -50,7 +48,7 @@ Currently the standard packages that [pass their tests](https://github.com/tardi
 - text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
 
-Other standard libray packages make limited use of runtime C or assembler functions without using the actual Go "runtime" or "os" packages. These limited runtime functions have been emulated for a small number of packages (math, strings, bytes, strconv) though this remains a work-in-progress. At present, standard library packages which rely on the Go "reflect" or other low-level packages are not implemented. Packages "runtime","os" & "syscall" are part-implemented, using a partial implementation of the nacl runtime (currently including debug messages).
+Packages "fmt", "reflect", "runtime", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime (currently including some debug messages).
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
@@ -123,7 +121,8 @@ To get a list of commands type "?" followed by carrage return, after the 1st bre
 To run cross-target command-line tests as quickly as possible, the "-haxe X" flag concurrently runs the Haxe compiler and executes the resulting code as follows:
 - "-haxe all" - all supported targets 
 - "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview), where float32 is correctly handled
-- "-haxe interp" - only runs the haxe interpreter
+- "-haxe interp" - only runs the haxe interpreter (for automated testing, exits with an error if one occurs)
+- "-haxe cpp" - only compiles and runs C++ (for automated testing, exits with an error if one occurs)
 Compiler output is suppressed and results appear in the order they complete, with an execution time, for example:
 ```
 tardisgo -haxe all myprogram.go

@@ -381,14 +381,26 @@ func doTestable(args []string) error {
 				r.backChan <- true
 			}
 
-		case "interp":
-			go doTarget([][]string{
-				[]string{"echo", ``}, // Output from this line is ignored
-				[]string{"echo", `"Neko (haxe --interp):"`},
-				[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
-			}, results)
+		case "interp", "cpp": // for running tests
+			switch *allFlag {
+			case "interp":
+				go doTarget([][]string{
+					[]string{"echo", ``}, // Output from this line is ignored
+					[]string{"echo", `"Neko (haxe --interp):"`},
+					[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
+				}, results)
+			case "cpp":
+				go doTarget([][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "tardis/cpp"},
+					[]string{"echo", `"CPP:"`},
+					[]string{"time", "./tardis/cpp/Go"},
+				}, results)
+			}
 			r := <-results
 			fmt.Println(r.output)
+			if r.err != nil {
+				os.Exit(1) // exit with an error if the test fails
+			}
 			r.backChan <- true
 
 		default:
@@ -452,11 +464,13 @@ var targets = [][][]string{
 
 type resChan struct {
 	output   string
+	err      error
 	backChan chan bool
 }
 
 func doTarget(cl [][]string, results chan resChan) {
 	res := ""
+	var lastErr error
 	for j, c := range cl {
 		exe := c[0]
 		if exe == "echo" {
@@ -477,8 +491,8 @@ func doTarget(cl [][]string, results chan resChan) {
 				c = append(c, TestFS)
 			}
 			if exe != "" {
-				out, err := exec.Command(exe, c[1:]...).CombinedOutput()
-				if err != nil {
+				out, lastErr := exec.Command(exe, c[1:]...).CombinedOutput()
+				if lastErr != nil {
 					out = append(out, []byte(err.Error())...)
 				}
 				if j > 0 { // ignore the output from the compile phase
@@ -488,6 +502,6 @@ func doTarget(cl [][]string, results chan resChan) {
 		}
 	}
 	bc := make(chan bool)
-	results <- resChan{res, bc}
+	results <- resChan{res, lastErr, bc}
 	<-bc
 }

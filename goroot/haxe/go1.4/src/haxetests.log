@@ -1,6 +1,7 @@
 =========================================
-Unit Test:  bufio
+Unit Test (via C++):  bufio
 =========================================
+"CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -118,9 +119,12 @@ Executing test: TestWriterReadFromWhileFull
 Executing test: TestWriterReset 
 
 Executing test: TestZeroReader 
+       11.51 real        12.55 user         0.26 sys
+
 =========================================
-Unit Test:  bytes
+Unit Test (via C++):  bytes
 =========================================
+"CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -252,47 +256,12 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
+       59.16 real        55.90 user        13.03 sys
+
 =========================================
-Unit Test:  errors
+Unit Test (via C++):  sort
 =========================================
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main
-
-Executing test: TestErrorMethod 
-
-Executing test: TestNewEqual 
-=========================================
-Unit Test:  path
-=========================================
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main
-
-Executing test: TestBase 
-
-Executing test: TestClean 
-
-Executing test: TestCleanMallocs 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/path/path_test.go 77
-skipping malloc count in short mode
-
-Executing test: TestDir 
-
-Executing test: TestExt 
-
-Executing test: TestIsAbs 
-
-Executing test: TestJoin 
-
-Executing test: TestMatch 
-
-Executing test: TestSplit 
-=========================================
-Unit Test:  sort
-=========================================
+"CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -380,9 +349,84 @@ Executing test: TestStableBM
 Executing test: TestStableInts 
 
 Executing test: TestStrings 
+       13.13 real        14.14 user         0.25 sys
+
 =========================================
-Unit Test:  strings
+Unit Test (via C++):  container/ring
 =========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestCornerCases 
+
+Executing test: TestLink1 
+
+Executing test: TestLink2 
+
+Executing test: TestLink3 
+
+Executing test: TestLinkUnlink 
+
+Executing test: TestMoveEmptyRing 
+
+Executing test: TestNew 
+
+Executing test: TestUnlink 
+        0.78 real         0.69 user         0.03 sys
+
+=========================================
+Unit Test (via interpreter):  errors
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestErrorMethod 
+
+Executing test: TestNewEqual 
+        9.98 real         9.71 user         0.17 sys
+
+=========================================
+Unit Test (via interpreter):  path
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main
+
+Executing test: TestBase 
+
+Executing test: TestClean 
+
+Executing test: TestCleanMallocs 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/path/path_test.go 77
+skipping malloc count in short mode
+
+Executing test: TestDir 
+
+Executing test: TestExt 
+
+Executing test: TestIsAbs 
+
+Executing test: TestJoin 
+
+Executing test: TestMatch 
+
+Executing test: TestSplit 
+       17.61 real        17.16 user         0.26 sys
+
+=========================================
+Unit Test (via interpreter):  strings
+=========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -472,9 +516,13 @@ Executing test: TestUnreadRuneError
 Executing test: TestWriteStringError 
 
 Executing test: TestWriteTo 
+       63.84 real        62.90 user         0.48 sys
+
 =========================================
-Unit Test:  unicode
+Unit Test (via interpreter):  unicode
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -532,29 +580,13 @@ Executing test: TestToTitleCase
 Executing test: TestToUpperCase 
 
 Executing test: TestTurkishCase 
+       18.84 real        18.38 user         0.25 sys
+
 =========================================
-Unit Test:  container/heap
+Unit Test (via interpreter):  container/list
 =========================================
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main
 
-Executing test: Test 
-
-Executing test: TestFix 
-
-Executing test: TestInit0 
-
-Executing test: TestInit1 
-
-Executing test: TestRemove0 
-
-Executing test: TestRemove1 
-
-Executing test: TestRemove2 
-=========================================
-Unit Test:  container/list
-=========================================
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -578,31 +610,37 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
+       12.08 real        11.76 user         0.18 sys
+
 =========================================
-Unit Test:  container/ring
+Unit Test (via interpreter):  container/heap
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
 
-Executing test: TestCornerCases 
+Executing test: Test 
 
-Executing test: TestLink1 
+Executing test: TestFix 
 
-Executing test: TestLink2 
+Executing test: TestInit0 
 
-Executing test: TestLink3 
+Executing test: TestInit1 
 
-Executing test: TestLinkUnlink 
+Executing test: TestRemove0 
 
-Executing test: TestMoveEmptyRing 
+Executing test: TestRemove1 
 
-Executing test: TestNew 
+Executing test: TestRemove2 
+       12.74 real        12.38 user         0.18 sys
 
-Executing test: TestUnlink 
 =========================================
-Unit Test:  encoding/ascii85
+Unit Test (via interpreter):  encoding/ascii85
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -624,9 +662,13 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
+       19.27 real        18.70 user         0.26 sys
+
 =========================================
-Unit Test:  encoding/base32
+Unit Test (via interpreter):  encoding/base32
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -650,9 +692,13 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
+       20.26 real        19.72 user         0.26 sys
+
 =========================================
-Unit Test:  encoding/base64
+Unit Test (via interpreter):  encoding/base64
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -680,9 +726,13 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
+       20.17 real        19.64 user         0.27 sys
+
 =========================================
-Unit Test:  encoding/hex
+Unit Test (via interpreter):  encoding/hex
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -702,9 +752,13 @@ Executing test: TestEncodeToString
 Executing test: TestInvalidErr 
 
 Executing test: TestInvalidStringErr 
+       21.95 real        21.38 user         0.25 sys
+
 =========================================
-Unit Test:  text/tabwriter
+Unit Test (via interpreter):  text/tabwriter
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -714,9 +768,13 @@ Executing test: Test
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
+       20.37 real        19.85 user         0.27 sys
+
 =========================================
-Unit Test:  unicode/utf8
+Unit Test (via interpreter):  unicode/utf8
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -744,9 +802,13 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
+       22.85 real        22.24 user         0.28 sys
+
 =========================================
-Unit Test:  unicode/utf16
+Unit Test (via interpreter):  unicode/utf16
 =========================================
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main
@@ -762,6 +824,8 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
+       19.27 real        18.70 user         0.23 sys
+
 =====================
 All Unit Tests Passed
 =====================
