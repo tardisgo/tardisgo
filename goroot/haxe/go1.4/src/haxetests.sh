@@ -12,7 +12,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/ring  # this item is a place-holder, it does not run long enough to require C++
+for twolevels in math/cmplx
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $twolevels 
@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/list container/heap encoding/ascii85 encoding/base32 encoding/base64 encoding/hex text/tabwriter unicode/utf8 unicode/utf16 
+for twolevels in container/heap container/list container/ring encoding/ascii85 encoding/base32 encoding/base64 encoding/hex text/tabwriter unicode/utf8 unicode/utf16 
 do
 	echo "========================================="
 	echo "Unit Test (via interpreter): " $twolevels 

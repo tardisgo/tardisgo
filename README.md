@@ -36,12 +36,13 @@ Goroutines are implemented as co-operatively scheduled co-routines. Other gorout
 
 Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk have not been tested or implemented yet. If a standard package is not mentioned in the notes below, please assume it does not work. 
 
-The "testing" packages is emulated in an ugly and part-working way. Currently the standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/haxetests.log) are:
+The "testing" package is emulated in an ugly and part-working way. Currently the standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/haxetests.log) are:
 - bufio
 - bytes
 - container/heap, container/list, container/ring
 - encoding/ascii85, encoding/base32, encoding/base64, encoding/hex
 - errors
+- math/cmplx (cpp or js -D fullunsafe only)
 - path
 - sort
 - strings
@@ -123,11 +124,13 @@ To run cross-target command-line tests as quickly as possible, the "-haxe X" fla
 - "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview), where float32 is correctly handled
 - "-haxe interp" - only runs the haxe interpreter (for automated testing, exits with an error if one occurs)
 - "-haxe cpp" - only compiles and runs C++ (for automated testing, exits with an error if one occurs)
+
 Compiler output is suppressed and results appear in the order they complete, with an execution time, for example:
 ```
 tardisgo -haxe all myprogram.go
 ```
-When using the -haxe flag with the -test flag, if the file "tgotestfs.zip" exists in the current directory, it will be added as a haxe resource and its contents auto-loaded into the in-memory file system.
+
+When using the -haxe flag with the -test flag, if the file "tgotestfs.zip" exists in the current directory, it will be added as a haxe resource and its contents auto-loaded into the in-memory file system. 
 
 If you can't work-out what is going on prior to a panic, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
 

@@ -472,6 +472,9 @@ func doTarget(cl [][]string, results chan resChan) {
 	res := ""
 	var lastErr error
 	for j, c := range cl {
+		if lastErr != nil {
+			break
+		}
 		exe := c[0]
 		if exe == "echo" {
 			res += c[1] + "\n"
@@ -493,7 +496,7 @@ func doTarget(cl [][]string, results chan resChan) {
 			if exe != "" {
 				out, lastErr := exec.Command(exe, c[1:]...).CombinedOutput()
 				if lastErr != nil {
-					out = append(out, []byte(err.Error())...)
+					out = append(out, []byte(lastErr.Error())...)
 				}
 				if j > 0 { // ignore the output from the compile phase
 					res += string(out)

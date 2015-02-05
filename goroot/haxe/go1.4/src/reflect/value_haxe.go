@@ -1121,7 +1121,7 @@ func (v Value) Method(i int) Value {
 
 // NumMethod returns the number of methods in the value's method set.
 func (v Value) NumMethod() int {
-	panic("reflect.value.NumMethod not yet implemented")
+	//panic("reflect.value.NumMethod not yet implemented")
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.NumMethod", Invalid})
 	}

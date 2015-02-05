@@ -540,7 +540,6 @@ func (t *uncommonType) MethodByName(name string) (m Method, ok bool) {
 // as efficient as they could be: they have commonType
 // as the receiver instead of *rtype.
 func (t *rtype) NumMethod() int {
-	return 0 // TODO bodge for now...
 	panic("reflect.NumMethod not yet implemented")
 	if t.Kind() == Interface {
 		panic("reflect.NumMethod unhandled *interface ")
