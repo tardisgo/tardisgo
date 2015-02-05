@@ -222,7 +222,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			var f:Float=  cast(x,Float) / cast(y,Float);
 			return f>=0?Math.floor(f):Math.ceil(f);
 		} else { // unsigned division 
-			return GOint64.toInt(GOint64.div(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
+			return toUint32(GOint64.toInt(GOint64.div(GOint64.make(0x0,x),GOint64.make(0x0,y),false)));
 		}
 	}
 	public static function intMod(x:Int,y:Int,sv:Int):Int {
@@ -231,12 +231,12 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		if((sv>0)||((x>0)&&(y>0))){ // signed mod will work (even though it may be unsigned)
 			return x % y;
 		} else { // unsigned mod (do it in 64 bits to ensure unsigned)
-			return GOint64.toInt(GOint64.mod(GOint64.make(0x0,x),GOint64.make(0x0,y),false));
+			return toUint32(GOint64.toInt(GOint64.mod(GOint64.make(0x0,x),GOint64.make(0x0,y),false)));
 		}
 	}
 	public static function intMul(x:Int,y:Int,sv:Int):Int {
 		#if (js || php)
-			if(sv>0){ // signed mul as normal
+			if(sv>0){ // signed mul
 				return toInt32(GOint64.toInt(GOint64.mul(GOint64.ofInt(x),GOint64.ofInt(y)))); // TODO review if this required
 			} else { // unsigned mul 
 				return toUint32(GOint64.toInt(GOint64.mul(GOint64.ofUInt(x),GOint64.ofUInt(y)))); // required for overflowing mul

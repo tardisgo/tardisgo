@@ -166,7 +166,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 
 func (l langType) Convert(register, langType string, destType types.Type, v interface{}, errorInfo string) string {
 	srcTyp := l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo)
-	if srcTyp == langType && langType != "Float" { // no cast required because the Haxe type is the same
+	if srcTyp == langType && langType != "Float" && langType != "Int" { // no cast required because the Haxe type is the same
 		return register + "=" + l.IndirectValue(v, errorInfo) + ";"
 	}
 	switch langType { // target Haxe type
@@ -239,6 +239,8 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 	case "Int":
 		vInt := ""
 		switch srcTyp {
+		case "Int":
+			vInt = l.IndirectValue(v, errorInfo) // to get the type coercion below
 		case "GOint64":
 			vInt = "GOint64.toInt(" + l.IndirectValue(v, errorInfo) + ")" // un/signed OK as just truncates
 		case "Float":

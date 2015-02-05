@@ -42,14 +42,16 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - container/heap, container/list, container/ring
 - encoding/ascii85, encoding/base32, encoding/base64, encoding/hex
 - errors
-- math/cmplx (cpp or js -D fullunsafe only)
+- math/cmplx math/rand
 - path
 - sort
 - strings
 - text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
 
-Packages "fmt", "reflect", "runtime", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime (currently including some debug messages).
+Math-related packages may only fully work with cpp or js -D fullunsafe. No methods are modeled in "reflect" yet, so tests that use this feature (like math/rand) are not fully excercised.
+
+Packages "fmt", "runtime", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime (currently including some debug messages).
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
