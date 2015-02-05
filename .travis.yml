@@ -12,21 +12,3 @@ install:
 
 script: 
   - go test -v .
-  - cd goroot/haxe/go1.4/src
-  - ./haxestdlibtest.sh bufio
-  - ./haxestdlibtest.sh bytes
-  - ./haxestdlibtest.sh errors
-  - ./haxestdlibtest.sh path
-  - ./haxestdlibtest.sh sort 
-  - ./haxestdlibtest.sh strings 
-  - ./haxestdlibtest.sh unicode
-  - ./haxestdlibtest2.sh container/heap
-  - ./haxestdlibtest2.sh container/list
-  - ./haxestdlibtest2.sh container/ring 
-  - ./haxestdlibtest2.sh encoding/ascii85 
-  - ./haxestdlibtest2.sh encoding/base32 
-  - ./haxestdlibtest2.sh encoding/base64 
-  - ./haxestdlibtest2.sh encoding/hex 
-  - ./haxestdlibtest2.sh text/tabwriter 
-  - ./haxestdlibtest2.sh unicode/utf8 
-  - ./haxestdlibtest2.sh unicode/utf16 
