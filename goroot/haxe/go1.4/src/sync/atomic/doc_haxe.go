@@ -51,6 +51,28 @@ import (
 // "*addr = val".
 //
 
+// SwapInt32 atomically stores new into *addr and returns the previous *addr value.
+func SwapInt32(addr *int32, new int32) (old int32) { old = *addr; *addr = new; return }
+
+// SwapInt64 atomically stores new into *addr and returns the previous *addr value.
+func SwapInt64(addr *int64, new int64) (old int64) { old = *addr; *addr = new; return }
+
+// SwapUint32 atomically stores new into *addr and returns the previous *addr value.
+func SwapUint32(addr *uint32, new uint32) (old uint32) { old = *addr; *addr = new; return }
+
+// SwapUint64 atomically stores new into *addr and returns the previous *addr value.
+func SwapUint64(addr *uint64, new uint64) (old uint64) { old = *addr; *addr = new; return }
+
+// SwapUintptr atomically stores new into *addr and returns the previous *addr value.
+func SwapUintptr(addr *uintptr, new uintptr) (old uintptr) { old = *addr; *addr = new; return }
+
+// SwapPointer atomically stores new into *addr and returns the previous *addr value.
+func SwapPointer(addr *unsafe.Pointer, new unsafe.Pointer) (old unsafe.Pointer) {
+	old = *addr
+	*addr = new
+	return
+}
+
 // CompareAndSwapInt32 executes the compare-and-swap operation for an int32 value.
 func CompareAndSwapInt32(addr *int32, old, new int32) (swapped bool) {
 	if *addr == old {
@@ -89,7 +111,7 @@ func CompareAndSwapUint64(addr *uint64, old, new uint64) (swapped bool) {
 
 // CompareAndSwapUintptr executes the compare-and-swap operation for a uintptr value.
 func CompareAndSwapUintptr(addr *uintptr, old, new uintptr) (swapped bool) {
-	if *addr == old {
+	if uint32(*addr) == uint32(old) { // in haxe uintptr could be anything
 		*addr = new
 		return true
 	}

@@ -75,6 +75,9 @@ func init() { // to avoid DCE
 // Float32bits returns the IEEE 754 binary representation of f.
 //func Float32bits(f float32) uint32 { return *(*uint32)(unsafe.Pointer(&f)) }
 func Float32bits(f float32) uint32 {
+	// stop recursion
+	InF32fb = true
+	defer func() { InF32fb = false }()
 
 	if hx.GetBool("", "Object.nativeFloats") {
 		var t float32 = f
@@ -132,10 +135,14 @@ func Float32bits(f float32) uint32 {
 	return s | uint32(e)<<23 | (uint32(f) &^ (1 << 23))
 }
 
+var InF32fb bool // signal to haxegoruntime Force.toFloat32() to stop re-entry
+
 // Float32frombits returns the floating point number corresponding
 // to the IEEE 754 binary representation b.
 // func Float32frombits(b uint32) float32 { return *(*float32)(unsafe.Pointer(&b)) }
 func Float32frombits(b uint32) float32 {
+	InF32fb = true
+	defer func() { InF32fb = false }()
 	if hx.GetBool("", "Object.nativeFloats") {
 		var t uint32 = b
 		return *(*float32)(unsafe.Pointer(&t))

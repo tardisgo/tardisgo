@@ -157,26 +157,27 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return v;
 		#end
 	}	
-	static var f32temp = new Object(4);
-	public static function toFloat32(v:Float):Float {
-		if(Object.nativeFloats) {
-			f32temp.set_float32(0,v);
-			return f32temp.get_float32(0);
-		}else{
+	public static inline function toFloat32(v:Float):Float { // TODO refactor to remove "safe" version
 			return toFloat32safe(v);
-		}
 	}
+	#if (cpp || neko)
+		static private var f32byts = haxe.io.Bytes.alloc(4);
+	#elseif (js && fullunsafe)
+		static private var f32dView = new js.html.DataView(new js.html.ArrayBuffer(8),0,8); 
+	#end
 	public static function toFloat32safe(v:Float):Float {
 		#if (cpp || neko)
-			var byts = haxe.io.Bytes.alloc(4);
-			byts.setFloat(0,v);
-			return byts.getFloat(0);
+			f32byts.setFloat(0,v);
+			return f32byts.getFloat(0);
+		#elseif (js && fullunsafe)
+			f32dView.setFloat32(0,v); 
+			return f32dView.getFloat32(0); 
 		#else
-			var MaxFloat32:Float = 3.40282346638528859811704183484516925440e+38 ; // 2**127 * (2**24 - 1) / 2**23
-	    	if(v<-MaxFloat32) return Math.NEGATIVE_INFINITY;
-			if(v>MaxFloat32) return Math.POSITIVE_INFINITY;
-			// TODO needs more here...
-			return v;
+			if(Go.haxegoruntime_IInFF32fb.load_bool()) { // in the Float32frombits() function so don't recurse
+				return v;
+			} else {
+				return Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(v));
+			}
 		#end
 	}
 	public static function uintCompare(x:Int,y:Int):Int { // +ve if uint(x)>unint(y), 0 equal, else -ve 
@@ -383,12 +384,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 // a single type of Go object
 @:keep
 class Object { // this implementation will improve with typed array access
-	#if (js && fullunsafe) 
+	#if ((js || cpp || neko) && fullunsafe) 
 		public static var nativeFloats:Bool=true; 
-	#elseif !fullunsafe
-		public static var nativeFloats:Bool=false; 
-	#elseif (cpp || neko)
-		public static var nativeFloats:Bool=true; 	
 	#else
 		public static var nativeFloats:Bool=false; 	
 	#end
@@ -399,7 +396,7 @@ class Object { // this implementation will improve with typed array access
 		private var dView:js.html.DataView;
 	#elseif !fullunsafe	// Simple! 1 address per byte, non-Int types are always on 4-byte
 		private var iVec:haxe.ds.Vector<Int>; 
-	#else // default position is to allow unsafe pointers, and therefore run slowly...
+	#else // fullunsafe position is to allow unsafe pointers, and therefore run slowly...
 		private var byts:haxe.io.Bytes;
 	#end
 	public var length:Int;
@@ -1228,6 +1225,9 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 		if(Reflect.isObject(a.val) && Reflect.isObject(b.val)){
 			if(Std.is(a.val,Pointer) && Std.is(b.val,Pointer))
 				return Pointer.isEqual(a.val,b.val); // could still be equal within a Pointer type     
+			if(Std.is(a.val,Complex) && Std.is(b.val,Complex))
+				return Complex.eq(a.val,b.val);
+			// TODO other types here? 
 			if(Std.is(a.val,Interface) && Std.is(b.val,Interface))
 				return isEqual(a.val,b.val); // recurse for interfaces     
 			// assume GOint64 - Std.is() does not work for abstract types
@@ -2313,7 +2313,7 @@ public static function stackDump():String {
 	var gr:Int;
 	ret += "runAll() entryCount="+entryCount+"\n";
 	for(gr in 0...grStacks.length) {
-		ret += "Goroutine " + gr + " "+grPanicMsg[gr]+"\n"; //may need to unpack the interface
+		ret += "---\nGoroutine " + gr + " "+grPanicMsg[gr]+"\n"; //may need to unpack the interface
 		if(grStacks[gr].isEmpty()) {
 			ret += "Stack is empty\n";
 		} else {
@@ -2412,7 +2412,7 @@ public static function panicFromHaxe(err:String) {
 		panic(0,new Interface(TypeInfo.getId("string"),"Runtime panic, unknown goroutine, "+err+" "));
 	else
 		panic(currentGR,new Interface(TypeInfo.getId("string"),"Runtime panic, "+err+" "));
-	throw panicStackDump;
+	throw panicStackDump; // NOTE can't be recovered!
 }
 public static function bbi() {
 	panicFromHaxe("bad block ID (internal phi error)");
@@ -2422,8 +2422,7 @@ public static function ioor() {
 }
 public static function htc(c:Dynamic,pos:Int) {
 	panicFromHaxe("Haxe try-catch exception <"+Std.string(c)+"> position "+Std.string(pos)+
-		" at or before: "+Go.CPos(pos)+
-		"\n(tip: for more information here use debug mode to instrument the code)");
+		" at or before: "+Go.CPos(pos));
 }
 public static inline function wraprangechk(val:Int,sz:Int) {
 	if((val<0)||(val>=sz)) ioor();

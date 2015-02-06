@@ -7,10 +7,8 @@ package atomic_test
 import (
 	"math/rand"
 	"runtime"
-	"sync"
 	. "sync/atomic"
 	"testing"
-	"time"
 )
 
 func TestValue(t *testing.T) {
@@ -129,6 +127,7 @@ func BenchmarkValueRead(b *testing.B) {
 	})
 }
 
+/*
 // The following example shows how to use Value for periodic program config updates
 // and propagation of the changes to worker goroutines.
 func ExampleValue_config() {
@@ -193,3 +192,4 @@ func ExampleValue_readMostly() {
 	}
 	_, _ = read, insert
 }
+*/

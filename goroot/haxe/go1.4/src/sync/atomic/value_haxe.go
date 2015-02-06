@@ -6,6 +6,8 @@
 
 package atomic
 
+import "github.com/tardisgo/tardisgo/haxe/hx"
+
 // A Value provides an atomic load and store of a consistently typed value.
 // Values can be created as part of other data structures.
 // The zero value for a Value returns nil from Load.
@@ -43,11 +45,15 @@ func (v *Value) Load() (x interface{}) {
 // All calls to Store for a given Value must use values of the same concrete type.
 // Store of an inconsistent type panics, as does Store(nil).
 func (v *Value) Store(x interface{}) {
+	if x == nil {
+		panic("sync/atomic: store of nil value into Value")
+	}
+	if v.v != nil && hx.CodeBool("", "_a.itemAddr(0).load().typ!=_a.itemAddr(1).load().typ;", v.v, x) {
+		panic("sync/atomic: store of inconsistently typed value into Value")
+	}
 	v.v = x
+
 	/*
-		if x == nil {
-			panic("sync/atomic: store of nil value into Value")
-		}
 		vp := (*ifaceWords)(unsafe.Pointer(v))
 		xp := (*ifaceWords)(unsafe.Pointer(&x))
 		for {

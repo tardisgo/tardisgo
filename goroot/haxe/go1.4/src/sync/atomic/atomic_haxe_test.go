@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package atomic_test
 
 import (
@@ -153,6 +155,7 @@ func TestSwapUintptr(t *testing.T) {
 	}
 }
 
+/* not haxe
 func TestSwapPointer(t *testing.T) {
 	var x struct {
 		before uintptr
@@ -175,7 +178,7 @@ func TestSwapPointer(t *testing.T) {
 		t.Fatalf("wrong magic: %#x _ %#x != %#x _ %#x", x.before, x.after, magicptr, magicptr)
 	}
 }
-
+*/
 func TestAddInt32(t *testing.T) {
 	var x struct {
 		before int32
@@ -446,6 +449,7 @@ func TestCompareAndSwapUintptr(t *testing.T) {
 	}
 }
 
+/* TODO - haxe does not alow uintptr->pointer conversion
 func TestCompareAndSwapPointer(t *testing.T) {
 	var x struct {
 		before uintptr
@@ -476,6 +480,7 @@ func TestCompareAndSwapPointer(t *testing.T) {
 		t.Fatalf("wrong magic: %#x _ %#x != %#x _ %#x", x.before, x.after, magicptr, magicptr)
 	}
 }
+*/
 
 func TestLoadInt32(t *testing.T) {
 	var x struct {
@@ -585,6 +590,7 @@ func TestLoadUintptr(t *testing.T) {
 	}
 }
 
+/* not in haxe
 func TestLoadPointer(t *testing.T) {
 	var x struct {
 		before uintptr
@@ -606,7 +612,7 @@ func TestLoadPointer(t *testing.T) {
 		t.Fatalf("wrong magic: %#x _ %#x != %#x _ %#x", x.before, x.after, magicptr, magicptr)
 	}
 }
-
+*/
 func TestStoreInt32(t *testing.T) {
 	var x struct {
 		before int32
@@ -720,6 +726,7 @@ func TestStoreUintptr(t *testing.T) {
 	}
 }
 
+/* not haxe
 func TestStorePointer(t *testing.T) {
 	var x struct {
 		before uintptr
@@ -742,6 +749,7 @@ func TestStorePointer(t *testing.T) {
 		t.Fatalf("wrong magic: %#x _ %#x != %#x _ %#x", x.before, x.after, magicptr, magicptr)
 	}
 }
+*/
 
 // Tests of correct behavior, with contention.
 // (Is the function atomic?)
@@ -756,17 +764,17 @@ func TestStorePointer(t *testing.T) {
 // has low and high bits equal.
 
 var hammer32 = map[string]func(*uint32, int){
-	"SwapInt32":             hammerSwapInt32,
-	"SwapUint32":            hammerSwapUint32,
-	"SwapUintptr":           hammerSwapUintptr32,
-	"SwapPointer":           hammerSwapPointer32,
+	"SwapInt32":   hammerSwapInt32,
+	"SwapUint32":  hammerSwapUint32,
+	"SwapUintptr": hammerSwapUintptr32,
+	//"SwapPointer":           hammerSwapPointer32,
 	"AddInt32":              hammerAddInt32,
 	"AddUint32":             hammerAddUint32,
 	"AddUintptr":            hammerAddUintptr32,
 	"CompareAndSwapInt32":   hammerCompareAndSwapInt32,
 	"CompareAndSwapUint32":  hammerCompareAndSwapUint32,
 	"CompareAndSwapUintptr": hammerCompareAndSwapUintptr32,
-	"CompareAndSwapPointer": hammerCompareAndSwapPointer32,
+	//"CompareAndSwapPointer": hammerCompareAndSwapPointer32,
 }
 
 func init() {
@@ -821,6 +829,7 @@ func hammerSwapUintptr32(uaddr *uint32, count int) {
 func hammerSwapPointer32(uaddr *uint32, count int) {
 	// only safe when uintptr is 32-bit.
 	// not called on 64-bit systems.
+	/* not in haxe!
 	addr := (*unsafe.Pointer)(unsafe.Pointer(uaddr))
 	seed := int(uintptr(unsafe.Pointer(&count)))
 	for i := 0; i < count; i++ {
@@ -830,6 +839,7 @@ func hammerSwapPointer32(uaddr *uint32, count int) {
 			panic(fmt.Sprintf("SwapPointer is not atomic: %#08x", old))
 		}
 	}
+	*/
 }
 
 func hammerAddInt32(uaddr *uint32, count int) {
@@ -894,6 +904,7 @@ func hammerCompareAndSwapUintptr32(uaddr *uint32, count int) {
 func hammerCompareAndSwapPointer32(uaddr *uint32, count int) {
 	// only safe when uintptr is 32-bit.
 	// not called on 64-bit systems.
+	/* not allowed in Haxe
 	addr := (*unsafe.Pointer)(unsafe.Pointer(uaddr))
 	for i := 0; i < count; i++ {
 		for {
@@ -903,6 +914,7 @@ func hammerCompareAndSwapPointer32(uaddr *uint32, count int) {
 			}
 		}
 	}
+	*/
 }
 
 func TestHammer32(t *testing.T) {
@@ -1202,6 +1214,7 @@ func hammerStoreLoadUintptr(t *testing.T, paddr unsafe.Pointer) {
 	StoreUintptr(addr, new)
 }
 
+/* pointer-arithmetic not supported in haxe
 func hammerStoreLoadPointer(t *testing.T, paddr unsafe.Pointer) {
 	addr := (*unsafe.Pointer)(paddr)
 	var test64 uint64 = 1 << 50
@@ -1229,11 +1242,12 @@ func hammerStoreLoadPointer(t *testing.T, paddr unsafe.Pointer) {
 	}
 	StorePointer(addr, unsafe.Pointer(new))
 }
+*/
 
 func TestHammerStoreLoad(t *testing.T) {
 	var tests []func(*testing.T, unsafe.Pointer)
 	tests = append(tests, hammerStoreLoadInt32, hammerStoreLoadUint32,
-		hammerStoreLoadUintptr, hammerStoreLoadPointer)
+		hammerStoreLoadUintptr /*, hammerStoreLoadPointer */)
 	if test64err == nil {
 		tests = append(tests, hammerStoreLoadInt64, hammerStoreLoadUint64)
 	}
@@ -1445,6 +1459,7 @@ func shouldPanic(t *testing.T, name string, f func()) {
 	f()
 }
 
+/* unalignment is only a problem on some haxe targets
 func TestUnaligned64(t *testing.T) {
 	// Unaligned 64-bit atomics on 32-bit systems are
 	// a continual source of pain. Test that on 32-bit systems they crash
@@ -1461,10 +1476,13 @@ func TestUnaligned64(t *testing.T) {
 	shouldPanic(t, "CompareAndSwapUint64", func() { CompareAndSwapUint64(p, 1, 2) })
 	shouldPanic(t, "AddUint64", func() { AddUint64(p, 3) })
 }
+*/
 
 func TestNilDeref(t *testing.T) {
-	if p := runtime.GOOS + "/" + runtime.GOARCH; p == "freebsd/arm" || p == "netbsd/arm" {
+	if p := runtime.GOOS + "/" + runtime.GOARCH; p == "freebsd/arm" || p == "netbsd/arm" ||
+		strings.HasPrefix(p, "nacl/") { // NOTE haxe cant recover a panic from the runtime
 		t.Skipf("issue 7338: skipping test on %q", p)
+		return
 	}
 	funcs := [...]func(){
 		func() { CompareAndSwapInt32(nil, 0, 0) },

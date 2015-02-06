@@ -285,16 +285,15 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			if v.(ssa.Value).Type().Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
 				return register + "=GOint64.toUFloat(GOint64.make(0," + l.IndirectValue(v, errorInfo) + "));"
 			}
-			return register + "=" + l.IndirectValue(v, errorInfo) + ";" // just the default conversion to float required
+			return register + "=Force.toFloat(" + l.IndirectValue(v, errorInfo) + ");" // just the default conversion to float required
 		case "Dynamic":
 			return register + "=GOint64.toUFloat(GOint64.ofUInt(Force.toInt(" + l.IndirectValue(v, errorInfo) + ")));"
 		case "Float":
-			if v.(ssa.Value).Type().Underlying().(*types.Basic).Kind() == types.Float64 &&
-				destType.Underlying().(*types.Basic).Kind() == types.Float32 {
+			if destType.Underlying().(*types.Basic).Kind() == types.Float32 {
 				return register + "=Force.toFloat32(" +
 					l.IndirectValue(v, errorInfo) + ");" // need to truncate to float32
 			}
-			return register + "=" + l.IndirectValue(v, errorInfo) + ";" // just the default assignment
+			return register + "=Force.toFloat(" + l.IndirectValue(v, errorInfo) + ");" 
 		default:
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - unhandled convert to float from: %s", srcTyp))
 			return ""

@@ -71,7 +71,7 @@ func IsInf(f float64, sign int) bool {
 		if sign > 0 {
 			return f > 0
 		}
-		return sign < 0
+		return f < 0
 	*/
 }
 

@@ -582,9 +582,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 func (l langType) FieldAddr(register string, v interface{}, errorInfo string) string {
 	if register != "" {
 		ptr := l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo)
-		if pogo.DebugFlag {
-			ptr = "Pointer.check(" + ptr + ")"
-		}
+		ptr = "Pointer.check(" + ptr + ")"
 		fld := v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field)
 		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
 		return fmt.Sprintf(`%s=%s.fieldAddr( /*%d : %s */ %d );`, register,
@@ -596,11 +594,11 @@ func (l langType) FieldAddr(register string, v interface{}, errorInfo string) st
 func wrapForce_toUInt(v string, k types.BasicKind) string {
 	switch k {
 	case types.Uintptr:
-		return "Force.toInt(" + v + ")"
+		return "Force.toUint32(Force.toInt(" + v + "))"
 	case types.Int64, types.Uint64:
-		return "GOint64.toInt(" + v + ")"
+		return "Force.toUint32(GOint64.toInt(" + v + "))"
 	case types.Float32, types.Float64, types.UntypedFloat:
-		return "(" + v + "<=0?0:Math.floor(" + v + "))"
+		return "Force.toUint32(" + v + "<=0?0:Math.floor(" + v + "))"
 	}
 	return v
 }
@@ -614,9 +612,7 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 	switch v.(*ssa.IndexAddr).X.Type().Underlying().(type) {
 	case *types.Pointer:
 		ptr := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
-		if pogo.DebugFlag {
-			ptr = "Pointer.check(" + ptr + ")"
-		}
+		ptr = "Pointer.check(" + ptr + ")"
 		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
 		return fmt.Sprintf(`%s=%s.addr(%s%s);`, register,
 			ptr, idxString, arrayOffsetCalc(ele))
@@ -677,9 +673,7 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 
 func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
 	ptr := l.IndirectValue(v1, errorInfo)
-	if pogo.DebugFlag {
-		ptr = "Pointer.check(" + ptr + ")"
-	}
+	ptr = "Pointer.check(" + ptr + ")"
 	return ptr + ".store" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) +
 		l.IndirectValue(v2, errorInfo) + ");" +
 		" /* " + v2.(ssa.Value).Type().Underlying().String() + " */ "

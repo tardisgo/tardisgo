@@ -12,7 +12,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in math/cmplx math/rand
+for twolevels in math/cmplx math/rand sync/atomic
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $twolevels 

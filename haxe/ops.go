@@ -42,9 +42,7 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 		//if strings.HasPrefix(lt, "Pointer") {
 		//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
 		//}
-		if pogo.DebugFlag {
-			iVal = "Pointer.check(" + iVal + ")"
-		}
+		iVal = "Pointer.check(" + iVal + ")"
 		return iVal + ".load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */", goTyp)
 		//}
 	case "-":
@@ -125,13 +123,13 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 	case "Float":
 		v1string = "Force.toFloat(" + v1string + ")"
 	case "Dynamic": // assume it is a uintptr, so integer arithmetic is required
-		v1string = "Force.toInt(" + v1string + ")"
+		v1string = "Force.toUint32(Force.toInt(" + v1string + "))"
 	}
 	switch v2LangType {
 	case "Float":
 		v2string = "Force.toFloat(" + v2string + ")"
 	case "Dynamic": // assume it is a uintptr, so integer arithmetic is required
-		v2string = "Force.toInt(" + v2string + ")"
+		v2string = "Force.toUint32(Force.toInt(" + v2string + "))"
 	}
 
 	if v1LangType == "Complex" {

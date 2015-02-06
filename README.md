@@ -46,6 +46,7 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - path
 - sort
 - strings
+- sync/atomic
 - text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
 
