@@ -51,15 +51,28 @@ const ( // from package math
 	uvinf    = 0x7FF0000000000000
 	uvneginf = 0xFFF0000000000000
 
+	MaxFloat32 = 3.40282346638528859811704183484516925440e+38   // 2**127 * (2**24 - 1) / 2**23
 	MaxFloat64 = 1.797693134862315708145274237317043567981e+308 // 2**1023 * (2**53 - 1) / 2**52
 )
 
+const ( // from http://www.cprogramming.com/tutorial/floating_point/understanding_floating_point_representation.html
+	uvinf32    = 0x7f800000
+	uvneginf32 = 0xff800000
+	uvnan32    = 0x7fc00000
+)
+
 //from GopherJS
-var zero float64 = 0
+var zero float64
 var posInf = 1 / zero  //hx.GetFloat("", "Math.POSITIVE_INFINITY") // 1 / zero
 var negInf = -1 / zero //hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
 var nan = 0 / zero     //hx.GetFloat("", "Math.NaN")                  //0 / zero
 var minusZero = zero * -1
+
+var zero32 float32
+var posInf32 = 1 / zero32  //hx.GetFloat("", "Math.POSITIVE_INFINITY") // 1 / zero
+var negInf32 = -1 / zero32 //hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
+var nan32 = 0 / zero32     //hx.GetFloat("", "Math.NaN")                  //0 / zero
+var minusZero32 = zero32 * -1
 
 func init() { // to avoid DCE
 	if false {
@@ -78,7 +91,10 @@ func init() { // to avoid DCE
 // Float32bits returns the IEEE 754 binary representation of f.
 //func Float32bits(f float32) uint32 { return *(*uint32)(unsafe.Pointer(&f)) }
 func Float32bits(f float32) uint32 {
-	// stop recursion
+	// stop recursion - NOTE also must not compare two float32 in this fn !
+	if InF32fb {
+		panic("haxegoruntime.Float32bits() InF32fb already set")
+	}
 	InF32fb = true
 	defer func() { InF32fb = false }()
 
@@ -88,40 +104,49 @@ func Float32bits(f float32) uint32 {
 	}
 	// TODO cpp/neko short-cut
 
-	if float64(f) == hx.GetFloat("", "0") { // to avoid recursion(0) { //js.InternalObject(f) == js.InternalObject(0) {
-		tv := hx.GetFloat("", "1") / float64(f)
-		if tv < 0 && !hx.CallBool("", "Math.isFinite", 1, tv) { //js.InternalObject(1/f) == js.InternalObject(negInf) {
-			return 1 << 31 //-0
+	// below logic from math.IsInf
+	if float64(f) > float64(MaxFloat32) {
+		return uvinf32
+	}
+	if float64(f) < float64(-MaxFloat32) {
+		return uvneginf32
+	}
+	if float64(f) != float64(f) { // NaN
+		if float64(f) < 0 { // -NaN ?
+			return uvnan32 | uint32(1)<<31
+		}
+		return uvnan32
+	}
+	if float64(f) == 0 {
+		if 1/float64(f) < float64(-MaxFloat32) { // dividing by -0 gives -Inf
+			return uint32(1) << 31
 		}
 		return 0
 	}
-	if float64(f) != float64(f) { //js.InternalObject(f) != js.InternalObject(f) { // NaN
-		return 2143289344
-	}
 
 	s := uint32(0)
-	if float64(f) < hx.GetFloat("", "0") { // must use float64 to avoid recusion on the comparison NOTE ditto below...
+	if float64(f) < 0 { // must use float64 to avoid recusion on the comparison NOTE ditto below...
 		s = 1 << 31
 		f = -f
 	}
 
 	e := uint32(127 + 23)
-	for float64(f) >= float64(int64(1<<24)) {
-		f /= float32(hx.GetFloat("", "2"))
+	for float64(f) >= 1<<24 {
+		f /= 2
 		e++
 		if e == uint32((1<<8)-1) {
-			if float64(f) >= hx.GetFloat("", "1<<23") {
-				f = float32(posInf)
+			if float64(f) >= 1<<23 {
+				f = posInf32
 			}
 			break
 		}
 	}
-	for float64(f) < float64(int64(1<<23)) {
+	for float64(f) < float64(1<<23) {
 		e--
 		if e == 0 {
 			break
 		}
-		f *= float32(hx.GetFloat("", "2"))
+		f *= 2
 	}
 
 	//r := js.Global.Call("$mod", f, 2).Float()
@@ -129,8 +154,8 @@ func Float32bits(f float32) uint32 {
 	if float64(f) < hx.GetFloat("", "0") {
 		panic("haxegoruntime.Float32bits")
 	}
-	t := float64(f) / hx.GetFloat("", "2")
-	r := float64(f) - (hx.GetFloat("", "2") * t)
+	t := float64(f) / 2
+	r := float64(f) - (2 * t)
 	// end simulate code
 	if (r > hx.GetFloat("", "0.5") && r < hx.GetFloat("", "1")) || r >= hx.GetFloat("", "1.5") { // round to nearest even
 		f++
@@ -145,6 +170,9 @@ var InF32fb bool // signal to haxegoruntime Force.toFloat32() to stop re-entry
 // to the IEEE 754 binary representation b.
 // func Float32frombits(b uint32) float32 { return *(*float32)(unsafe.Pointer(&b)) }
 func Float32frombits(b uint32) float32 {
+	if InF32fb {
+		panic("haxegoruntime.Float32frombits() InF32fb already set")
+	}
 	InF32fb = true
 	defer func() { InF32fb = false }()
 	if hx.GetBool("", "Object.nativeFloats") {
@@ -152,6 +180,22 @@ func Float32frombits(b uint32) float32 {
 		return *(*float32)(unsafe.Pointer(&t))
 	}
 	// TODO cpp/neko short-cut
+
+	// first handle the special cases
+	switch b {
+	case uvnan32:
+		return nan32
+	case uvnan32 | 1<<31:
+		return nan32 * -1 // -NaN
+	case uvinf32:
+		return posInf32
+	case uvneginf32:
+		return negInf32
+	case 0:
+		return 0
+	case 1 << 31:
+		return minusZero32 // -0
+	}
 
 	s := float32(+1)
 	if b&(1<<31) != 0 {
@@ -164,7 +208,7 @@ func Float32frombits(b uint32) float32 {
 		if m == 0 {
 			return s / 0 // Inf
 		}
-		return float32(nan)
+		return nan32
 	}
 	if e != 0 {
 		m += 1 << 23

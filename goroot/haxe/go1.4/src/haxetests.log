@@ -119,7 +119,7 @@ Executing test: TestWriterReadFromWhileFull
 Executing test: TestWriterReset 
 
 Executing test: TestZeroReader 
-       18.21 real        19.38 user         0.29 sys
+       16.52 real        17.60 user         0.31 sys
 
 =========================================
 Unit Test (via C++):  bytes
@@ -256,7 +256,7 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
-       59.19 real        55.95 user        12.52 sys
+       63.74 real        60.85 user        13.01 sys
 
 =========================================
 Unit Test (via C++):  sort
@@ -349,7 +349,7 @@ Executing test: TestStableBM
 Executing test: TestStableInts 
 
 Executing test: TestStrings 
-       24.45 real        25.17 user         0.26 sys
+       23.52 real        24.33 user         0.29 sys
 
 =========================================
 Unit Test (via C++):  math/cmplx
@@ -427,7 +427,7 @@ Executing test: TestRegress
 Executing test: TestStandardExponentialValues 
 
 Executing test: TestStandardNormalValues 
-      555.10 real       602.10 user        15.18 sys
+      544.44 real       589.16 user        13.88 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
@@ -525,7 +525,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       24.33 real        25.65 user         0.22 sys
+       29.41 real        30.16 user         0.23 sys
 
 =========================================
 Unit Test (via interpreter):  errors
@@ -539,7 +539,7 @@ testing.Main
 Executing test: TestErrorMethod 
 
 Executing test: TestNewEqual 
-       12.52 real        12.26 user         0.20 sys
+       12.68 real        12.34 user         0.19 sys
 
 =========================================
 Unit Test (via interpreter):  path
@@ -571,7 +571,7 @@ Executing test: TestJoin
 Executing test: TestMatch 
 
 Executing test: TestSplit 
-       26.72 real        26.07 user         0.34 sys
+       24.61 real        23.86 user         0.30 sys
 
 =========================================
 Unit Test (via interpreter):  strings
@@ -667,7 +667,7 @@ Executing test: TestUnreadRuneError
 Executing test: TestWriteStringError 
 
 Executing test: TestWriteTo 
-       79.74 real        78.42 user         0.66 sys
+       77.07 real        75.84 user         0.64 sys
 
 =========================================
 Unit Test (via interpreter):  unicode
@@ -731,7 +731,7 @@ Executing test: TestToTitleCase
 Executing test: TestToUpperCase 
 
 Executing test: TestTurkishCase 
-       28.85 real        28.36 user         0.35 sys
+       27.34 real        26.56 user         0.31 sys
 
 =========================================
 Unit Test (via interpreter):  container/heap
@@ -755,7 +755,7 @@ Executing test: TestRemove0
 Executing test: TestRemove1 
 
 Executing test: TestRemove2 
-       14.84 real        14.57 user         0.22 sys
+       14.54 real        14.15 user         0.20 sys
 
 =========================================
 Unit Test (via interpreter):  container/list
@@ -785,7 +785,7 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
-       12.99 real        12.70 user         0.22 sys
+       12.56 real        12.20 user         0.20 sys
 
 =========================================
 Unit Test (via interpreter):  container/ring
@@ -811,7 +811,7 @@ Executing test: TestMoveEmptyRing
 Executing test: TestNew 
 
 Executing test: TestUnlink 
-       40.00 real        39.24 user         0.29 sys
+       36.62 real        35.77 user         0.21 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/ascii85
@@ -839,7 +839,7 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
-       27.05 real        26.61 user         0.33 sys
+       27.97 real        27.14 user         0.32 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base32
@@ -869,7 +869,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       28.48 real        27.80 user         0.38 sys
+       29.94 real        29.06 user         0.31 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base64
@@ -903,7 +903,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       26.09 real        25.55 user         0.32 sys
+       29.73 real        28.82 user         0.31 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/hex
@@ -929,7 +929,7 @@ Executing test: TestEncodeToString
 Executing test: TestInvalidErr 
 
 Executing test: TestInvalidStringErr 
-       23.13 real        22.82 user         0.28 sys
+       24.52 real        23.74 user         0.30 sys
 
 =========================================
 Unit Test (via interpreter):  text/tabwriter
@@ -945,7 +945,7 @@ Executing test: Test
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
-       26.59 real        26.08 user         0.34 sys
+       27.87 real        27.01 user         0.33 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf8
@@ -979,7 +979,7 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-       33.10 real        32.19 user         0.41 sys
+       30.56 real        29.66 user         0.35 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf16
@@ -1001,7 +1001,7 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
-       21.46 real        21.14 user         0.28 sys
+       22.35 real        21.68 user         0.28 sys
 
 =====================
 All Unit Tests Passed

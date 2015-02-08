@@ -661,7 +661,7 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 			return ""
 		case types.Float32:
 			return "Force.toFloat32(" + v + ")"
-		case types.Float64:
+		case types.Float64, types.Bool:
 			return v
 		default:
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled basic kind %s",

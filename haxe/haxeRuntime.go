@@ -267,7 +267,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 					else return Math.NEGATIVE_INFINITY;
 			if(x==0)
 				if(y>0) return x; // return x incase -0, x==y==0.0 already handled above
-				else return return zero * -1.0; // should be -0
+				else return return zero * -1; // should be -0
 		#end
 		return x/y;
 	}
@@ -277,7 +277,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		#if php 
 			if(x==0)
 				if(y>=0) return x; // to allow for -0
-				else return return zero * -1.0; // should be -0
+				else return return zero * -1; // should be -0
 		#end
 		return x%y;
 	}

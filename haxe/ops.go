@@ -76,13 +76,14 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 			switch op {
 			case "^":
 				// Haxe has a different operator for bit-wise complement
-				return l.intTypeCoersion(v.(ssa.Value).Type().Underlying(),
+				return l.intTypeCoersion(regTyp.Underlying(),
 					"(~"+valStr+")", errorInfo)
 			case "-": //both negation and bit-complement can overflow
-				return l.intTypeCoersion(v.(ssa.Value).Type().Underlying(),
+				return l.intTypeCoersion(regTyp.Underlying(),
 					"(-"+valStr+")", errorInfo)
-			default: //no overflow issues
-				return "(" + op + valStr + ")"
+			default: //no overflow issues, but let's be on the safe-side...
+				return l.intTypeCoersion(regTyp.Underlying(),
+					"("+op+valStr+")", errorInfo)
 			}
 		}
 	}
@@ -302,6 +303,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 					}
 				}
 				ret = "({var _v1:Int=" + v1string + "; var _v2:Int=" + v2string + "; _v2==0?_v1:_v1" + op + "_v2;})" //NoOp if v2==0
+
 			case "/":
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 				case types.Int8:
@@ -334,6 +336,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
 					ret = "(ERROR)"
 				}
+
 			case "*":
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 				case types.Int8:
@@ -355,11 +358,12 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				op = "&~" // Haxe has a different operator for bit-wise complement
 				fallthrough
 			default:
-				innerCode := "(" + v1string + op + v2string + ")"
-				ret = l.intTypeCoersion(
-					v1.(ssa.Value).Type().Underlying(),
-					innerCode, errorInfo)
+				ret = "(" + v1string + op + v2string + ")"
 			}
+			ret = l.intTypeCoersion(
+				regTyp.Underlying(),
+				ret, errorInfo)
+
 		}
 		return ret
 	}
