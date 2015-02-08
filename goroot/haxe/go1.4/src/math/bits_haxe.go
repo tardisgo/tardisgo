@@ -6,8 +6,6 @@
 
 package math
 
-import "github.com/tardisgo/tardisgo/haxe/hx"
-
 const (
 	uvnan    = 0x7FF8000000000001
 	uvinf    = 0x7FF0000000000000
@@ -17,23 +15,31 @@ const (
 	bias     = 1023
 )
 
+// making these is expensive on most platforms, so only do it once
+var f64uvnan = Float64frombits(uvnan)
+var f64uvinf = Float64frombits(uvinf)
+var f64uvneginf = Float64frombits(uvneginf)
+
 // Inf returns positive infinity if sign >= 0, negative infinity if sign < 0.
 func Inf(sign int) float64 {
 	//var v uint64
 	if sign >= 0 {
 		//v = uvinf
-		return hx.GetFloat("", "Math.POSITIVE_INFINITY")
+		//return hx.GetFloat("", "Math.POSITIVE_INFINITY")
+		return f64uvinf
 	} else {
 		//v = uvneginf
-		return hx.GetFloat("", "Math.NEGATIVE_INFINITY")
+		//return hx.GetFloat("", "Math.NEGATIVE_INFINITY")
+		return f64uvneginf
 	}
 	//return Float64frombits(v)
 }
 
 // NaN returns an IEEE 754 ``not-a-number'' value.
 func NaN() float64 {
+	return f64uvnan
 	//return Float64frombits(uvnan)
-	return hx.GetFloat("", "Math.NaN")
+	//return hx.GetFloat("", "Math.NaN")
 }
 
 // IsNaN reports whether f is an IEEE 754 ``not-a-number'' value.

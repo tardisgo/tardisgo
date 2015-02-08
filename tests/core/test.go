@@ -1556,34 +1556,79 @@ func tourfib() {
 // end tour
 
 func testUintDiv32() {
-	var uifs, pwr2 uint32
-	uifs = uint32(0xffffffff) // test for  "-1" number constant
-	pwr2 = uint32(1)
-	for i := uint32(0); i < 32; i++ {
-		if !TEQuint32("testUintDiv32() T1 ", (uifs)>>i, (uifs)/pwr2) {
-			println("ProblemT1 i=", int(i))
+	for seed := int32(-10); seed <= 10; seed++ {
+		var uifs, pwr2 uint32
+		uifs = uint32(seed)
+		if seed != 0 {
+			one := uint32(1)
+			TEQuint32("testUintDiv32() uint x/x==unity ", 1, uifs/uifs)
+			TEQint32("testUintDiv32() int x/x==unity ", 1, seed/seed)
+			TEQuint32("testUintDiv32() uint x/1==x ", uifs/one, uifs)
+			TEQint32("testUintDiv32() int x/1==x ", seed/int32(one), seed)
+			if seed > 0 {
+				TEQuint32("testUintDiv32() uint +ve roundtrip ", uifs, (uifs*uifs)/uifs)
+			}
+			TEQint32("testUintDiv32() int +ve roundtrip ", seed, (seed*seed)/seed)
 		}
-		pwr2 *= 2
-	}
-	uifs2 := uint32(0xfffffff0) //  test another "-ve" number constant
-	uifs = uifs2
-	pwr2 = uint32(1)
-	for i := uint32(0); i < 32; i++ {
-		if !TEQuint32("testUintDiv32() T2 ", (uifs)>>i, (uifs)/pwr2) {
-			println("ProblemT2 i=", int(i))
+		pwr2 = uint32(1)
+		for i := uint32(0); i < 32; i++ {
+			if !TEQuint32("testUintDiv32() T1 uint ", (uifs)>>i, (uifs)/pwr2) {
+				println("ProblemT1 uint i=", int(i))
+			}
+			if !TEQuint32("testUintDiv32() uint shift equivalence roundtrip  ", (uifs*pwr2)>>i, (uifs<<i)/pwr2) {
+				println("Problem uint seed,i=", seed, i)
+			}
+			if i < 31 {
+				if seed >= 0 {
+					if !TEQint32("testUintDiv32() T1 int ", (seed)>>i, (seed)/int32(pwr2)) {
+						println("ProblemT1 int i=", int(i))
+					}
+				}
+				if !TEQint32("testUintDiv32() int shift equivalence roundtrip  ",
+					(seed*int32(pwr2))>>i, (seed<<i)/int32(pwr2)) {
+					println("Problem int seed,i=", seed, i)
+				}
+			}
+			pwr2 <<= 1
 		}
-		pwr2 *= 2
 	}
 }
 func testUintDiv64() {
-	var uifs, pwr2 uint64
-	uifs = uint64(0xfffffffffffffff0)
-	pwr2 = uint64(1)
-	for i := uint64(0); i < 64; i++ {
-		if !TEQuint64("testUintDiv64() ", uifs>>i, uifs/pwr2) {
-			println("Problem i=", int(i))
+	for seed := int64(-10); seed <= 10; seed++ {
+		var uifs, pwr2 uint64
+		uifs = uint64(seed)
+		if seed != 0 {
+			one := uint64(1)
+			TEQuint64("testUintDiv64() uint x/x==unity ", 1, uifs/uifs)
+			TEQint64("testUintDiv64() int x/x==unity ", 1, seed/seed)
+			TEQuint64("testUintDiv64() uint x/1==x ", uifs/one, uifs)
+			TEQint64("testUintDiv64() int x/1==x ", seed/int64(one), seed)
+			if seed > 0 {
+				TEQuint64("testUintDiv64() +ve roundtrip ", uifs, (uifs*uifs)/uifs)
+			}
+			TEQint64("testUintDiv64() int +ve roundtrip ", seed, (seed*seed)/seed)
 		}
-		pwr2 *= 2
+		pwr2 = uint64(1)
+		for i := uint64(0); i < 64; i++ {
+			if !TEQuint64("testUintDiv64() uint ", uifs>>i, uifs/pwr2) {
+				println("Problem seed,i=", seed, i)
+			}
+			if !TEQuint64("testUintDiv64() uint shift equivalence roundtrip  ", (uifs*pwr2)>>i, (uifs<<i)/pwr2) {
+				println("Problem seed,i=", seed, i)
+			}
+			if i < 63 {
+				if seed >= 0 {
+					if !TEQint64("testUintDiv64() T1 int ", (seed)>>i, (seed)/int64(pwr2)) {
+						println("ProblemT1 int i=", int(i))
+					}
+				}
+				if !TEQint64("testUintDiv64() int shift equivalence roundtrip  ",
+					(seed*int64(pwr2))>>i, (seed<<i)/int64(pwr2)) {
+					println("Problem int seed,i=", seed, i)
+				}
+			}
+			pwr2 <<= 1
+		}
 	}
 }
 

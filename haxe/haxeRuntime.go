@@ -161,14 +161,20 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return toFloat32safe(v);
 	}
 	#if (cpp || neko)
-		static private var f32byts = haxe.io.Bytes.alloc(4);
+		static public var f64byts = haxe.io.Bytes.alloc(8);
+		//static public function Float64frombits(v:GOint64):Float{
+			// TODO
+		//}
+		//static public function Float64bits(v:Float):GOint64{
+			// TODO 	
+		//}
 	#elseif (js && fullunsafe)
 		static private var f32dView = new js.html.DataView(new js.html.ArrayBuffer(8),0,8); 
 	#end
 	public static function toFloat32safe(v:Float):Float {
 		#if (cpp || neko)
-			f32byts.setFloat(0,v);
-			return f32byts.getFloat(0);
+			f64byts.setFloat(0,v);
+			return f64byts.getFloat(0);
 		#elseif (js && fullunsafe)
 			f32dView.setFloat32(0,v); 
 			return f32dView.getFloat32(0); 
@@ -181,6 +187,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		#end
 	}
 	public static function uintCompare(x:Int,y:Int):Int { // +ve if uint(x)>unint(y), 0 equal, else -ve 
+		// use method in 64bit haxe library code
+		return x < 0 ? (y < 0 ? (~y - ~x) : 1) : (y < 0 ? -1 : (x - y));
+		/*was:
 			if(x==y) return 0; // simple case first for speed TODO is it faster with this in or out?
 			if(x>=0) {
 				if(y>=0){ // both +ve so normal comparison
@@ -195,6 +204,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 					return (x-y); //eg -1::-7 gives -1--7 = +6 meaning -1 > -7
 				}
 			}
+		*/
 	}
 	private static function checkIntDiv(x:Int,y:Int,byts:Int):Int { // implement the special processing required by Go
 		var r:Int=y;
@@ -1477,7 +1487,10 @@ public static function ofFloat(v):HaxeInt64abs { // float to signed int64 (TODO 
 }
 public static function ofUFloat(v):HaxeInt64abs { // float to un-signed int64 
 		//TODO native versions for java & cs
-		if(v<=0.0) return make(0,0); // -ve values are invalid, so return 0
+		if(v<0.0){
+			Scheduler.panicFromHaxe("-ve value passed to internal haxe function ofUFloat()");
+			return make(0,0); // -ve values are invalid here, so return 0
+		} 
 		if(Math.isNaN(v)) return make(0x80000000,0); // largest -ve number is returned by Go in this situation
 		if(v<2147483647.0) { // optimization: if just a small integer, don't do the full conversion code below
 			return ofInt(Math.floor(v));
@@ -1543,7 +1556,7 @@ public static function div(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt6
 				if( HaxeInt64Typedef.compare(x,y) < 0 ) { // x is more "-ve" than y, so the smaller uint   
 					return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));						
 				} else {
-					return new HaxeInt64abs(HaxeInt64Typedef.ofInt(1));	
+					return new HaxeInt64abs(HaxeInt64Typedef.ofInt(1));	// both have top bit set & uint(x)>uint(y)
 				}
 			} else { // only x is -ve
 				var pt1:HaxeInt64Typedef = HaxeInt64Typedef.make(0x7FFFFFFF,0xFFFFFFFF); // the largest part of the numerator
@@ -1560,7 +1573,7 @@ public static function div(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt6
 				pt2 = HaxeInt64Typedef.div(pt2,y);			
 				return new HaxeInt64abs(HaxeInt64Typedef.add(pt1,HaxeInt64Typedef.add(pt2,rem)));	
 			}
-		}else{ // logically, y is "-ve"" but x is "+ve" so y>x , so any divide will yeild 0
+		}else{ // logically, y is "-ve"" but x is "+ve" so y>x , so any integer divide will yeild 0
 				return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));	
 		}
 	}
@@ -1604,7 +1617,11 @@ public static inline function compare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
 	return HaxeInt64Typedef.compare(x,y);
 }
 public static function ucompare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
+	//#if cpp
+	 	return HaxeInt64Typedef.ucompare(x,y);
+	//#else
 	// unsigned compare library code does not work properly for all platforms 
+	/*was:
 		if(HaxeInt64Typedef.isZero(x)) {
 			if(HaxeInt64Typedef.isZero(y)) {
 				return 0;
@@ -1628,8 +1645,7 @@ public static function ucompare(x:HaxeInt64abs,y:HaxeInt64abs):Int {
 				return HaxeInt64Typedef.compare(x,y); 
 			}
 		}
-	//#else
-	// 	return HaxeInt64Typedef.ucompare(x,y);
+	*/
 	//#end
 }
 }

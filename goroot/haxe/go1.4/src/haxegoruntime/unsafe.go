@@ -50,13 +50,16 @@ const ( // from package math
 	uvnan    = 0x7FF8000000000001
 	uvinf    = 0x7FF0000000000000
 	uvneginf = 0xFFF0000000000000
+
+	MaxFloat64 = 1.797693134862315708145274237317043567981e+308 // 2**1023 * (2**53 - 1) / 2**52
 )
 
 //from GopherJS
 var zero float64 = 0
-var posInf = hx.GetFloat("", "Math.POSITIVE_INFINITY") // 1 / zero
-var negInf = hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
-var nan = hx.GetFloat("", "Math.NaN")                  //0 / zero
+var posInf = 1 / zero  //hx.GetFloat("", "Math.POSITIVE_INFINITY") // 1 / zero
+var negInf = -1 / zero //hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
+var nan = 0 / zero     //hx.GetFloat("", "Math.NaN")                  //0 / zero
+var minusZero = zero * -1
 
 func init() { // to avoid DCE
 	if false {
@@ -83,6 +86,7 @@ func Float32bits(f float32) uint32 {
 		var t float32 = f
 		return *(*uint32)(unsafe.Pointer(&t))
 	}
+	// TODO cpp/neko short-cut
 
 	if float64(f) == hx.GetFloat("", "0") { // to avoid recursion(0) { //js.InternalObject(f) == js.InternalObject(0) {
 		tv := hx.GetFloat("", "1") / float64(f)
@@ -147,6 +151,8 @@ func Float32frombits(b uint32) float32 {
 		var t uint32 = b
 		return *(*float32)(unsafe.Pointer(&t))
 	}
+	// TODO cpp/neko short-cut
+
 	s := float32(+1)
 	if b&(1<<31) != 0 {
 		s = -1
@@ -178,18 +184,27 @@ func Float64bits(f float64) uint64 {
 		var t float64 = f
 		return *(*uint64)(unsafe.Pointer(&t))
 	}
+	// TODO cpp/neko short-cut - using Force.f64byts
 
-	// below from GopherJS
-	if f == hx.GetFloat("", "0") {
-		tv := hx.GetFloat("", "1") / float64(f)
-		if tv < 0 && !hx.CallBool("", "Math.isFinite", 1, tv) { //js.InternalObject(1/f) == js.InternalObject(negInf) {
-			//if hx.GetFloat("", "1")/f == negInf {
-			return 1 << 63
-		}
-		return 0
+	// below from math.IsInf
+	if f > MaxFloat64 {
+		return uvinf
+	}
+	if f < -MaxFloat64 {
+		return uvneginf
 	}
 	if f != f { // NaN
-		return 9221120237041090561
+		if f < 0 { // -NaN ?
+			return uvnan | uint64(1)<<63
+		}
+		//return 9221120237041090561
+		return uvnan
+	}
+	if f == 0 {
+		if 1/f < -MaxFloat64 { // dividing by -0 gives -Inf
+			return uint64(1) << 63
+		}
+		return 0
 	}
 
 	s := uint64(0)
@@ -225,6 +240,8 @@ func Float64frombits(b uint64) float64 {
 		var t uint64 = b
 		return *(*float64)(unsafe.Pointer(&t))
 	}
+	// TODO cpp/neko short-cut
+
 	// first handle the special cases
 	switch b {
 	case uvnan:

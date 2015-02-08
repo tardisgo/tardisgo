@@ -598,7 +598,7 @@ func wrapForce_toUInt(v string, k types.BasicKind) string {
 	case types.Int64, types.Uint64:
 		return "Force.toUint32(GOint64.toInt(" + v + "))"
 	case types.Float32, types.Float64, types.UntypedFloat:
-		return "Force.toUint32(" + v + "<=0?0:Math.floor(" + v + "))"
+		return "Force.toUint32(" + v + "<=0?Math.ceil(" + v + "):Math.floor(" + v + "))"
 	}
 	return v
 }
@@ -637,9 +637,9 @@ func (l langType) IndirectValue(v interface{}, errorInfo string) string {
 }
 
 func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
-	switch t.(type) {
+	switch t.Underlying().(type) {
 	case *types.Basic:
-		switch t.(*types.Basic).Kind() {
+		switch t.Underlying().(*types.Basic).Kind() {
 		case types.Int8:
 			return "Force.toInt8(" + v + ")"
 		case types.Int16:
@@ -652,21 +652,24 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 			return "Force.toUint8(" + v + ")"
 		case types.Uint16:
 			return "Force.toUint16(" + v + ")"
-		case types.Uint32, types.Uint: // NOTE type uint is always uint32
+		case types.Uint32, types.Uint, types.Uintptr: // NOTE type uint is always uint32
 			return "Force.toUint32(" + v + ")"
 		case types.Uint64:
 			return "Force.toUint64(" + v + ")"
 		case types.UntypedInt, types.UntypedRune:
 			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion(): unhandled types.UntypedInt or types.UntypedRune"))
 			return ""
-		case types.Uintptr: // held as the Dynamic type in Haxe
-			return "" + v + "" // TODO review correct thing to do here
 		case types.Float32:
 			return "Force.toFloat32(" + v + ")"
+		case types.Float64:
+			return v
 		default:
+			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled basic kind %s",
+				t.Underlying().(*types.Basic).Kind()))
 			return v
 		}
 	default:
+		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled type %T", t.Underlying()))
 		return v
 	}
 }

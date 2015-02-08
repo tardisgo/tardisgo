@@ -172,9 +172,14 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 	switch langType { // target Haxe type
 	case "Dynamic": // no cast allowed for dynamic variables
 		vInt := l.IndirectValue(v, errorInfo)
+		// but some Go code uses uintptr as just another integer, so ensure it is unsigned
 		switch srcTyp {
 		case "GOint64":
-			vInt = "GOint64.toInt(" + vInt + ")" // some Go code uses uintptr as just another integer
+			vInt = "Force.toUint32(GOint64.toInt(" + vInt + "))" 
+		case "Float":  
+			vInt = "Force.toUint32({var _f:Float=" + vInt + ";_f>=0?Math.floor(_f):Math.ceil(_f);})"// same as signed
+		case "Int":
+			vInt = "Force.toUint32(" + vInt+")"
 		}
 		return register + "=" + vInt + ";"
 	case "Pointer":
@@ -244,11 +249,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "GOint64":
 			vInt = "GOint64.toInt(" + l.IndirectValue(v, errorInfo) + ")" // un/signed OK as just truncates
 		case "Float":
-			if destType.Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
-				vInt = "{var _f:Float=" + l.IndirectValue(v, errorInfo) + ";_f>0?Math.floor(_f):0;}"
-			} else {
-				vInt = "{var _f:Float=" + l.IndirectValue(v, errorInfo) + ";_f>=0?Math.floor(_f):Math.ceil(_f);}"
-			}
+			vInt = "{var _f:Float=" + l.IndirectValue(v, errorInfo) + ";_f>=0?Math.floor(_f):Math.ceil(_f);}"
 		case "Dynamic":
 			vInt = "Force.toInt(" + l.IndirectValue(v, errorInfo) + ")" // Dynamic == uintptr
 		default:
@@ -265,7 +266,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			return register + "=GOint64.ofInt(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Float":
 			if destType.Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
-				return register + "=GOint64.ofUFloat(" + l.IndirectValue(v, errorInfo) + ");"
+				return register + "=GOint64.ofFloat(" + l.IndirectValue(v, errorInfo) + ");" // same as signed
 			}
 			return register + "=GOint64.ofFloat(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Dynamic": // uintptr

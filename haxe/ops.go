@@ -67,7 +67,7 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 			valStr := l.IndirectValue(v, errorInfo)
 			switch v.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 			case types.Uintptr: // although held as Dynamic, uintpointers are integers when doing calculations
-				valStr = "Force.toInt(" + valStr + ")"
+				valStr = "Force.toUint32(Force.toInt(" + valStr + "))"
 			case types.Float32:
 				valStr = "Force.toFloat32(" + valStr + ")"
 			case types.Float64:
@@ -258,7 +258,12 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 		} else {
 			switch v2LangType {
 			case "GOint64":
-				v2string = "GOint64.toInt(" + v2string + ")"
+				switch op {
+				case "<<", ">>":
+					v2string = "GOint64.toInt(" + v2string + ")"
+				default:
+					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled 64-bit 2nd param to op: %s", op))
+				}
 			}
 			switch op { // standard case, use Haxe operators
 			case "==", "!=", "<", ">", "<=", ">=": // no integer coersion, boolian results
