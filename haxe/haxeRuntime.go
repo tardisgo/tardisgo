@@ -1590,15 +1590,25 @@ public static inline function or(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.or(x,y));
 }
 public static inline function shl(x:HaxeInt64abs,y:Int):HaxeInt64abs {
-	if(y==64) // this amount of shl is not handled correcty by the underlying code
+	if(y==0) return new HaxeInt64abs(x);
+	if(y<0 || y>=64) // this amount of shl is not handled correcty by the underlying code
 		return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));	
 	else
 		return new HaxeInt64abs(HaxeInt64Typedef.shl(x,y));
 }
-public static inline function shr(x:HaxeInt64abs,y:Int):HaxeInt64abs {
+public static function shr(x:HaxeInt64abs,y:Int):HaxeInt64abs { // note, not inline
+	if(y==0) return new HaxeInt64abs(x);
+	if(y<0 || y>=64)
+		if(isNeg(x))
+			return new HaxeInt64abs(HaxeInt64Typedef.ofInt(-1));		
+		else
+			return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));		
 	return new HaxeInt64abs(HaxeInt64Typedef.shr(x,y));
 }
 public static function ushr(x:HaxeInt64abs,y:Int):HaxeInt64abs { // note, not inline
+	if(y==0) return new HaxeInt64abs(x);
+	if(y<0 || y>=64)
+		return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));		
 	#if php
 	if(y==32){ // error with php on 32 bit right shift for uint64, so do 2x16
 		var ret:HaxeInt64Typedef = HaxeInt64Typedef.ushr(x,16);

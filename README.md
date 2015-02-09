@@ -40,14 +40,15 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - bufio
 - bytes
 - container/heap, container/list, container/ring
-- encoding/ascii85, encoding/base32, encoding/base64, encoding/hex
+- encoding/ascii85, encoding/base32, encoding/base64, encoding/csv, encoding/hex
 - errors
-- math/cmplx math/rand
+- math/cmplx, math/rand
 - path
 - sort
+- strconv
 - strings
 - sync/atomic
-- text/tabwriter
+- text/scanner, text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
 
 Math-related packages may only fully work with cpp or js -D fullunsafe. No methods are modeled in "reflect" yet, so tests that use this feature (like math/rand) are not fully excercised.

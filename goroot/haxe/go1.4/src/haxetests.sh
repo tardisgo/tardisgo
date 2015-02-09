@@ -1,5 +1,5 @@
 # run the working unit tests using the fastest/most accurate method C++ or neko/interp
-for onelevel in bufio bytes sort
+for onelevel in bufio bytes sort strconv
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $onelevel 
@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/heap container/list container/ring encoding/ascii85 encoding/base32 encoding/base64 encoding/hex text/tabwriter unicode/utf8 unicode/utf16 
+for twolevels in container/heap container/list container/ring encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex text/scanner text/tabwriter unicode/utf8 unicode/utf16 
 do
 	echo "========================================="
 	echo "Unit Test (via interpreter): " $twolevels 
