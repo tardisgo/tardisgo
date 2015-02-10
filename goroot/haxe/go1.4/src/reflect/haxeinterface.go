@@ -163,16 +163,39 @@ func createHaxeType(id int) *rtype {
 	case Interface:
 		interfaceT := interfaceType{
 			rtype:   basicT,
-			methods: make([]imethod, 0),
+			methods: make([]imethod, 0), // TODO
 		}
 		haxeIDmap[id] = unsafe.Pointer(&interfaceT)
+
+	case Map:
+		//panic("reflect.createHaxeType() not yet programmed Map ")
+		mapInfo := hx.CodeDynamic("", "TypeInfo.mapByID[_a.itemAddr(0).load().val];", id)
+		if hx.IsNull(mapInfo) {
+			panic("reflect.createHaxeType() no map information for id: " +
+				hx.CallString("", "Std.string", 1, id))
+		}
+		el := createHaxeType(hx.FgetInt("", mapInfo, "", "elem"))
+		if el == nil {
+			panic("reflect.createHaxeType() no map element information for id: " +
+				hx.CallString("", "Std.string", 1, id))
+		}
+		ky := createHaxeType(hx.FgetInt("", mapInfo, "", "key"))
+		if ky == nil {
+			panic("reflect.createHaxeType() no map key information for id: " +
+				hx.CallString("", "Std.string", 1, id))
+		}
+
+		mapT := mapType{
+			rtype: basicT,
+			key:   ky, // *rtype // map key type
+			elem:  el, // *rtype // map element (value) type
+		}
+		haxeIDmap[id] = unsafe.Pointer(&mapT)
 
 	case Chan:
 		panic("reflect.createHaxeType() not yet programmed Chan ")
 	case Func:
 		panic("reflect.createHaxeType() not yet programmed Func ")
-	case Map:
-		panic("reflect.createHaxeType() not yet programmed Map ")
 	}
 
 	return (*rtype)(haxeIDmap[id])
@@ -232,7 +255,7 @@ func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 			"_a.itemAddr(1).load().val.store_object(_a.itemAddr(2).load().val,_a.itemAddr(0).load().val);",
 			i, ret.word, ret.typ.size)
 
-	case Slice, Interface:
+	case Slice, Interface, Map:
 		hx.Code("",
 			"_a.itemAddr(1).load().val.store(_a.itemAddr(0).load().val);",
 			i, ret.word)
@@ -241,8 +264,8 @@ func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 		panic("reflect.haxeInterfaceUnpack() not yet programmed Chan ")
 	case Func:
 		panic("reflect.haxeInterfaceUnpack() not yet programmed Func ")
-	case Map:
-		panic("reflect.haxeInterfaceUnpack() not yet programmed Map ")
+		//case Map:
+		//	panic("reflect.haxeInterfaceUnpack() not yet programmed Map ")
 	}
 
 	return ret
@@ -289,7 +312,7 @@ func haxeInterfacePack(ei *emptyInterface) interface{} {
 	case String:
 		return hx.CodeIface("", "string", "_a.itemAddr(0).load().val;", *(*string)(ei.word))
 
-	case Array:
+	case Array, Struct:
 		return hx.CodeIface("", ei.typ.String(),
 			"_a.itemAddr(0).load().val.load_object(_a.itemAddr(1).load().val);",
 			ei.word, ei.typ.size)
@@ -306,7 +329,6 @@ func haxeInterfacePack(ei *emptyInterface) interface{} {
 	case Func:
 	case Interface:
 	case Map:
-	case Struct:
 	}
 
 	panic("reflect.haxeInterfacePack() not yet implemented for " + ei.typ.String() +

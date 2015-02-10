@@ -51,7 +51,7 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - text/scanner, text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
 
-Math-related packages may only fully work with cpp or js -D fullunsafe. No methods are modeled in "reflect" yet, so tests that use this feature (like math/rand) are not fully excercised.
+Math-related packages may only fully work with cpp or js -D fullunsafe, partly due to modelling float32 as float64. No methods are modeled in "reflect" yet, so tests that use this feature (like math/rand) are not fully excercised.
 
 Packages "fmt", "runtime", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime (currently including some debug messages).
 

@@ -540,7 +540,7 @@ func (l langType) EmitTypeInfo() string {
 	for id, t := range typesByID {
 		switch t.(type) {
 		case *types.Pointer:
-			ret += fmt.Sprintf("\t%d=>%s,\n", id, pogo.LogTypeUse(t.(*types.Pointer).Elem()))
+			ret += fmt.Sprintf("\t%d=>%s,\n", id, pogo.LogTypeUse(t.(*types.Pointer).Elem().Underlying()))
 		}
 	}
 	ret += "];\n"
@@ -551,7 +551,7 @@ func (l langType) EmitTypeInfo() string {
 	for id, t := range typesByID {
 		switch t.(type) {
 		case *types.Slice:
-			ret += fmt.Sprintf("\t%d=>%s,\n", id, pogo.LogTypeUse(t.(*types.Slice).Elem()))
+			ret += fmt.Sprintf("\t%d=>%s,\n", id, pogo.LogTypeUse(t.(*types.Slice).Elem().Underlying()))
 		}
 	}
 	ret += "];\n"
@@ -600,6 +600,22 @@ func (l langType) EmitTypeInfo() string {
 
 	buildTBI()
 
+	ret += "public static var mapByID:Map<Int,{key:Int,elem:Int}> = [ 0=>{key:0,elem:0}, \n"
+	for id, t := range typesByID {
+		switch t.(type) {
+		case *types.Named:
+			t = t.(*types.Named).Underlying()
+		}
+		switch t.(type) {
+		case *types.Map:
+			ret += fmt.Sprintf("\t%d=>{key:%s,elem:%s},\n", id,
+				pogo.LogTypeUse(t.(*types.Map).Key()),
+				pogo.LogTypeUse(t.(*types.Map).Elem()) )
+		}
+	}
+	ret += "];\n"
+
+	buildTBI()
 
 	ret += "public static var arrayByID:Map<Int,{elem:Int,slice:Int,len:Int}> = [ 0=>{elem:0,slice:0,len:0}, \n"
 	for id, t := range typesByID {

@@ -1019,7 +1019,7 @@ func (v Value) Len() int {
 // It returns the zero Value if key is not found in the map or if v represents a nil map.
 // As in Go, the key's value must be assignable to the map's key type.
 func (v Value) MapIndex(key Value) Value {
-	panic("reflect.value.MapIndex not yet implemented")
+	//panic("reflect.value.MapIndex not yet implemented")
 	v.mustBe(Map)
 	tt := (*mapType)(unsafe.Pointer(v.typ))
 
@@ -1061,7 +1061,7 @@ func (v Value) MapIndex(key Value) Value {
 // It panics if v's Kind is not Map.
 // It returns an empty slice if v represents a nil map.
 func (v Value) MapKeys() []Value {
-	panic("reflect.value.MapKeys not yet implemented")
+	//panic("reflect.value.MapKeys not yet implemented")
 	v.mustBe(Map)
 	tt := (*mapType)(unsafe.Pointer(v.typ))
 	keyType := tt.key
@@ -2570,7 +2570,33 @@ func makemap(t *rtype) (m unsafe.Pointer) {
 	return nil
 }
 func mapaccess(t *rtype, m unsafe.Pointer, key unsafe.Pointer) (val unsafe.Pointer) {
+	if m == nil || key == nil {
+		return nil
+	}
 	panic("reflect.mapaccess() not yet implemented in haxe")
+	/*
+		kyT := (*mapType)(unsafe.Pointer(t)).Key()
+		kyS := ""
+		switch {
+	case  kyT.Kind()==String:
+		kyS := *(*string)(key)
+		case kyT.Bits()
+		}
+		el := hx.CodeDynamic("",
+			"cast(_a.itemAddr(0).load().val,GOmap).mapaccess(_a.itemAddr(1).load().val.load());",
+			m, key)
+		sz := (*mapType)(unsafe.Pointer(t)).elem.size
+		ret := hx.Malloc(sz)
+		if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Object);", el) {
+			hx.Code("",
+				"_a.itemAddr(0).load().val.store_object(_a.itemAddr(2).load().val,"+
+					"_a.itemAddr(1).load().val);",
+				ret, el, sz)
+		} else {
+			*(*uintptr)(ret) = el
+		}
+		return unsafe.Pointer(&ret)
+	*/
 	return nil
 }
 func mapassign(t *rtype, m unsafe.Pointer, key, val unsafe.Pointer) {
@@ -2579,20 +2605,67 @@ func mapassign(t *rtype, m unsafe.Pointer, key, val unsafe.Pointer) {
 func mapdelete(t *rtype, m unsafe.Pointer, key unsafe.Pointer) {
 	panic("reflect.mapdelete() not yet implemented in haxe")
 }
+
+type mapIter struct {
+	t    *rtype
+	m    unsafe.Pointer
+	r    uintptr
+	ok   bool
+	key  uintptr
+	elem uintptr
+}
+
 func mapiterinit(t *rtype, m unsafe.Pointer) unsafe.Pointer {
-	panic("reflect.mapiterinit() not yet implemented in haxe")
-	return nil
+	//panic("reflect.mapiterinit() not yet implemented in haxe")
+	if m == nil {
+		return nil
+	}
+	mi := new(mapIter)
+	mi.t = t
+	mi.m = m
+	mi.r = hx.CodeDynamic("", "cast(_a.itemAddr(0).load().val,GOmap).range();", m)
+	mapiternext(unsafe.Pointer(mi))
+	return unsafe.Pointer(mi)
 }
 func mapiterkey(it unsafe.Pointer) (key unsafe.Pointer) {
-	panic("reflect.mapiterkey() not yet implemented in haxe")
-	return nil
+	//panic("reflect.mapiterkey() not yet implemented in haxe")
+	if it == nil {
+		return nil
+	}
+	mi := (*mapIter)(it)
+	sz := (*mapType)(unsafe.Pointer(mi.t)).size
+	ky := hx.Malloc(sz)
+	if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Object);", mi.key) {
+		hx.Code("",
+			"_a.itemAddr(0).load().val.store_object(_a.itemAddr(2).load().val,"+
+				"_a.itemAddr(1).load().val);",
+			ky, mi.key, sz)
+	} else {
+		*(*uintptr)(ky) = mi.key
+	}
+	return unsafe.Pointer(&ky)
 }
 func mapiternext(it unsafe.Pointer) {
-	panic("reflect.mspiternext() not yet implemented in haxe")
+	//panic("reflect.mspiternext() not yet implemented in haxe")
+	if it == nil {
+		return
+	}
+	mi := (*mapIter)(it)
+	if hx.IsNull(mi.r) {
+		panic("reflect.mapiternext() null map range")
+	}
+	tuple := hx.CodeDynamic("", "cast(_a.itemAddr(0).load().val,GOmapRange).next();", mi.r)
+	mi.ok = hx.CodeBool("", "_a.itemAddr(0).load().val.r0;", tuple)
+	mi.key = hx.CodeDynamic("", "_a.itemAddr(0).load().val.r1;", tuple)
+	mi.elem = hx.CodeDynamic("", "_a.itemAddr(0).load().val.r2;", tuple)
+
 }
 func maplen(m unsafe.Pointer) int {
-	panic("reflect.maplen() not yet implemented in haxe")
-	return 0
+	//panic("reflect.maplen() not yet implemented in haxe")
+	if m == nil {
+		return 0
+	}
+	return hx.CodeInt("", "cast(_a.itemAddr(0).load().val,GOmap).len();", m)
 }
 func call(fn, arg unsafe.Pointer, n uint32, retoffset uint32) {
 	panic("reflect.call() not yet implemented in haxe")

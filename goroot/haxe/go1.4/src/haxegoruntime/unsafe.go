@@ -68,12 +68,6 @@ var negInf = -1 / zero //hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
 var nan = 0 / zero     //hx.GetFloat("", "Math.NaN")                  //0 / zero
 var minusZero = zero * -1
 
-var zero32 float32
-var posInf32 = 1 / zero32  //hx.GetFloat("", "Math.POSITIVE_INFINITY") // 1 / zero
-var negInf32 = -1 / zero32 //hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
-var nan32 = 0 / zero32     //hx.GetFloat("", "Math.NaN")                  //0 / zero
-var minusZero32 = zero32 * -1
-
 func init() { // to avoid DCE
 	if false {
 		_ = Float32bits(0)
@@ -136,7 +130,7 @@ func Float32bits(f float32) uint32 {
 		e++
 		if e == uint32((1<<8)-1) {
 			if float64(f) >= 1<<23 {
-				f = posInf32
+				f = float32(posInf)
 			}
 			break
 		}
@@ -184,17 +178,17 @@ func Float32frombits(b uint32) float32 {
 	// first handle the special cases
 	switch b {
 	case uvnan32:
-		return nan32
+		return float32(nan)
 	case uvnan32 | 1<<31:
-		return nan32 * -1 // -NaN
+		return float32(nan * -1) // -NaN
 	case uvinf32:
-		return posInf32
+		return float32(posInf)
 	case uvneginf32:
-		return negInf32
+		return float32(negInf)
 	case 0:
 		return 0
 	case 1 << 31:
-		return minusZero32 // -0
+		return float32(minusZero) // -0
 	}
 
 	s := float32(+1)
@@ -208,7 +202,7 @@ func Float32frombits(b uint32) float32 {
 		if m == 0 {
 			return s / 0 // Inf
 		}
-		return nan32
+		return float32(nan)
 	}
 	if e != 0 {
 		m += 1 << 23

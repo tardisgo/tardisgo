@@ -733,6 +733,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setUint8(i,v?1:0);
 		#elseif !fullunsafe
 			iVec[i]=v?1:0;
+			#if (js || php || neko ) 
+				if(iVec[i]==0) iVec[i]=null; 
+			#end
 		#else
 			byts.set(i,v?1:0); 
 		#end
@@ -742,6 +745,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setInt8(i,v);
 		#elseif !fullunsafe
 			iVec[i]=v;
+			#if (js || php || neko ) 
+				if(iVec[i]==0) iVec[i]=null; 
+			#end
 		#else
 			byts.set(i,v&0xff); 
 		#end
@@ -751,6 +757,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setInt16(i,v,true); // little-endian
 		#elseif !fullunsafe
 			iVec[i]=v;
+			#if (js || php || neko ) 
+				if(iVec[i]==0) iVec[i]=null; 
+			#end
 		#else
 			set_int8(i,v);
 			set_int8(i+1,v>>8);
@@ -761,6 +770,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setInt32(i,v,true); // little-endian
 		#elseif !fullunsafe
 			iVec[i]=v;
+			#if (js || php || neko ) 
+				if(iVec[i]==0) iVec[i]=null; 
+			#end
 		#else
 			set_int16(i,v);
 			set_int16(i+2,v>>16); 
@@ -768,7 +780,12 @@ class Object { // this implementation will improve with typed array access
 	}
 	public inline function set_int64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
-			set(i,v);
+			#if (js || php || neko ) 
+				if(GOint64.isZero(v)) 	set(i,null);
+				else					set(i,v);  
+			#else
+				set(i,v);
+			#end
 		#else
 			set_uint32(i,GOint64.getLow(v));
 			set_uint32(i+4,GOint64.getHigh(v));
@@ -779,6 +796,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setUint8(i,v);
 		#elseif !fullunsafe
 			iVec[i]=v&0xff;
+			#if (js || php || neko ) 
+				if(iVec[i]==0) iVec[i]=null; 
+			#end
 		#else
 			byts.set(i,v&0xff);
 		#end
@@ -788,6 +808,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setUint16(i,v,true); // little-endian
 		#elseif !fullunsafe
 			iVec[i]=v&0xffff;
+			#if (js || php || neko ) 
+				if(iVec[i]==0) iVec[i]=null; 
+			#end
 		#else
 			set_uint8(i,v); 
 			set_uint8(i+1,v>>8); 
@@ -798,6 +821,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setUint32(i,v,true); // little-endian
 		#elseif !fullunsafe
 			iVec[i]=Force.toUint32(v);
+			#if (js || php || neko ) 
+				if(iVec[i]==0) iVec[i]=null; 
+			#end
 		#else
 			set_uint16(i,v);
 			set_uint16(i+2,v>>16); 
@@ -805,7 +831,12 @@ class Object { // this implementation will improve with typed array access
 	}
 	public inline function set_uint64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
-			set(i,v);
+			#if (js || php || neko ) 
+				if(GOint64.isZero(v)) 	set(i,null);
+				else					set(i,v);  
+			#else
+				set(i,v);
+			#end
 		#else
 			set_uint32(i,GOint64.getLow(v));
 			set_uint32(i+4,GOint64.getHigh(v));
@@ -821,6 +852,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setFloat32(i,v,true); // little-endian
 		#elseif !fullunsafe
 			//set(i,Force.toFloat32safe(v));
+			#if (js || php || neko ) 
+				if(get(i)==0.0) set(i,null); 
+			#end
 		#else 
 			#if (cpp||neko)
 				byts.setFloat(i,v);
@@ -835,6 +869,9 @@ class Object { // this implementation will improve with typed array access
 			dView.setFloat64(i,v,true); // little-endian
 		#elseif !fullunsafe
 			// set(i,v);
+			#if (js || php || neko ) 
+				if(get(i)==0.0) set(i,null); 
+			#end
 		#else
 			#if (cpp||neko)
 				byts.setDouble(i,v);
@@ -845,13 +882,16 @@ class Object { // this implementation will improve with typed array access
 	}
 	
 	public inline function set_complex64(i:Int,v:Complex):Void { 
-		set(i,v); // TODO review
+		if(v.real==0 && v.imag==0) set(i,null);
+		else set(i,v); // TODO review
 	} 
 	public inline function set_complex128(i:Int,v:Complex):Void { 
-		set(i,v); // TODO review
+		if(v.real==0 && v.imag==0) set(i,null);
+		else set(i,v); // TODO review
 	} 
 	public inline function set_string(i:Int,v:String):Void { 
-		set(i,v); 
+		if(v=="") set(i,null);
+		else set(i,v); 
 	}
 	private inline static function str(v:Dynamic):String{
 		return v==null?"nil":Std.is(v,Pointer)?v.toUniqueVal():Std.string(v);
@@ -2502,6 +2542,26 @@ class GOmap {
 
 	public function range():GOmapRange {
 		return new GOmapRange(baseMap.keys(),this);
+	}
+
+	public function mapaccess(realKey:Dynamic):Dynamic {
+		var sKey:String;
+		if(Reflect.isObject(realKey)){
+			if(Std.is(realKey,Pointer)){
+				sKey = realKey.toUniqueVal();
+			}else{
+				sKey = realKey.toString();
+			}
+		}else{
+			if(Std.is(realKey,String))
+				sKey = realKey;
+			else
+				sKey = Std.string(realKey);
+		}
+		if(exists(sKey))
+			return get(sKey);
+		else
+			return null;
 	}
 }
 
