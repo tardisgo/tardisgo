@@ -1,5 +1,5 @@
 # run the working unit tests using the fastest/most accurate method C++ or neko/interp
-for onelevel in bufio bytes sort strconv
+for onelevel in bufio bytes runtime sort strconv
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $onelevel 

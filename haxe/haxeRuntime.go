@@ -388,6 +388,35 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		else 
 			return {r0:c&0xff,r1:true};
 	}
+	public static function isEqualDynamic(a:Dynamic,b:Dynamic):Bool{
+		if(a==b) 
+			return true; // simple equality
+		if(Reflect.isObject(a) && Reflect.isObject(b)){
+			if(Std.is(a,String) && Std.is(b,String))
+				return a==b;
+			if(Std.is(a,Pointer) && Std.is(b,Pointer))
+				return Pointer.isEqual(a,b); // could still be equal within a Pointer type     
+			if(Std.is(a,Complex) && Std.is(b,Complex))
+				return Complex.eq(a,b);
+			if(Std.is(a,Interface) && Std.is(b,Interface))
+				return Interface.isEqual(a,b); // interfaces   
+			if(Std.is(a,Object) && Std.is(b,Object))
+				return a.isEqual(0,b,0);
+
+			if(Std.is(a,GOmap)||Std.is(a,Closure)||Std.is(a,Slice)||Std.is(a,Channel)) {
+				Scheduler.panicFromHaxe("Unsupported isEqualDynamic haxe type:"+a);
+				return false; // never equal
+			}
+	  
+			// assume GOint64 - Std.is() does not work for abstract types
+			return GOint64.compare(a,b)==0;
+		}
+		if(Std.is(a,Float)&&Std.is(b,Float)){
+			if(Math.isNaN(a)&&Math.isNaN(b))
+				return true;
+		}
+		return false;	
+	}
 }
 
 // Object code
@@ -472,6 +501,8 @@ class Object { // this implementation will improve with typed array access
 			if((i+off)&3==0){
 				var a:Dynamic=this.get(i+off);
 				var b:Dynamic=target.get(i+tgtOff);
+				if(!Force.isEqualDynamic(a,b)) return false;
+				/* code like that below all now in isEqualDynamic
 				if(a!=b){
 					if(Reflect.isObject(a)&&Reflect.isObject(b)) { // also deals with one being null
 						if(Std.is(a,Pointer)&&Std.is(b,Pointer)) {
@@ -492,6 +523,7 @@ class Object { // this implementation will improve with typed array access
 					} else
 						return false;
 				}
+				*/
 			}
  			#if fullunsafe
 				if(this.get_uint8(i+off)!=target.get_uint8(i+tgtOff))
@@ -1270,20 +1302,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 			return false;
 		if(! (TypeInfo.isIdentical(a.typ,b.typ)||TypeInfo.isAssignableTo(a.typ,b.typ)||	TypeInfo.isAssignableTo(b.typ,a.typ)) ) 
 			return false;	
-		if(a.val==b.val) 
-			return true; // simple equality
-		if(Reflect.isObject(a.val) && Reflect.isObject(b.val)){
-			if(Std.is(a.val,Pointer) && Std.is(b.val,Pointer))
-				return Pointer.isEqual(a.val,b.val); // could still be equal within a Pointer type     
-			if(Std.is(a.val,Complex) && Std.is(b.val,Complex))
-				return Complex.eq(a.val,b.val);
-			// TODO other types here? 
-			if(Std.is(a.val,Interface) && Std.is(b.val,Interface))
-				return isEqual(a.val,b.val); // recurse for interfaces     
-			// assume GOint64 - Std.is() does not work for abstract types
-			return GOint64.compare(a.val,b.val)==0;
-		}
-		return false;	
+		return Force.isEqualDynamic(a.val,b.val);
 	}			
 	/* from the SSA documentation:
 	If AssertedType is a concrete type, TypeAssert checks whether the dynamic type in Interface X is equal to it, and if so, 
@@ -1334,8 +1353,10 @@ var max_entries:Int;
 var num_entries:Int;
 var oldest_entry:Int;	
 var closed:Bool;
+var capa:Int;
 
 public function new(how_many_entries:Int) {
+	capa = how_many_entries;
 	if(how_many_entries<=0)
 		how_many_entries=1;
 	entries = new Array<T>();
@@ -1389,7 +1410,7 @@ public inline function len():Int {
 	return num_entries; 
 }
 public inline function cap():Int { 
-	return max_entries; 
+	return capa; // give back the cap we were told
 }
 public inline function close() {
 	if(this==null) Scheduler.panicFromHaxe( "attempt to close a nil channel" ); 
@@ -2512,24 +2533,66 @@ class GOmap {
 	public var vz:Dynamic;
 
 	public function new (kDef:Dynamic,vDef:Dynamic) {
+		//trace("DEBUG new",kDef,vDef);
 		baseMap = new Map<String,{key:Dynamic,val:Dynamic}>();
 		kz = kDef;
 		vz = vDef;
 	}
 
-	public function set(sKey:String,realKey:Dynamic,value:Dynamic){
+	public static function makeKey(a:Dynamic):String{
+		//trace("DEBUG makeKey",a);
+		if(a==null) return "<<<<NULL>>>>"; // TODO how can this be more unique?
+		if(Reflect.isObject(a)){
+			if(Std.is(a,String))
+				return a;
+			if(Std.is(a,Pointer))
+				return cast(a,Pointer).toUniqueVal();    
+			if(Std.is(a,Object)){
+				//trace("DEBUG makeKey Object found");
+				var r=cast(a,Object).toString(); 
+				//trace("DEBUG makeKey Object="+r);
+				return r;
+			}
+			if(Std.is(a,Complex)){
+				return Complex.toString(a);
+			}
+			if(Std.is(a,Interface))
+				return cast(a,Interface).toString(); 
+			if(Std.is(a,GOmap)||Std.is(a,Closure)||Std.is(a,Slice)||Std.is(a,Channel)) {
+				Scheduler.panicFromHaxe("haxeruntime.GOmap.makeKey() unsupported haxe type: "+a);
+				return "";
+			}
+			return cast(a,GOint64).toString(); // must be an Int64
+		}
+		return Std.string(a);
+	}
+
+	public function set(realKey:Dynamic,value:Dynamic){
+		var sKey = makeKey(realKey);
+		//trace("DEBUG set",sKey,realKey);
+		if(baseMap.exists(sKey)){
+			if(!Force.isEqualDynamic(baseMap.get(sKey).key,realKey))
+				Scheduler.panicFromHaxe("haxeruntime.GOmap non-unique key for: "+sKey);
+		}
 		baseMap.set(sKey,{key:realKey,val:value});
 	}
 
-	public function get(sKey:String):Dynamic {
-		return baseMap.get(sKey).val;
+	public function get(rKey:Dynamic):Dynamic {
+		var sKey = makeKey(rKey);
+		//trace("DEBUG get",sKey,rKey);		
+		if(baseMap.exists(sKey))	return baseMap.get(sKey).val;
+		else 						return vz; // the zero value
 	}
 
-	public function exists(sKey:String):Bool {
+	public function exists(rKey:Dynamic):Bool {
+		var sKey = makeKey(rKey);
+		//trace("DEBUG exists",sKey,rKey);		
 		return baseMap.exists(sKey);
 	}
 
-	public function remove(s:String){
+	public function remove(r:Dynamic){
+		var s = makeKey(r);
+		//trace("DEBUG remove",s,r);		
 		baseMap.remove(s);
 	}
 
@@ -2537,6 +2600,7 @@ class GOmap {
 		var _l:Int=0;
 		var _it=baseMap.iterator();
 		while(_it.hasNext()) {_l++; _it.next();};
+		//trace("DEBUG len",_l);		
 		return _l;
 	}
 
@@ -2544,6 +2608,7 @@ class GOmap {
 		return new GOmapRange(baseMap.keys(),this);
 	}
 
+/*
 	public function mapaccess(realKey:Dynamic):Dynamic {
 		var sKey:String;
 		if(Reflect.isObject(realKey)){
@@ -2563,6 +2628,7 @@ class GOmap {
 		else
 			return null;
 	}
+*/
 }
 
 class GOmapRange {
@@ -2578,7 +2644,10 @@ class GOmapRange {
 		var _hn:Bool=k.hasNext();
 		if(_hn){
 			var _nxt=k.next();
-			return {r0:true,r1:m.baseMap.get(_nxt).key,r2:m.baseMap.get(_nxt).val};
+			if(m.baseMap.exists(_nxt))
+				return {r0:true,r1:m.baseMap.get(_nxt).key,r2:m.baseMap.get(_nxt).val};
+			else
+				return next(); // recurse if this key is not found (deleted in-between?)
 		}else{
 			return {r0:false,r1:m.kz,r2:m.vz};
 		}

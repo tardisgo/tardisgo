@@ -5,6 +5,7 @@
 package haxe
 
 import (
+	"errors"
 	"fmt"
 	"go/token"
 	"reflect"
@@ -772,10 +773,10 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 			switch sel.States[s].Dir {
 			case types.SendOnly:
 				ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-				ret += fmt.Sprintf("_states[%d]=%s.hasSpace();\n", s, ch)
+				ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasSpace();\n", s, ch, ch)
 			case types.RecvOnly:
 				ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-				ret += fmt.Sprintf("_states[%d]=%s.hasContents();\n", s, ch)
+				ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasContents();\n", s, ch, ch)
 			default:
 				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
 				return ""
@@ -1503,30 +1504,44 @@ func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
 	return reg + "=" + l.LangType(v.(*ssa.MakeMap).Type().Underlying(), true, errorInfo) + `;`
 }
 
-func serializeKey(val, haxeTyp string) string {
+func serializeKey(val, haxeTyp string) string { // can the key be serialized?
 	switch haxeTyp {
-	case "String":
+	case "String", "Int", "Float", "Bool",
+		"Pointer", "Object", "GOint64", "Complex", "Interface":
 		return val
-	case "Pointer":
-		return val + "==null?\"\":" + val + ".toUniqueVal()"
-	case "Object", "GOint64", "Complex", "Interface":
-		return val + "==null?\"\":" + val + ".toString()"
-		//TODO more here?
 	default:
-		return "Std.string(" + val + ")"
+		pogo.LogError("serializeKey", "haxe", errors.New("unsupported map key type: "+haxeTyp))
+		return ""
 	}
+
+	/*
+		switch haxeTyp {
+		case "String":
+			return val
+		case "Pointer":
+			return val + "==null?\"\":" + val + ".toUniqueVal()"
+		case "Object", "GOint64", "Complex", "Interface":
+			return val + "==null?\"\":" + val + ".toString()"
+			//TODO more here?
+		default:
+			return "Std.string(" + val + ")"
+		}
+	*/
 }
 
 func (l langType) MapUpdate(Map, Key, Value interface{}, errorInfo string) string {
 	skey := serializeKey(l.IndirectValue(Key, errorInfo),
 		l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 	ret := l.IndirectValue(Map, errorInfo) + ".set("
-	ret += skey + "," + l.IndirectValue(Key, errorInfo) + ","
+	ret += skey + "," //+ l.IndirectValue(Key, errorInfo) + ","
 	ret += l.IndirectValue(Value, errorInfo) + ");"
 	return ret
 }
 
 func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorInfo string) string {
+	if reg == "" {
+		return ""
+	}
 	keyString := l.IndirectValue(Key, errorInfo)
 	// check if we are looking up in a string
 	if l.LangType(Map.(ssa.Value).Type().Underlying(), false, errorInfo) == "String" {
@@ -1544,21 +1559,21 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	// assume it is a Map
 	keyString = serializeKey(keyString, l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 
-	li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
-	if strings.HasPrefix(li, "new ") {
-		li = "null" // no need for a full object declaration in this context
-	}
+	//li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
+	//if strings.HasPrefix(li, "new ") {
+	//	li = "null" // no need for a full object declaration in this context
+	//}
 	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")" //.val
-	ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
-	switch ltEle {
-	case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
-		returnValue = "cast(" + returnValue + "," + ltEle + ")"
-	}
+	//ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
+	//switch ltEle {
+	//case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
+	//	returnValue = "cast(" + returnValue + "," + ltEle + ")"
+	//}
 	eleExists := l.IndirectValue(Map, errorInfo) + ".exists(" + keyString + ")"
 	if commaOk {
-		return reg + "=" + eleExists + "?{r0:" + returnValue + ",r1:true}:{r0:" + li + ",r1:false};"
+		return reg + "={r0:" + returnValue + ",r1:" + eleExists + "};"
 	}
-	return reg + "=" + eleExists + "?" + returnValue + ":" + li + ";"
+	return reg + "=" + returnValue + ";" // the .get will check for existance and return the zero value if not
 }
 
 func (l langType) Extract(reg string, tuple interface{}, index int, errorInfo string) string {

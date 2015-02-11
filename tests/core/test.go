@@ -1775,6 +1775,13 @@ func testObjMap() {
 		ObjKey{1, 2}: 3,
 	}
 	TEQint32("", 3, m[ObjKey{1, 2}])
+
+	cm := map[complex128]int32{
+		1 + 2i: 3,
+	}
+
+	TEQint32("", 3, cm[1+2i])
+
 }
 
 func main() {

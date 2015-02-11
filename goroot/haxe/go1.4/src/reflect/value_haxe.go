@@ -2569,22 +2569,57 @@ func makemap(t *rtype) (m unsafe.Pointer) {
 	panic("reflectmakemap() not yet implemented in haxe")
 	return nil
 }
+
 func mapaccess(t *rtype, m unsafe.Pointer, key unsafe.Pointer) (val unsafe.Pointer) {
 	if m == nil || key == nil {
 		return nil
 	}
 	panic("reflect.mapaccess() not yet implemented in haxe")
+	return nil
 	/*
 		kyT := (*mapType)(unsafe.Pointer(t)).Key()
 		kyS := ""
-		switch {
-	case  kyT.Kind()==String:
-		kyS := *(*string)(key)
-		case kyT.Bits()
+		switch kyT.Kind() {
+		case String:
+			kyS = *(*string)(key)
+		case UnsafePointer, Ptr:
+			kyS = hx.MethString("", *(*uintptr)(key), "Pointer", "toUniqueVal", 0)
+		//case Complex64, Complex128:
+		//	kyS = hx.MethString("", *(*uintptr)(key), "Complex", "toString", 0)
+		case Array:
+			kyS = hx.MethString("", *(*uintptr)(key), "Object", "toString", 0)
+		case Interface:
+			kyS = hx.MethString("", *(*uintptr)(key), "Interface", "toString", 0)
+		case Slice:
+			kyS = hx.MethString("", *(*uintptr)(key), "Slice", "toString", 0)
+		case Struct:
+			kyS = hx.MethString("", *(*uintptr)(key), "Object", "toString", 0)
+		case Int64, Uint64:
+			kyS = hx.CodeString("", "cast(_a.itemAddr(0).load().val,GOint64).toString();", *(*int64)(key))
+		case Bool:
+			kyS = hx.CallString("", "Std.string", 1, *(*bool)(key))
+		case Int8:
+			kyS = hx.CallString("", "Std.string", 1, *(*int8)(key))
+		case Int16:
+			kyS = hx.CallString("", "Std.string", 1, *(*int16)(key))
+		case Int32, Int:
+			kyS = hx.CallString("", "Std.string", 1, *(*int32)(key))
+		case Uint8:
+			kyS = hx.CallString("", "Std.string", 1, *(*uint8)(key))
+		case Uint16:
+			kyS = hx.CallString("", "Std.string", 1, *(*uint16)(key))
+		case Uint32, Uint, Uintptr:
+			kyS = hx.CallString("", "Std.string", 1, *(*uint32)(key))
+		case Float32:
+			kyS = hx.CallString("", "Std.string", 1, *(*float32)(key))
+		case Float64:
+			kyS = hx.CallString("", "Std.string", 1, *(*float64)(key))
+		default:
+			panic("reflect.mapaccess() unhandled key Kind")
 		}
 		el := hx.CodeDynamic("",
-			"cast(_a.itemAddr(0).load().val,GOmap).mapaccess(_a.itemAddr(1).load().val.load());",
-			m, key)
+			"cast(_a.itemAddr(0).load().val,GOmap).mapaccess(_a.itemAddr(1).load().val);",
+			m, kyS)
 		sz := (*mapType)(unsafe.Pointer(t)).elem.size
 		ret := hx.Malloc(sz)
 		if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Object);", el) {
@@ -2593,11 +2628,53 @@ func mapaccess(t *rtype, m unsafe.Pointer, key unsafe.Pointer) (val unsafe.Point
 					"_a.itemAddr(1).load().val);",
 				ret, el, sz)
 		} else {
+			println("DEBUG ", kyS, el)
 			*(*uintptr)(ret) = el
+			/*
+				switch *mapType)(unsafe.Pointer(t)).elem.Kind()  {
+				case String:
+					 *(*string)(ret) = hx.CodeString("","_a.itemAddr(0).load().val", el )
+				case UnsafePointer, Ptr:
+					kyS = hx.MethString("", *(*uintptr)(key), "Pointer", "toUniqueVal", 0)
+				case Complex64, Complex128:
+					kyS = hx.MethString("", *(*uintptr)(key), "Complex", "toString", 0)
+				case Array:
+					kyS = hx.MethString("", *(*uintptr)(key), "Array", "toString", 0)
+				case Interface:
+					kyS = hx.MethString("", *(*uintptr)(key), "Interface", "toString", 0)
+				case Slice:
+					kyS = hx.MethString("", *(*uintptr)(key), "Slice", "toString", 0)
+				case Struct:
+					kyS = hx.MethString("", *(*uintptr)(key), "Struct", "toString", 0)
+				case Int64, Uint64:
+					kyS = hx.MethString("", *(*int64)(key), "GOint64", "toString", 0)
+				case Bool:
+					kyS = hx.CallString("", "Std.string", 1, *(*bool)(key))
+				case Int8:
+					kyS = hx.CallString("", "Std.string", 1, *(*int8)(key))
+				case Int16:
+					kyS = hx.CallString("", "Std.string", 1, *(*int16)(key))
+				case Int32, Int:
+					kyS = hx.CallString("", "Std.string", 1, *(*int32)(key))
+				case Uint8:
+					kyS = hx.CallString("", "Std.string", 1, *(*uint8)(key))
+				case Uint16:
+					kyS = hx.CallString("", "Std.string", 1, *(*uint16)(key))
+				case Uint32, Uint, Uintptr:
+					kyS = hx.CallString("", "Std.string", 1, *(*uint32)(key))
+				case Float32:
+					kyS = hx.CallString("", "Std.string", 1, *(*float32)(key))
+				case Float64:
+					kyS = hx.CallString("", "Std.string", 1, *(*float64)(key))
+				default:
+					panic("reflect.mapaccess() unhandled elem Kind")
+				}
+
 		}
+
 		return unsafe.Pointer(&ret)
 	*/
-	return nil
+
 }
 func mapassign(t *rtype, m unsafe.Pointer, key, val unsafe.Pointer) {
 	panic("reflect.mapassign() not yet implemented in haxe")
