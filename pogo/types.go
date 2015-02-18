@@ -79,16 +79,20 @@ func TypesWithMethodSets() (sets []types.Type) {
 var catchReferencedTypesSeen = make(map[string]bool)
 
 func catchReferencedTypes(et types.Type) {
-	id:=LogTypeUse(et)
-	_,seen := catchReferencedTypesSeen[id]
+	id := LogTypeUse(et)
+	_, seen := catchReferencedTypesSeen[id]
 	if seen {
 		return
 	}
-	catchReferencedTypesSeen[id]=true
+	catchReferencedTypesSeen[id] = true
 	//LogTypeUse(types.NewPointer(et))
 	switch et.(type) {
 	case *types.Named:
 		catchReferencedTypes(et.Underlying())
+		for m := 0; m < et.(*types.Named).NumMethods(); m++ {
+			catchReferencedTypes(et.(*types.Named).Method(m).Type())
+		}
+		catchReferencedTypes(types.NewPointer(et))
 	case *types.Array:
 		catchReferencedTypes(et.(*types.Array).Elem())
 		//catchReferencedTypes(types.NewSlice(et.(*types.Array).Elem()))
@@ -96,18 +100,33 @@ func catchReferencedTypes(et types.Type) {
 		catchReferencedTypes(et.(*types.Pointer).Elem())
 	case *types.Slice:
 		catchReferencedTypes(et.(*types.Slice).Elem())
- 	case *types.Struct:
-		for f := 0; f< et.(*types.Struct).NumFields();f++ {
+	case *types.Struct:
+		for f := 0; f < et.(*types.Struct).NumFields(); f++ {
 			if et.(*types.Struct).Field(f).IsField() {
-				catchReferencedTypes(et.(*types.Struct).Field(f).Type() )
-			} 
+				catchReferencedTypes(et.(*types.Struct).Field(f).Type())
+			}
 		}
+	case *types.Signature:
+		for i := 0; i < et.(*types.Signature).Params().Len(); i++ {
+			catchReferencedTypes(et.(*types.Signature).Params().At(i).Type())
+		}
+		for o := 0; o < et.(*types.Signature).Results().Len(); o++ {
+			catchReferencedTypes(et.(*types.Signature).Results().At(o).Type())
+		}
+	case *types.Chan:
+		catchReferencedTypes(et.(*types.Chan).Elem())
+	}
+}
+
+func visitAllTypes() {
+	// ...so just get the full info on the types we've seen
+	for _, t := range TypesEncountered.Keys() {
+		catchReferencedTypes(t)
 	}
 }
 
 // Wrapper for target language emitTypeInfo()
 func emitTypeInfo() {
-
 	// belt-and-braces could be used here to make sure we capture every type, needed for reflect
 	// but this makes the generated code too large for Java & C++
 	/*
@@ -117,12 +136,7 @@ func emitTypeInfo() {
 			}
 		}
 	*/
-
-	// ...so just get the full info on the types we've seen
-	for _, t := range TypesEncountered.Keys() {
-		catchReferencedTypes(t)
-	}
-
+	visitAllTypes()
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].EmitTypeInfo())
 }

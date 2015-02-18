@@ -1,5 +1,5 @@
-# run the working unit tests using the fastest/most accurate method C++ or neko/interp
-for onelevel in bufio bytes runtime sort strconv
+# run the working unit tests using the fastest/most accurate method: C++ or neko/interp
+for onelevel in bufio bytes fmt runtime sort strconv
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $onelevel 
@@ -12,7 +12,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in math/cmplx math/rand sync/atomic
+for twolevels in math/cmplx sync/atomic
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $twolevels 

@@ -27,7 +27,7 @@ type Language interface {
 	GoClassStart() string
 	GoClassEnd(*ssa.Package) string
 	SubFnStart(int, bool) string
-	SubFnEnd(id int,pos int, mustSplit bool) string
+	SubFnEnd(id int, pos int, mustSplit bool) string
 	SubFnCall(int) string
 	FuncName(*ssa.Function) string
 	FieldAddr(register string, v interface{}, errorInfo string) string
@@ -47,8 +47,8 @@ type Language interface {
 	Phi(register string, phiEntries []int, valEntries []interface{}, defaultValue, errorInfo string) string
 	LangType(types.Type, bool, string) string
 	Value(v interface{}, errorInfo string) string
-	BinOp(register string,regTyp types.Type, op string, v1, v2 interface{}, errorInfo string) string
-	UnOp(register string,regTyp types.Type, op string, v interface{}, commaOK bool, errorInfo string) string
+	BinOp(register string, regTyp types.Type, op string, v1, v2 interface{}, errorInfo string) string
+	UnOp(register string, regTyp types.Type, op string, v interface{}, commaOK bool, errorInfo string) string
 	Store(v1, v2 interface{}, errorInfo string) string
 	Send(v1, v2 interface{}, errorInfo string) string
 	Ret(values []*ssa.Value, errorInfo string) string

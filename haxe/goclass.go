@@ -333,7 +333,7 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 				if l == 0 {
 					return "Pointer", "null"
 				}
-				pogo.LogError(position, "Haxe", fmt.Errorf("unsafe pointers cannot be initialized in TARDISgo/Haxe to a non-zero value: %v",l))
+				pogo.LogError(position, "Haxe", fmt.Errorf("unsafe pointers cannot be initialized in TARDISgo/Haxe to a non-zero value: %v", l))
 			default:
 				panic("haxe.Const() unhandled integer constant for: " +
 					lit.Type().Underlying().(*types.Basic).String())

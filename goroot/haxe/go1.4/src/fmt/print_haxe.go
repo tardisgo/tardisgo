@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package fmt
 
 import (
@@ -11,6 +13,8 @@ import (
 	"reflect"
 	"sync"
 	"unicode/utf8"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
 // Some constants in the form of bytes, to avoid string overhead.
@@ -684,6 +688,9 @@ func (p *pp) handleMethods(verb rune, depth int) (handled bool) {
 		handled = true
 		defer p.restoreSpecialFlags(p.clearSpecialFlags())
 		defer p.catchPanic(p.arg, verb)
+		if hx.IsNull(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", formatter)) {
+			panic("<nil>")
+		}
 		formatter.Format(p, verb)
 		return
 	}
@@ -693,6 +700,9 @@ func (p *pp) handleMethods(verb rune, depth int) (handled bool) {
 		if stringer, ok := p.arg.(GoStringer); ok {
 			handled = true
 			defer p.catchPanic(p.arg, verb)
+			if hx.IsNull(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", stringer)) {
+				panic("<nil>")
+			}
 			// Print the result of GoString unadorned.
 			p.fmt.fmt_s(stringer.GoString())
 			return
@@ -711,12 +721,18 @@ func (p *pp) handleMethods(verb rune, depth int) (handled bool) {
 			case error:
 				handled = true
 				defer p.catchPanic(p.arg, verb)
+				if hx.IsNull(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", v)) {
+					panic("<nil>")
+				}
 				p.printArg(v.Error(), verb, depth)
 				return
 
 			case Stringer:
 				handled = true
 				defer p.catchPanic(p.arg, verb)
+				if hx.IsNull(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", v)) {
+					panic("<nil>")
+				}
 				p.printArg(v.String(), verb, depth)
 				return
 			}

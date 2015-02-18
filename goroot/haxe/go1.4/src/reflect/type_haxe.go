@@ -22,6 +22,8 @@ import (
 	"strconv"
 	"sync"
 	"unsafe"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
 // Type is the representation of a Go type.
@@ -460,7 +462,23 @@ func (t *uncommonType) Name() string {
 	return *t.name
 }
 
-func (t *rtype) String() string { return *t.string }
+func (t *rtype) String() string {
+	if t == nil { // haxe addition
+		panic("reflect.*rtype.String() internal error: t is nil")
+		return ""
+	}
+	l := hx.CodeInt("", "cast(_a.itemAddr(0).load().val,Pointer).len();", t)
+	if l < 6 {
+		panic("reflect.*rtype.String() internal error: *t only has length " +
+			hx.CallString("", "Std.string", 1, l))
+		return ""
+	}
+	if t.string == nil { // haxe addition
+		panic("reflect.*rtype.String() internal error:  t.string is nil")
+		return ""
+	}
+	return *t.string
+}
 
 func (t *rtype) Size() uintptr { return t.size }
 
@@ -542,7 +560,7 @@ func (t *uncommonType) MethodByName(name string) (m Method, ok bool) {
 func (t *rtype) NumMethod() int {
 	//panic("reflect.NumMethod not yet implemented")
 	if t.Kind() == Interface {
-		panic("reflect.NumMethod unhandled *interface ")
+		//panic("reflect.NumMethod unhandled *interface ")
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.NumMethod()
 	}
@@ -745,7 +763,7 @@ func (t *interfaceType) Method(i int) (m Method) {
 
 // NumMethod returns the number of interface methods in the type's method set.
 func (t *interfaceType) NumMethod() int {
-	panic("reflect.NumMethod not yet implemented")
+	//panic("reflect.NumMethod not yet implemented")
 	return len(t.methods)
 }
 

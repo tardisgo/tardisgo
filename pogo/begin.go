@@ -160,3 +160,14 @@ func emitGoClassEnd(pak *ssa.Package) {
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].GoClassEnd(pak))
 }
+
+func UsingPackage(pkgName string) bool {
+	pkgs := rootProgram.AllPackages()
+	for p := range pkgs {
+		//println("DEBUG pkg", pkgs[p].String())
+		if pkgs[p].String() == pkgName {
+			return true
+		}
+	}
+	return false
+}

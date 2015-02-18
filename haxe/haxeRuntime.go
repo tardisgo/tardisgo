@@ -957,10 +957,15 @@ class Pointer {
 		return obj.length-off;
 	}
 	public function hashInt():Int {
-		return (obj.uniqueRef&0xffff)<<16 | off&0xffff; // hash value for a pointer
+		var r = ((obj.uniqueRef&0xffff)<<16) | (off&0xffff); // hash value for a pointer
+		//trace("DEBUG Pointer.hashInt="+Std.string(r)+" this="+this.toUniqueVal());
+		return r;
 	}
 	public static function check(p:Dynamic):Pointer {
-		if(p==null) Scheduler.panicFromHaxe("nil pointer de-reference");
+		if(p==null) {
+			Scheduler.panicFromHaxe("nil pointer de-reference");
+			return null;
+		}
 		if(Std.is(p,Pointer)) return p;
 		if(Std.is(p,Int)) 
 			Scheduler.panicFromHaxe("TARDISgo/Haxe implementation cannot convert from uintptr to pointer");
@@ -1317,7 +1322,9 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 			Scheduler.panicFromHaxe( "Interface.assert null Interface");
 			return null;
 		}
-		if(!(TypeInfo.isAssignableTo(ifce.typ,assTyp)||TypeInfo.isIdentical(assTyp,ifce.typ))) { // TODO review need for isIdentical 
+		if(!(ifce.typ==assTyp||TypeInfo.assertableTo(ifce.typ,assTyp))){
+			//||TypeInfo.typeImplements(ifce.typ,assTyp)||TypeInfo.isAssignableTo(ifce.typ,assTyp)||
+			//TypeInfo.isIdentical(assTyp,ifce.typ))) { // TODO review need for isIdentical 
 			Scheduler.panicFromHaxe( "type assert failed: expected "+TypeInfo.getName(assTyp)+", got "+TypeInfo.getName(ifce.typ) );
 			return null;
 		}
@@ -1329,7 +1336,9 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 	public static function assertOk(assTyp:Int,ifce:Interface):{r0:Dynamic,r1:Bool} {
 		if(ifce==null) 
 			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
-		if(!(TypeInfo.isAssignableTo(ifce.typ,assTyp)||TypeInfo.isIdentical(assTyp,ifce.typ))) // TODO review need for isIdentical 
+		if(!(ifce.typ==assTyp||TypeInfo.assertableTo(ifce.typ,assTyp)))
+			//TypeInfo.typeImplements(ifce.typ,assTyp)||TypeInfo.isAssignableTo(ifce.typ,assTyp)||
+			//TypeInfo.isIdentical(assTyp,ifce.typ))) // TODO review need for isIdentical 
 			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
 		if(TypeInfo.isConcrete(assTyp))	
 			return {r0:ifce.val,r1:true};
@@ -1342,13 +1351,13 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 		if(!Std.is(ifce,Interface)) 
 			Scheduler.panicFromHaxe( "Interface.invoke on non-Interface value"); 
 		var fn:Dynamic;
-		fn=TypeInfo.method(ifce.typ,meth);
+		fn=MethodTypeInfo.method(ifce.typ,meth);
 		return Reflect.callMethod(null, fn, args);
 	}
 }
 
-class Channel<T> { //TODO check close & rangeing over a channel
-var entries:Array<T>;
+class Channel { //TODO check close & rangeing over a channel
+var entries:Array<Dynamic>;
 var max_entries:Int;
 var num_entries:Int;
 var oldest_entry:Int;	
@@ -1359,7 +1368,7 @@ public function new(how_many_entries:Int) {
 	capa = how_many_entries;
 	if(how_many_entries<=0)
 		how_many_entries=1;
-	entries = new Array<T>();
+	entries = new Array<Dynamic>();
 	max_entries = how_many_entries;
 	oldest_entry = 0;
 	num_entries = 0;
@@ -1370,7 +1379,7 @@ public function hasSpace():Bool {
 	if(closed) return false; // closed channels don't have space
 	return num_entries < max_entries;
 }
-public function send(source:T):Bool {
+public function send(source:Dynamic):Bool {
 	if(closed) Scheduler.panicFromHaxe( "attempt to send to closed channel"); 
 	var next_element:Int;
 	if (this.hasSpace()) {
@@ -1391,8 +1400,8 @@ public function hasContents():Bool { // used by select
 	if (closed) return true; // spec: "Receiving from a closed channel always succeeds..."
 	return num_entries != 0;
 }
-public function receive(zero:T):{r0:T ,r1:Bool} {
-	var ret:T=zero;
+public function receive(zero:Dynamic):{r0:Dynamic ,r1:Bool} {
+	var ret:Dynamic=zero;
 	if (num_entries > 0) {
 		ret=entries[oldest_entry];
 		oldest_entry = (oldest_entry + 1) % max_entries;
@@ -2528,6 +2537,10 @@ public static inline function wrapnilchk(p:Pointer):Pointer {
 }
 
 class GOmap {
+	// TODO a more sophisticated (and hopefully faster) version of this code 
+	// TODO in Haxe, the keys can be Int, String or "object" (by reference)
+	// TODO there is also a very sophisticated go implementation in runtime
+
 	public var baseMap:Map<String,{key:Dynamic,val:Dynamic}>;
 	public var kz:Dynamic;
 	public var vz:Dynamic;
@@ -2608,27 +2621,6 @@ class GOmap {
 		return new GOmapRange(baseMap.keys(),this);
 	}
 
-/*
-	public function mapaccess(realKey:Dynamic):Dynamic {
-		var sKey:String;
-		if(Reflect.isObject(realKey)){
-			if(Std.is(realKey,Pointer)){
-				sKey = realKey.toUniqueVal();
-			}else{
-				sKey = realKey.toString();
-			}
-		}else{
-			if(Std.is(realKey,String))
-				sKey = realKey;
-			else
-				sKey = Std.string(realKey);
-		}
-		if(exists(sKey))
-			return get(sKey);
-		else
-			return null;
-	}
-*/
 }
 
 class GOmapRange {

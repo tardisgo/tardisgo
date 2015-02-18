@@ -1376,9 +1376,9 @@ func (l langType) Alloc(reg string, heap bool, v interface{}, errorInfo string) 
 }
 
 func (l langType) MakeChan(reg string, v interface{}, errorInfo string) string {
-	typeElem := l.LangType(v.(*ssa.MakeChan).Type().Underlying().(*types.Chan).Elem().Underlying(), false, errorInfo)
+	//typeElem := l.LangType(v.(*ssa.MakeChan).Type().Underlying().(*types.Chan).Elem().Underlying(), false, errorInfo)
 	size := l.IndirectValue(v.(*ssa.MakeChan).Size, errorInfo)
-	return reg + "=new Channel<" + typeElem + ">(" + size + `);`
+	return reg + "=new Channel(" + size + `);` // <" + typeElem + ">(" + size + `);`
 }
 
 func newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize string) string {

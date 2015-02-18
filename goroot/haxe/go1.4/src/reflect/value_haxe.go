@@ -62,6 +62,7 @@ type Value struct {
 	// the receiver r, but the flag's Kind bits say Func (methods are
 	// functions), and the top bits of the flag give the method number
 	// in r's type's method table.
+
 }
 
 type flag uintptr
@@ -687,15 +688,18 @@ func (v Value) Elem() Value {
 	k := v.kind()
 	switch k {
 	case Interface:
+		//panic("reflect.value.Elem of interface{} not yet implemented")
 		var eface interface{}
-		if v.typ.NumMethod() == 0 {
-			eface = *(*interface{})(v.ptr)
-		} else {
-			panic("reflect.value.Elem of interface{} not yet implemented")
-			eface = (interface{})(*(*interface {
-				M()
-			})(v.ptr))
-		}
+		//println("DEBUG elem v.ptr=", v.ptr)
+		//if v.typ.NumMethod() == 0 {
+		eface = *(*interface{})(v.ptr)
+		//	//println("DEBUG eface no methods", eface)
+		//} else {
+		//	eface = (interface{})(*(*interface {
+		//		M()
+		//	})(v.ptr))
+		//	//println("DEBUG eface with methods", eface)
+		//}
 		x := unpackEface(eface)
 		if x.flag != 0 {
 			x.flag |= v.flag & flagRO
@@ -746,6 +750,7 @@ func (v Value) Field(i int) Value {
 	// so v.ptr + field.offset is still okay.
 	//ptr:=unsafe.Pointer(uintptr(v.ptr) + field.offset)
 	ptr := unsafe.Pointer(hx.MethDynamic("", uintptr(v.ptr), "Pointer", "addr", 1, field.offset))
+	//println("DEBUG field()", i, typ.Name(), typ.NumMethod(), ptr, fl)
 	return Value{typ, ptr, fl}
 }
 
@@ -915,7 +920,7 @@ func valueInterface(v Value, safe bool) interface{} {
 	}
 
 	if v.kind() == Interface {
-		panic("reflect.valueInterface not yet implemented for *interface")
+		//panic("reflect.valueInterface not yet implemented for *interface")
 		// Special case: return the element inside the interface.
 		// Empty interface has one layout, all interfaces with
 		// methods have a second layout.
@@ -955,21 +960,20 @@ func (v Value) InterfaceData() [2]uintptr {
 func (v Value) IsNil() bool {
 	k := v.kind()
 	switch k {
-	case Chan, Func, Map, Ptr:
+	case /*Chan, Func, Map,*/ Ptr:
 		if v.flag&flagMethod != 0 {
 			return false
 		}
 		ptr := v.ptr
 		if v.flag&flagIndir != 0 {
-			panic("reflect.value.IsNil not yet implemented")
 			ptr = *(*unsafe.Pointer)(ptr)
 		}
 		return ptr == nil
-	case Interface, Slice:
+	case Interface, Slice, Chan, Func, Map:
+		return hx.CodeBool("", "_a.itemAddr(0).load().val.load()==null;", v.ptr)
 		// Both interface and slice are nil if first word is 0.
 		// Both are always bigger than a word; assume flagIndir.
 		//return *(*unsafe.Pointer)(v.ptr) == nil
-		return hx.CodeBool("", "_a.itemAddr(0).load().val.load()==null;", v.ptr)
 	}
 	panic(&ValueError{"reflect.Value.IsNil", v.kind()})
 }
@@ -1003,7 +1007,7 @@ func (v Value) Len() int {
 		return chanlen(v.pointer())
 	case Map:
 		panic("reflect.value.Len not yet implemented")
-		return maplen(v.pointer())
+		return maplen(*(*uintptr)(v.ptr)) //v.pointer())
 	case Slice:
 		// Slice is bigger than a word; assume flagIndir.
 		return hx.CodeInt("", "_a.itemAddr(0).load().val.load().len();", v.ptr) //(*sliceHeader)(v.ptr).Len
@@ -1038,7 +1042,7 @@ func (v Value) MapIndex(key Value) Value {
 	} else {
 		k = unsafe.Pointer(&key.ptr)
 	}
-	e := mapaccess(v.typ, v.pointer(), k)
+	e := mapaccess(v.typ, *(*uintptr)(v.ptr) /*v.pointer()*/, k)
 	if e == nil {
 		return Value{}
 	}
@@ -1068,11 +1072,12 @@ func (v Value) MapKeys() []Value {
 
 	fl := v.flag&flagRO | flag(keyType.Kind())
 
-	m := v.pointer()
+	m := *(*uintptr)(v.ptr) //v.pointer()
 	mlen := int(0)
-	if m != nil {
+	if !hx.IsNull(m) /*!= nil*/ {
 		mlen = maplen(m)
 	}
+	//println("DEBUG maplen map", mlen, m)
 	it := mapiterinit(v.typ, m)
 	a := make([]Value, mlen)
 	var i int
@@ -1239,9 +1244,14 @@ func (v Value) Pointer() uintptr {
 		return uintptr(v.pointer())
 	case Slice:
 		//return (*SliceHeader)(v.ptr).Data
-		return hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", v.ptr)
+		return hx.CodeDynamic("",
+			"_a.itemAddr(0).load().val.load().len()==0?null:_a.itemAddr(0).load().val.load().itemAddr(0);",
+			v.ptr)
+	case Map, Func, Chan:
+		return uintptr(unsafe.Pointer(&v.ptr)) // this is a dummy value
+	default:
+		panic("reflect.value.Pointer not yet implemented for " + v.Kind().String())
 	}
-	panic("reflect.value.Pointer not yet implemented")
 	// TODO: deprecate
 	k := v.kind()
 	switch k {
@@ -1341,7 +1351,7 @@ func (v Value) send(x Value, nb bool) (selected bool) {
 // It panics if CanSet returns false.
 // As in Go, x's value must be assignable to v's type.
 func (v Value) Set(x Value) {
-	panic("reflect.value.Set not yet implemented")
+	//panic("reflect.value.Set not yet implemented")
 	v.mustBeAssignable()
 	x.mustBeExported() // do not let unexported x leak
 	var target unsafe.Pointer
@@ -1359,7 +1369,7 @@ func (v Value) Set(x Value) {
 // SetBool sets v's underlying value.
 // It panics if v's Kind is not Bool or if CanSet() is false.
 func (v Value) SetBool(x bool) {
-	panic("reflect.value.SetBool not yet implemented")
+	//panic("reflect.value.SetBool not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(Bool)
 	*(*bool)(v.ptr) = x
@@ -1368,7 +1378,7 @@ func (v Value) SetBool(x bool) {
 // SetBytes sets v's underlying value.
 // It panics if v's underlying value is not a slice of bytes.
 func (v Value) SetBytes(x []byte) {
-	panic("reflect.value.SetBytes not yet implemented")
+	//panic("reflect.value.SetBytes not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(Slice)
 	if v.typ.Elem().Kind() != Uint8 {
@@ -1391,7 +1401,7 @@ func (v Value) setRunes(x []rune) {
 // SetComplex sets v's underlying value to x.
 // It panics if v's Kind is not Complex64 or Complex128, or if CanSet() is false.
 func (v Value) SetComplex(x complex128) {
-	panic("reflect.value.SetComplex not yet implemented")
+	//panic("reflect.value.SetComplex not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1406,7 +1416,7 @@ func (v Value) SetComplex(x complex128) {
 // SetFloat sets v's underlying value to x.
 // It panics if v's Kind is not Float32 or Float64, or if CanSet() is false.
 func (v Value) SetFloat(x float64) {
-	panic("reflect.value.SetFloat not yet implemented")
+	//panic("reflect.value.SetFloat not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1421,7 +1431,7 @@ func (v Value) SetFloat(x float64) {
 // SetInt sets v's underlying value to x.
 // It panics if v's Kind is not Int, Int8, Int16, Int32, or Int64, or if CanSet() is false.
 func (v Value) SetInt(x int64) {
-	panic("reflect.value.SetInt not yet implemented")
+	//panic("reflect.value.SetInt not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1506,7 +1516,7 @@ func (v Value) SetMapIndex(key, val Value) {
 // SetUint sets v's underlying value to x.
 // It panics if v's Kind is not Uint, Uintptr, Uint8, Uint16, Uint32, or Uint64, or if CanSet() is false.
 func (v Value) SetUint(x uint64) {
-	panic("reflect.value.SetUint not yet implemented")
+	//panic("reflect.value.SetUint not yet implemented")
 	v.mustBeAssignable()
 	switch k := v.kind(); k {
 	default:
@@ -1529,7 +1539,7 @@ func (v Value) SetUint(x uint64) {
 // SetPointer sets the unsafe.Pointer value v to x.
 // It panics if v's Kind is not UnsafePointer.
 func (v Value) SetPointer(x unsafe.Pointer) {
-	panic("reflect.value.SetPointer not yet implemented")
+	//panic("reflect.value.SetPointer not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(UnsafePointer)
 	*(*unsafe.Pointer)(v.ptr) = x
@@ -1538,7 +1548,7 @@ func (v Value) SetPointer(x unsafe.Pointer) {
 // SetString sets v's underlying value to x.
 // It panics if v's Kind is not String or if CanSet() is false.
 func (v Value) SetString(x string) {
-	panic("reflect.value.SetString not yet implemented")
+	//panic("reflect.value.SetString not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(String)
 	*(*string)(v.ptr) = x
@@ -1685,6 +1695,9 @@ func (v Value) String() string {
 	case Invalid:
 		return "<invalid Value>"
 	case String:
+		if v.ptr == nil { // haxe addition
+			return "<" + v.Type().String() + " nil pointer to string>"
+		}
 		return *(*string)(v.ptr)
 	}
 	// If you call String on a reflect.Value of other type, it's better to
@@ -2570,111 +2583,36 @@ func makemap(t *rtype) (m unsafe.Pointer) {
 	return nil
 }
 
-func mapaccess(t *rtype, m unsafe.Pointer, key unsafe.Pointer) (val unsafe.Pointer) {
-	if m == nil || key == nil {
-		return nil
+func mapaccess(t *rtype, m uintptr /*unsafe.Pointer*/, key unsafe.Pointer) (val unsafe.Pointer) {
+	if t == nil {
+		panic("reflect.mapaccess() nil pointer to type info")
 	}
-	panic("reflect.mapaccess() not yet implemented in haxe")
-	return nil
-	/*
-		kyT := (*mapType)(unsafe.Pointer(t)).Key()
-		kyS := ""
-		switch kyT.Kind() {
-		case String:
-			kyS = *(*string)(key)
-		case UnsafePointer, Ptr:
-			kyS = hx.MethString("", *(*uintptr)(key), "Pointer", "toUniqueVal", 0)
-		//case Complex64, Complex128:
-		//	kyS = hx.MethString("", *(*uintptr)(key), "Complex", "toString", 0)
-		case Array:
-			kyS = hx.MethString("", *(*uintptr)(key), "Object", "toString", 0)
-		case Interface:
-			kyS = hx.MethString("", *(*uintptr)(key), "Interface", "toString", 0)
-		case Slice:
-			kyS = hx.MethString("", *(*uintptr)(key), "Slice", "toString", 0)
-		case Struct:
-			kyS = hx.MethString("", *(*uintptr)(key), "Object", "toString", 0)
-		case Int64, Uint64:
-			kyS = hx.CodeString("", "cast(_a.itemAddr(0).load().val,GOint64).toString();", *(*int64)(key))
-		case Bool:
-			kyS = hx.CallString("", "Std.string", 1, *(*bool)(key))
-		case Int8:
-			kyS = hx.CallString("", "Std.string", 1, *(*int8)(key))
-		case Int16:
-			kyS = hx.CallString("", "Std.string", 1, *(*int16)(key))
-		case Int32, Int:
-			kyS = hx.CallString("", "Std.string", 1, *(*int32)(key))
-		case Uint8:
-			kyS = hx.CallString("", "Std.string", 1, *(*uint8)(key))
-		case Uint16:
-			kyS = hx.CallString("", "Std.string", 1, *(*uint16)(key))
-		case Uint32, Uint, Uintptr:
-			kyS = hx.CallString("", "Std.string", 1, *(*uint32)(key))
-		case Float32:
-			kyS = hx.CallString("", "Std.string", 1, *(*float32)(key))
-		case Float64:
-			kyS = hx.CallString("", "Std.string", 1, *(*float64)(key))
-		default:
-			panic("reflect.mapaccess() unhandled key Kind")
-		}
-		el := hx.CodeDynamic("",
-			"cast(_a.itemAddr(0).load().val,GOmap).mapaccess(_a.itemAddr(1).load().val);",
-			m, kyS)
-		sz := (*mapType)(unsafe.Pointer(t)).elem.size
-		ret := hx.Malloc(sz)
-		if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Object);", el) {
-			hx.Code("",
-				"_a.itemAddr(0).load().val.store_object(_a.itemAddr(2).load().val,"+
-					"_a.itemAddr(1).load().val);",
-				ret, el, sz)
+	//panic("reflect.mapaccess() not yet implemented in haxe")
+	//return nil
+	kt := (*mapType)(unsafe.Pointer(t)).key
+	et := (*mapType)(unsafe.Pointer(t)).elem
+	ei := new(emptyInterface)
+	var el uintptr
+	if !hx.IsNull(m) /*m != nil*/ {
+		if key != nil {
+			ei.typ = kt
+			ei.word = key
+			hk := haxeInterfacePack(ei)
+			el = hx.CodeDynamic("",
+				"cast(_a.itemAddr(0).load().val,GOmap).get(_a.itemAddr(1).load().val);",
+				m, hk)
+			//println("DEBUG mapaccess key,val=", hk, el)
 		} else {
-			println("DEBUG ", kyS, el)
-			*(*uintptr)(ret) = el
-			/*
-				switch *mapType)(unsafe.Pointer(t)).elem.Kind()  {
-				case String:
-					 *(*string)(ret) = hx.CodeString("","_a.itemAddr(0).load().val", el )
-				case UnsafePointer, Ptr:
-					kyS = hx.MethString("", *(*uintptr)(key), "Pointer", "toUniqueVal", 0)
-				case Complex64, Complex128:
-					kyS = hx.MethString("", *(*uintptr)(key), "Complex", "toString", 0)
-				case Array:
-					kyS = hx.MethString("", *(*uintptr)(key), "Array", "toString", 0)
-				case Interface:
-					kyS = hx.MethString("", *(*uintptr)(key), "Interface", "toString", 0)
-				case Slice:
-					kyS = hx.MethString("", *(*uintptr)(key), "Slice", "toString", 0)
-				case Struct:
-					kyS = hx.MethString("", *(*uintptr)(key), "Struct", "toString", 0)
-				case Int64, Uint64:
-					kyS = hx.MethString("", *(*int64)(key), "GOint64", "toString", 0)
-				case Bool:
-					kyS = hx.CallString("", "Std.string", 1, *(*bool)(key))
-				case Int8:
-					kyS = hx.CallString("", "Std.string", 1, *(*int8)(key))
-				case Int16:
-					kyS = hx.CallString("", "Std.string", 1, *(*int16)(key))
-				case Int32, Int:
-					kyS = hx.CallString("", "Std.string", 1, *(*int32)(key))
-				case Uint8:
-					kyS = hx.CallString("", "Std.string", 1, *(*uint8)(key))
-				case Uint16:
-					kyS = hx.CallString("", "Std.string", 1, *(*uint16)(key))
-				case Uint32, Uint, Uintptr:
-					kyS = hx.CallString("", "Std.string", 1, *(*uint32)(key))
-				case Float32:
-					kyS = hx.CallString("", "Std.string", 1, *(*float32)(key))
-				case Float64:
-					kyS = hx.CallString("", "Std.string", 1, *(*float64)(key))
-				default:
-					panic("reflect.mapaccess() unhandled elem Kind")
-				}
-
+			el = hx.CodeDynamic("",
+				"cast(_a.itemAddr(0).load().val,GOmap).vz;",
+				m)
+			//println("DEBUG mapaccess default val=", el)
 		}
-
-		return unsafe.Pointer(&ret)
-	*/
-
+	}
+	ei.typ = et
+	ei.word = nil
+	haxe2go(ei, el)
+	return ei.word
 }
 func mapassign(t *rtype, m unsafe.Pointer, key, val unsafe.Pointer) {
 	panic("reflect.mapassign() not yet implemented in haxe")
@@ -2685,21 +2623,23 @@ func mapdelete(t *rtype, m unsafe.Pointer, key unsafe.Pointer) {
 
 type mapIter struct {
 	t    *rtype
-	m    unsafe.Pointer
 	r    uintptr
 	ok   bool
 	key  uintptr
-	elem uintptr
+	elem uintptr // TODO remove if not used
 }
 
-func mapiterinit(t *rtype, m unsafe.Pointer) unsafe.Pointer {
+func mapiterinit(t *rtype, m uintptr /*unsafe.Pointer*/) unsafe.Pointer {
 	//panic("reflect.mapiterinit() not yet implemented in haxe")
-	if m == nil {
+	if t == nil || hx.IsNull(m) /* == nil */ {
+		if t == nil {
+			panic("reflect.mapiterinit() nil pointer to type info")
+		}
+		//println("DEBUG reflect.mapiterinit() nil pointer to map")
 		return nil
 	}
 	mi := new(mapIter)
 	mi.t = t
-	mi.m = m
 	mi.r = hx.CodeDynamic("", "cast(_a.itemAddr(0).load().val,GOmap).range();", m)
 	mapiternext(unsafe.Pointer(mi))
 	return unsafe.Pointer(mi)
@@ -2707,20 +2647,15 @@ func mapiterinit(t *rtype, m unsafe.Pointer) unsafe.Pointer {
 func mapiterkey(it unsafe.Pointer) (key unsafe.Pointer) {
 	//panic("reflect.mapiterkey() not yet implemented in haxe")
 	if it == nil {
+		//println("DEBUG reflect.mapiterkey() nil pointer to iterator")
 		return nil
 	}
 	mi := (*mapIter)(it)
-	sz := (*mapType)(unsafe.Pointer(mi.t)).size
-	ky := hx.Malloc(sz)
-	if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Object);", mi.key) {
-		hx.Code("",
-			"_a.itemAddr(0).load().val.store_object(_a.itemAddr(2).load().val,"+
-				"_a.itemAddr(1).load().val);",
-			ky, mi.key, sz)
-	} else {
-		*(*uintptr)(ky) = mi.key
-	}
-	return unsafe.Pointer(&ky)
+	kt := (*mapType)(unsafe.Pointer(mi.t)).key
+	ei := new(emptyInterface)
+	ei.typ = kt
+	haxe2go(ei, mi.key)
+	return ei.word
 }
 func mapiternext(it unsafe.Pointer) {
 	//panic("reflect.mspiternext() not yet implemented in haxe")
@@ -2735,11 +2670,12 @@ func mapiternext(it unsafe.Pointer) {
 	mi.ok = hx.CodeBool("", "_a.itemAddr(0).load().val.r0;", tuple)
 	mi.key = hx.CodeDynamic("", "_a.itemAddr(0).load().val.r1;", tuple)
 	mi.elem = hx.CodeDynamic("", "_a.itemAddr(0).load().val.r2;", tuple)
-
+	//println("DEBUG reflect.mapiternext() tuple=", mi.ok, mi.key, mi.elem)
 }
-func maplen(m unsafe.Pointer) int {
+func maplen(m uintptr /*unsafe.Pointer*/) int {
 	//panic("reflect.maplen() not yet implemented in haxe")
-	if m == nil {
+	//println("DEBUG maplen XXX", m)
+	if hx.IsNull(m) /*== nil*/ {
 		return 0
 	}
 	return hx.CodeInt("", "cast(_a.itemAddr(0).load().val,GOmap).len();", m)
@@ -2755,10 +2691,12 @@ func ifaceE2I(t *rtype, src interface{}, dst unsafe.Pointer) {
 //go:noescape
 func memmove(adst, asrc unsafe.Pointer, n uintptr) {
 	//panic("reflect.memmove() not yet implemented in haxe")
+	//println("DEBUG Memmove asrc", asrc)
 	hx.Code("",
 		"_a.itemAddr(0).load().val.store_object(_a.itemAddr(2).load().val,"+
 			"_a.itemAddr(1).load().val.load_object(_a.itemAddr(2).load().val));",
-		adst, asrc, n)
+		adst, asrc, uint(n))
+	//println("DEBUG Memmove adst", adst)
 }
 
 // Dummy annotation marking that the value x escapes,
