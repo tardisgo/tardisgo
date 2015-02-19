@@ -560,7 +560,7 @@ func buildTBI() {
 func (l langType) EmitTypeInfo() string {
 	var ret string = ""
 
-	//if pogo.UsingPackage("reflect") {
+	if pogo.UsingPackage("reflect") {
 
 	ret += "class PtrTypeInfo{\n"
 
@@ -850,7 +850,7 @@ func (l langType) EmitTypeInfo() string {
 	ret += "];\n"
 
 	ret += "}\n"
-	//} // end of Reflect-releated type info
+	} // end of Reflect-releated type info
 
 	buildTBI()
 

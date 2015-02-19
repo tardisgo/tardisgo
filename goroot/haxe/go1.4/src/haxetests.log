@@ -4,7 +4,7 @@ Unit Test (via C++):  bufio
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestBadReader 
 
@@ -119,7 +119,7 @@ Executing test: TestWriterReadFromWhileFull
 Executing test: TestWriterReset 
 
 Executing test: TestZeroReader 
-       16.88 real        17.53 user         0.62 sys
+       14.72 real        16.43 user         0.26 sys
 
 =========================================
 Unit Test (via C++):  bytes
@@ -127,7 +127,7 @@ Unit Test (via C++):  bytes
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestBasicOperations 
 
@@ -256,7 +256,7 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
-       59.45 real        51.83 user        12.98 sys
+       55.58 real        49.14 user        12.90 sys
 
 =========================================
 Unit Test (via C++):  fmt
@@ -264,7 +264,7 @@ Unit Test (via C++):  fmt
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestBadVerbRecursion 
 
@@ -277,8 +277,8 @@ Executing test: TestComplexFormatting
 Executing test: TestCountMallocs 
   
   
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/fmt/fmt_haxe_test.go 914
-skipping malloc count in short mode
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/fmt/fmt_haxe_test.go 914  
+skipping malloc count in short mode  
 
 Executing test: TestEmptyMap 
 
@@ -309,7 +309,146 @@ Executing test: TestStringer
 Executing test: TestStructPrinter 
 
 Executing test: TestWidthAndPrecision 
-        6.58 real         7.11 user         0.08 sys
+        6.64 real         7.24 user         0.09 sys
+
+=========================================
+Unit Test (via C++):  math
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestAbs 
+
+Executing test: TestAcos 
+
+Executing test: TestAcosh 
+
+Executing test: TestAsin 
+
+Executing test: TestAsinh 
+
+Executing test: TestAtan 
+
+Executing test: TestAtan2 
+
+Executing test: TestAtanh 
+
+Executing test: TestCbrt 
+
+Executing test: TestCeil 
+
+Executing test: TestCopysign 
+
+Executing test: TestCos 
+
+Executing test: TestCosh 
+
+Executing test: TestDim 
+
+Executing test: TestErf 
+
+Executing test: TestErfc 
+
+Executing test: TestExp 
+
+Executing test: TestExp2 
+
+Executing test: TestExpm1 
+
+Executing test: TestFloatMinMax 
+
+Executing test: TestFloor 
+
+Executing test: TestFrexp 
+
+Executing test: TestGamma 
+
+Executing test: TestHypot 
+
+Executing test: TestHypotGo 
+
+Executing test: TestIlogb 
+
+Executing test: TestJ0 
+
+Executing test: TestJ1 
+
+Executing test: TestJn 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2176  
+Jn test fails - TODO  
+
+Executing test: TestLargeCos 
+
+Executing test: TestLargeSin 
+
+Executing test: TestLargeSincos 
+
+Executing test: TestLargeTan 
+
+Executing test: TestLdexp 
+
+Executing test: TestLgamma 
+
+Executing test: TestLog 
+
+Executing test: TestLog10 
+
+Executing test: TestLog1p 
+
+Executing test: TestLog2 
+
+Executing test: TestLogb 
+
+Executing test: TestMax 
+
+Executing test: TestMin 
+
+Executing test: TestMod 
+
+Executing test: TestModf 
+
+Executing test: TestNaN 
+
+Executing test: TestNextafter32 
+
+Executing test: TestNextafter64 
+
+Executing test: TestPow 
+
+Executing test: TestPow10 
+
+Executing test: TestRemainder 
+
+Executing test: TestSignbit 
+
+Executing test: TestSin 
+
+Executing test: TestSincos 
+
+Executing test: TestSinh 
+
+Executing test: TestSqrt 
+
+Executing test: TestTan 
+
+Executing test: TestTanh 
+
+Executing test: TestTrunc 
+
+Executing test: TestY0 
+
+Executing test: TestY1 
+
+Executing test: TestYn 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2541  
+Yn test fails - TODO  
+        0.36 real         0.20 user         0.03 sys
 
 =========================================
 Unit Test (via C++):  runtime
@@ -317,7 +456,7 @@ Unit Test (via C++):  runtime
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestAlias 
 
@@ -362,7 +501,7 @@ Executing test: TestSideEffectOrder
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-      132.02 real       144.27 user         1.47 sys
+      148.15 real       160.74 user         1.88 sys
 
 =========================================
 Unit Test (via C++):  sort
@@ -370,52 +509,52 @@ Unit Test (via C++):  sort
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestAdversary 
 
 Executing test: TestCountSortOps 
   
   
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Counting skipped as non-verbose mode.
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Counting skipped as non-verbose mode.  
   
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Sort        100 elements:         191 Swap,        597 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Sort   100 191 597  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Sort        300 elements:         689 Swap,       2422 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Sort   300 689 2422  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Sort       1000 elements:        2701 Swap,      10590 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Sort   1000 2701 10590  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Sort       3000 elements:        9204 Swap,      39728 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Sort   3000 9204 39728  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Sort      10000 elements:       35194 Swap,     157232 Less
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Sort   10000 35194 157232  } %s %8d elements: %11d Swap, %10d Less  
 Executing test: TestCountStableOps 
   
   
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Counting skipped as non-verbose mode.
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Counting skipped as non-verbose mode.  
   
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Stable      100 elements:         872 Swap,        794 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Stable 100 872 794  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Stable      300 elements:        3948 Swap,       3031 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Stable 300 3948 3031  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Stable     1000 elements:       19743 Swap,      12345 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Stable 1000 19743 12345  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Stable     3000 elements:       82119 Swap,      43322 Less  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Stable 3000 82119 43322  } %s %8d elements: %11d Swap, %10d Less    
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494
-Stable    10000 elements:      348287 Swap,     165609 Less
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+ { Stable 10000 348287 165609  } %s %8d elements: %11d Swap, %10d Less  
 Executing test: TestFloat64s 
 
 Executing test: TestHeapsortBM 
@@ -435,8 +574,8 @@ Executing test: TestSearchWrappers
 Executing test: TestSearchWrappersDontAlloc 
   
   
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/search_test.go 130
-skipping malloc count in short mode
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/search_test.go 130  
+skipping malloc count in short mode  
 
 Executing test: TestSortBM 
 
@@ -455,7 +594,7 @@ Executing test: TestStableBM
 Executing test: TestStableInts 
 
 Executing test: TestStrings 
-       17.86 real        19.53 user         0.23 sys
+       19.32 real        21.19 user         0.24 sys
 
 =========================================
 Unit Test (via C++):  strconv
@@ -463,7 +602,7 @@ Unit Test (via C++):  strconv
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestAppendBool 
 
@@ -472,8 +611,8 @@ Executing test: TestAtof
 Executing test: TestAtofRandom 
   
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
-tested 100 random numbers
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286  
+ { 100  } tested %d random numbers  
 Executing test: TestAtofSlow 
 
 Executing test: TestCanBackquote 
@@ -481,8 +620,8 @@ Executing test: TestCanBackquote
 Executing test: TestCountMallocs 
   
   
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
-skipping malloc count in short mode
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44  
+skipping malloc count in short mode  
 
 Executing test: TestDecimalRound 
 
@@ -499,8 +638,8 @@ Executing test: TestFtoa
 Executing test: TestFtoaRandom 
   
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
-testing 100 random numbers with fast and slow FormatFloat
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157  
+ { 100  } testing %d random numbers with fast and slow FormatFloat  
 Executing test: TestIsPrint 
 
 Executing test: TestItoa 
@@ -534,12 +673,70 @@ Executing test: TestRoundTrip
 Executing test: TestRoundTrip32 
   
   
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
-tested 21393 float32's
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338  
+ { 21393  } tested %d float32's  
 Executing test: TestUitoa 
 
 Executing test: TestUnquote 
-      113.74 real       121.93 user         0.76 sys
+      114.59 real       123.40 user         0.66 sys
+
+=========================================
+Unit Test (via C++):  hash/adler32
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestGolden 
+       19.93 real        10.03 user        10.39 sys
+
+=========================================
+Unit Test (via C++):  hash/crc32
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestGolden 
+        0.08 real         0.03 user         0.01 sys
+
+=========================================
+Unit Test (via C++):  hash/crc64
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestGolden 
+        0.07 real         0.02 user         0.01 sys
+
+=========================================
+Unit Test (via C++):  hash/fnv
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestGolden32 
+
+Executing test: TestGolden32a 
+
+Executing test: TestGolden64 
+
+Executing test: TestGolden64a 
+
+Executing test: TestIntegrity32 
+
+Executing test: TestIntegrity32a 
+
+Executing test: TestIntegrity64 
+
+Executing test: TestIntegrity64a 
+        0.24 real         0.05 user         0.02 sys
 
 =========================================
 Unit Test (via C++):  math/cmplx
@@ -547,7 +744,7 @@ Unit Test (via C++):  math/cmplx
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestAbs 
 
@@ -592,7 +789,7 @@ Executing test: TestSqrt
 Executing test: TestTan 
 
 Executing test: TestTanh 
-        0.22 real         0.04 user         0.03 sys
+        0.12 real         0.04 user         0.01 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
@@ -600,7 +797,7 @@ Unit Test (via C++):  sync/atomic
 "CPP:"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestAddInt32 
 
@@ -641,8 +838,8 @@ Executing test: TestLoadUintptr
 Executing test: TestNilDeref 
   
   
-Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1481
-issue 7338: skipping test on "nacl/cpp"
+Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1481  
+ { nacl/cpp  } issue 7338: skipping test on %q  
 Executing test: TestStoreInt32 
 
 Executing test: TestStoreInt64 
@@ -650,23 +847,23 @@ Executing test: TestStoreInt64
 Executing test: TestStoreLoadRelAcq32 
   
   
-Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1360
-Skipping test on 1 processor machine
+Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1360  
+ { 1  } Skipping test on %v processor machine  
 Executing test: TestStoreLoadRelAcq64 
   
   
-Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1405
-Skipping test on 1 processor machine
+Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1405  
+ { 1  } Skipping test on %v processor machine  
 Executing test: TestStoreLoadSeqCst32 
   
   
-Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1277
-Skipping test on 1 processor machine
+Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1277  
+ { 1  } Skipping test on %v processor machine  
 Executing test: TestStoreLoadSeqCst64 
   
   
-Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1317
-Skipping test on 1 processor machine
+Skipf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sync/atomic/atomic_haxe_test.go 1317  
+ { 1  } Skipping test on %v processor machine  
 Executing test: TestStoreUint32 
 
 Executing test: TestStoreUint64 
@@ -690,7 +887,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       24.57 real        26.34 user         0.18 sys
+       26.77 real        28.26 user         0.19 sys
 
 =========================================
 Unit Test (via interpreter):  errors
@@ -699,12 +896,12 @@ Unit Test (via interpreter):  errors
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestErrorMethod 
 
 Executing test: TestNewEqual 
-       12.50 real        12.28 user         0.18 sys
+        3.41 real         3.32 user         0.07 sys
 
 =========================================
 Unit Test (via interpreter):  path
@@ -713,7 +910,7 @@ Unit Test (via interpreter):  path
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestBase 
 
@@ -722,8 +919,8 @@ Executing test: TestClean
 Executing test: TestCleanMallocs 
   
   
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/path/path_test.go 77
-skipping malloc count in short mode
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/path/path_test.go 77  
+skipping malloc count in short mode  
 
 Executing test: TestDir 
 
@@ -736,7 +933,7 @@ Executing test: TestJoin
 Executing test: TestMatch 
 
 Executing test: TestSplit 
-       28.50 real        27.89 user         0.36 sys
+       15.83 real        15.59 user         0.22 sys
 
 =========================================
 Unit Test (via interpreter):  strings
@@ -745,7 +942,7 @@ Unit Test (via interpreter):  strings
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestCaseConsistency 
 
@@ -832,7 +1029,7 @@ Executing test: TestUnreadRuneError
 Executing test: TestWriteStringError 
 
 Executing test: TestWriteTo 
-       87.05 real        85.84 user         0.73 sys
+       88.27 real        87.16 user         0.71 sys
 
 =========================================
 Unit Test (via interpreter):  unicode
@@ -841,7 +1038,7 @@ Unit Test (via interpreter):  unicode
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestCalibrate 
 
@@ -896,7 +1093,7 @@ Executing test: TestToTitleCase
 Executing test: TestToUpperCase 
 
 Executing test: TestTurkishCase 
-       31.61 real        30.81 user         0.38 sys
+       34.71 real        34.00 user         0.37 sys
 
 =========================================
 Unit Test (via interpreter):  container/heap
@@ -905,7 +1102,7 @@ Unit Test (via interpreter):  container/heap
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: Test 
 
@@ -920,7 +1117,7 @@ Executing test: TestRemove0
 Executing test: TestRemove1 
 
 Executing test: TestRemove2 
-       17.26 real        16.84 user         0.21 sys
+        5.38 real         5.28 user         0.09 sys
 
 =========================================
 Unit Test (via interpreter):  container/list
@@ -929,7 +1126,7 @@ Unit Test (via interpreter):  container/list
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestExtending 
 
@@ -950,7 +1147,7 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
-       16.19 real        15.72 user         0.22 sys
+        3.38 real         3.30 user         0.07 sys
 
 =========================================
 Unit Test (via interpreter):  container/ring
@@ -959,7 +1156,7 @@ Unit Test (via interpreter):  container/ring
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestCornerCases 
 
@@ -976,7 +1173,7 @@ Executing test: TestMoveEmptyRing
 Executing test: TestNew 
 
 Executing test: TestUnlink 
-       40.44 real        39.63 user         0.25 sys
+       37.32 real        36.88 user         0.22 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/ascii85
@@ -985,7 +1182,7 @@ Unit Test (via interpreter):  encoding/ascii85
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestBig 
 
@@ -1004,7 +1201,7 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
-       31.72 real        30.92 user         0.35 sys
+       20.12 real        19.84 user         0.25 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base32
@@ -1013,7 +1210,7 @@ Unit Test (via interpreter):  encoding/base32
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestBig 
 
@@ -1034,7 +1231,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       35.86 real        35.07 user         0.37 sys
+       20.93 real        20.61 user         0.27 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base64
@@ -1043,7 +1240,7 @@ Unit Test (via interpreter):  encoding/base64
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestBig 
 
@@ -1068,7 +1265,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       37.33 real        36.55 user         0.38 sys
+       26.30 real        25.84 user         0.31 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/csv
@@ -1077,14 +1274,14 @@ Unit Test (via interpreter):  encoding/csv
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestError 
 
 Executing test: TestRead 
 
 Executing test: TestWrite 
-       37.00 real        36.15 user         0.40 sys
+       40.04 real        39.35 user         0.36 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/hex
@@ -1093,7 +1290,7 @@ Unit Test (via interpreter):  encoding/hex
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestDecode 
 
@@ -1110,7 +1307,7 @@ Executing test: TestEncodeToString
 Executing test: TestInvalidErr 
 
 Executing test: TestInvalidStringErr 
-       28.39 real        27.93 user         0.36 sys
+       30.45 real        30.01 user         0.35 sys
 
 =========================================
 Unit Test (via interpreter):  text/scanner
@@ -1119,7 +1316,7 @@ Unit Test (via interpreter):  text/scanner
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestError 
 
@@ -1142,7 +1339,7 @@ Executing test: TestScanSelectedMask
 Executing test: TestScanWhitespace 
 
 Executing test: TestScanZeroMode 
-       50.15 real        49.27 user         0.43 sys
+       52.78 real        51.98 user         0.40 sys
 
 =========================================
 Unit Test (via interpreter):  text/tabwriter
@@ -1151,14 +1348,14 @@ Unit Test (via interpreter):  text/tabwriter
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: Test 
 
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
-       32.30 real        31.69 user         0.38 sys
+       18.47 real        18.22 user         0.23 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf8
@@ -1167,7 +1364,7 @@ Unit Test (via interpreter):  unicode/utf8
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestConstants 
 
@@ -1192,7 +1389,7 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-       40.99 real        40.14 user         0.38 sys
+       22.97 real        22.51 user         0.27 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf16
@@ -1201,7 +1398,7 @@ Unit Test (via interpreter):  unicode/utf16
 "Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
-testing.Main
+testing.Main  
 
 Executing test: TestConstants 
 
@@ -1214,7 +1411,7 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
-       31.55 real        30.80 user         0.33 sys
+       20.34 real        20.03 user         0.28 sys
 
 =====================
 All Unit Tests Passed

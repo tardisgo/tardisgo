@@ -162,12 +162,16 @@ func emitGoClassEnd(pak *ssa.Package) {
 }
 
 func UsingPackage(pkgName string) bool {
+	//println("DEBUG UsingPackage() looking for: ", pkgName)
+	pkgName = "package " + pkgName
 	pkgs := rootProgram.AllPackages()
 	for p := range pkgs {
-		//println("DEBUG pkg", pkgs[p].String())
+		//println("DEBUG UsingPackage() considering pkg: ", pkgs[p].String())
 		if pkgs[p].String() == pkgName {
+			//println("DEBUG UsingPackage()  ", pkgName, " = true")
 			return true
 		}
 	}
+	//println("DEBUG UsingPackage()  ", pkgName, " =false")
 	return false
 }

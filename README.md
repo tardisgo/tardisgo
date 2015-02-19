@@ -42,14 +42,18 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - container/heap, container/list, container/ring
 - encoding/ascii85, encoding/base32, encoding/base64, encoding/csv, encoding/hex
 - errors
-- math/cmplx
+- fmt (only print side working, minor differences printing golang type names, scan side TODO)
+- hash/adler32, hash/crc32, hash/crc64, hash/fnv
+- math (Jn & Yn fail tests), math/cmplx
 - path
+- runtime (some general tests pass, NaN handled differently as a Map key)
 - sort
 - strconv
 - strings
 - sync/atomic
 - text/scanner, text/tabwriter
 - unicode, unicode/utf8, unicode/utf16
+- unsafe (no tests, but everything seems to work)
 
 Math-related packages may only fully work with cpp or js -D fullunsafe, partly due to modelling float32 as float64. 
 
@@ -57,7 +61,7 @@ Packages "fmt", "runtime", "os" & "syscall" are part-implemented, using an imple
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
-The code is developed and tested on OS X 10.9.5, using Go 1.4 and Haxe 3.1.3. The CI tests run on 64-bit Ubuntu. 
+The code is developed and tested on OS X 10.9.5, using Go 1.4 and Haxe 3.1.3. The short CI test runs on 64-bit Ubuntu. 
 
 No other platforms are currently regression tested, although the project has been run on Ubuntu 32-bit and Windows 7 32-bit. Compilation to the C# target is suspect on Win-7 and PHP is flakey (but you probably knew that).
 

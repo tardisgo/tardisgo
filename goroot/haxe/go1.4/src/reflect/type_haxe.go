@@ -1078,10 +1078,10 @@ func PtrTo(t Type) Type {
 }
 
 func (t *rtype) ptrTo() *rtype {
-	panic("reflect.PtrTo not yet implemented")
 	if p := t.ptrToThis; p != nil {
 		return p
 	}
+	panic("reflect.PtrTo pointer synthesis not yet implemented")
 
 	// Otherwise, synthesize one.
 	// This only happens for pointers with no methods.
@@ -1143,7 +1143,7 @@ func fnv1(x uint32, list ...byte) uint32 {
 }
 
 func (t *rtype) Implements(u Type) bool {
-	panic("reflect.Implements not yet implemented")
+	//panic("reflect.Implements not yet implemented")
 	if u == nil {
 		panic("reflect: nil type passed to Type.Implements")
 	}
@@ -1154,7 +1154,7 @@ func (t *rtype) Implements(u Type) bool {
 }
 
 func (t *rtype) AssignableTo(u Type) bool {
-	panic("reflect.AssignableTo not yet implemented")
+	//panic("reflect.AssignableTo not yet implemented")
 	if u == nil {
 		panic("reflect: nil type passed to Type.AssignableTo")
 	}
@@ -1163,7 +1163,7 @@ func (t *rtype) AssignableTo(u Type) bool {
 }
 
 func (t *rtype) ConvertibleTo(u Type) bool {
-	panic("reflect.ConvertableTo not yet implemented")
+	//panic("reflect.ConvertableTo not yet implemented")
 	if u == nil {
 		panic("reflect: nil type passed to Type.ConvertibleTo")
 	}
@@ -1172,7 +1172,7 @@ func (t *rtype) ConvertibleTo(u Type) bool {
 }
 
 func (t *rtype) Comparable() bool {
-	panic("reflect.Comparable not yet implemented")
+	//panic("reflect.Comparable not yet implemented")
 	return t.alg != nil && t.alg.equal != nil
 }
 

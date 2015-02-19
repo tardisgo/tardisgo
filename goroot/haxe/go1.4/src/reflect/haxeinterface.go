@@ -1,6 +1,5 @@
 package reflect
 
-// this code relies on "unsafe" being included in the runtime - see Ptr in haxeInterfacePack
 import (
 	"unsafe"
 
