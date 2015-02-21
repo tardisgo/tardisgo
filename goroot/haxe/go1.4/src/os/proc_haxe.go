@@ -14,7 +14,7 @@ import (
 )
 
 // Args hold the command-line arguments, starting with the program name.
-var Args []string
+var Args []string = []string{"tardisgo"}
 
 func init() {
 	if runtime.GOOS == "windows" {
@@ -24,7 +24,7 @@ func init() {
 	Args = runtime_args()
 }
 
-func runtime_args() []string { return []string{} } // dummy for haxe, should be in package runtime
+func runtime_args() []string { return []string{"tardisgo"} } // dummy for haxe, should be in package runtime
 
 // Getuid returns the numeric user id of the caller.
 func Getuid() int { return syscall.Getuid() }

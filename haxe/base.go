@@ -1559,10 +1559,12 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	// assume it is a Map
 	keyString = serializeKey(keyString, l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 
-	//li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
-	//if strings.HasPrefix(li, "new ") {
-	//	li = "null" // no need for a full object declaration in this context
-	//}
+	isNull := l.IndirectValue(Map, errorInfo) + "==null?"
+
+	li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
+	if strings.HasPrefix(li, "new ") {
+		li = "null" // no need for a full object declaration in this context
+	}
 	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")" //.val
 	//ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
 	//switch ltEle {
@@ -1571,9 +1573,9 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	//}
 	eleExists := l.IndirectValue(Map, errorInfo) + ".exists(" + keyString + ")"
 	if commaOk {
-		return reg + "={r0:" + returnValue + ",r1:" + eleExists + "};"
+		return reg + "=" + isNull + "{r0:" + li + ",r1:false}:{r0:" + returnValue + ",r1:" + eleExists + "};"
 	}
-	return reg + "=" + returnValue + ";" // the .get will check for existance and return the zero value if not
+	return reg + "=" + isNull + li + ":" + returnValue + ";" // the .get will check for existance and return the zero value if not
 }
 
 func (l langType) Extract(reg string, tuple interface{}, index int, errorInfo string) string {
@@ -1591,7 +1593,7 @@ func (l langType) Range(reg string, v interface{}, errorInfo string) string {
 		return reg + "=new GOstringRange(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 		//return reg + "={k:0,v:Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ")" + "};"
 	default: // assume it is a Map {k: key itterator,m: the map,z: zero value of an entry}
-		return reg + "=cast(" + l.IndirectValue(v, errorInfo) + ",GOmap).range();"
+		return reg + "=" + l.IndirectValue(v, errorInfo) + "==null?null:cast(" + l.IndirectValue(v, errorInfo) + ",GOmap).range();"
 		/*
 			keyTyp := l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo)
 			if keyTyp != "Int" {
@@ -1628,7 +1630,7 @@ func (l langType) Next(register string, v interface{}, isString bool, errorInfo 
 		*/
 	}
 	// otherwise it is a map itterator
-	return register + "=cast(" + l.IndirectValue(v, errorInfo) + ",GOmapRange).next();"
+	return register + "=" + l.IndirectValue(v, errorInfo) + "==null?{r0:false,r1:null,r2:null}:cast(" + l.IndirectValue(v, errorInfo) + ",GOmapRange).next();"
 	/*
 		return register + "={var _hn:Bool=" + l.IndirectValue(v, errorInfo) + ".k.hasNext();\n" +
 			"if(_hn){var _nxt=" + l.IndirectValue(v, errorInfo) + ".k.next();\n" +

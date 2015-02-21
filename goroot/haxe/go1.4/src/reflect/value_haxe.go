@@ -1003,16 +1003,22 @@ func (v Value) Len() int {
 		tt := (*arrayType)(unsafe.Pointer(v.typ))
 		return int(tt.len)
 	case Chan:
-		panic("reflect.value.Len not yet implemented")
+		panic("reflect.value.Len chan not yet implemented")
 		return chanlen(v.pointer())
 	case Map:
-		panic("reflect.value.Len not yet implemented")
+		panic("reflect.value.Len map not yet implemented")
 		return maplen(*(*uintptr)(v.ptr)) //v.pointer())
 	case Slice:
 		// Slice is bigger than a word; assume flagIndir.
+		if hx.IsNull(*(*uintptr)(unsafe.Pointer(v.ptr))) { // nil slice
+			return 0
+		}
 		return hx.CodeInt("", "_a.itemAddr(0).load().val.load().len();", v.ptr) //(*sliceHeader)(v.ptr).Len
 	case String:
 		// String is bigger than a word; assume flagIndir.
+		if v.ptr == nil {
+			return 0
+		}
 		return len(*(*string)(v.ptr)) //(*stringHeader)(v.ptr).Len
 	}
 	panic(&ValueError{"reflect.Value.Len", v.kind()})

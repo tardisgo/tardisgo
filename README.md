@@ -42,7 +42,8 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - container/heap, container/list, container/ring
 - encoding/ascii85, encoding/base32, encoding/base64, encoding/csv, encoding/hex
 - errors
-- fmt (only print side working, minor differences printing golang type names, scan side TODO)
+- flag (but no way to pass flags in yet)
+- fmt (only print side working so far, minor differences printing golang type names)
 - hash/adler32, hash/crc32, hash/crc64, hash/fnv
 - math (Jn & Yn fail tests), math/cmplx
 - path

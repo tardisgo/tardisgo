@@ -25,7 +25,7 @@ do
 	fi
 	cd ../.. 
 done
-for onelevel in errors path strings unicode 
+for onelevel in errors flag path strings unicode 
 do
 	echo "========================================="
 	echo "Unit Test (via interpreter): " $onelevel 
