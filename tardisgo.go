@@ -124,8 +124,8 @@ func doMain() error {
 func doTestable(args []string) error {
 
 	conf := loader.Config{
-		Build:         &build.Default,
-		SourceImports: true,
+		Build:            &build.Default,
+		ImportFromBinary: false,
 	}
 
 	// TODO(adonovan): make go/types choose its default Sizes from
@@ -165,7 +165,7 @@ func doTestable(args []string) error {
 		case 'N':
 			mode |= ssa.NaiveForm
 		case 'G':
-			conf.SourceImports = false
+			conf.ImportFromBinary = true
 		case 'L':
 			mode |= ssa.BuildSerially
 		case 'I':
