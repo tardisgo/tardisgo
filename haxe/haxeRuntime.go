@@ -4,6 +4,8 @@
 
 package haxe
 
+import "github.com/tardisgo/tardisgo/pogo"
+
 // Runtime Haxe code for Go, which may eventually become a haxe library when the system settles down.
 // TODO All runtime class names are currently carried through if the haxe code uses "import tardis.Go;" and some are too generic,
 // others, like Int64, will overload the Haxe standard library version for some platforms, which may cause other problems.
@@ -12,7 +14,9 @@ package haxe
 // However, there are references to Go->Haxe generated classes, like "Go", that would need to be managed somehow.
 // TODO consider merging and possibly renaming the Deep and Force classes as they both hold general utility code
 
-var haxeruntime = `
+func haxeruntime() string {
+
+	pogo.WriteAsClass("Console", `
 
 class Console {
 	public static inline function naclWrite(v:String){
@@ -72,6 +76,8 @@ class Console {
 	}
 }
 
+`)
+	pogo.WriteAsClass("Force", `
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 class Force { // TODO maybe this should not be a separate haxe class, as no non-Go code needs access to it
@@ -418,6 +424,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return false;	
 	}
 }
+`)
+	pogo.WriteAsClass("Object", `
 
 // Object code
 // a single type of Go object
@@ -942,6 +950,8 @@ class Object { // this implementation will improve with typed array access
 		return ret+"}";
 	}
 }
+`)
+	pogo.WriteAsClass("Pointer", `
 @:keep
 class Pointer { 
 	private var obj:Object; // reference to the object holding the value
@@ -1068,6 +1078,8 @@ class Pointer {
 		return "&<"+Std.string(obj.uniqueRef)+":"+Std.string(off)+">";
 	}
 }
+`)
+	pogo.WriteAsClass("Slice", `
 
 @:keep
 class Slice {
@@ -1196,6 +1208,8 @@ class Slice {
 		return ret+"]}";
 	}
 }
+`)
+	pogo.WriteAsClass("Closure", `
 
 @:keep
 class Closure { // "closure" is a keyword in PHP but solved using compiler flag  --php-prefix go  //TODO tidy names
@@ -1245,6 +1259,8 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 		return Reflect.makeVarArgs(bcf); 
 	}
 }
+`)
+	pogo.WriteAsClass("Interface", `
 
 class Interface { // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix tgo //TODO tidy names 
 	public var typ:Int; // the possibly interface type that has been cast to
@@ -1355,6 +1371,8 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 		return Reflect.callMethod(null, fn, args);
 	}
 }
+`)
+	pogo.WriteAsClass("Channel", `
 
 class Channel { //TODO check close & rangeing over a channel
 var entries:Array<Dynamic>;
@@ -1426,6 +1444,8 @@ public inline function close() {
 	closed = true;
 }
 }
+`)
+	pogo.WriteAsClass("Complex", `
 
 class Complex {
 	public var real:Float;
@@ -1466,6 +1486,9 @@ public static function toString(x:Complex):String {
 	return Std.string(x.real)+"+"+Std.string(x.imag)+"i";
 }
 }
+
+`)
+	pogo.WriteAsClass("GOint64", `
 
 // TODO optimize to use cs and java base i64 types, as with cpp below
 #if ( cpp )
@@ -2016,6 +2039,8 @@ class Int64 {
 }
 //**************** END REWRITE of haxe.Int64 for php and to correct errors
 
+`)
+	pogo.WriteAsClass("StackFrameBasis", `
 
 // GoRoutine 
 class StackFrameBasis
@@ -2221,6 +2246,8 @@ public function runDefers(){
 }
 
 }
+`)
+	pogo.WriteAsClass("StackFrame", `
 
 interface StackFrame
 {
@@ -2238,6 +2265,8 @@ public var _debugVars:Map<String,Dynamic>;
 function run():StackFrame; // function state machine (set up by each Go function Haxe class)
 function res():Dynamic; // function result (set up by each Go function Haxe class)
 }
+`)
+	pogo.WriteAsClass("Scheduler", `
 
 class Scheduler { // NOTE this code requires a single-thread, as there is no locking TODO detect deadlocks
 // public
@@ -2535,6 +2564,8 @@ public static inline function wrapnilchk(p:Pointer):Pointer {
 	return p;
 }
 }
+`)
+	pogo.WriteAsClass("GOmap", `
 
 class GOmap {
 	// TODO a more sophisticated (and hopefully faster) version of this code 
@@ -2622,6 +2653,8 @@ class GOmap {
 	}
 
 }
+`)
+	pogo.WriteAsClass("GOmapRange", `
 
 class GOmapRange {
 	private var k:Iterator<String>;
@@ -2645,6 +2678,8 @@ class GOmapRange {
 		}
 	}
 }
+`)
+	pogo.WriteAsClass("GOstringRange", `
 
 class GOstringRange {
 	private var g:Int;
@@ -2670,4 +2705,7 @@ class GOstringRange {
 }
 
 
-`
+`)
+
+	return ""
+}

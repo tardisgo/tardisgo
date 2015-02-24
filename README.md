@@ -58,7 +58,7 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 
 Math-related packages may only fully work with cpp or js -D fullunsafe, partly due to modelling float32 as float64. 
 
-Packages "fmt", "runtime", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime (currently including some debug messages).
+Packages "reflect", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime (currently including some debug messages).
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
@@ -85,13 +85,13 @@ To translate Go to Haxe, from the directory containing your .go files type the c
 ```
 tardisgo yourfilename.go 
 ``` 
-A single Go.hx file will be created in the tardis subdirectory.
+A large number of .hx files will be created in the tardis subdirectory, of which Go.hx contains the entry-point. The use of a file per Haxe class makes second and subsequent compilations using C++ much faster, as only the altered classes are recompiled.
 
 To run your transpiled code you will first need to install [Haxe](http://haxe.org).
 
 Then to run the tardis/Go.hx file generated above, type the command line: 
 ```
-haxe -main tardis.Go --interp
+haxe -main tardis.Go -cp tardis --interp
 ```
 ... or whatever [Haxe compilation options](http://haxe.org/documentation/introduction/compiler-usage.html) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
@@ -99,7 +99,7 @@ See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scr
 The default memory model is fast, but requires more memory than you might expect (an int per byte) and only allows some unsafe pointer usages. If your code uses unsafe pointers to re-use memory as different types (say writing a float64 but reading back a uint64), there is a Haxe compilation flag for "fullunsafe" mode (this is slower, but has a smaller memory footprint and allows most unsafe pointers to be modelled accurately). In JS fullunsafe uses the dataview method of object access, for other targets it simulates memory access. Fullunsafe is little-endian only at present and pointer aritmetic (via uintptr) will panic. A command line example: 
 ```
 tardisgo mycode.go
-haxe -main tardis.Go -D fullunsafe -js tardis/go-fu.js
+haxe -main tardis.Go -cp tardis -D fullunsafe -js tardis/go-fu.js
 node < tardis/go-fu.js
 ```
 
@@ -108,7 +108,7 @@ While on the subject of JS, the closure compiler seems to work using "ADVANCED_O
 The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/a.txt" thus (for example in JS):
 ```
 tardisgo your_code_using_package_os.go
-haxe -main tardis.Go -js tardis/go.js -resource testdata/config.xml@/myapp/static/config.xml
+haxe -main tardis.Go -cp tardis -js tardis/go.js -resource testdata/config.xml@/myapp/static/config.xml
 node < tardis/go.js
 ```
 To add more than one file, use multiple -resource flags (the haxe ".hxml" compiler paramater file format can be helpful here). The files are stored as part of the executable code, in a target-specific way. The only resources that will be loaded are those named with a leading "/". A log file of the load process can be found at "/fsinit.log" in the in-memory file-system.
@@ -122,8 +122,8 @@ To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tag
 
 Use the "-debug" tardisgo compilation flag to instrument the code and add automated comments to the Haxe. When you experience a panic in this mode the latest Go source code line information and local variables appears in the stack dump. For the C++ & Neko (--interp) targets, a very simple debugger is also available by using the "-D godebug" Haxe flag, for example to use it in C++ type:
 ```
-tardisgo -debug=true myprogram.go
-haxe -main tardis.Go -dce full -D godebug -cpp tardis/cpp
+tardisgo -debug myprogram.go
+haxe -main tardis.Go -cp tardis -dce full -D godebug -cpp tardis/cpp
 ./tardis/cpp/Go
 ``` 
 To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). 
@@ -167,7 +167,7 @@ The focus of short-term development is to get the Haxe implementation production
 In speed terms, the planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for faster execution times by making less use of the Haxe "Dynamic" type to store values on the heap. See the -D fullunsafe haxe compilation flag for JS to see a partial implementation.
 
 Longer term development priorities:
-- For all Go standard libraries, report testing and implementation status
+- For all Go standard libraries, report testing and implementation status (in-progress, see above)
 - Improve integration with Haxe code and libraries, automating as far as possible - [in progress](https://github.com/tardisgo/gohaxelib)
 - Improve currently poor execution speeds and update benchmarking results
 - Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications - [in progress](https://github.com/tardisgo/tardisgo-samples/tree/master/openfl)

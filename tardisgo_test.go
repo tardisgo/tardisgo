@@ -18,7 +18,7 @@ func TestCore(t *testing.T) {
 		t.Error(err)
 	}
 
-	out, err := exec.Command("haxe", "-main", "tardis.Go", "--interp").CombinedOutput()
+	out, err := exec.Command("haxe", "-main", "tardis.Go", "-cp", "tardis", "--interp").CombinedOutput()
 	if err != nil {
 		t.Error(err)
 	}

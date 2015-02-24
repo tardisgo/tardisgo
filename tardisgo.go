@@ -362,12 +362,12 @@ func doTestable(args []string) error {
 			}
 			mathCmds := [][][]string{
 				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "tardis/cpp"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
 				},
 				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
 					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 					[]string{"time", "node", "tardis/go-fu.js"},
 				},
@@ -387,11 +387,11 @@ func doTestable(args []string) error {
 				go doTarget([][]string{
 					[]string{"echo", ``}, // Output from this line is ignored
 					[]string{"echo", `"Neko (haxe --interp):"`},
-					[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
+					[]string{"time", "haxe", "-main", "tardis.Go", "-cp", "tardis", "--interp"},
 				}, results)
 			case "cpp":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "tardis/cpp"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
 				}, results)
@@ -410,41 +410,41 @@ func doTestable(args []string) error {
 	return nil
 }
 
-var dirs = []string{"tardis/cpp", "tardis/java", "tardis/cs", "tardis/php"}
+var dirs = []string{} // was: "tardis/cpp", "tardis/java", "tardis/cs", "tardis/php"}
 
 var targets = [][][]string{
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cpp", "tardis/cpp"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
 		[]string{"echo", `"CPP:"`},
 		[]string{"time", "./tardis/cpp/Go"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-java", "tardis/java"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-java", "tardis/java"},
 		[]string{"echo", `"Java:"`},
 		[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-cs", "tardis/cs"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cs", "tardis/cs"},
 		[]string{"echo", `"CS:"`},
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-js", "tardis/go.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
 		[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 		[]string{"time", "node", "tardis/go-fu.js"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-swf", "tardis/go.swf"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-swf", "tardis/go.swf"},
 		[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
 		[]string{"open", "tardis/go.swf"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo"},
 		[]string{"echo", `"PHP:"`},
 		[]string{"time", "php", "tardis/php/index.php"},
 	},
@@ -458,7 +458,7 @@ var targets = [][][]string{
 	[][]string{
 		[]string{"echo", ``}, // Output from this line is ignored
 		[]string{"echo", `"Neko (haxe --interp):"`},
-		[]string{"time", "haxe", "-main", "tardis.Go", "--interp"},
+		[]string{"time", "haxe", "-main", "tardis.Go", "-cp", "tardis", "--interp"},
 	},
 }
 

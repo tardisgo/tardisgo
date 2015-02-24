@@ -7,8 +7,6 @@ package pogo
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"unicode"
 
 	"golang.org/x/tools/go/ssa"
@@ -94,10 +92,16 @@ type LanguageEntry struct {
 	HeaderConstVarName    string       // The special constant name for a target-specific header.
 	Goruntime             string       // The location of the core implementation go runtime code for this target language.
 	TestFS                string       // the location of the test zipped file system, if present
+	files                 []FileOutput // files to write if no errors in compilation
 }
 
-// LanguageList holds the languages that can be targeted. Hey, I hope we do get up to 10 target languages!!
-var LanguageList = make([]LanguageEntry, 0, 10)
+type FileOutput struct {
+	filename string
+	data     []byte
+}
+
+// LanguageList holds the languages that can be targeted.
+var LanguageList = make([]LanguageEntry, 0, 1)
 
 // TargetLang holds the language currently being targeted, default is the first on the list, initially haxe.
 var TargetLang = 0
@@ -106,24 +110,6 @@ var TargetLang = 0
 func emitComment(cmt string) {
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].Comment(cmt))
-}
-
-// Write out the target language file
-// TODO consider writing multiple output files, if this would be better/required for some target languages.
-func writeFiles() {
-	l := TargetLang
-	// TODO move to the correct directory based on a command line argument
-	if err := os.Mkdir("tardis", os.ModePerm); err != nil {
-		if !os.IsExist(err) { // no problem if it already exists
-			LogError("Unable to create tardis output directory", "pogo", err)
-		}
-	}
-	err := ioutil.WriteFile(
-		"tardis/Go"+LanguageList[l].FileTypeSuffix(), // Ubuntu requires the first letter of the haxe file to be uppercase
-		LanguageList[l].buffer.Bytes(), 0666)
-	if err != nil {
-		LogError("Unable to write output file", "pogo", err)
-	}
 }
 
 // MakeID cleans-up Go names to replace characters outside (_,0-9,a-z,A-Z) with a decimal value surrounded by underlines, with special handling of '.' and '*'.
@@ -162,4 +148,19 @@ func isDupPkg(pn string) bool {
 		}
 	}
 	return pnCount > 1
+}
+
+// FunctionName returns a unique function path and name.
+// TODO refactor this code and everywhere it is called to remove duplication.
+func FuncPathName(fn *ssa.Function) (path, name string) {
+	rx := fn.Signature.Recv()
+	pf := MakeID(rootProgram.Fset.Position(fn.Pos()).String()) //fmt.Sprintf("fn%d", fn.Pos())
+	if rx != nil {                                             // it is not the name of a normal function, but that of a method, so append the method description
+		pf = rx.Type().String() // NOTE no underlying()
+	} else {
+		if fn.Pkg != nil {
+			pf = fn.Pkg.Object.Path() // was .Name(), but not unique
+		}
+	}
+	return pf, fn.Name()
 }

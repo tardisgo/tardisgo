@@ -120,8 +120,12 @@ func catchReferencedTypes(et types.Type) {
 
 func visitAllTypes() {
 	// ...so just get the full info on the types we've seen
-	for _, t := range TypesEncountered.Keys() {
-		catchReferencedTypes(t)
+	for t := 1; t < NextTypeID; t++ { // make sure we do this in a consistent order
+		for _, k := range TypesEncountered.Keys() {
+			if TypesEncountered.At(k).(int) == t {
+				catchReferencedTypes(k)
+			}
+		}
 	}
 }
 

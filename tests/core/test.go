@@ -19,18 +19,7 @@ import (
 
 const tardisgoHeader = "/* TARDIS Go general header*/"
 
-const tardisgoHaxeHeader = `class Util {
-public static inline function comma(num:Interface):Interface
-{
-    var arr = Std.string(num.val).split(".");
-    var str = "";
-    while(arr[0].length > 3) 
-    {
-        str = "," + arr[0].substr(-3) + str;
-        arr[0] = arr[0].substr(0, arr[0].length - 3);
-    }
-    return new Interface(TypeInfo.getId("string"),arr[0] + str) ; //cut because decimals do not always work!: + if(arr.length > 1) "." + arr[1];
-}}
+const tardisgoHaxeHeader = `// Haxe specific header for each file
 `
 
 const ShowKnownErrors = false
@@ -420,11 +409,7 @@ func testAppend() {
 }
 
 func testHeader() {
-	if runtime.GOOS == "haxe" { // test of "pogoHeaderHaxe"
-		//TODO implement a way to do this properly, probably using _package
-		//TEQ("", pg.C1("Util.comma", 75840032), string("75,840,032"))
-		//TEQ("", pg.C1("Util.comma", 300012301), string("300,012,301"))
-	}
+	// not sure how to test this
 }
 
 func testCopy() {

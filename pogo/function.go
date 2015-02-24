@@ -54,7 +54,7 @@ func emitFunctions() {
 		dupCheck[p+"."+n] = f
 	}
 
-	for f := range fnMap {
+	for _, f := range fnMapSorted() {
 		if !IsOverloaded(f) {
 			emitFunc(f)
 		}
@@ -334,7 +334,7 @@ func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode 
 
 func GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 	mName := fn.Name()
-	pName := fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(fn)))
+	pName, _ := FuncPathName(fn) //fmt.Sprintf("fn%d", fn.Pos()) //uintptr(unsafe.Pointer(fn)))
 	if fn.Pkg != nil {
 		if fn.Pkg.Object != nil {
 			pName = fn.Pkg.Object.Path() // was .Name()
@@ -391,7 +391,7 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 		fnToCall = callInfo.Value.(*ssa.Builtin).Name()
 		usesGr = false
 	} else if callInfo.StaticCallee() != nil {
-		pName := fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(callInfo.StaticCallee())))
+		pName, _ := FuncPathName(callInfo.StaticCallee()) //fmt.Sprintf("fn%d", callInfo.StaticCallee().Pos())
 		if callInfo.Signature().Recv() != nil {
 			pName = callInfo.Signature().Recv().Pkg().String() + ":" + callInfo.Signature().Recv().Type().String() // no use of Underlying() here
 		} else {

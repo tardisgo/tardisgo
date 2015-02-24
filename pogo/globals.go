@@ -7,10 +7,10 @@ package pogo
 import (
 	"fmt"
 	"go/token"
-	"unicode"
-
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
+	"sort"
+	"unicode"
 )
 
 /* THIS SECTION ONLY REQUIRED IF GLOBALS ARE ADDRESSABLE USING OFFSETS RATTHER THAN PSEUDO-POINTERS
@@ -64,9 +64,12 @@ func scanGlobals() {
 // Emit the Global declarations, run inside the Go class declaration output.
 func emitGlobals() {
 	allPack := rootProgram.AllPackages()
+	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
 		pkg := allPack[pkgIdx]
-		for mName, mem := range pkg.Members {
+		allMem := MemberNamesSorted(pkg)
+		for _, mName := range allMem {
+			mem := pkg.Members[mName]
 			if mem.Token() == token.VAR {
 				glob := mem.(*ssa.Global)
 				pName := glob.Pkg.Object.Path() // was .Name()
@@ -97,9 +100,12 @@ type GlobalInfo struct {
 func GlobalList() []GlobalInfo {
 	var gi = make([]GlobalInfo, 0)
 	allPack := rootProgram.AllPackages()
+	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
 		pkg := allPack[pkgIdx]
-		for mName, mem := range pkg.Members {
+		allMem := MemberNamesSorted(pkg)
+		for _, mName := range allMem {
+			mem := pkg.Members[mName]
 			if mem.Token() == token.VAR {
 				glob := mem.(*ssa.Global)
 				pName := glob.Pkg.Object.Path()             // was .Name()

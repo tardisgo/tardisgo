@@ -7,6 +7,7 @@ package pogo
 import (
 	"fmt"
 	"go/token"
+	"sort"
 	"strconv"
 
 	"golang.org/x/tools/go/exact"
@@ -58,6 +59,7 @@ func emitGoClass(mainPkg *ssa.Package) {
 	emitNamedConstants()
 	emitGlobals()
 	emitGoClassEnd(mainPkg)
+	WriteAsClass("Go", "")
 }
 
 // special constant name used in TARDIS Go to put text in the header of files
@@ -72,22 +74,17 @@ const pogoHeader = "tardisgoHeader"
 
 // emit the standard file header for target language
 func emitFileStart() {
-	/* TODO - add some sort of dated preamble, perhaps including something like:
-	for _, pkg := range rootProgram.PackagesByPath {
-		// Print out the package info.
-		pkg.DumpTo(os.Stdout)
-		fmt.Println()
-	}
-	*/
 	hxPkg := ""
 	l := TargetLang
 	ph := LanguageList[l].HeaderConstVarName
 	targetPackage := LanguageList[l].PackageConstVarName
 	header := ""
 	allPack := rootProgram.AllPackages()
-	for pkgIdx := range allPack {
-		pkg := allPack[pkgIdx]
-		for mName, mem := range pkg.Members {
+	sort.Sort(PackageSorter(allPack))
+	for _, pkg := range allPack {
+		allMem := MemberNamesSorted(pkg)
+		for _, mName := range allMem {
+			mem := pkg.Members[mName]
 			if mem.Token() == token.CONST {
 				switch mName {
 				case ph, pogoHeader: // either the language-specific constant, or the standard one
@@ -144,6 +141,7 @@ func emitFileEnd() {
 	}
 	emitComment("Package List:")
 	allPack := rootProgram.AllPackages()
+	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
 		emitComment(" " + allPack[pkgIdx].String())
 	}

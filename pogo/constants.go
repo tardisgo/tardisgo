@@ -7,6 +7,7 @@ package pogo
 import (
 	"fmt"
 	"go/token"
+	"sort"
 	"strconv"
 
 	"golang.org/x/tools/go/exact"
@@ -16,9 +17,12 @@ import (
 // emit the constant declarations
 func emitNamedConstants() {
 	allPack := rootProgram.AllPackages()
+	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
 		pkg := allPack[pkgIdx]
-		for mName, mem := range pkg.Members {
+		allMem := MemberNamesSorted(pkg)
+		for _, mName := range allMem {
+			mem := pkg.Members[mName]
 			if mem.Token() == token.CONST {
 				lit := mem.(*ssa.NamedConst).Value
 				posStr := CodePosition(lit.Pos())

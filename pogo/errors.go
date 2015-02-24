@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go/token"
 	"os"
+	"sort"
 )
 
 // TODO remove all global scope
@@ -66,6 +67,12 @@ type PosHashFileStruct struct {
 	BasePosHash int    // The base posHash value for this file.
 }
 
+type posHashFileSorter []PosHashFileStruct
+
+func (a posHashFileSorter) Len() int           { return len(a) }
+func (a posHashFileSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a posHashFileSorter) Less(i, j int) bool { return a[i].FileName < a[j].FileName }
+
 // PosHashFileList holds the list of input go files with their posHash information
 var PosHashFileList = make([]PosHashFileStruct, 0)
 
@@ -75,6 +82,7 @@ func setupPosHash() {
 		PosHashFileList = append(PosHashFileList, PosHashFileStruct{FileName: fRef.Name(), LineCount: fRef.LineCount()})
 		return true
 	})
+	sort.Sort(posHashFileSorter(PosHashFileList))
 	for f := range PosHashFileList {
 		if f > 0 {
 			PosHashFileList[f].BasePosHash = PosHashFileList[f-1].BasePosHash + PosHashFileList[f-1].LineCount

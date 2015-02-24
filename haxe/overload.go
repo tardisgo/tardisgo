@@ -5,13 +5,11 @@
 package haxe
 
 import (
-	"fmt"
 	"go/ast"
 
-	"unsafe"
-
 	"golang.org/x/tools/go/ssa"
-	//"fmt"
+
+	"github.com/tardisgo/tardisgo/pogo"
 )
 
 var builtinOverloadMap = map[string]string{
@@ -88,7 +86,7 @@ func (l langType) FuncName(fnx *ssa.Function) string {
 	if fnx.Signature.Recv() != nil {
 		pn = fnx.Signature.Recv().Type().String() // NOTE no use of underlying here
 	} else {
-		pn = fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(fnx)))
+		pn, _ = pogo.FuncPathName(fnx) //fmt.Sprintf("fn%d", fnx.Pos())
 		fn := ssa.EnclosingFunction(fnx.Package(), []ast.Node{fnx.Syntax()})
 		if fn == nil {
 			fn = fnx

@@ -6,6 +6,7 @@ package haxe
 
 import (
 	"fmt"
+	"sort"
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
@@ -69,7 +70,13 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 		}
 
 		ret += "switch(_Phi) { \n"
-		for phi, opt := range opts {
+		idxs := make([]int, 0, len(opts))
+		for phi := range opts {
+			idxs = append(idxs, phi)
+		}
+		sort.Ints(idxs)
+		for _, phi := range idxs {
+			opt := opts[phi]
 			ret += fmt.Sprintf("\tcase %d:\n", phi)
 			for _, ent := range opt {
 				xx := ""

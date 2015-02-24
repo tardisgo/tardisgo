@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"strings"
 	"unicode"
-	"unsafe"
 
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
@@ -99,11 +98,12 @@ func (langType) FileStart(haxePackageName, headerText string) string {
 	if haxePackageName == "" {
 		haxePackageName = "tardis"
 	}
-	return "package " + haxePackageName + ";\n" + imports + headerText + tardisgoLicence + haxeruntime
+	return "package " + haxePackageName + ";\n" + imports + headerText + tardisgoLicence
 }
 
+// TODO rename
 func (langType) FileEnd() string {
-	return ""
+	return haxeruntime() // this deals with the individual runtime class files
 }
 
 var nextReturnAddress int       // what number is the next pseudo block return address?
@@ -134,7 +134,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	if isPublic {
 		ret += fmt.Sprintf(`#if js @:expose("Go_%s") #end `, l.LangName(packageName, objectName))
 	} else {
-		ret += "#if (!php) private #end " // for some reason making classes private is a problem in php
+		//	ret += "#if (!php) private #end " // for some reason making classes private is a problem in php
 	}
 	ret += fmt.Sprintf("class %s extends StackFrameBasis implements StackFrame { %s\n",
 		currentfnName, l.Comment(position))
@@ -453,7 +453,8 @@ func (l langType) RunEnd(fn *ssa.Function) string {
 }
 func (l langType) FuncEnd(fn *ssa.Function) string {
 	// actually, the end of the class for that Go function
-	return `}`
+	pogo.WriteAsClass(currentfnName, "}\n")
+	return ``
 }
 
 // utiltiy to set-up a haxe variable
@@ -551,7 +552,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	case *ssa.FreeVar:
 		return `_bds.` + v.(*ssa.FreeVar).Name()
 	case *ssa.Function:
-		pk := fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(v.(*ssa.Function))))
+		pk, _ := pogo.FuncPathName(v.(*ssa.Function))  //fmt.Sprintf("fn%d", v.(*ssa.Function).Pos())
 		if v.(*ssa.Function).Signature.Recv() != nil { // it's a method
 			pn := v.(*ssa.Function).Signature.Recv().Pkg().Path() // was .Name()
 			pk = pn + "." + v.(*ssa.Function).Signature.Recv().Name()
@@ -865,7 +866,7 @@ func getPackagePath(cc *ssa.CallCommon) string {
 	// This code to find the package name
 	var pn string = "UNKNOWN" // package name
 	if cc.StaticCallee() != nil {
-		pn = fmt.Sprintf("fn%d", uintptr(unsafe.Pointer(cc.StaticCallee())))
+		pn, _ = pogo.FuncPathName(cc.StaticCallee()) // was =fmt.Sprintf("fn%d", cc.StaticCallee().Pos())
 	}
 	if cc != nil {
 		if cc.Method != nil {
