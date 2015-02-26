@@ -1711,8 +1711,8 @@ func testUnsafe() { // adapted from http://stackoverflow.com/questions/19721008/
 
 func tc64(f float64) float64 {
 	if runtime.GOOS == "nacl" {
-		return hx.CallFloat("", "Go_haxegoruntime_FFloat64frombits.callFromHaxe", 1,
-			hx.CallDynamic("", "Go_haxegoruntime_FFloat64bits.callFromHaxe", 1, f))
+		return hx.CallFloat("", "Go_haxegoruntime_FFloat64frombits.hx", 1,
+			hx.CallDynamic("", "Go_haxegoruntime_FFloat64bits.hx", 1, f))
 	}
 	return f
 }

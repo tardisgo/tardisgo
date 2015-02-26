@@ -67,15 +67,22 @@ var traceFlag = flag.Bool("trace", false, "Output trace information for every bl
 var buidTags = flag.String("tags", "", "build tags separated by spaces")
 var tgoroot = flag.String("tgoroot", "", "set goroot to the given value")
 
+// TODO
+//var traceFlag = flag.Bool("v", false, "Verbose compiler mode (including files written)")
+//var hxPackFlag = flag.String("hxpack", "tardis", "Sets the Haxe package name to use")
+//var hxDirFlag = flag.String("hxdir", "tardis", "Sets the directory in which to output generated Haxe code")
+//var hxLibFlag = flag.Bool("hxlib", false, "Generates code suitable for use as a Haxe library (no Dead Code Elimination)")
+
 // TARDIS Go modification TODO review words here
 const usage = `SSA builder and TARDIS Go transpiler (experimental).
 Usage: tardisgo [<flag> ...] <args> ...
 A shameless copy of the ssadump utility, but also writes a 'Go.hx' Haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:
 % tardisgo hello.go
-Then to run the tardis/Go.hx file generated, type the command line: "haxe -main tardis.Go --interp", or whatever Haxe compilation options you want to use. 
+Then to run the tardis/Go.hx file generated, type the command line: "haxe -main tardis.Go -cp tardis --interp", or whatever Haxe compilation options you want to use. 
 (Note that to compile for PHP you currently need to add the haxe compilation option "--php-prefix tardisgo" to avoid name confilcts).
-use -help to display options
+
+Use -help to display other options.
 `
 const ignore = `
 Use -help flag to display options.
@@ -356,10 +363,10 @@ func doTestable(args []string) error {
 			}
 
 		case "math":
-			err := os.RemoveAll("tardis/cpp")
-			if err != nil {
-				fmt.Println("Error deleting existing '" + "tardis/cpp" + "' directory: " + err.Error())
-			}
+			//err := os.RemoveAll("tardis/cpp")
+			//if err != nil {
+			//	fmt.Println("Error deleting existing '" + "tardis/cpp" + "' directory: " + err.Error())
+			//}
 			mathCmds := [][][]string{
 				[][]string{
 					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
@@ -448,12 +455,12 @@ var targets = [][][]string{
 		[]string{"echo", `"PHP:"`},
 		[]string{"time", "php", "tardis/php/index.php"},
 	},
-	// TODO Seldom works, so removed
-	//[][]string{
-	//	[]string{"haxe", "-main", "tardis.Go", "-dce", "full", "-D", "safe", "-neko", "tardis/go.n"},
-	//	[]string{"echo", `"Neko (using safe mode):"`},
-	//	[]string{"time", "neko", "tardis/go.n"},
-	//},
+	// TODO Seldom works, so remove?
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-neko", "tardis/go.n"},
+		[]string{"echo", `"Neko (does not work for large code):"`},
+		[]string{"time", "neko", "tardis/go.n"},
+	},
 	// only really useful for testing, so can be run from the command line
 	[][]string{
 		[]string{"echo", ``}, // Output from this line is ignored

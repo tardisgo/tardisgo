@@ -119,7 +119,7 @@ Executing test: TestWriterReadFromWhileFull
 Executing test: TestWriterReset 
 
 Executing test: TestZeroReader 
-       15.26 real        16.69 user         0.25 sys
+       14.28 real        15.33 user         0.20 sys
 
 =========================================
 Unit Test (via C++):  bytes
@@ -256,7 +256,7 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
-       53.52 real        47.11 user        13.17 sys
+       53.72 real        47.69 user        12.32 sys
 
 =========================================
 Unit Test (via C++):  fmt
@@ -309,7 +309,7 @@ Executing test: TestStringer
 Executing test: TestStructPrinter 
 
 Executing test: TestWidthAndPrecision 
-        6.41 real         6.82 user         0.09 sys
+        6.47 real         6.94 user         0.08 sys
 
 =========================================
 Unit Test (via C++):  math
@@ -448,7 +448,7 @@ Executing test: TestYn
   
 Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2541  
 Yn test fails - TODO  
-        0.36 real         0.18 user         0.03 sys
+        0.29 real         0.17 user         0.02 sys
 
 =========================================
 Unit Test (via C++):  runtime
@@ -501,7 +501,7 @@ Executing test: TestSideEffectOrder
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-      127.20 real       140.38 user         1.77 sys
+      145.97 real       147.78 user         1.28 sys
 
 =========================================
 Unit Test (via C++):  sort
@@ -594,7 +594,7 @@ Executing test: TestStableBM
 Executing test: TestStableInts 
 
 Executing test: TestStrings 
-       17.13 real        18.65 user         0.24 sys
+       20.60 real        22.75 user         0.40 sys
 
 =========================================
 Unit Test (via C++):  strconv
@@ -678,7 +678,7 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/st
 Executing test: TestUitoa 
 
 Executing test: TestUnquote 
-      113.19 real       121.49 user         0.83 sys
+      116.13 real       127.41 user         1.19 sys
 
 =========================================
 Unit Test (via C++):  hash/adler32
@@ -689,7 +689,7 @@ Native Client nameservice: not implemented on Native Client
 testing.Main  
 
 Executing test: TestGolden 
-       20.17 real        10.14 user        10.36 sys
+       19.10 real        10.09 user         9.37 sys
 
 =========================================
 Unit Test (via C++):  hash/crc32
@@ -700,7 +700,7 @@ Native Client nameservice: not implemented on Native Client
 testing.Main  
 
 Executing test: TestGolden 
-        0.08 real         0.03 user         0.01 sys
+        0.07 real         0.03 user         0.00 sys
 
 =========================================
 Unit Test (via C++):  hash/crc64
@@ -711,7 +711,7 @@ Native Client nameservice: not implemented on Native Client
 testing.Main  
 
 Executing test: TestGolden 
-        0.08 real         0.02 user         0.01 sys
+        0.06 real         0.02 user         0.00 sys
 
 =========================================
 Unit Test (via C++):  hash/fnv
@@ -736,7 +736,30 @@ Executing test: TestIntegrity32a
 Executing test: TestIntegrity64 
 
 Executing test: TestIntegrity64a 
-        0.16 real         0.04 user         0.02 sys
+        0.15 real         0.04 user         0.02 sys
+
+=========================================
+Unit Test (via C++):  image/draw
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestClip 
+
+Executing test: TestDraw 
+
+Executing test: TestDrawOverlap 
+
+Executing test: TestFill 
+
+Executing test: TestFloydSteinbergCheckerboard 
+
+Executing test: TestNonZeroSrcPt 
+
+Executing test: TestPaletted 
+       33.27 real        35.22 user         0.32 sys
 
 =========================================
 Unit Test (via C++):  math/cmplx
@@ -789,7 +812,7 @@ Executing test: TestSqrt
 Executing test: TestTan 
 
 Executing test: TestTanh 
-        0.11 real         0.04 user         0.01 sys
+        0.09 real         0.04 user         0.01 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
@@ -887,7 +910,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       24.65 real        26.02 user         0.19 sys
+       24.73 real        26.41 user         0.25 sys
 
 =========================================
 Unit Test (via interpreter):  errors
@@ -901,7 +924,7 @@ testing.Main
 Executing test: TestErrorMethod 
 
 Executing test: TestNewEqual 
-        1.31 real         1.24 user         0.05 sys
+        1.40 real         1.33 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  flag
@@ -937,7 +960,7 @@ Usage of test:
   -b=0: usage
 
 Executing test: TestUserDefinedForCommandLine 
-       31.72 real        31.14 user         0.44 sys
+       30.76 real        30.30 user         0.38 sys
 
 =========================================
 Unit Test (via interpreter):  path
@@ -969,7 +992,7 @@ Executing test: TestJoin
 Executing test: TestMatch 
 
 Executing test: TestSplit 
-       11.63 real        11.42 user         0.21 sys
+       11.54 real        11.34 user         0.20 sys
 
 =========================================
 Unit Test (via interpreter):  strings
@@ -1065,7 +1088,7 @@ Executing test: TestUnreadRuneError
 Executing test: TestWriteStringError 
 
 Executing test: TestWriteTo 
-       91.78 real        90.53 user         0.93 sys
+       89.37 real        88.52 user         0.71 sys
 
 =========================================
 Unit Test (via interpreter):  unicode
@@ -1129,7 +1152,7 @@ Executing test: TestToTitleCase
 Executing test: TestToUpperCase 
 
 Executing test: TestTurkishCase 
-       32.90 real        32.36 user         0.44 sys
+       31.37 real        30.89 user         0.36 sys
 
 =========================================
 Unit Test (via interpreter):  container/heap
@@ -1153,7 +1176,7 @@ Executing test: TestRemove0
 Executing test: TestRemove1 
 
 Executing test: TestRemove2 
-        2.75 real         2.66 user         0.08 sys
+        2.79 real         2.70 user         0.07 sys
 
 =========================================
 Unit Test (via interpreter):  container/list
@@ -1183,7 +1206,7 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
-        1.57 real         1.50 user         0.05 sys
+        1.55 real         1.48 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  container/ring
@@ -1209,7 +1232,7 @@ Executing test: TestMoveEmptyRing
 Executing test: TestNew 
 
 Executing test: TestUnlink 
-       32.38 real        32.13 user         0.22 sys
+       35.20 real        34.82 user         0.26 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/ascii85
@@ -1237,7 +1260,7 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
-       17.71 real        17.41 user         0.27 sys
+       18.62 real        18.30 user         0.29 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base32
@@ -1267,7 +1290,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       18.76 real        18.47 user         0.27 sys
+       19.56 real        19.21 user         0.31 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base64
@@ -1301,7 +1324,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       26.64 real        26.25 user         0.35 sys
+       27.81 real        27.20 user         0.44 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/csv
@@ -1317,7 +1340,7 @@ Executing test: TestError
 Executing test: TestRead 
 
 Executing test: TestWrite 
-       31.92 real        31.40 user         0.43 sys
+       32.94 real        32.42 user         0.45 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/hex
@@ -1343,7 +1366,19 @@ Executing test: TestEncodeToString
 Executing test: TestInvalidErr 
 
 Executing test: TestInvalidStringErr 
-       27.76 real        27.36 user         0.36 sys
+       28.59 real        28.16 user         0.39 sys
+
+=========================================
+Unit Test (via interpreter):  image/color
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestRoundtrip 
+       15.59 real        15.46 user         0.10 sys
 
 =========================================
 Unit Test (via interpreter):  text/scanner
@@ -1375,7 +1410,7 @@ Executing test: TestScanSelectedMask
 Executing test: TestScanWhitespace 
 
 Executing test: TestScanZeroMode 
-       50.32 real        49.70 user         0.47 sys
+       52.95 real        52.15 user         0.61 sys
 
 =========================================
 Unit Test (via interpreter):  text/tabwriter
@@ -1391,7 +1426,7 @@ Executing test: Test
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
-       15.18 real        14.93 user         0.23 sys
+       16.30 real        15.94 user         0.25 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf8
@@ -1425,7 +1460,7 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-       19.10 real        18.78 user         0.26 sys
+       19.59 real        19.27 user         0.24 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf16
@@ -1447,7 +1482,7 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
-       15.05 real        14.67 user         0.28 sys
+       15.03 real        14.70 user         0.26 sys
 
 =====================
 All Unit Tests Passed

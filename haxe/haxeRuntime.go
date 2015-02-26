@@ -188,7 +188,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			if(Go.haxegoruntime_IInFF32fb.load_bool()) { // in the Float32frombits() function so don't recurse
 				return v;
 			} else {
-				return Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(v));
+				return Go_haxegoruntime_FFloat32frombits.hx(Go_haxegoruntime_FFloat32bits.hx(v));
 			}
 		#end
 	}

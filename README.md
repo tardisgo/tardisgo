@@ -23,7 +23,7 @@ Target medium-term use-case will be to make the wider Haxe ecosystem available t
 
 Target long-term use-cases (once the generated code and runtime environment is more efficient):
 - For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
-- For the Go community: write a library in Go and call it from  existing Haxe, JavaScript, ActionScript, Java, C# or PHP applications (in C++ you would just link as normal). 
+- For the Go community: write code in Go and call to and/or from existing Haxe, JavaScript, ActionScript, Java, C# or PHP applications (in C++ you would probably just link as normal through CGO). 
 
 For more background and on-line examples see the links from: http://tardisgo.github.io/
 
@@ -45,6 +45,7 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - flag (but no way to pass flags in yet)
 - fmt (only print side working so far, minor differences printing golang type names)
 - hash/adler32, hash/crc32, hash/crc64, hash/fnv
+- image/color, image/draw
 - math (Jn & Yn fail tests), math/cmplx
 - path
 - runtime (some general tests pass, NaN handled differently as a Map key)

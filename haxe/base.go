@@ -208,7 +208,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	}
 
 	// call from haxe (TODO: maybe run in a new goroutine)
-	ret += "public static function callFromHaxe( "
+	ret += "public static function hx( " // used to call this function from Haxe
 	for p := range fn.Params {
 		if p != 0 {
 			ret += ", "
@@ -966,7 +966,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		case "runtime_UUnzipTTestFFSS":
 			nextReturnAddress-- //decrement to set new return address for next call generation
 			if pogo.LanguageList[langIdx].TestFS != "" {
-				return `Go_syscall_UUnzipFFSS.callFromHaxe("` + pogo.LanguageList[langIdx].TestFS + `");`
+				return `Go_syscall_UUnzipFFSS.hx("` + pogo.LanguageList[langIdx].TestFS + `");`
 			}
 			return ""
 		//case "math_Inf":

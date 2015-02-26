@@ -277,17 +277,10 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 						case types.Float32:
 							// make sure we only compare the float32 bits
 							ret = "(" +
-								"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
+								"Go_haxegoruntime_FFloat32frombits.hx(Go_haxegoruntime_FFloat32bits.hx(" +
 								v1string + "))" + op +
-								"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
+								"Go_haxegoruntime_FFloat32frombits.hx(Go_haxegoruntime_FFloat32bits.hx(" +
 								v2string + "))" + ")"
-						//	ret = "(Force.floatCompare(" +
-						//		"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
-						//		v1string + "))," +
-						//		"Go_haxegoruntime_FFloat32frombits.callFromHaxe(Go_haxegoruntime_FFloat32bits.callFromHaxe(" +
-						//		v2string + "))" + ")" + op + "0)"
-						//case types.Float64:
-						//	ret = "(Force.floatCompare(" + v1string + "," + v2string + ")" + op + "0)"
 						default:
 							ret = "(" + v1string + op + v2string + ")"
 						}

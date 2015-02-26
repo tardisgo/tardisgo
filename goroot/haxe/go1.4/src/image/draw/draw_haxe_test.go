@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package draw
 
 import (
@@ -388,7 +390,7 @@ type embeddedPaletted struct {
 // TestPaletted tests that the drawPaletted function behaves the same
 // regardless of whether dst is an *image.Paletted.
 func TestPaletted(t *testing.T) {
-	f, err := os.Open("../testdata/video-001.png")
+	f, err := os.Open("testdata/video-001.png") // tardisgo change was ../
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}

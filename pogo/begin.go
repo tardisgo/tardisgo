@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"sort"
 	"strconv"
+	"strings"
 
 	"golang.org/x/tools/go/exact"
 	"golang.org/x/tools/go/ssa"
@@ -39,6 +40,7 @@ func EntryPoint(mainPkg *ssa.Package) error {
 	}
 
 	setupPosHash()
+	loadSpecialConsts()
 	emitFileStart()
 	emitFunctions()
 	emitGoClass(mainPackage)
@@ -64,16 +66,9 @@ func emitGoClass(mainPkg *ssa.Package) {
 
 // special constant name used in TARDIS Go to put text in the header of files
 const pogoHeader = "tardisgoHeader"
+const pogoLibList = "tardisgoLibList"
 
-// special constant name used in TARDIS Go to say where the runtime for the go standard libraries is located
-//const pogoLibRuntimePath = "tardisgoLibRuntimePath"
-
-// LibRuntimePath is required to stop the init function in runtime replacement functions being generated.
-// NOTE default value can be overwritten if required using the name in pogoLibRuntimePath see above in the code
-//var LibRuntimePath = "github.com/tardisgo/tardisgo/golibruntime"
-
-// emit the standard file header for target language
-func emitFileStart() {
+func loadSpecialConsts() {
 	hxPkg := ""
 	l := TargetLang
 	ph := LanguageList[l].HeaderConstVarName
@@ -112,24 +107,37 @@ func emitFileStart() {
 						LogError(CodePosition(lit.Pos()), "pogo",
 							fmt.Errorf("special targetPackage constant not a string"))
 					}
-					//case pogoLibRuntimePath:
-					//	lit := mem.(*ssa.NamedConst).Value
-					//	switch lit.Value.Kind() {
-					//	case exact.String:
-					//		lrp, err := strconv.Unquote(lit.Value.String())
-					//		if err != nil {
-					//			LogError(CodePosition(lit.Pos())+"Special LibRuntimePath constant ", "pogo", err)
-					//		}
-					//		LibRuntimePath = lrp
-					//	default:
-					//		LogError(CodePosition(lit.Pos()), "pogo",
-					//			fmt.Errorf("special targetPackage constant not a string"))
-					//	}
+				case pogoLibList:
+					lit := mem.(*ssa.NamedConst).Value
+					switch lit.Value.Kind() {
+					case exact.String:
+						lrp, err := strconv.Unquote(lit.Value.String())
+						if err != nil {
+							LogError(CodePosition(lit.Pos())+"Special "+pogoLibList+" constant ", "pogo", err)
+						}
+						LibListNoDCE = strings.Split(lrp, ",")
+						for lib := range LibListNoDCE {
+							LibListNoDCE[lib] = strings.TrimSpace(LibListNoDCE[lib])
+						}
+					default:
+						LogError(CodePosition(lit.Pos()), "pogo",
+							fmt.Errorf("special targetPackage constant not a string"))
+					}
 				}
 			}
 		}
 	}
-	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FileStart(hxPkg, header))
+	hxPkgName = hxPkg
+	headerText = header
+}
+
+var hxPkgName, headerText string
+var LibListNoDCE = []string{}
+
+// emit the standard file header for target language
+func emitFileStart() {
+	l := TargetLang
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FileStart(hxPkgName, headerText))
 }
 
 // emit the tail of the required language file

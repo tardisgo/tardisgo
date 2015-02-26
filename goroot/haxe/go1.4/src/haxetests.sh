@@ -12,7 +12,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in hash/adler32 hash/crc32 hash/crc64 hash/fnv math/cmplx sync/atomic
+for twolevels in hash/adler32 hash/crc32 hash/crc64 hash/fnv image/draw math/cmplx sync/atomic
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $twolevels 
@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/heap container/list container/ring encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex text/scanner text/tabwriter unicode/utf8 unicode/utf16 
+for twolevels in container/heap container/list container/ring encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex image/color text/scanner text/tabwriter unicode/utf8 unicode/utf16 
 do
 	echo "========================================="
 	echo "Unit Test (via interpreter): " $twolevels 

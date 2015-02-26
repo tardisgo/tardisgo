@@ -26,6 +26,7 @@ func emitFunctions() {
 	if LanguageList[TargetLang].TestFS != "" { // need to load file system
 		dceExceptions = append(dceExceptions, "syscall") // so that we keep UnzipFS()
 	}
+	dceExceptions = append(dceExceptions, LibListNoDCE...)
 	for _, ex := range dceExceptions {
 		exip := rootProgram.ImportedPackage(ex)
 		if exip != nil {
@@ -38,6 +39,20 @@ func emitFunctions() {
 		for df, db := range grMap {
 			if !db {
 				fmt.Println(df)
+			}
+		}
+	*/
+	/*
+		fmt.Println("DEBUG functions removed by Dead Code Eliminaiton:")
+		for _,pkg := range rootProgram.AllPackages() {
+			for _,mem := range pkg.Members {
+				fn,ok := mem.(*ssa.Function)
+				if ok {
+					_,found := fnMap[fn]
+					if !found {
+						println(fn.String())
+					}
+				}
 			}
 		}
 	*/
