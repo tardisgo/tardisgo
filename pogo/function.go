@@ -356,7 +356,7 @@ func GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 		}
 	}
 	if fn.Signature.Recv() != nil { // we have a method
-		pName = fn.Signature.Recv().Pkg().String() + ":" + fn.Signature.Recv().Type().String() // note no underlying()
+		pName = fn.Signature.Recv().Pkg().Name() + ":" + fn.Signature.Recv().Type().String() // note no underlying()
 		//pName = LanguageList[l].PackageOverloadReplace(pName)
 	}
 	return pName, mName
@@ -408,7 +408,7 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 	} else if callInfo.StaticCallee() != nil {
 		pName, _ := FuncPathName(callInfo.StaticCallee()) //fmt.Sprintf("fn%d", callInfo.StaticCallee().Pos())
 		if callInfo.Signature().Recv() != nil {
-			pName = callInfo.Signature().Recv().Pkg().String() + ":" + callInfo.Signature().Recv().Type().String() // no use of Underlying() here
+			pName = callInfo.Signature().Recv().Pkg().Name() + ":" + callInfo.Signature().Recv().Type().String() // no use of Underlying() here
 		} else {
 			pkg := callInfo.StaticCallee().Package()
 			if pkg != nil {

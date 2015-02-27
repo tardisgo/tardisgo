@@ -72,7 +72,7 @@ type Language interface {
 	Next(register string, v interface{}, isString bool, errorInfo string) string
 	Panic(v1 interface{}, errorInfo string, usesGr bool) string
 	TypeStart(*types.Named, string) string
-	TypeEnd(*types.Named, string) string
+	//TypeEnd(*types.Named, string) string
 	TypeAssert(Register string, X ssa.Value, AssertedType types.Type, CommaOk bool, errorInfo string) string
 	EmitTypeInfo() string
 	EmitInvoke(register string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string

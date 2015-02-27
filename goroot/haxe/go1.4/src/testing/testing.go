@@ -141,12 +141,14 @@ func Main(matchString func(pat, str string) (bool, error), tests []InternalTest,
 		badExit()
 	}
 	hx.Call("(cpp || cs || java || macro || neko || php || python)", "Sys.exit", 1, 0)
+	hx.Code("js", "untyped __js__('process.exit(0)');") // only works on Node
 }
 
 var hadError = false
 
 func badExit() {
 	hx.Call("(cpp || cs || java || macro || neko || php || python)", "Sys.exit", 1, 1)
+	hx.Code("js", "untyped __js__('process.exit(1)');") // only works on Node
 }
 
 func init() {

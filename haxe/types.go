@@ -1187,7 +1187,7 @@ func (l langType) EmitTypeInfo() string {
 										}
 										line += `case "` + funcObj.Name() + `": return `
 										fnToCall := l.LangName(
-											ms.At(m).Obj().Pkg().String()+":"+ms.At(m).Recv().String(),
+											ms.At(m).Obj().Pkg().Name()+":"+ms.At(m).Recv().String(),
 											funcObj.Name())
 										line += `Go_` + fnToCall + `.call` + "; "
 									}
@@ -1267,10 +1267,104 @@ func loadStoreSuffix(T types.Type, hasParameters bool) string {
 	return "(" // no suffix, so some dynamic type
 }
 
-// Type definitions are not carried through to Haxe, though they might be to other target languages
+// Type definitions are only carried through to Haxe to allow access to objects as if they were native Haxe classes.
+// TODO consider renaming
 func (l langType) TypeStart(nt *types.Named, err string) string {
+	typName := "GoType" + l.LangName("", nt.String())
+	ret := "public class " + typName
+	ret += " extends " + l.LangType(nt.Obj().Type(), false, nt.String()) + " {\n"
+	str, isStr := nt.Underlying().(*types.Struct)
+	if isStr {
+		ret += "public function new(){ super new(" + strconv.Itoa(int(haxeStdSizes.Sizeof(nt.Obj().Type()))) + "); }\n"
+		flds := []string{}
+		for f := 0; f < str.NumFields(); f++ {
+			fName := str.Field(f).Name()
+			if len(fName) > 0 {
+				if unicode.IsUpper(rune(fName[0])) {
+					flds = append(flds, fName)
+				}
+			}
+		}
+		sort.Strings(flds) // make sure the fields are always in the same order in the file
+		for _, fName := range flds {
+			for f := 0; f < str.NumFields(); f++ {
+				if fName == str.Field(f).Name() {
+					haxeTyp := l.LangType(str.Field(f).Type(), false, nt.String())
+					fOff := fieldOffset(str, f)
+					sfx := loadStoreSuffix(str.Field(f).Type(), true)
+					ret += fmt.Sprintf("public var _%s(get,set):%s;\n", fName, haxeTyp)
+					ret += fmt.Sprintf("function get__%s():%s { return get%s%d); }\n",
+						fName, haxeTyp, sfx, fOff)
+					ret += fmt.Sprintf("function set__%s(v:%s):%s { return set%s%d,v); }\n",
+						fName, haxeTyp, haxeTyp, sfx, fOff)
+					break
+				}
+			}
+		}
+	} else {
+		// TODO not yet sure how to handle named types that are not structs
+	}
+
+	meths := []string{}
+	for m := 0; m < nt.NumMethods(); m++ {
+		mName := nt.Method(m).Name()
+		if len(mName) > 0 {
+			if unicode.IsUpper(rune(mName[0])) {
+				meths = append(meths, mName)
+			}
+		}
+	}
+	sort.Strings(meths) // make sure the methods always appear in the same order in the file
+	for _, mName := range meths {
+		for m := 0; m < nt.NumMethods(); m++ {
+			meth := nt.Method(m)
+			if mName == meth.Name() {
+				sig := meth.Type().(*types.Signature)
+				ret += "// " + mName + " " + sig.String() + "\n"
+				ret += "public function _" + mName + "("
+				for p := 0; p < sig.Params().Len(); p++ {
+					if p > 0 {
+						ret += ","
+					}
+					ret += "_" + sig.Params().At(p).Name() + ":" + l.LangType(sig.Params().At(p).Type(), false, nt.String())
+				}
+				ret += ")"
+				switch sig.Results().Len() {
+				case 0:
+					ret += ":Void "
+				case 1:
+					ret += ":" + l.LangType(sig.Results().At(0).Type(), false, nt.String())
+				default:
+					ret += ":{"
+					for r := 0; r < sig.Results().Len(); r++ {
+						if r > 0 {
+							ret += ","
+						}
+						ret += fmt.Sprintf("r%d:%s", r, l.LangType(sig.Results().At(r).Type(), false, nt.String()))
+					}
+					ret += "}"
+				}
+				ret += "{\n\t"
+				if sig.Results().Len() > 0 {
+					ret += "return "
+				}
+				fnToCall := l.LangName(
+					nt.Obj().Pkg().Name()+":"+sig.Recv().String(),
+					meth.Name())
+				ret += `Go_` + fnToCall + `.hx(this`
+				for p := 0; p < sig.Params().Len(); p++ {
+					ret += ", _" + sig.Params().At(p).Name()
+				}
+				ret += ");\n}\n"
+			}
+		}
+	}
+
+	pogo.WriteAsClass(typName, ret+"}\n")
+
 	return "" //ret
 }
-func (langType) TypeEnd(nt *types.Named, err string) string {
-	return "" //"}"
-}
+
+//func (langType) TypeEnd(nt *types.Named, err string) string {
+//	return "" //"}"
+//}

@@ -220,6 +220,9 @@ func doTestable(args []string) error {
 	// TODO Eventually this might be better as an environment variable
 	if !(*runFlag) {
 		if *tgoroot == "" {
+			if conf.Build.GOPATH == "" {
+				return fmt.Errorf("GOPATH must be set")
+			}
 			conf.Build.GOROOT = strings.Split(conf.Build.GOPATH, ":")[0] + "/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4"
 		} else {
 			conf.Build.GOROOT = *tgoroot
@@ -388,7 +391,7 @@ func doTestable(args []string) error {
 				r.backChan <- true
 			}
 
-		case "interp", "cpp": // for running tests
+		case "interp", "cpp", "js": // for running tests
 			switch *allFlag {
 			case "interp":
 				go doTarget([][]string{
@@ -401,6 +404,12 @@ func doTestable(args []string) error {
 					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
+				}, results)
+			case "js":
+				go doTarget([][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
+					[]string{"time", "node", "tardis/go-fu.js"},
 				}, results)
 			}
 			r := <-results
@@ -501,7 +510,8 @@ func doTarget(cl [][]string, results chan resChan) {
 				c = append(c, TestFS)
 			}
 			if exe != "" {
-				out, lastErr := exec.Command(exe, c[1:]...).CombinedOutput()
+				out := []byte{}
+				out, lastErr = exec.Command(exe, c[1:]...).CombinedOutput()
 				if lastErr != nil {
 					out = append(out, []byte(lastErr.Error())...)
 				}

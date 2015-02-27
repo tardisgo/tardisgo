@@ -1,125 +1,1122 @@
 =========================================
-Unit Test (via C++):  bufio
+Unit Test (via interpreter):  errors
 =========================================
-"CPP:"
+
+"Neko (haxe --interp):"
 DEBUG: syscall.Syscall()2 
 Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
+Executing test: TestErrorMethod 
+
+Executing test: TestNewEqual 
+        2.36 real         2.18 user         0.11 sys
+
+=========================================
+Unit Test (via interpreter):  path
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestBase 
+
+Executing test: TestClean 
+
+Executing test: TestCleanMallocs 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/path/path_test.go 77  
+skipping malloc count in short mode  
+
+Executing test: TestDir 
+
+Executing test: TestExt 
+
+Executing test: TestIsAbs 
+
+Executing test: TestJoin 
+
+Executing test: TestMatch 
+
+Executing test: TestSplit 
+       17.91 real        17.43 user         0.35 sys
+
+=========================================
+Unit Test (via interpreter):  container/heap
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: Test 
+
+Executing test: TestFix 
+
+Executing test: TestInit0 
+
+Executing test: TestInit1 
+
+Executing test: TestRemove0 
+
+Executing test: TestRemove1 
+
+Executing test: TestRemove2 
+        4.96 real         4.71 user         0.15 sys
+
+=========================================
+Unit Test (via interpreter):  container/list
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestExtending 
+
+Executing test: TestInsertAfterUnknownMark 
+
+Executing test: TestInsertBeforeUnknownMark 
+
+Executing test: TestIssue4103 
+
+Executing test: TestIssue6349 
+
+Executing test: TestList 
+
+Executing test: TestMove 
+
+Executing test: TestMoveUnkownMark 
+
+Executing test: TestRemove 
+
+Executing test: TestZeroList 
+        2.80 real         2.63 user         0.11 sys
+
+=========================================
+Unit Test (via interpreter):  encoding/ascii85
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestBig 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeCorrupt 
+
+Executing test: TestDecoder 
+
+Executing test: TestDecoderBuffering 
+
+Executing test: TestDecoderInternalWhitespace 
+
+Executing test: TestEncode 
+
+Executing test: TestEncoder 
+
+Executing test: TestEncoderBuffering 
+       29.63 real        27.79 user         0.65 sys
+
+=========================================
+Unit Test (via interpreter):  encoding/base32
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestBig 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeCorrupt 
+
+Executing test: TestDecoder 
+
+Executing test: TestDecoderBuffering 
+
+Executing test: TestDecoderIssue4779 
+
+Executing test: TestEncode 
+
+Executing test: TestEncoder 
+
+Executing test: TestEncoderBuffering 
+
+Executing test: TestNewLineCharacters 
+       30.28 real        29.32 user         0.58 sys
+
+=========================================
+Unit Test (via interpreter):  image/color
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestRoundtrip 
+       25.35 real        24.85 user         0.27 sys
+
+=========================================
+Unit Test (via interpreter):  text/tabwriter
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: Test 
+
+Executing test: TestPanicDuringFlush 
+
+Executing test: TestPanicDuringWrite 
+       23.96 real        23.18 user         0.50 sys
+
+=========================================
+Unit Test (via interpreter):  unicode/utf8
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestConstants 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestDecodeSurrogateRune 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestFullRune 
+
+Executing test: TestIntConversion 
+
+Executing test: TestNegativeRune 
+
+Executing test: TestRuneCount 
+
+Executing test: TestRuneLen 
+
+Executing test: TestSequencing 
+
+Executing test: TestValid 
+
+Executing test: TestValidRune 
+       30.80 real        29.91 user         0.54 sys
+
+=========================================
+Unit Test (via interpreter):  unicode/utf16
+=========================================
+
+"Neko (haxe --interp):"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestConstants 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestEncode 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestIsSurrogate 
+       23.96 real        23.15 user         0.53 sys
+
+=========================================
+Unit Test (via js):  bufio
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
 Executing test: TestBadReader 
-
+Console.hx:22: 
 Executing test: TestBlankLines 
-
+Console.hx:22: 
 Executing test: TestBufferFull 
-
+Console.hx:22: 
 Executing test: TestDontLoopForever 
-
+Console.hx:22: 
 Executing test: TestEmptyLinesOK 
-
+Console.hx:22: 
 Executing test: TestEmptyTokens 
-
+Console.hx:22: 
 Executing test: TestErrAtEOF 
-
+Console.hx:22: 
 Executing test: TestLineTooLong 
-
+Console.hx:22: 
 Executing test: TestLinesAfterRead 
-
+Console.hx:22: 
 Executing test: TestNegativeRead 
-
+Console.hx:22: 
 Executing test: TestNewReaderSizeIdempotent 
-
+Console.hx:22: 
 Executing test: TestNewWriterSizeIdempotent 
-
+Console.hx:22: 
 Executing test: TestNonEOFWithEmptyRead 
-
+Console.hx:22: 
 Executing test: TestPeek 
-
+Console.hx:22: 
 Executing test: TestPeekThenUnreadRune 
-
+Console.hx:22: 
 Executing test: TestReadAfterLines 
-
+Console.hx:22: 
 Executing test: TestReadEmptyBuffer 
-
+Console.hx:22: 
 Executing test: TestReadLine 
-
+Console.hx:22: 
 Executing test: TestReadLineNewlines 
-
+Console.hx:22: 
 Executing test: TestReadLineNonNilLineOrError 
-
+Console.hx:22: 
 Executing test: TestReadRune 
-
+Console.hx:22: 
 Executing test: TestReadWriteRune 
-
+Console.hx:22: 
 Executing test: TestReader 
-
+Console.hx:22: 
 Executing test: TestReaderClearError 
-
+Console.hx:22: 
 Executing test: TestReaderReset 
-
+Console.hx:22: 
 Executing test: TestReaderSimple 
-
+Console.hx:22: 
 Executing test: TestReaderWriteTo 
-
+Console.hx:22: 
 Executing test: TestReaderWriteToErrors 
-
+Console.hx:22: 
 Executing test: TestScanByte 
-
+Console.hx:22: 
 Executing test: TestScanLineEmptyFinalLine 
-
+Console.hx:22: 
 Executing test: TestScanLineEmptyFinalLineWithCR 
-
+Console.hx:22: 
 Executing test: TestScanLineNoNewline 
-
+Console.hx:22: 
 Executing test: TestScanLineReturnButNoNewline 
-
+Console.hx:22: 
 Executing test: TestScanLineTooLong 
-
+Console.hx:22: 
 Executing test: TestScanLongLines 
-
+Console.hx:22: 
 Executing test: TestScanRune 
-
+Console.hx:22: 
 Executing test: TestScanWords 
-
+Console.hx:22: 
 Executing test: TestScanWordsExcessiveWhiteSpace 
-
+Console.hx:22: 
 Executing test: TestSpace 
-
+Console.hx:22: 
 Executing test: TestSplitError 
-
+Console.hx:22: 
 Executing test: TestUnreadByte 
-
+Console.hx:22: 
 Executing test: TestUnreadByteMultiple 
-
+Console.hx:22: 
 Executing test: TestUnreadByteOthers 
-
+Console.hx:22: 
 Executing test: TestUnreadRune 
-
+Console.hx:22: 
 Executing test: TestUnreadRuneAtEOF 
-
+Console.hx:22: 
 Executing test: TestUnreadRuneError 
-
+Console.hx:22: 
 Executing test: TestWriteErrors 
-
+Console.hx:22: 
 Executing test: TestWriteString 
-
+Console.hx:22: 
 Executing test: TestWriter 
-
+Console.hx:22: 
 Executing test: TestWriterReadFrom 
-
+Console.hx:22: 
 Executing test: TestWriterReadFromCounts 
-
+Console.hx:22: 
 Executing test: TestWriterReadFromErrNoProgress 
-
+Console.hx:22: 
 Executing test: TestWriterReadFromErrors 
-
+Console.hx:22: 
 Executing test: TestWriterReadFromUntilEOF 
-
+Console.hx:22: 
 Executing test: TestWriterReadFromWhileFull 
-
+Console.hx:22: 
 Executing test: TestWriterReset 
-
+Console.hx:22: 
 Executing test: TestZeroReader 
-       14.28 real        15.33 user         0.20 sys
+       80.44 real        79.12 user         1.32 sys
+
+=========================================
+Unit Test (via js):  flag
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestChangingArgs 
+Console.hx:22: 
+Executing test: TestEverything 
+Console.hx:22: 
+Executing test: TestFlagSetParse 
+Console.hx:22: 
+Executing test: TestGet 
+Console.hx:22: 
+Executing test: TestHelp 
+Console.hx:22: 
+Executing test: TestParse 
+Console.hx:22: 
+Executing test: TestSetOutput 
+Console.hx:22: 
+Executing test: TestUsage 
+Console.hx:15: flag provided but not defined: -x
+
+Console.hx:22: 
+Executing test: TestUserDefined 
+Console.hx:22: 
+Executing test: TestUserDefinedBool 
+Console.hx:15: flag needs an argument: -b
+
+Console.hx:15: Usage of test:
+
+Console.hx:15:   -b=0: usage
+
+Console.hx:22: 
+Executing test: TestUserDefinedForCommandLine 
+        1.88 real         1.70 user         0.18 sys
+
+=========================================
+Unit Test (via js):  fmt
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestBadVerbRecursion 
+Console.hx:22: 
+Executing test: TestBlank 
+Console.hx:22: 
+Executing test: TestBlankln 
+Console.hx:22: 
+Executing test: TestComplexFormatting 
+Console.hx:22: 
+Executing test: TestCountMallocs 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/fmt/fmt_haxe_test.go 914  
+Console.hx:22: skipping malloc count in short mode  
+Console.hx:22: 
+Executing test: TestEmptyMap 
+Console.hx:22: 
+Executing test: TestFlagParser 
+Console.hx:22: 
+Executing test: TestFmtInterface 
+Console.hx:22: 
+Executing test: TestFormatterFlags 
+Console.hx:22: 
+Executing test: TestFormatterPrintln 
+Console.hx:22: 
+Executing test: TestIsSpace 
+Console.hx:22: 
+Executing test: TestMapPrinter 
+Console.hx:22: 
+Executing test: TestNilDoesNotBecomeTyped 
+Console.hx:22: 
+Executing test: TestPanics 
+Console.hx:22: 
+Executing test: TestReorder 
+Console.hx:22: 
+Executing test: TestSlicePrinter 
+Console.hx:22: 
+Executing test: TestSprintf 
+Console.hx:22: 
+Executing test: TestStringer 
+Console.hx:22: 
+Executing test: TestStructPrinter 
+Console.hx:22: 
+Executing test: TestWidthAndPrecision 
+       70.03 real        68.97 user         1.13 sys
+
+=========================================
+Unit Test (via js):  math
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestAbs 
+Console.hx:22: 
+Executing test: TestAcos 
+Console.hx:22: 
+Executing test: TestAcosh 
+Console.hx:22: 
+Executing test: TestAsin 
+Console.hx:22: 
+Executing test: TestAsinh 
+Console.hx:22: 
+Executing test: TestAtan 
+Console.hx:22: 
+Executing test: TestAtan2 
+Console.hx:22: 
+Executing test: TestAtanh 
+Console.hx:22: 
+Executing test: TestCbrt 
+Console.hx:22: 
+Executing test: TestCeil 
+Console.hx:22: 
+Executing test: TestCopysign 
+Console.hx:22: 
+Executing test: TestCos 
+Console.hx:22: 
+Executing test: TestCosh 
+Console.hx:22: 
+Executing test: TestDim 
+Console.hx:22: 
+Executing test: TestErf 
+Console.hx:22: 
+Executing test: TestErfc 
+Console.hx:22: 
+Executing test: TestExp 
+Console.hx:22: 
+Executing test: TestExp2 
+Console.hx:22: 
+Executing test: TestExpm1 
+Console.hx:22: 
+Executing test: TestFloatMinMax 
+Console.hx:22: 
+Executing test: TestFloor 
+Console.hx:22: 
+Executing test: TestFrexp 
+Console.hx:22: 
+Executing test: TestGamma 
+Console.hx:22: 
+Executing test: TestHypot 
+Console.hx:22: 
+Executing test: TestHypotGo 
+Console.hx:22: 
+Executing test: TestIlogb 
+Console.hx:22: 
+Executing test: TestJ0 
+Console.hx:22: 
+Executing test: TestJ1 
+Console.hx:22: 
+Executing test: TestJn 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2176  
+Console.hx:22: Jn test fails - TODO  
+Console.hx:22: 
+Executing test: TestLargeCos 
+Console.hx:22: 
+Executing test: TestLargeSin 
+Console.hx:22: 
+Executing test: TestLargeSincos 
+Console.hx:22: 
+Executing test: TestLargeTan 
+Console.hx:22: 
+Executing test: TestLdexp 
+Console.hx:22: 
+Executing test: TestLgamma 
+Console.hx:22: 
+Executing test: TestLog 
+Console.hx:22: 
+Executing test: TestLog10 
+Console.hx:22: 
+Executing test: TestLog1p 
+Console.hx:22: 
+Executing test: TestLog2 
+Console.hx:22: 
+Executing test: TestLogb 
+Console.hx:22: 
+Executing test: TestMax 
+Console.hx:22: 
+Executing test: TestMin 
+Console.hx:22: 
+Executing test: TestMod 
+Console.hx:22: 
+Executing test: TestModf 
+Console.hx:22: 
+Executing test: TestNaN 
+Console.hx:22: 
+Executing test: TestNextafter32 
+Console.hx:22: 
+Executing test: TestNextafter64 
+Console.hx:22: 
+Executing test: TestPow 
+Console.hx:22: 
+Executing test: TestPow10 
+Console.hx:22: 
+Executing test: TestRemainder 
+Console.hx:22: 
+Executing test: TestSignbit 
+Console.hx:22: 
+Executing test: TestSin 
+Console.hx:22: 
+Executing test: TestSincos 
+Console.hx:22: 
+Executing test: TestSinh 
+Console.hx:22: 
+Executing test: TestSqrt 
+Console.hx:22: 
+Executing test: TestTan 
+Console.hx:22: 
+Executing test: TestTanh 
+Console.hx:22: 
+Executing test: TestTrunc 
+Console.hx:22: 
+Executing test: TestY0 
+Console.hx:22: 
+Executing test: TestY1 
+Console.hx:22: 
+Executing test: TestYn 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2541  
+Console.hx:22: Yn test fails - TODO  
+        2.58 real         2.40 user         0.17 sys
+
+=========================================
+Unit Test (via js):  sort
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestAdversary 
+Console.hx:22: 
+Executing test: TestCountSortOps 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:22: Counting skipped as non-verbose mode.  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Sort   100 191 597  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Sort   300 689 2422  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Sort   1000 2701 10590  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Sort   3000 9204 39728  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Sort   10000 35194 157232  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22: 
+Executing test: TestCountStableOps 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:22: Counting skipped as non-verbose mode.  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Stable 100 872 794  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Stable 300 3948 3031  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Stable 1000 19743 12345  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Stable 3000 82119 43322  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
+Console.hx:29:  { Stable 10000 348287 165609  } %s %8d elements: %11d Swap, %10d Less  
+Console.hx:22: 
+Executing test: TestFloat64s 
+Console.hx:22: 
+Executing test: TestHeapsortBM 
+Console.hx:22: 
+Executing test: TestInts 
+Console.hx:22: 
+Executing test: TestReverseSortIntSlice 
+Console.hx:22: 
+Executing test: TestSearch 
+Console.hx:22: 
+Executing test: TestSearchEfficiency 
+Console.hx:22: 
+Executing test: TestSearchExhaustive 
+Console.hx:22: 
+Executing test: TestSearchWrappers 
+Console.hx:22: 
+Executing test: TestSearchWrappersDontAlloc 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/search_test.go 130  
+Console.hx:22: skipping malloc count in short mode  
+Console.hx:22: 
+Executing test: TestSortBM 
+Console.hx:22: 
+Executing test: TestSortFloat64Slice 
+Console.hx:22: 
+Executing test: TestSortIntSlice 
+Console.hx:22: 
+Executing test: TestSortLarge_Random 
+Console.hx:22: 
+Executing test: TestSortStringSlice 
+Console.hx:22: 
+Executing test: TestStability 
+Console.hx:22: 
+Executing test: TestStableBM 
+Console.hx:22: 
+Executing test: TestStableInts 
+Console.hx:22: 
+Executing test: TestStrings 
+       46.89 real        46.29 user         0.72 sys
+
+=========================================
+Unit Test (via js):  strings
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestCaseConsistency 
+Console.hx:22: 
+Executing test: TestContains 
+Console.hx:22: 
+Executing test: TestContainsAny 
+Console.hx:22: 
+Executing test: TestContainsRune 
+Console.hx:22: 
+Executing test: TestCount 
+Console.hx:22: 
+Executing test: TestEmptyReaderConcurrent 
+Console.hx:22: 
+Executing test: TestEqualFold 
+Console.hx:22: 
+Executing test: TestExplode 
+Console.hx:22: 
+Executing test: TestFields 
+Console.hx:22: 
+Executing test: TestFieldsFunc 
+Console.hx:22: 
+Executing test: TestFinderCreation 
+Console.hx:22: 
+Executing test: TestFinderNext 
+Console.hx:22: 
+Executing test: TestGenericTrieBuilding 
+Console.hx:22: 
+Executing test: TestIndex 
+Console.hx:22: 
+Executing test: TestIndexAny 
+Console.hx:22: 
+Executing test: TestIndexFunc 
+Console.hx:22: 
+Executing test: TestIndexRune 
+Console.hx:22: 
+Executing test: TestLastIndex 
+Console.hx:22: 
+Executing test: TestLastIndexAny 
+Console.hx:22: 
+Executing test: TestMap 
+Console.hx:22: 
+Executing test: TestPickAlgorithm 
+Console.hx:22: 
+Executing test: TestReadAfterBigSeek 
+Console.hx:22: 
+Executing test: TestReadByte 
+Console.hx:22: 
+Executing test: TestReadRune 
+Console.hx:22: 
+Executing test: TestReader 
+Console.hx:22: 
+Executing test: TestReaderAt 
+Console.hx:22: 
+Executing test: TestReaderAtConcurrent 
+Console.hx:22: 
+Executing test: TestRepeat 
+Console.hx:22: 
+Executing test: TestReplace 
+Console.hx:22: 
+Executing test: TestReplacer 
+Console.hx:22: 
+Executing test: TestRunes 
+Console.hx:22: 
+Executing test: TestSpecialCase 
+Console.hx:22: 
+Executing test: TestSplit 
+Console.hx:22: 
+Executing test: TestSplitAfter 
+Console.hx:22: 
+Executing test: TestTitle 
+Console.hx:22: 
+Executing test: TestToLower 
+Console.hx:22: 
+Executing test: TestToUpper 
+Console.hx:22: 
+Executing test: TestTrim 
+Console.hx:22: 
+Executing test: TestTrimFunc 
+Console.hx:22: 
+Executing test: TestTrimSpace 
+Console.hx:22: 
+Executing test: TestUnreadRuneError 
+Console.hx:22: 
+Executing test: TestWriteStringError 
+Console.hx:22: 
+Executing test: TestWriteTo 
+       31.31 real        30.72 user         0.64 sys
+
+=========================================
+Unit Test (via js):  unicode
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestCalibrate 
+Console.hx:22: 
+Executing test: TestCategories 
+Console.hx:22: 
+Executing test: TestDigit 
+Console.hx:22: 
+Executing test: TestDigitOptimization 
+Console.hx:22: 
+Executing test: TestIsControlLatin1 
+Console.hx:22: 
+Executing test: TestIsGraphicLatin1 
+Console.hx:22: 
+Executing test: TestIsLetter 
+Console.hx:22: 
+Executing test: TestIsLetterLatin1 
+Console.hx:22: 
+Executing test: TestIsLowerLatin1 
+Console.hx:22: 
+Executing test: TestIsPrintLatin1 
+Console.hx:22: 
+Executing test: TestIsPunctLatin1 
+Console.hx:22: 
+Executing test: TestIsSpace 
+Console.hx:22: 
+Executing test: TestIsSpaceLatin1 
+Console.hx:22: 
+Executing test: TestIsSymbolLatin1 
+Console.hx:22: 
+Executing test: TestIsUpper 
+Console.hx:22: 
+Executing test: TestIsUpperLatin1 
+Console.hx:22: 
+Executing test: TestLatinOffset 
+Console.hx:22: 
+Executing test: TestLetterOptimizations 
+Console.hx:22: 
+Executing test: TestNumberLatin1 
+Console.hx:22: 
+Executing test: TestProperties 
+Console.hx:22: 
+Executing test: TestScripts 
+Console.hx:22: 
+Executing test: TestSimpleFold 
+Console.hx:22: 
+Executing test: TestTo 
+Console.hx:22: 
+Executing test: TestToLowerCase 
+Console.hx:22: 
+Executing test: TestToTitleCase 
+Console.hx:22: 
+Executing test: TestToUpperCase 
+Console.hx:22: 
+Executing test: TestTurkishCase 
+        2.19 real         2.01 user         0.18 sys
+
+=========================================
+Unit Test (via js):  container/ring
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestCornerCases 
+Console.hx:22: 
+Executing test: TestLink1 
+Console.hx:22: 
+Executing test: TestLink2 
+Console.hx:22: 
+Executing test: TestLink3 
+Console.hx:22: 
+Executing test: TestLinkUnlink 
+Console.hx:22: 
+Executing test: TestMoveEmptyRing 
+Console.hx:22: 
+Executing test: TestNew 
+Console.hx:22: 
+Executing test: TestUnlink 
+        3.05 real         2.91 user         0.14 sys
+
+=========================================
+Unit Test (via js):  encoding/base64
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestBig 
+Console.hx:22: 
+Executing test: TestDecode 
+Console.hx:22: 
+Executing test: TestDecodeCorrupt 
+Console.hx:22: 
+Executing test: TestDecoder 
+Console.hx:22: 
+Executing test: TestDecoderBuffering 
+Console.hx:22: 
+Executing test: TestDecoderIssue3577 
+Console.hx:22: 
+Executing test: TestDecoderIssue4779 
+Console.hx:22: 
+Executing test: TestDecoderIssue7733 
+Console.hx:22: 
+Executing test: TestEncode 
+Console.hx:22: 
+Executing test: TestEncoder 
+Console.hx:22: 
+Executing test: TestEncoderBuffering 
+Console.hx:22: 
+Executing test: TestNewLineCharacters 
+        1.90 real         1.75 user         0.15 sys
+
+=========================================
+Unit Test (via js):  encoding/csv
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestError 
+Console.hx:22: 
+Executing test: TestRead 
+Console.hx:22: 
+Executing test: TestWrite 
+        2.46 real         2.22 user         0.22 sys
+
+=========================================
+Unit Test (via js):  encoding/hex
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestDecode 
+Console.hx:22: 
+Executing test: TestDecodeString 
+Console.hx:22: 
+Executing test: TestDump 
+Console.hx:22: 
+Executing test: TestDumper 
+Console.hx:22: 
+Executing test: TestEncode 
+Console.hx:22: 
+Executing test: TestEncodeToString 
+Console.hx:22: 
+Executing test: TestInvalidErr 
+Console.hx:22: 
+Executing test: TestInvalidStringErr 
+        1.88 real         1.69 user         0.17 sys
+
+=========================================
+Unit Test (via js):  hash/adler32
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestGolden 
+       12.40 real        12.14 user         0.27 sys
+
+=========================================
+Unit Test (via js):  hash/crc32
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestGolden 
+        0.32 real         0.28 user         0.04 sys
+
+=========================================
+Unit Test (via js):  hash/crc64
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestGolden 
+        0.33 real         0.28 user         0.04 sys
+
+=========================================
+Unit Test (via js):  hash/fnv
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestGolden32 
+Console.hx:22: 
+Executing test: TestGolden32a 
+Console.hx:22: 
+Executing test: TestGolden64 
+Console.hx:22: 
+Executing test: TestGolden64a 
+Console.hx:22: 
+Executing test: TestIntegrity32 
+Console.hx:22: 
+Executing test: TestIntegrity32a 
+Console.hx:22: 
+Executing test: TestIntegrity64 
+Console.hx:22: 
+Executing test: TestIntegrity64a 
+        1.00 real         0.89 user         0.11 sys
+
+=========================================
+Unit Test (via js):  image/draw
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestClip 
+Console.hx:22: 
+Executing test: TestDraw 
+Console.hx:22: 
+Executing test: TestDrawOverlap 
+Console.hx:22: 
+Executing test: TestFill 
+Console.hx:22: 
+Executing test: TestFloydSteinbergCheckerboard 
+Console.hx:22: 
+Executing test: TestNonZeroSrcPt 
+Console.hx:22: 
+Executing test: TestPaletted 
+      563.39 real       559.52 user         6.22 sys
+
+=========================================
+Unit Test (via js):  math/cmplx
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestAbs 
+Console.hx:22: 
+Executing test: TestAcos 
+Console.hx:22: 
+Executing test: TestAcosh 
+Console.hx:22: 
+Executing test: TestAsin 
+Console.hx:22: 
+Executing test: TestAsinh 
+Console.hx:22: 
+Executing test: TestAtan 
+Console.hx:22: 
+Executing test: TestAtanh 
+Console.hx:22: 
+Executing test: TestConj 
+Console.hx:22: 
+Executing test: TestCos 
+Console.hx:22: 
+Executing test: TestCosh 
+Console.hx:22: 
+Executing test: TestExp 
+Console.hx:22: 
+Executing test: TestIsNaN 
+Console.hx:22: 
+Executing test: TestLog 
+Console.hx:22: 
+Executing test: TestLog10 
+Console.hx:22: 
+Executing test: TestPolar 
+Console.hx:22: 
+Executing test: TestPow 
+Console.hx:22: 
+Executing test: TestRect 
+Console.hx:22: 
+Executing test: TestSin 
+Console.hx:22: 
+Executing test: TestSinh 
+Console.hx:22: 
+Executing test: TestSqrt 
+Console.hx:22: 
+Executing test: TestTan 
+Console.hx:22: 
+Executing test: TestTanh 
+        0.55 real         0.50 user         0.04 sys
+
+=========================================
+Unit Test (via js):  text/scanner
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: DEBUG: syscall.Syscall()2 
+Console.hx:22: Native Client nameservice: not implemented on Native Client 
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestError 
+Console.hx:22: 
+Executing test: TestIOError 
+Console.hx:22: 
+Executing test: TestNext 
+Console.hx:22: 
+Executing test: TestPos 
+Console.hx:22: 
+Executing test: TestPosition 
+Console.hx:22: 
+Executing test: TestScan 
+Console.hx:22: 
+Executing test: TestScanCustomIdent 
+Console.hx:22: 
+Executing test: TestScanNext 
+Console.hx:22: 
+Executing test: TestScanSelectedMask 
+Console.hx:22: 
+Executing test: TestScanWhitespace 
+Console.hx:22: 
+Executing test: TestScanZeroMode 
+        4.82 real         4.64 user         0.19 sys
 
 =========================================
 Unit Test (via C++):  bytes
@@ -256,199 +1253,7 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
-       53.72 real        47.69 user        12.32 sys
-
-=========================================
-Unit Test (via C++):  fmt
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestBadVerbRecursion 
-
-Executing test: TestBlank 
-
-Executing test: TestBlankln 
-
-Executing test: TestComplexFormatting 
-
-Executing test: TestCountMallocs 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/fmt/fmt_haxe_test.go 914  
-skipping malloc count in short mode  
-
-Executing test: TestEmptyMap 
-
-Executing test: TestFlagParser 
-
-Executing test: TestFmtInterface 
-
-Executing test: TestFormatterFlags 
-
-Executing test: TestFormatterPrintln 
-
-Executing test: TestIsSpace 
-
-Executing test: TestMapPrinter 
-
-Executing test: TestNilDoesNotBecomeTyped 
-
-Executing test: TestPanics 
-
-Executing test: TestReorder 
-
-Executing test: TestSlicePrinter 
-
-Executing test: TestSprintf 
-
-Executing test: TestStringer 
-
-Executing test: TestStructPrinter 
-
-Executing test: TestWidthAndPrecision 
-        6.47 real         6.94 user         0.08 sys
-
-=========================================
-Unit Test (via C++):  math
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestAbs 
-
-Executing test: TestAcos 
-
-Executing test: TestAcosh 
-
-Executing test: TestAsin 
-
-Executing test: TestAsinh 
-
-Executing test: TestAtan 
-
-Executing test: TestAtan2 
-
-Executing test: TestAtanh 
-
-Executing test: TestCbrt 
-
-Executing test: TestCeil 
-
-Executing test: TestCopysign 
-
-Executing test: TestCos 
-
-Executing test: TestCosh 
-
-Executing test: TestDim 
-
-Executing test: TestErf 
-
-Executing test: TestErfc 
-
-Executing test: TestExp 
-
-Executing test: TestExp2 
-
-Executing test: TestExpm1 
-
-Executing test: TestFloatMinMax 
-
-Executing test: TestFloor 
-
-Executing test: TestFrexp 
-
-Executing test: TestGamma 
-
-Executing test: TestHypot 
-
-Executing test: TestHypotGo 
-
-Executing test: TestIlogb 
-
-Executing test: TestJ0 
-
-Executing test: TestJ1 
-
-Executing test: TestJn 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2176  
-Jn test fails - TODO  
-
-Executing test: TestLargeCos 
-
-Executing test: TestLargeSin 
-
-Executing test: TestLargeSincos 
-
-Executing test: TestLargeTan 
-
-Executing test: TestLdexp 
-
-Executing test: TestLgamma 
-
-Executing test: TestLog 
-
-Executing test: TestLog10 
-
-Executing test: TestLog1p 
-
-Executing test: TestLog2 
-
-Executing test: TestLogb 
-
-Executing test: TestMax 
-
-Executing test: TestMin 
-
-Executing test: TestMod 
-
-Executing test: TestModf 
-
-Executing test: TestNaN 
-
-Executing test: TestNextafter32 
-
-Executing test: TestNextafter64 
-
-Executing test: TestPow 
-
-Executing test: TestPow10 
-
-Executing test: TestRemainder 
-
-Executing test: TestSignbit 
-
-Executing test: TestSin 
-
-Executing test: TestSincos 
-
-Executing test: TestSinh 
-
-Executing test: TestSqrt 
-
-Executing test: TestTan 
-
-Executing test: TestTanh 
-
-Executing test: TestTrunc 
-
-Executing test: TestY0 
-
-Executing test: TestY1 
-
-Executing test: TestYn 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2541  
-Yn test fails - TODO  
-        0.29 real         0.17 user         0.02 sys
+       90.27 real        79.00 user        23.43 sys
 
 =========================================
 Unit Test (via C++):  runtime
@@ -501,100 +1306,7 @@ Executing test: TestSideEffectOrder
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-      145.97 real       147.78 user         1.28 sys
-
-=========================================
-Unit Test (via C++):  sort
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestAdversary 
-
-Executing test: TestCountSortOps 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
-Counting skipped as non-verbose mode.  
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Sort   100 191 597  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Sort   300 689 2422  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Sort   1000 2701 10590  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Sort   3000 9204 39728  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Sort   10000 35194 157232  } %s %8d elements: %11d Swap, %10d Less  
-Executing test: TestCountStableOps 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
-Counting skipped as non-verbose mode.  
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Stable 100 872 794  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Stable 300 3948 3031  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Stable 1000 19743 12345  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Stable 3000 82119 43322  } %s %8d elements: %11d Swap, %10d Less    
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/sort_test.go 494  
- { Stable 10000 348287 165609  } %s %8d elements: %11d Swap, %10d Less  
-Executing test: TestFloat64s 
-
-Executing test: TestHeapsortBM 
-
-Executing test: TestInts 
-
-Executing test: TestReverseSortIntSlice 
-
-Executing test: TestSearch 
-
-Executing test: TestSearchEfficiency 
-
-Executing test: TestSearchExhaustive 
-
-Executing test: TestSearchWrappers 
-
-Executing test: TestSearchWrappersDontAlloc 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/sort/search_test.go 130  
-skipping malloc count in short mode  
-
-Executing test: TestSortBM 
-
-Executing test: TestSortFloat64Slice 
-
-Executing test: TestSortIntSlice 
-
-Executing test: TestSortLarge_Random 
-
-Executing test: TestSortStringSlice 
-
-Executing test: TestStability 
-
-Executing test: TestStableBM 
-
-Executing test: TestStableInts 
-
-Executing test: TestStrings 
-       20.60 real        22.75 user         0.40 sys
+      182.96 real       190.15 user         2.06 sys
 
 =========================================
 Unit Test (via C++):  strconv
@@ -678,141 +1390,7 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/st
 Executing test: TestUitoa 
 
 Executing test: TestUnquote 
-      116.13 real       127.41 user         1.19 sys
-
-=========================================
-Unit Test (via C++):  hash/adler32
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestGolden 
-       19.10 real        10.09 user         9.37 sys
-
-=========================================
-Unit Test (via C++):  hash/crc32
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestGolden 
-        0.07 real         0.03 user         0.00 sys
-
-=========================================
-Unit Test (via C++):  hash/crc64
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestGolden 
-        0.06 real         0.02 user         0.00 sys
-
-=========================================
-Unit Test (via C++):  hash/fnv
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestGolden32 
-
-Executing test: TestGolden32a 
-
-Executing test: TestGolden64 
-
-Executing test: TestGolden64a 
-
-Executing test: TestIntegrity32 
-
-Executing test: TestIntegrity32a 
-
-Executing test: TestIntegrity64 
-
-Executing test: TestIntegrity64a 
-        0.15 real         0.04 user         0.02 sys
-
-=========================================
-Unit Test (via C++):  image/draw
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestClip 
-
-Executing test: TestDraw 
-
-Executing test: TestDrawOverlap 
-
-Executing test: TestFill 
-
-Executing test: TestFloydSteinbergCheckerboard 
-
-Executing test: TestNonZeroSrcPt 
-
-Executing test: TestPaletted 
-       33.27 real        35.22 user         0.32 sys
-
-=========================================
-Unit Test (via C++):  math/cmplx
-=========================================
-"CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestAbs 
-
-Executing test: TestAcos 
-
-Executing test: TestAcosh 
-
-Executing test: TestAsin 
-
-Executing test: TestAsinh 
-
-Executing test: TestAtan 
-
-Executing test: TestAtanh 
-
-Executing test: TestConj 
-
-Executing test: TestCos 
-
-Executing test: TestCosh 
-
-Executing test: TestExp 
-
-Executing test: TestIsNaN 
-
-Executing test: TestLog 
-
-Executing test: TestLog10 
-
-Executing test: TestPolar 
-
-Executing test: TestPow 
-
-Executing test: TestRect 
-
-Executing test: TestSin 
-
-Executing test: TestSinh 
-
-Executing test: TestSqrt 
-
-Executing test: TestTan 
-
-Executing test: TestTanh 
-        0.09 real         0.04 user         0.01 sys
+      171.06 real       186.11 user         2.01 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
@@ -910,579 +1488,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       24.73 real        26.41 user         0.25 sys
-
-=========================================
-Unit Test (via interpreter):  errors
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestErrorMethod 
-
-Executing test: TestNewEqual 
-        1.40 real         1.33 user         0.05 sys
-
-=========================================
-Unit Test (via interpreter):  flag
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestChangingArgs 
-
-Executing test: TestEverything 
-
-Executing test: TestFlagSetParse 
-
-Executing test: TestGet 
-
-Executing test: TestHelp 
-
-Executing test: TestParse 
-
-Executing test: TestSetOutput 
-
-Executing test: TestUsage 
-flag provided but not defined: -x
-
-Executing test: TestUserDefined 
-
-Executing test: TestUserDefinedBool 
-flag needs an argument: -b
-Usage of test:
-  -b=0: usage
-
-Executing test: TestUserDefinedForCommandLine 
-       30.76 real        30.30 user         0.38 sys
-
-=========================================
-Unit Test (via interpreter):  path
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestBase 
-
-Executing test: TestClean 
-
-Executing test: TestCleanMallocs 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/path/path_test.go 77  
-skipping malloc count in short mode  
-
-Executing test: TestDir 
-
-Executing test: TestExt 
-
-Executing test: TestIsAbs 
-
-Executing test: TestJoin 
-
-Executing test: TestMatch 
-
-Executing test: TestSplit 
-       11.54 real        11.34 user         0.20 sys
-
-=========================================
-Unit Test (via interpreter):  strings
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestCaseConsistency 
-
-Executing test: TestContains 
-
-Executing test: TestContainsAny 
-
-Executing test: TestContainsRune 
-
-Executing test: TestCount 
-
-Executing test: TestEmptyReaderConcurrent 
-
-Executing test: TestEqualFold 
-
-Executing test: TestExplode 
-
-Executing test: TestFields 
-
-Executing test: TestFieldsFunc 
-
-Executing test: TestFinderCreation 
-
-Executing test: TestFinderNext 
-
-Executing test: TestGenericTrieBuilding 
-
-Executing test: TestIndex 
-
-Executing test: TestIndexAny 
-
-Executing test: TestIndexFunc 
-
-Executing test: TestIndexRune 
-
-Executing test: TestLastIndex 
-
-Executing test: TestLastIndexAny 
-
-Executing test: TestMap 
-
-Executing test: TestPickAlgorithm 
-
-Executing test: TestReadAfterBigSeek 
-
-Executing test: TestReadByte 
-
-Executing test: TestReadRune 
-
-Executing test: TestReader 
-
-Executing test: TestReaderAt 
-
-Executing test: TestReaderAtConcurrent 
-
-Executing test: TestRepeat 
-
-Executing test: TestReplace 
-
-Executing test: TestReplacer 
-
-Executing test: TestRunes 
-
-Executing test: TestSpecialCase 
-
-Executing test: TestSplit 
-
-Executing test: TestSplitAfter 
-
-Executing test: TestTitle 
-
-Executing test: TestToLower 
-
-Executing test: TestToUpper 
-
-Executing test: TestTrim 
-
-Executing test: TestTrimFunc 
-
-Executing test: TestTrimSpace 
-
-Executing test: TestUnreadRuneError 
-
-Executing test: TestWriteStringError 
-
-Executing test: TestWriteTo 
-       89.37 real        88.52 user         0.71 sys
-
-=========================================
-Unit Test (via interpreter):  unicode
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestCalibrate 
-
-Executing test: TestCategories 
-
-Executing test: TestDigit 
-
-Executing test: TestDigitOptimization 
-
-Executing test: TestIsControlLatin1 
-
-Executing test: TestIsGraphicLatin1 
-
-Executing test: TestIsLetter 
-
-Executing test: TestIsLetterLatin1 
-
-Executing test: TestIsLowerLatin1 
-
-Executing test: TestIsPrintLatin1 
-
-Executing test: TestIsPunctLatin1 
-
-Executing test: TestIsSpace 
-
-Executing test: TestIsSpaceLatin1 
-
-Executing test: TestIsSymbolLatin1 
-
-Executing test: TestIsUpper 
-
-Executing test: TestIsUpperLatin1 
-
-Executing test: TestLatinOffset 
-
-Executing test: TestLetterOptimizations 
-
-Executing test: TestNumberLatin1 
-
-Executing test: TestProperties 
-
-Executing test: TestScripts 
-
-Executing test: TestSimpleFold 
-
-Executing test: TestTo 
-
-Executing test: TestToLowerCase 
-
-Executing test: TestToTitleCase 
-
-Executing test: TestToUpperCase 
-
-Executing test: TestTurkishCase 
-       31.37 real        30.89 user         0.36 sys
-
-=========================================
-Unit Test (via interpreter):  container/heap
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: Test 
-
-Executing test: TestFix 
-
-Executing test: TestInit0 
-
-Executing test: TestInit1 
-
-Executing test: TestRemove0 
-
-Executing test: TestRemove1 
-
-Executing test: TestRemove2 
-        2.79 real         2.70 user         0.07 sys
-
-=========================================
-Unit Test (via interpreter):  container/list
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestExtending 
-
-Executing test: TestInsertAfterUnknownMark 
-
-Executing test: TestInsertBeforeUnknownMark 
-
-Executing test: TestIssue4103 
-
-Executing test: TestIssue6349 
-
-Executing test: TestList 
-
-Executing test: TestMove 
-
-Executing test: TestMoveUnkownMark 
-
-Executing test: TestRemove 
-
-Executing test: TestZeroList 
-        1.55 real         1.48 user         0.05 sys
-
-=========================================
-Unit Test (via interpreter):  container/ring
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestCornerCases 
-
-Executing test: TestLink1 
-
-Executing test: TestLink2 
-
-Executing test: TestLink3 
-
-Executing test: TestLinkUnlink 
-
-Executing test: TestMoveEmptyRing 
-
-Executing test: TestNew 
-
-Executing test: TestUnlink 
-       35.20 real        34.82 user         0.26 sys
-
-=========================================
-Unit Test (via interpreter):  encoding/ascii85
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestBig 
-
-Executing test: TestDecode 
-
-Executing test: TestDecodeCorrupt 
-
-Executing test: TestDecoder 
-
-Executing test: TestDecoderBuffering 
-
-Executing test: TestDecoderInternalWhitespace 
-
-Executing test: TestEncode 
-
-Executing test: TestEncoder 
-
-Executing test: TestEncoderBuffering 
-       18.62 real        18.30 user         0.29 sys
-
-=========================================
-Unit Test (via interpreter):  encoding/base32
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestBig 
-
-Executing test: TestDecode 
-
-Executing test: TestDecodeCorrupt 
-
-Executing test: TestDecoder 
-
-Executing test: TestDecoderBuffering 
-
-Executing test: TestDecoderIssue4779 
-
-Executing test: TestEncode 
-
-Executing test: TestEncoder 
-
-Executing test: TestEncoderBuffering 
-
-Executing test: TestNewLineCharacters 
-       19.56 real        19.21 user         0.31 sys
-
-=========================================
-Unit Test (via interpreter):  encoding/base64
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestBig 
-
-Executing test: TestDecode 
-
-Executing test: TestDecodeCorrupt 
-
-Executing test: TestDecoder 
-
-Executing test: TestDecoderBuffering 
-
-Executing test: TestDecoderIssue3577 
-
-Executing test: TestDecoderIssue4779 
-
-Executing test: TestDecoderIssue7733 
-
-Executing test: TestEncode 
-
-Executing test: TestEncoder 
-
-Executing test: TestEncoderBuffering 
-
-Executing test: TestNewLineCharacters 
-       27.81 real        27.20 user         0.44 sys
-
-=========================================
-Unit Test (via interpreter):  encoding/csv
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestError 
-
-Executing test: TestRead 
-
-Executing test: TestWrite 
-       32.94 real        32.42 user         0.45 sys
-
-=========================================
-Unit Test (via interpreter):  encoding/hex
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestDecode 
-
-Executing test: TestDecodeString 
-
-Executing test: TestDump 
-
-Executing test: TestDumper 
-
-Executing test: TestEncode 
-
-Executing test: TestEncodeToString 
-
-Executing test: TestInvalidErr 
-
-Executing test: TestInvalidStringErr 
-       28.59 real        28.16 user         0.39 sys
-
-=========================================
-Unit Test (via interpreter):  image/color
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestRoundtrip 
-       15.59 real        15.46 user         0.10 sys
-
-=========================================
-Unit Test (via interpreter):  text/scanner
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestError 
-
-Executing test: TestIOError 
-
-Executing test: TestNext 
-
-Executing test: TestPos 
-
-Executing test: TestPosition 
-
-Executing test: TestScan 
-
-Executing test: TestScanCustomIdent 
-
-Executing test: TestScanNext 
-
-Executing test: TestScanSelectedMask 
-
-Executing test: TestScanWhitespace 
-
-Executing test: TestScanZeroMode 
-       52.95 real        52.15 user         0.61 sys
-
-=========================================
-Unit Test (via interpreter):  text/tabwriter
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: Test 
-
-Executing test: TestPanicDuringFlush 
-
-Executing test: TestPanicDuringWrite 
-       16.30 real        15.94 user         0.25 sys
-
-=========================================
-Unit Test (via interpreter):  unicode/utf8
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestConstants 
-
-Executing test: TestDecodeRune 
-
-Executing test: TestDecodeSurrogateRune 
-
-Executing test: TestEncodeRune 
-
-Executing test: TestFullRune 
-
-Executing test: TestIntConversion 
-
-Executing test: TestNegativeRune 
-
-Executing test: TestRuneCount 
-
-Executing test: TestRuneLen 
-
-Executing test: TestSequencing 
-
-Executing test: TestValid 
-
-Executing test: TestValidRune 
-       19.59 real        19.27 user         0.24 sys
-
-=========================================
-Unit Test (via interpreter):  unicode/utf16
-=========================================
-
-"Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
-testing.Main  
-
-Executing test: TestConstants 
-
-Executing test: TestDecode 
-
-Executing test: TestDecodeRune 
-
-Executing test: TestEncode 
-
-Executing test: TestEncodeRune 
-
-Executing test: TestIsSurrogate 
-       15.03 real        14.70 user         0.26 sys
+       50.02 real        48.61 user         1.82 sys
 
 =====================
 All Unit Tests Passed

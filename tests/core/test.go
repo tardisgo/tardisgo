@@ -1541,7 +1541,7 @@ func tourfib() {
 // end tour
 
 func testUintDiv32() {
-	for seed := int32(-10); seed <= 10; seed++ {
+	for seed := int32(-2); seed <= 2; seed++ {
 		var uifs, pwr2 uint32
 		uifs = uint32(seed)
 		if seed != 0 {
@@ -1579,7 +1579,7 @@ func testUintDiv32() {
 	}
 }
 func testUintDiv64() {
-	for seed := int64(-10); seed <= 10; seed++ {
+	for seed := int64(-2); seed <= 2; seed++ {
 		var uifs, pwr2 uint64
 		uifs = uint64(seed)
 		if seed != 0 {

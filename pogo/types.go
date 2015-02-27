@@ -142,5 +142,24 @@ func emitTypeInfo() {
 	*/
 	visitAllTypes()
 	l := TargetLang
+
+	if len(LibListNoDCE) > 0 { // output target lang type to access named object
+		for t := 1; t < NextTypeID; t++ { // make sure we do this in a consistent order
+			for _, k := range TypesEncountered.Keys() {
+				if TypesEncountered.At(k).(int) == t {
+					switch k.(type) {
+					case *types.Named:
+						if k.(*types.Named).Obj().Exported() {
+							fmt.Fprintln(&LanguageList[l].buffer,
+								LanguageList[l].TypeStart(k.(*types.Named), k.String()))
+							//fmt.Fprintln(&LanguageList[l].buffer,
+							//	LanguageList[l].TypeEnd(k.(*types.Named), k.String()))
+						}
+					}
+				}
+			}
+		}
+	}
+
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].EmitTypeInfo())
 }
