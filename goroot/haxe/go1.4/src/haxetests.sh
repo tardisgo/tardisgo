@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/ring encoding/base64 encoding/csv encoding/hex hash/adler32 hash/crc32 hash/crc64 hash/fnv image/draw math/cmplx text/scanner
+for twolevels in container/ring encoding/base64 encoding/csv encoding/hex hash/adler32 hash/crc32 hash/crc64 hash/fnv math/cmplx text/scanner
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $twolevels 
@@ -64,7 +64,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in sync/atomic
+for twolevels in image/draw regexp/syntax sync/atomic
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $twolevels 

@@ -10,7 +10,7 @@ testing.Main
 Executing test: TestErrorMethod 
 
 Executing test: TestNewEqual 
-        2.36 real         2.18 user         0.11 sys
+        1.16 real         1.08 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  path
@@ -42,7 +42,7 @@ Executing test: TestJoin
 Executing test: TestMatch 
 
 Executing test: TestSplit 
-       17.91 real        17.43 user         0.35 sys
+       11.19 real        10.99 user         0.19 sys
 
 =========================================
 Unit Test (via interpreter):  container/heap
@@ -66,7 +66,7 @@ Executing test: TestRemove0
 Executing test: TestRemove1 
 
 Executing test: TestRemove2 
-        4.96 real         4.71 user         0.15 sys
+        2.66 real         2.58 user         0.07 sys
 
 =========================================
 Unit Test (via interpreter):  container/list
@@ -96,7 +96,7 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
-        2.80 real         2.63 user         0.11 sys
+        1.39 real         1.33 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/ascii85
@@ -124,7 +124,7 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
-       29.63 real        27.79 user         0.65 sys
+       16.76 real        16.51 user         0.23 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base32
@@ -154,7 +154,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       30.28 real        29.32 user         0.58 sys
+       17.32 real        17.06 user         0.24 sys
 
 =========================================
 Unit Test (via interpreter):  image/color
@@ -166,7 +166,7 @@ Native Client nameservice: not implemented on Native Client
 testing.Main  
 
 Executing test: TestRoundtrip 
-       25.35 real        24.85 user         0.27 sys
+       14.39 real        14.31 user         0.07 sys
 
 =========================================
 Unit Test (via interpreter):  text/tabwriter
@@ -182,7 +182,7 @@ Executing test: Test
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
-       23.96 real        23.18 user         0.50 sys
+       14.66 real        14.44 user         0.21 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf8
@@ -216,7 +216,7 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-       30.80 real        29.91 user         0.54 sys
+       18.39 real        18.16 user         0.22 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf16
@@ -238,7 +238,7 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
-       23.96 real        23.15 user         0.53 sys
+       16.66 real        16.39 user         0.25 sys
 
 =========================================
 Unit Test (via js):  bufio
@@ -361,7 +361,7 @@ Console.hx:22:
 Executing test: TestWriterReset 
 Console.hx:22: 
 Executing test: TestZeroReader 
-       80.44 real        79.12 user         1.32 sys
+       47.68 real        47.45 user         0.40 sys
 
 =========================================
 Unit Test (via js):  flag
@@ -400,7 +400,7 @@ Console.hx:15:   -b=0: usage
 
 Console.hx:22: 
 Executing test: TestUserDefinedForCommandLine 
-        1.88 real         1.70 user         0.18 sys
+        1.13 real         1.04 user         0.09 sys
 
 =========================================
 Unit Test (via js):  fmt
@@ -453,7 +453,7 @@ Console.hx:22:
 Executing test: TestStructPrinter 
 Console.hx:22: 
 Executing test: TestWidthAndPrecision 
-       70.03 real        68.97 user         1.13 sys
+       40.35 real        40.20 user         0.31 sys
 
 =========================================
 Unit Test (via js):  math
@@ -592,7 +592,7 @@ Console.hx:22:
 Console.hx:22:   
 Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2541  
 Console.hx:22: Yn test fails - TODO  
-        2.58 real         2.40 user         0.17 sys
+        1.50 real         1.41 user         0.09 sys
 
 =========================================
 Unit Test (via js):  sort
@@ -695,7 +695,7 @@ Console.hx:22:
 Executing test: TestStableInts 
 Console.hx:22: 
 Executing test: TestStrings 
-       46.89 real        46.29 user         0.72 sys
+       28.13 real        28.02 user         0.23 sys
 
 =========================================
 Unit Test (via js):  strings
@@ -790,7 +790,7 @@ Console.hx:22:
 Executing test: TestWriteStringError 
 Console.hx:22: 
 Executing test: TestWriteTo 
-       31.31 real        30.72 user         0.64 sys
+       17.71 real        17.55 user         0.23 sys
 
 =========================================
 Unit Test (via js):  unicode
@@ -853,7 +853,7 @@ Console.hx:22:
 Executing test: TestToUpperCase 
 Console.hx:22: 
 Executing test: TestTurkishCase 
-        2.19 real         2.01 user         0.18 sys
+        1.31 real         1.20 user         0.10 sys
 
 =========================================
 Unit Test (via js):  container/ring
@@ -878,7 +878,7 @@ Console.hx:22:
 Executing test: TestNew 
 Console.hx:22: 
 Executing test: TestUnlink 
-        3.05 real         2.91 user         0.14 sys
+        1.75 real         1.69 user         0.07 sys
 
 =========================================
 Unit Test (via js):  encoding/base64
@@ -911,7 +911,7 @@ Console.hx:22:
 Executing test: TestEncoderBuffering 
 Console.hx:22: 
 Executing test: TestNewLineCharacters 
-        1.90 real         1.75 user         0.15 sys
+        1.15 real         1.06 user         0.08 sys
 
 =========================================
 Unit Test (via js):  encoding/csv
@@ -926,7 +926,7 @@ Console.hx:22:
 Executing test: TestRead 
 Console.hx:22: 
 Executing test: TestWrite 
-        2.46 real         2.22 user         0.22 sys
+        1.32 real         1.21 user         0.11 sys
 
 =========================================
 Unit Test (via js):  encoding/hex
@@ -951,7 +951,7 @@ Console.hx:22:
 Executing test: TestInvalidErr 
 Console.hx:22: 
 Executing test: TestInvalidStringErr 
-        1.88 real         1.69 user         0.17 sys
+        1.16 real         1.06 user         0.10 sys
 
 =========================================
 Unit Test (via js):  hash/adler32
@@ -962,7 +962,7 @@ Console.hx:22: Native Client nameservice: not implemented on Native Client
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-       12.40 real        12.14 user         0.27 sys
+        7.81 real         7.72 user         0.12 sys
 
 =========================================
 Unit Test (via js):  hash/crc32
@@ -973,7 +973,7 @@ Console.hx:22: Native Client nameservice: not implemented on Native Client
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.32 real         0.28 user         0.04 sys
+        0.22 real         0.19 user         0.02 sys
 
 =========================================
 Unit Test (via js):  hash/crc64
@@ -984,7 +984,7 @@ Console.hx:22: Native Client nameservice: not implemented on Native Client
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.33 real         0.28 user         0.04 sys
+        0.20 real         0.18 user         0.02 sys
 
 =========================================
 Unit Test (via js):  hash/fnv
@@ -1009,30 +1009,7 @@ Console.hx:22:
 Executing test: TestIntegrity64 
 Console.hx:22: 
 Executing test: TestIntegrity64a 
-        1.00 real         0.89 user         0.11 sys
-
-=========================================
-Unit Test (via js):  image/draw
-=========================================
-"Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
-Console.hx:22: testing.Main  
-Console.hx:22: 
-Executing test: TestClip 
-Console.hx:22: 
-Executing test: TestDraw 
-Console.hx:22: 
-Executing test: TestDrawOverlap 
-Console.hx:22: 
-Executing test: TestFill 
-Console.hx:22: 
-Executing test: TestFloydSteinbergCheckerboard 
-Console.hx:22: 
-Executing test: TestNonZeroSrcPt 
-Console.hx:22: 
-Executing test: TestPaletted 
-      563.39 real       559.52 user         6.22 sys
+        0.64 real         0.58 user         0.06 sys
 
 =========================================
 Unit Test (via js):  math/cmplx
@@ -1085,7 +1062,7 @@ Console.hx:22:
 Executing test: TestTan 
 Console.hx:22: 
 Executing test: TestTanh 
-        0.55 real         0.50 user         0.04 sys
+        0.38 real         0.34 user         0.03 sys
 
 =========================================
 Unit Test (via js):  text/scanner
@@ -1116,7 +1093,7 @@ Console.hx:22:
 Executing test: TestScanWhitespace 
 Console.hx:22: 
 Executing test: TestScanZeroMode 
-        4.82 real         4.64 user         0.19 sys
+        3.28 real         3.18 user         0.11 sys
 
 =========================================
 Unit Test (via C++):  bytes
@@ -1253,7 +1230,7 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
-       90.27 real        79.00 user        23.43 sys
+       49.96 real        42.17 user        13.50 sys
 
 =========================================
 Unit Test (via C++):  runtime
@@ -1306,7 +1283,7 @@ Executing test: TestSideEffectOrder
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-      182.96 real       190.15 user         2.06 sys
+      107.02 real       114.07 user         1.17 sys
 
 =========================================
 Unit Test (via C++):  strconv
@@ -1390,7 +1367,61 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/st
 Executing test: TestUitoa 
 
 Executing test: TestUnquote 
-      171.06 real       186.11 user         2.01 sys
+      108.87 real       116.34 user         0.73 sys
+
+=========================================
+Unit Test (via C++):  image/draw
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestClip 
+
+Executing test: TestDraw 
+
+Executing test: TestDrawOverlap 
+
+Executing test: TestFill 
+
+Executing test: TestFloydSteinbergCheckerboard 
+
+Executing test: TestNonZeroSrcPt 
+
+Executing test: TestPaletted 
+       28.61 real        30.67 user         0.29 sys
+
+=========================================
+Unit Test (via C++):  regexp/syntax
+=========================================
+"CPP:"
+DEBUG: syscall.Syscall()2 
+Native Client nameservice: not implemented on Native Client 
+testing.Main  
+
+Executing test: TestAppendRangeCollapse 
+
+Executing test: TestCompile 
+
+Executing test: TestFoldConstants 
+
+Executing test: TestParseFoldCase 
+
+Executing test: TestParseInvalidRegexps 
+
+Executing test: TestParseLiteral 
+
+Executing test: TestParseMatchNL 
+
+Executing test: TestParseNoMatchNL 
+
+Executing test: TestParseSimple 
+
+Executing test: TestSimplify 
+
+Executing test: TestToStringEquivalentParse 
+      177.08 real       188.49 user         1.11 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
@@ -1488,7 +1519,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       50.02 real        48.61 user         1.82 sys
+       23.57 real        25.19 user         0.20 sys
 
 =====================
 All Unit Tests Passed

@@ -365,14 +365,14 @@ func doTestable(args []string) error {
 				r.backChan <- true
 			}
 
-		case "math":
+		case "math": // everything as correct as it can be
 			//err := os.RemoveAll("tardis/cpp")
 			//if err != nil {
 			//	fmt.Println("Error deleting existing '" + "tardis/cpp" + "' directory: " + err.Error())
 			//}
 			mathCmds := [][][]string{
 				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-cpp", "tardis/cpp"},
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
 				},
@@ -464,12 +464,12 @@ var targets = [][][]string{
 		[]string{"echo", `"PHP:"`},
 		[]string{"time", "php", "tardis/php/index.php"},
 	},
-	// TODO Seldom works, so remove?
-	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-neko", "tardis/go.n"},
-		[]string{"echo", `"Neko (does not work for large code):"`},
-		[]string{"time", "neko", "tardis/go.n"},
-	},
+	// Seldom works, so removed
+	//[][]string{
+	//	[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-neko", "tardis/go.n"},
+	//	[]string{"echo", `"Neko (does not work for large code):"`},
+	//	[]string{"time", "neko", "tardis/go.n"},
+	//},
 	// only really useful for testing, so can be run from the command line
 	[][]string{
 		[]string{"echo", ``}, // Output from this line is ignored

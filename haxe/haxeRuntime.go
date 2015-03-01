@@ -570,7 +570,7 @@ class Object { // this implementation will improve with typed array access
 				" SrcSize: "+Std.string(src.length-srcPos));
 			return;			
 		}
-		#if (js && fullunsafe)
+		#if fullunsafe //(js && fullunsafe)
 			if((size&3==0)&&(srcPos&3==0)&&(destPos&3==0)) {
 				var i:Int=0;
 				var s:Int=srcPos;
@@ -595,12 +595,24 @@ class Object { // this implementation will improve with typed array access
 					d+=1;
 				}
 			}
-		#elseif !fullunsafe
-			haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
-			haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
-		#else
-			haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
-			dest.byts.blit(destPos,src.byts,srcPos,size);
+		#else //if !fullunsafe
+			//haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
+			//haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
+			{
+				var s:Int=srcPos;
+				var d:Int=destPos;
+				for(i in 0...size) {
+					dest.set_int32(d,src.get_int32(s));
+					if((s&3)==0){ 
+						dest.set(d,src.get(s));
+					}
+					s+=1;
+					d+=1;
+				}
+			}
+		//#else
+		//	haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
+		//	dest.byts.blit(destPos,src.byts,srcPos,size);
 		#end
 	}
 	public function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
@@ -766,7 +778,7 @@ class Object { // this implementation will improve with typed array access
 		return r==null?"":Std.string(r);
 	}
 	public inline function set(i:Int,v:Dynamic):Void { 
-		dVec4[i>>2]=v; // TODO special processing if Int?
+		dVec4[i>>2]=v;
 	}
 	public inline function set_bool(i:Int,v:Bool):Void { 
 		#if (js && fullunsafe)
@@ -884,7 +896,11 @@ class Object { // this implementation will improve with typed array access
 	} 
 	public inline function set_uintptr(i:Int,v:Dynamic):Void { 
 		set(i,v);
-		if(Std.is(v,Int)) set_uint32(i,v); // write through to ordinary memory if the type is Int
+		if(Std.is(v,Int)) {
+			set_uint32(i,v); // write through to ordinary memory if the type is Int
+			return;
+		}
+		set_uint32(i,0); // value overwritten
 	}
 	public inline function set_float32(i:Int,v:Float):Void {
 		set(i,Force.toFloat32safe(v)); // for NaN compatability
@@ -1239,10 +1255,20 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 	public function methVal(t:Dynamic,v:Dynamic):Dynamic{
 		return Reflect.callMethod(null, fn, [[],t,v]);
 	}
-	public function callFn(params:Dynamic):Dynamic {
-		if(fn==null) Scheduler.panicFromHaxe("attempt to call null function reference in Closure.callFn()");
-		if(!Reflect.isFunction(fn)) Scheduler.panicFromHaxe("invalid function reference in Closure(): "+fn);
-		return Reflect.callMethod(null, fn, params);
+	public static function callFn(cl:Closure,params:Dynamic):Dynamic {
+		if(cl==null) {
+			Scheduler.panicFromHaxe("attempt to call via null closure in Closure.callFn()");
+			return null;
+		}
+		if(cl.fn==null) {
+		 	Scheduler.panicFromHaxe("attempt to call null function reference in Closure.callFn()");
+		 	return null;
+		}
+		if(!Reflect.isFunction(cl.fn)) {
+			Scheduler.panicFromHaxe("invalid function reference in Closure(): "+cl.fn);
+			return null;
+		}
+		return Reflect.callMethod(null, cl.fn, params);
 	}
 	// This technique is used to create callback functions
 	public function buildCallbackFn():Dynamic { 

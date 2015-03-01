@@ -857,7 +857,7 @@ func (l langType) Ret(values []*ssa.Value, errorInfo string) string {
 }
 
 func (l langType) Panic(v1 interface{}, errorInfo string, usesGr bool) string {
-	ret := doCall("", "Scheduler.panic(this._goroutine,"+l.IndirectValue(v1, errorInfo)+");\n", usesGr)
+	ret := l.doCall("", nil, "Scheduler.panic(this._goroutine,"+l.IndirectValue(v1, errorInfo)+");\n", usesGr)
 	ret += l.Ret(nil, errorInfo) // just in case we return to this point without _recoverNext being set & used
 	return ret
 }
@@ -1174,7 +1174,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			case *ssa.MakeClosure: // it is a closure, but with a static callee
 				ret += targetFunc + "("
 			default: // closure with a dynamic callee
-				ret += fnToCall + ".callFn([" // the callee is in a local variable
+				ret += "Closure.callFn(" + fnToCall + ",[" // the callee is in a local variable
 			}
 		}
 	}
@@ -1191,10 +1191,10 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			ret += "[]" // goroutine + bindings
 		}
 	case *ssa.MakeClosure: // it is a closure, but with a static callee
-		ret += "" + l.IndirectValue(cc.Value, errorInfo) + ".bds"
+		ret += l.IndirectValue(cc.Value, errorInfo) + "==null?null:" + l.IndirectValue(cc.Value, errorInfo) + ".bds"
 	default: // closure with a dynamic callee
 		if !isBuiltin { // don't pass bindings to built-in functions
-			ret += "" + fnToCall + ".bds"
+			ret += fnToCall + "==null?null:" + fnToCall + ".bds"
 		}
 	}
 	for arg := range args {
@@ -1263,14 +1263,14 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 	if isDefer {
 		return ret + ";\nthis.defer(Scheduler.pop(this._goroutine));"
 	}
-	return doCall(register, ret+";\n", usesGr)
+	return l.doCall(register, cc.Signature().Results(), ret+";\n", usesGr)
 }
 
 func (l langType) RunDefers(usesGr bool) string {
-	return doCall("", "this.runDefers();\n", usesGr)
+	return l.doCall("", nil, "this.runDefers();\n", usesGr)
 }
 
-func doCall(register, callCode string, usesGr bool) string {
+func (l langType) doCall(register string, tuple *types.Tuple, callCode string, usesGr bool) string {
 	ret := ""
 	if register != "" {
 		ret += fmt.Sprintf("_SF%d=", -nextReturnAddress)
@@ -1307,8 +1307,21 @@ func doCall(register, callCode string, usesGr bool) string {
 			}
 		}
 	}
-	if register != "" { // if register, set return value
-		ret += register + "=" + fmt.Sprintf("_SF%d.res();\n", -nextReturnAddress)
+	if register != "" { // if register, set return value, but only for non-null stack frames
+		registerZero := ""
+		switch tuple.Len() {
+		case 0: // nothing to do
+		case 1:
+			registerZero = l.LangType(tuple.At(0).Type(), true, callCode)
+		default:
+			registerZero = l.LangType(tuple, true, callCode)
+		}
+		if registerZero != "" {
+			//ret += fmt.Sprintf("%s=(_SF%d==null)?%s:_SF%d.res();\n", // goroutine of -1 => null closure
+			//	register, -nextReturnAddress, registerZero, -nextReturnAddress)
+			ret += fmt.Sprintf("%s=_SF%d.res();\n", // will fail if _SF is null
+				register, -nextReturnAddress)
+		}
 	}
 	nextReturnAddress-- //decrement to set new return address for next call generation
 	return ret
@@ -1691,7 +1704,8 @@ func (l langType) EmitInvoke(register string, isGo, isDefer, usesGr bool, callCo
 	if isDefer {
 		return ret + "]);\nthis.defer(Scheduler.pop(this._goroutine));"
 	}
-	return doCall(register, ret+"]);", usesGr)
+	cc := callCommon.(ssa.CallCommon)
+	return l.doCall(register, cc.Signature().Results(), ret+"]);", usesGr)
 }
 
 func (l langType) SubFnStart(id int, mustSplitCode bool) string {

@@ -48,6 +48,7 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - image/color, image/draw
 - math (Jn & Yn fail tests), math/cmplx
 - path
+- regexp/syntax
 - runtime (some general tests pass, NaN handled differently as a Map key)
 - sort
 - strconv
