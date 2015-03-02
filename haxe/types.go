@@ -1271,11 +1271,19 @@ func loadStoreSuffix(T types.Type, hasParameters bool) string {
 // TODO consider renaming
 func (l langType) TypeStart(nt *types.Named, err string) string {
 	typName := "GoType" + l.LangName("", nt.String())
-	ret := "public class " + typName
-	ret += " extends " + l.LangType(nt.Obj().Type(), false, nt.String()) + " {\n"
-	str, isStr := nt.Underlying().(*types.Struct)
-	if isStr {
-		ret += "public function new(){ super new(" + strconv.Itoa(int(haxeStdSizes.Sizeof(nt.Obj().Type()))) + "); }\n"
+	hxTyp := l.LangType(nt.Obj().Type(), false, nt.String())
+	ret := ""
+	switch hxTyp {
+	case "Object":
+		ret += "class " + typName
+		ret += " extends " + hxTyp + " {\n"
+	default:
+		ret += "abstract " + typName + "(" + hxTyp + ") from "+hxTyp+" to "+hxTyp+" {\n"
+	}
+	switch nt.Underlying().(type) {
+	case *types.Struct:
+		str := nt.Underlying().(*types.Struct)
+		ret += "inline public function new(){ super new(" + strconv.Itoa(int(haxeStdSizes.Sizeof(nt.Obj().Type()))) + "); }\n"
 		flds := []string{}
 		for f := 0; f < str.NumFields(); f++ {
 			fName := str.Field(f).Name()
@@ -1301,8 +1309,10 @@ func (l langType) TypeStart(nt *types.Named, err string) string {
 				}
 			}
 		}
-	} else {
-		// TODO not yet sure how to handle named types that are not structs
+	case *types.Array:
+		ret += "inline public function new(){ super new(" + strconv.Itoa(int(haxeStdSizes.Sizeof(nt.Obj().Type()))) + "); }\n"
+	default: // TODO not yet sure how to handle named types that are not structs
+		ret += "inline public function new(v:"+hxTyp+") { this = v; }\n"
 	}
 
 	meths := []string{}
@@ -1349,7 +1359,7 @@ func (l langType) TypeStart(nt *types.Named, err string) string {
 					ret += "return "
 				}
 				fnToCall := l.LangName(
-					nt.Obj().Pkg().Name()+":"+sig.Recv().String(),
+					nt.Obj().Pkg().Name()+":"+sig.Recv().Type().String(),
 					meth.Name())
 				ret += `Go_` + fnToCall + `.hx(this`
 				for p := 0; p < sig.Params().Len(); p++ {

@@ -333,7 +333,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		#if !( cpp || neko || php ) // need to translate back to UTF16 when passing back to Haxe
 			var sli:Slice=new Slice(new Pointer(new Object(v.length)),0,-1,v.length,1);
 			for(i in 0...v.length){
-				if(v.charCodeAt(i)>0xff) return v; // probably already encoded as UTF-16
+				//if(v.charCodeAt(i)>0xff) return v; // probably already encoded as UTF-16
 				sli.itemAddr(i).store_uint8(v.charCodeAt(i));
 			}
 			var slr = Go_haxegoruntime_UUTTFF8toRRunes.callFromRT(0,sli);
@@ -351,10 +351,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			var sli:Slice=new Slice(new Pointer(new Object(v.length<<1)),0,-1,v.length,2);
 			var allSmall = true;
 			for(i in 0...v.length){
-				if(v.charCodeAt(i)>0xff) allSmall=false; // encoded as UTF-16 with big vals
 				sli.itemAddr(i).store_uint16(v.charCodeAt(i));
 			}
-			if(allSmall) return v; // no need to go through the whole procedure if no chars larger than 8-bit
 			var slr = Go_haxegoruntime_UUTTFF16toRRunes.callFromRT(0,sli);
 			var slo = Go_haxegoruntime_RRunesTToUUTTFF8.callFromRT(0,slr);
 			v="";

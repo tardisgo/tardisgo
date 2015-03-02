@@ -764,7 +764,8 @@ func nsConnect() *srpcClient {
 	var ns int32 = -1
 	_, _, errno := Syscall(sys_nameservice, uintptr(unsafe.Pointer(&ns)), 0, 0)
 	if errno != 0 {
-		println("Native Client nameservice:", errno.Error())
+		// TODO add proper error logging here and below
+		//println("Native Client nameservice:", errno.Error())
 		return nil
 	}
 

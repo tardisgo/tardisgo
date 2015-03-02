@@ -250,7 +250,21 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += "while(_sf._incomplete) Scheduler.runAll();\n" // TODO alter for multi-threading if ever implemented
 	}
 	if fn.Signature.Results().Len() > 0 {
-		ret += "return _sf.res();\n"
+		if fn.Signature.Results().Len() == 1 {
+			if fn.Signature.Results().At(0).Type().Underlying().String() == "string" {
+				ret += "return Force.toHaxeString(cast(_sf.res(),String));\n"
+			} else {
+				ret += "return _sf.res();\n"
+			}
+		} else {
+			ret += "var _r = _sf.res();\n"
+			for rv := 0; rv < fn.Signature.Results().Len(); rv++ {
+				if fn.Signature.Results().At(rv).Type().Underlying().String() == "string" {
+					ret += fmt.Sprintf("_r.r%d = Force.toHaxeString(cast(_r.r%d,String));\n", rv, rv)
+				}
+			}
+			ret += "return _r;\n"
+		}
 	}
 	ret += "}\n"
 

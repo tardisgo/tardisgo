@@ -3,22 +3,18 @@ Unit Test (via interpreter):  errors
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestErrorMethod 
 
 Executing test: TestNewEqual 
-        1.16 real         1.08 user         0.05 sys
+        1.27 real         1.19 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  path
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestBase 
@@ -42,15 +38,13 @@ Executing test: TestJoin
 Executing test: TestMatch 
 
 Executing test: TestSplit 
-       11.19 real        10.99 user         0.19 sys
+       11.16 real        10.96 user         0.19 sys
 
 =========================================
 Unit Test (via interpreter):  container/heap
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: Test 
@@ -66,15 +60,13 @@ Executing test: TestRemove0
 Executing test: TestRemove1 
 
 Executing test: TestRemove2 
-        2.66 real         2.58 user         0.07 sys
+        2.87 real         2.79 user         0.07 sys
 
 =========================================
 Unit Test (via interpreter):  container/list
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestExtending 
@@ -96,15 +88,13 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
-        1.39 real         1.33 user         0.05 sys
+        1.45 real         1.39 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/ascii85
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestBig 
@@ -124,15 +114,13 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
-       16.76 real        16.51 user         0.23 sys
+       17.46 real        17.21 user         0.24 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base32
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestBig 
@@ -154,27 +142,23 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       17.32 real        17.06 user         0.24 sys
+       17.96 real        17.71 user         0.24 sys
 
 =========================================
 Unit Test (via interpreter):  image/color
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestRoundtrip 
-       14.39 real        14.31 user         0.07 sys
+       14.03 real        13.96 user         0.06 sys
 
 =========================================
 Unit Test (via interpreter):  text/tabwriter
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: Test 
@@ -182,15 +166,13 @@ Executing test: Test
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
-       14.66 real        14.44 user         0.21 sys
+       14.82 real        14.60 user         0.21 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf8
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestConstants 
@@ -216,15 +198,13 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-       18.39 real        18.16 user         0.22 sys
+       18.32 real        18.08 user         0.23 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf16
 =========================================
 
 "Neko (haxe --interp):"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestConstants 
@@ -238,14 +218,12 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
-       16.66 real        16.39 user         0.25 sys
+       17.01 real        16.75 user         0.26 sys
 
 =========================================
 Unit Test (via js):  bufio
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestBadReader 
@@ -361,14 +339,12 @@ Console.hx:22:
 Executing test: TestWriterReset 
 Console.hx:22: 
 Executing test: TestZeroReader 
-       47.68 real        47.45 user         0.40 sys
+       47.60 real        47.45 user         0.37 sys
 
 =========================================
 Unit Test (via js):  flag
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestChangingArgs 
@@ -400,14 +376,12 @@ Console.hx:15:   -b=0: usage
 
 Console.hx:22: 
 Executing test: TestUserDefinedForCommandLine 
-        1.13 real         1.04 user         0.09 sys
+        1.26 real         1.16 user         0.10 sys
 
 =========================================
 Unit Test (via js):  fmt
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestBadVerbRecursion 
@@ -453,14 +427,12 @@ Console.hx:22:
 Executing test: TestStructPrinter 
 Console.hx:22: 
 Executing test: TestWidthAndPrecision 
-       40.35 real        40.20 user         0.31 sys
+       44.01 real        43.80 user         0.38 sys
 
 =========================================
 Unit Test (via js):  math
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestAbs 
@@ -592,14 +564,12 @@ Console.hx:22:
 Console.hx:22:   
 Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/math/all_test.go 2541  
 Console.hx:22: Yn test fails - TODO  
-        1.50 real         1.41 user         0.09 sys
+        1.78 real         1.69 user         0.10 sys
 
 =========================================
 Unit Test (via js):  sort
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestAdversary 
@@ -695,14 +665,12 @@ Console.hx:22:
 Executing test: TestStableInts 
 Console.hx:22: 
 Executing test: TestStrings 
-       28.13 real        28.02 user         0.23 sys
+       32.05 real        31.87 user         0.25 sys
 
 =========================================
 Unit Test (via js):  strings
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestCaseConsistency 
@@ -790,14 +758,12 @@ Console.hx:22:
 Executing test: TestWriteStringError 
 Console.hx:22: 
 Executing test: TestWriteTo 
-       17.71 real        17.55 user         0.23 sys
+       18.52 real        18.35 user         0.25 sys
 
 =========================================
 Unit Test (via js):  unicode
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestCalibrate 
@@ -853,14 +819,12 @@ Console.hx:22:
 Executing test: TestToUpperCase 
 Console.hx:22: 
 Executing test: TestTurkishCase 
-        1.31 real         1.20 user         0.10 sys
+        1.33 real         1.22 user         0.10 sys
 
 =========================================
 Unit Test (via js):  container/ring
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestCornerCases 
@@ -878,14 +842,12 @@ Console.hx:22:
 Executing test: TestNew 
 Console.hx:22: 
 Executing test: TestUnlink 
-        1.75 real         1.69 user         0.07 sys
+        1.93 real         1.85 user         0.07 sys
 
 =========================================
 Unit Test (via js):  encoding/base64
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestBig 
@@ -911,14 +873,12 @@ Console.hx:22:
 Executing test: TestEncoderBuffering 
 Console.hx:22: 
 Executing test: TestNewLineCharacters 
-        1.15 real         1.06 user         0.08 sys
+        1.20 real         1.10 user         0.08 sys
 
 =========================================
 Unit Test (via js):  encoding/csv
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestError 
@@ -926,14 +886,12 @@ Console.hx:22:
 Executing test: TestRead 
 Console.hx:22: 
 Executing test: TestWrite 
-        1.32 real         1.21 user         0.11 sys
+        1.33 real         1.23 user         0.10 sys
 
 =========================================
 Unit Test (via js):  encoding/hex
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestDecode 
@@ -951,47 +909,39 @@ Console.hx:22:
 Executing test: TestInvalidErr 
 Console.hx:22: 
 Executing test: TestInvalidStringErr 
-        1.16 real         1.06 user         0.10 sys
+        1.21 real         1.11 user         0.10 sys
 
 =========================================
 Unit Test (via js):  hash/adler32
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        7.81 real         7.72 user         0.12 sys
+        7.74 real         7.65 user         0.12 sys
 
 =========================================
 Unit Test (via js):  hash/crc32
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.22 real         0.19 user         0.02 sys
+        0.21 real         0.18 user         0.02 sys
 
 =========================================
 Unit Test (via js):  hash/crc64
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.20 real         0.18 user         0.02 sys
+        0.20 real         0.17 user         0.02 sys
 
 =========================================
 Unit Test (via js):  hash/fnv
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden32 
@@ -1009,14 +959,12 @@ Console.hx:22:
 Executing test: TestIntegrity64 
 Console.hx:22: 
 Executing test: TestIntegrity64a 
-        0.64 real         0.58 user         0.06 sys
+        0.64 real         0.57 user         0.06 sys
 
 =========================================
 Unit Test (via js):  math/cmplx
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestAbs 
@@ -1062,14 +1010,12 @@ Console.hx:22:
 Executing test: TestTan 
 Console.hx:22: 
 Executing test: TestTanh 
-        0.38 real         0.34 user         0.03 sys
+        0.38 real         0.35 user         0.03 sys
 
 =========================================
 Unit Test (via js):  text/scanner
 =========================================
 "Node/JS using fullunsafe memory mode (js dataview):"
-Console.hx:22: DEBUG: syscall.Syscall()2 
-Console.hx:22: Native Client nameservice: not implemented on Native Client 
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestError 
@@ -1093,14 +1039,12 @@ Console.hx:22:
 Executing test: TestScanWhitespace 
 Console.hx:22: 
 Executing test: TestScanZeroMode 
-        3.28 real         3.18 user         0.11 sys
+        3.32 real         3.21 user         0.12 sys
 
 =========================================
 Unit Test (via C++):  bytes
 =========================================
 "CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestBasicOperations 
@@ -1230,14 +1174,12 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
-       49.96 real        42.17 user        13.50 sys
+       50.59 real        43.43 user        13.00 sys
 
 =========================================
 Unit Test (via C++):  runtime
 =========================================
 "CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestAlias 
@@ -1283,14 +1225,12 @@ Executing test: TestSideEffectOrder
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-      107.02 real       114.07 user         1.17 sys
+      110.45 real       116.86 user         1.19 sys
 
 =========================================
 Unit Test (via C++):  strconv
 =========================================
 "CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestAppendBool 
@@ -1367,14 +1307,12 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/st
 Executing test: TestUitoa 
 
 Executing test: TestUnquote 
-      108.87 real       116.34 user         0.73 sys
+      130.41 real       142.31 user         1.29 sys
 
 =========================================
 Unit Test (via C++):  image/draw
 =========================================
 "CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestClip 
@@ -1390,14 +1328,12 @@ Executing test: TestFloydSteinbergCheckerboard
 Executing test: TestNonZeroSrcPt 
 
 Executing test: TestPaletted 
-       28.61 real        30.67 user         0.29 sys
+       29.42 real        31.56 user         0.30 sys
 
 =========================================
 Unit Test (via C++):  regexp/syntax
 =========================================
 "CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestAppendRangeCollapse 
@@ -1421,14 +1357,12 @@ Executing test: TestParseSimple
 Executing test: TestSimplify 
 
 Executing test: TestToStringEquivalentParse 
-      177.08 real       188.49 user         1.11 sys
+      184.97 real       198.62 user         1.47 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
 =========================================
 "CPP:"
-DEBUG: syscall.Syscall()2 
-Native Client nameservice: not implemented on Native Client 
 testing.Main  
 
 Executing test: TestAddInt32 
@@ -1519,7 +1453,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       23.57 real        25.19 user         0.20 sys
+       25.65 real        27.44 user         0.26 sys
 
 =====================
 All Unit Tests Passed
