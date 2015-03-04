@@ -2630,7 +2630,7 @@ class GOmap {
 				Scheduler.panicFromHaxe("haxeruntime.GOmap.makeKey() unsupported haxe type: "+a);
 				return "";
 			}
-			return cast(a,GOint64).toString(); // must be an Int64
+			return a.toString(); // must be an Int64
 		}
 		return Std.string(a);
 	}

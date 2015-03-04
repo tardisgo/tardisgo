@@ -40,12 +40,15 @@ class Go
     	return "java";
     #elseif cs
     	return "cs";
+    #elseif python
+    	#error "SORRY: the python target is not yet ready for general use"
+    	return "python";
     #elseif php
     	return "php";
     #elseif neko
     	return "neko";
     #else 
-        #error "Only the js, flash, cpp (C++), java, cs (C#), php and neko Haxe targets are supported as a Go platform" 
+        #error "Only the js, flash, cpp (C++), java, cs (C#), php, python and neko Haxe targets are supported as a Go platform" 
     #end
 	}
 `
