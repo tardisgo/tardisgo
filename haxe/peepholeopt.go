@@ -79,11 +79,10 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 			opt := opts[phi]
 			ret += fmt.Sprintf("\tcase %d:\n", phi)
 			for _, ent := range opt {
-				xx := ""
-				if "_"+ent.reg == ent.val {
-					xx = "//"
-				}
-				ret += fmt.Sprintf("\t\t%s_%s=%s;\n", xx, ent.reg, ent.val)
+				ret += fmt.Sprintf("\t\tvar tmp_%s=%s;\n", ent.reg, ent.val) // need temp vars for a,b = b,a
+			}
+			for _, ent := range opt {
+				ret += fmt.Sprintf("\t\t_%s=tmp_%s;\n", ent.reg, ent.reg)
 			}
 		}
 		ret += "}\n"

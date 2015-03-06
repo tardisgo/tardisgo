@@ -12,7 +12,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/heap container/list encoding/ascii85 encoding/base32 image/color text/tabwriter unicode/utf8 unicode/utf16 
+for twolevels in container/heap container/list crypto/aes crypto/cipher encoding/ascii85 encoding/base32 image/color text/tabwriter unicode/utf8 unicode/utf16 
 do
 	echo "========================================="
 	echo "Unit Test (via interpreter): " $twolevels 
@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/ring encoding/base64 encoding/csv encoding/hex hash/adler32 hash/crc32 hash/crc64 hash/fnv math/cmplx text/scanner
+for twolevels in container/ring crypto/des crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 encoding/base64 encoding/csv encoding/hex hash/adler32 hash/crc32 hash/crc64 hash/fnv index/suffixarray math/cmplx text/scanner
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $twolevels 

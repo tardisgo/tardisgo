@@ -257,15 +257,6 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 			}
 
 		} else {
-			switch v2LangType {
-			case "GOint64":
-				switch op {
-				case "<<", ">>":
-					v2string = "GOint64.toInt(" + v2string + ")"
-				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled 64-bit 2nd param to op: %s", op))
-				}
-			}
 			switch op { // standard case, use Haxe operators
 			case "==", "!=", "<", ">", "<=", ">=": // no integer coersion, boolian results
 				switch v1.(ssa.Value).Type().Underlying().(type) {
@@ -289,6 +280,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 					ret = "(" + v1string + op + v2string + ")"
 				}
 			case ">>", "<<":
+				v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned bit shift
 					if op == ">>" {

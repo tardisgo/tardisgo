@@ -636,12 +636,12 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 		return fmt.Sprintf(`%s=%s.itemAddr(%s);`, register,
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
 			idxString)
-	case *types.Array: // need to create a pointer before using it
-		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying()
-		return fmt.Sprintf(`%s={var _v=new Pointer<%s>(%s); _v.addr(%s%s);};`, register,
-			l.LangType(v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying(), false, errorInfo),
-			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
-			idxString, arrayOffsetCalc(ele))
+	//case *types.Array: // need to create a pointer before using it
+	//	ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying()
+	//	return fmt.Sprintf(`%s={var _v=new Pointer<%s>(%s); _v.addr(%s%s);};`, register, // TODO is Pointer<type> correct?
+	//		l.LangType(v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying(), false, errorInfo),
+	//		l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
+	//		idxString, arrayOffsetCalc(ele))
 	default:
 		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
 		return ""

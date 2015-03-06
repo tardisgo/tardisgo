@@ -289,7 +289,7 @@ func (v Value) CanAddr() bool {
 // If CanSet returns false, calling Set or any type-specific
 // setter (e.g., SetBool, SetInt64) will panic.
 func (v Value) CanSet() bool {
-	panic("reflect.CanSet not yet implemented")
+	//panic("reflect.CanSet not yet implemented")
 	return v.flag&(flagAddr|flagRO) == flagAddr
 }
 
@@ -1619,11 +1619,16 @@ func (v Value) Slice(i, j int) Value {
 	*/
 
 	//Haxe:	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) {
+	elemSize := uint32(typ.Elem().Size())
+	elemAlign := uint32(typ.Elem().Align()) // TODO should this be field align?
+	for (elemSize % elemAlign) != 0 {
+		elemSize++ // make sure we have the correct size for the elements
+	}
 	hx.Code("",
 		"_a.itemAddr(0).load().val.store(new Slice("+
 			"_a.itemAddr(1).load().val,_a.itemAddr(2).load().val,_a.itemAddr(3).load().val,"+
 			"_a.itemAddr(4).load().val,_a.itemAddr(5).load().val));",
-		&x, base, i, j, cap, typ.Elem().Size())
+		&x, base, i, j, cap, elemSize)
 
 	fl := v.flag&flagRO | flagIndir | flag(Slice)
 	return Value{typ.common(), unsafe.Pointer(&x), fl}
@@ -2180,7 +2185,7 @@ func MakeMap(typ Type) Value {
 // If v is a nil pointer, Indirect returns a zero Value.
 // If v is not a pointer, Indirect returns v.
 func Indirect(v Value) Value {
-	panic("reflect.Indirect not yet implemented")
+	//panic("reflect.Indirect not yet implemented")
 	if v.Kind() != Ptr {
 		return v
 	}
@@ -2210,7 +2215,7 @@ func ValueOf(i interface{}) Value {
 // For example, Zero(TypeOf(42)) returns a Value with Kind Int and value 0.
 // The returned value is neither addressable nor settable.
 func Zero(typ Type) Value {
-	panic("reflect.Zero not yet implemented")
+	//panic("reflect.Zero not yet implemented")
 	if typ == nil {
 		panic("reflect: Zero(nil)")
 	}
@@ -2225,7 +2230,7 @@ func Zero(typ Type) Value {
 // New returns a Value representing a pointer to a new zero value
 // for the specified type.  That is, the returned Value's Type is PtrTo(typ).
 func New(typ Type) Value {
-	panic("reflect.New not yet implemented")
+	//panic("reflect.New not yet implemented")
 	if typ == nil {
 		panic("reflect: New(nil)")
 	}

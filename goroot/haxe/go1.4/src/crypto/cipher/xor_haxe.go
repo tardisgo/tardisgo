@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package cipher
 
 import (
@@ -10,7 +12,8 @@ import (
 )
 
 const wordSize = int(unsafe.Sizeof(uintptr(0)))
-const supportsUnaligned = runtime.GOARCH == "386" || runtime.GOARCH == "amd64"
+
+var supportsUnaligned = runtime.GOARCH == "386" || runtime.GOARCH == "amd64"
 
 // fastXORBytes xors in bulk. It only works on architectures that
 // support unaligned read/writes.

@@ -137,9 +137,9 @@ func exp(x float64) float64 {
 // Exp2 returns 2**x, the base-2 exponential of x.
 //
 // Special cases are the same as Exp.
-func Exp2(x float64) float64 {
+func Exp2(x float64) float64 { return exp2(x) }
 
-	//func exp2(x float64) float64 {
+func exp2(x float64) float64 {
 	const (
 		Ln2Hi = 6.93147180369123816490e-01
 		Ln2Lo = 1.90821492927058770002e-10

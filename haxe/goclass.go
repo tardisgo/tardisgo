@@ -62,15 +62,16 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	main += `if(gr!=0) throw "non-zero goroutine number in init";` + "\n"                                       // first goroutine number is always 0, NOTE using throw as panic not setup
 
 	main += "var _sfgr=new Go_haxegoruntime_init(gr,[]).run();\n" //haxegoruntime.init() NOTE can't use .hx() to call from Haxe as that would call this fn
+	main += `Go.haxegoruntime_ZZiLLen.store_uint32('字'.length);`  // value required by haxegoruntime to know what type of strings we have
 	main += "while(_sfgr._incomplete) Scheduler.runAll();\n"
-	main += "var _sf=new Go_" + l.LangName(pkg.Object.Path() /* was .Name()*/, "init") + `(gr,[]).run();` + "\n" //NOTE can't use .hx() to call from Haxe as that would call this fn
+	main += "var _sf=new Go_" + l.LangName(pkg.Object.Path(), "init") + `(gr,[]).run();` + "\n" //NOTE can't use .hx() to call from Haxe as that would call this fn
 	main += "while(_sf._incomplete) Scheduler.runAll();\n"
+	main += ""
 	main += "Scheduler.doneInit=true;\n"
-	main += `Go.haxegoruntime_ZZiLLen.store_uint32('字'.length);` // value required by haxegoruntime to know what type of strings we have
 	main += "}\n"
 	// Haxe main function, only called in a go-only environment
 	main += "\npublic static function main() : Void {\n"
-	main += "Go_" + l.LangName(pkg.Object.Path() /* was .Name() */, "main") + `.hx();` + "\n"
+	main += "Go_" + l.LangName(pkg.Object.Path(), "main") + `.hx();` + "\n"
 	main += "}\n"
 
 	pos := "public static function CPos(pos:Int):String {\nvar prefix:String=\"\";\n"
@@ -367,8 +368,8 @@ func (l langType) NamedConst(packageName, objectName string, lit ssa.Const, posi
 }
 
 func (l langType) Global(packageName, objectName string, glob ssa.Global, position string, isPublic bool) string {
-	pub := "public "                                                      // all globals have to be public in Haxe terms
-	gTyp := glob.Type().Underlying().(*types.Pointer).Elem().Underlying() // globals are always pointers to an underlying element
+	pub := "public " // all globals have to be public in Haxe terms
+	//gTyp := glob.Type().Underlying().(*types.Pointer).Elem().Underlying() // globals are always pointers to an underlying element
 	/*
 		ptrTyp := "Pointer"
 		//ltDesc := "Dynamic" // these values suitable for *types.Struct
@@ -396,7 +397,7 @@ func (l langType) Global(packageName, objectName string, glob ssa.Global, positi
 	//return fmt.Sprintf("%sstatic %s %s",
 	//	pub, haxeVar(l.LangName(packageName, objectName), ptrTyp, init, position, "Global()"),
 	//	l.Comment(position))
-	return fmt.Sprintf("%sstatic var %s:Pointer=new Pointer(new Object(%d)); %s",
-		pub, l.LangName(packageName, objectName), haxeStdSizes.Sizeof(gTyp),
-		l.Comment(position))
+	obj := allocNewObject(glob.Type().Underlying().(*types.Pointer))
+	return fmt.Sprintf("%sstatic var %s:Pointer=new Pointer(%s); %s",
+		pub, l.LangName(packageName, objectName), obj, l.Comment(position))
 }

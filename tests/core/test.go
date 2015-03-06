@@ -1769,6 +1769,42 @@ func testObjMap() {
 
 }
 
+type unaligned7 struct {
+	h [17]testtbe
+	i int32
+	j uint16
+	k uint8
+}
+
+func testUnaligned() {
+	var x [3]unaligned7
+	//y := interface{}(x)
+	//z := reflect.ValueOf(y)
+	for d := 0; d < len(x); d++ {
+		x[d].k = uint8(d)
+		TEQuint32("x[d]k!=d", uint32(x[d].k), uint32(d))
+		//TEQuint32("reflect(x[d]k)!=d", uint32(z.Index(d).FieldByName("k").Int()), uint32(d))
+		for hh := 0; hh < 17; hh++ {
+			x[d].h[hh].a = hh
+			TEQuint32("x[d].h[hh].a!=hh", uint32(x[d].h[hh].a), uint32(hh))
+			//TEQuint32("reflect(x[d].h[hh].a)!=hh", uint32(z.Index(d).FieldByName("h").Index(hh).Int()), uint32(hh))
+		}
+	}
+	x1 := make([]unaligned7, 7)
+	//y1 := interface{}(x1)
+	//z1 := reflect.ValueOf(y1)
+	for d := 0; d < len(x1); d++ {
+		x1[d].k = uint8(d)
+		TEQuint32("x1[d]k!=d", uint32(x1[d].k), uint32(d))
+		//TEQuint32("reflect(x1[d]k)!=d", uint32(z1.Index(d).FieldByName("k").Int()), uint32(d))
+		for hh := 0; hh < 17; hh++ {
+			x1[d].h[hh].a = hh
+			TEQuint32("x1[d].h[hh].a!=hh", uint32(x1[d].h[hh].a), uint32(hh))
+			//TEQuint32("reflect(x1[d].h[hh].a)!=hh", uint32(z1.Index(d).FieldByName("h").Index(hh).Int()), uint32(hh))
+		}
+	}
+}
+
 func main() {
 	var array [4][5]int
 	array[3][2] = 12
@@ -1816,6 +1852,7 @@ func main() {
 	testUnsafe()
 	testObjMap()
 	testFloatConv()
+	testUnaligned()
 	//aGrWG.Wait()
 	TEQint32(""+" testManyGoroutines() (NOT sync/atomic) counter:", aGrCtr, 0)
 	if runtime.GOOS == "nacl" { // really a haxe emulation of nacl

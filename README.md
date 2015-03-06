@@ -40,13 +40,15 @@ The "testing" package is emulated in an ugly and part-working way. Currently the
 - bufio
 - bytes
 - container/heap, container/list, container/ring
+- crypto/aes, crypto/cipher, crypto/des, crypto/rc4, crypto/sha1, crypto/sha256, crypto/sha512
 - encoding/ascii85, encoding/base32, encoding/base64, encoding/csv, encoding/hex
 - errors
 - flag (but no way to pass flags in yet)
 - fmt (only print side working so far, minor differences printing golang type names)
 - hash/adler32, hash/crc32, hash/crc64, hash/fnv
 - image/color, image/draw
-- math (Jn & Yn fail tests), math/cmplx
+- index/suffixarray
+- math, math/cmplx
 - path
 - regexp/syntax
 - runtime (some general tests pass, NaN handled differently as a Map key)

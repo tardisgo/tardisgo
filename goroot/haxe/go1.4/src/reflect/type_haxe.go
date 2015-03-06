@@ -671,7 +671,7 @@ func (t *rtype) FieldByNameFunc(match func(string) bool) (StructField, bool) {
 }
 
 func (t *rtype) In(i int) Type {
-	panic("reflect.In not yet implemented")
+	//panic("reflect.In not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: In of non-func type")
 	}
@@ -707,7 +707,7 @@ func (t *rtype) NumField() int {
 }
 
 func (t *rtype) NumIn() int {
-	panic("reflect.NumIn not yet implemented")
+	//panic("reflect.NumIn not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: NumIn of non-func type")
 	}
@@ -716,7 +716,7 @@ func (t *rtype) NumIn() int {
 }
 
 func (t *rtype) NumOut() int {
-	panic("reflect.NumOut not yet implemented")
+	//panic("reflect.NumOut not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: NumOut of non-func type")
 	}
