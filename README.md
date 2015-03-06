@@ -34,35 +34,9 @@ All of the core [Go language specification](http://golang.org/ref/spec) is imple
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to give up control.  
 
-Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk have not been tested or implemented yet. If a standard package is not mentioned in the notes below, please assume it does not work. 
+Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk have not been tested or implemented yet. 
 
-The "testing" package is emulated in an ugly and part-working way. Currently the standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/haxetests.log) are:
-- bufio
-- bytes
-- container/heap, container/list, container/ring
-- crypto/aes, crypto/cipher, crypto/des, crypto/rc4, crypto/sha1, crypto/sha256, crypto/sha512
-- encoding/ascii85, encoding/base32, encoding/base64, encoding/csv, encoding/hex
-- errors
-- flag (but no way to pass flags in yet)
-- fmt (only print side working so far, minor differences printing golang type names)
-- hash/adler32, hash/crc32, hash/crc64, hash/fnv
-- image/color, image/draw
-- index/suffixarray
-- math, math/cmplx
-- path
-- regexp/syntax
-- runtime (some general tests pass, NaN handled differently as a Map key)
-- sort
-- strconv
-- strings
-- sync/atomic
-- text/scanner, text/tabwriter
-- unicode, unicode/utf8, unicode/utf16
-- unsafe (no tests, but everything seems to work)
-
-Math-related packages may only fully work with cpp or js -D fullunsafe, partly due to modelling float32 as float64. 
-
-Packages "reflect", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime (currently including some debug messages).
+Only around a third of the standard packages are currently passing their tests, [full details here](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md).
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 

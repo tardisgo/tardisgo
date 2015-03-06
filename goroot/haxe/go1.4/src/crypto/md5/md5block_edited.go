@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-const x86 = runtime.GOARCH == "amd64" || runtime.GOARCH == "386"
+var x86 = runtime.GOARCH == "amd64" || runtime.GOARCH == "386"
 
 var littleEndian bool
 

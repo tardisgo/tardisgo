@@ -965,7 +965,8 @@ class Object { // this implementation will improve with typed array access
 	}
 }
 `)
-	pogo.WriteAsClass("Pointer", `
+
+	ptrClass := `
 @:keep
 class Pointer { 
 	private var obj:Object; // reference to the object holding the value
@@ -985,7 +986,9 @@ class Pointer {
 		//trace("DEBUG Pointer.hashInt="+Std.string(r)+" this="+this.toUniqueVal());
 		return r;
 	}
-	public static function check(p:Dynamic):Pointer {
+`
+	if pogo.DebugFlag {
+		ptrClass += `	public static function check(p:Dynamic):Pointer {
 		if(p==null) {
 			Scheduler.panicFromHaxe("nil pointer de-reference");
 			return null;
@@ -996,7 +999,12 @@ class Pointer {
 		Scheduler.panicFromHaxe("non-Pointer cannot be used as a pointer");
 		return null;
 	}
-	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
+`
+	} else {
+		ptrClass += "\tpublic inline static function check(p:Pointer):Pointer { return p; }\n"
+	}
+	pogo.WriteAsClass("Pointer", ptrClass+
+		`	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
 		if(p1==p2) return true; // simple case of being the same haxe object
 		if(p1==null || p2==null) return false; // one of them is null (if above handles both null)
 		if(p1.obj.uniqueRef==p2.obj.uniqueRef && p1.off==p2.off) return true; // point to same object & offset

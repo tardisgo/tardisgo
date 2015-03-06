@@ -25,7 +25,7 @@ do
 	fi
 	cd ../.. 
 done
-for onelevel in bufio flag fmt math sort strings unicode 
+for onelevel in bufio flag fmt html math sort strings unicode 
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $onelevel 
@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in container/ring crypto/des crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 encoding/base64 encoding/csv encoding/hex hash/adler32 hash/crc32 hash/crc64 hash/fnv index/suffixarray math/cmplx text/scanner
+for twolevels in container/ring crypto/des crypto/md5 crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 encoding/base64 encoding/csv encoding/hex go/format go/scanner hash/adler32 hash/crc32 hash/crc64 hash/fnv index/suffixarray math/cmplx text/scanner
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $twolevels 
@@ -50,6 +50,19 @@ do
 		exit $?
 	fi
 	cd ../.. 
+done
+for threelevels in database/sql/driver
+do
+	echo "========================================="
+	echo "Unit Test (via js): " $threelevels 
+	echo "========================================="
+	cd $threelevels
+	tardisgo -haxe js -test $threelevels
+	if [ "$?" != "0" ]; then
+		cd ../../.. 
+		exit $?
+	fi
+	cd ../../.. 
 done
 for onelevel in bytes runtime strconv
 do
