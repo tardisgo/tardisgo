@@ -423,7 +423,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}
 }
 `)
-	pogo.WriteAsClass("Object", `
+	objClass := `
 
 // Object code
 // a single type of Go object
@@ -543,6 +543,9 @@ class Object { // this implementation will improve with typed array access
 	}
 	private static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
 		if(size==0) return;
+`
+	if pogo.DebugFlag {
+		objClass += `
 		if(!Std.is(src,Object)) { 
 			Scheduler.panicFromHaxe("Object.objBlt() src parameter is not an Object - Value: "+Std.string(src)+" Type: "+Type.typeof(src));
 			return;
@@ -568,6 +571,13 @@ class Object { // this implementation will improve with typed array access
 				" SrcSize: "+Std.string(src.length-srcPos));
 			return;			
 		}
+`
+	} else {
+		objClass += `
+		if(size>(src.length-srcPos) ) size = src.length-srcPos ; // TODO review why this defensive code is needed
+		`
+	}
+	objClass += `
 		#if fullunsafe //(js && fullunsafe)
 			if((size&3==0)&&(srcPos&3==0)&&(destPos&3==0)) {
 				var i:Int=0;
@@ -594,9 +604,10 @@ class Object { // this implementation will improve with typed array access
 				}
 			}
 		#else //if !fullunsafe
-			//haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
-			//haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
-			{
+			if((size>>2)>0)
+				haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, size>>2); 
+			haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
+			/*{
 				var s:Int=srcPos;
 				var d:Int=destPos;
 				for(i in 0...size) {
@@ -607,7 +618,7 @@ class Object { // this implementation will improve with typed array access
 					s+=1;
 					d+=1;
 				}
-			}
+			}*/
 		//#else
 		//	haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
 		//	dest.byts.blit(destPos,src.byts,srcPos,size);
@@ -964,7 +975,8 @@ class Object { // this implementation will improve with typed array access
 		return ret+"}";
 	}
 }
-`)
+`
+	pogo.WriteAsClass("Object", objClass)
 
 	ptrClass := `
 @:keep
