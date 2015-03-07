@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package ioutil
 
 import (
@@ -20,6 +22,10 @@ func checkSize(t *testing.T, path string, size int64) {
 }
 
 func TestReadFile(t *testing.T) {
+	if err := os.Chdir("/ioutil"); err != nil {
+		panic(err)
+	}
+
 	filename := "rumpelstilzchen"
 	contents, err := ReadFile(filename)
 	if err == nil {
@@ -36,6 +42,9 @@ func TestReadFile(t *testing.T) {
 }
 
 func TestWriteFile(t *testing.T) {
+	if err := os.Chdir("/ioutil"); err != nil {
+		panic(err)
+	}
 	f, err := TempFile("", "ioutil-test")
 	if err != nil {
 		t.Fatal(err)
@@ -64,6 +73,9 @@ func TestWriteFile(t *testing.T) {
 }
 
 func TestReadDir(t *testing.T) {
+	if err := os.Chdir("/ioutil"); err != nil {
+		panic(err)
+	}
 	dirname := "rumpelstilzchen"
 	_, err := ReadDir(dirname)
 	if err == nil {

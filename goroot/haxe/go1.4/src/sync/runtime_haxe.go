@@ -5,6 +5,7 @@
 // +build haxe
 
 // runtime functions rewritten for single-threaded Haxe
+// TODO this is all VERY simplistic, it needs to mesh-in with goroutine scheduling
 
 package sync
 
@@ -36,19 +37,21 @@ func runtime_Semrelease(s *uint32) {
 
 // Approximation of syncSema in runtime/sema.go.
 type syncSema struct {
-	lock uintptr
+	lock uint32 // was uintptr
 	head unsafe.Pointer
 	tail unsafe.Pointer
 }
 
 // Syncsemacquire waits for a pairing Syncsemrelease on the same semaphore s.
 func runtime_Syncsemacquire(s *syncSema) {
-	panic("TODO:sync.runtime_Syncsemaquire")
+	//panic("TODO:sync.runtime_Syncsemaquire")
+	runtime_Semacquire(&s.lock)
 }
 
 // Syncsemrelease waits for n pairing Syncsemacquire on the same semaphore s.
 func runtime_Syncsemrelease(s *syncSema, n uint32) {
-	panic("TODO:sync.runtime_Syncsemrelease")
+	//panic("TODO:sync.runtime_Syncsemrelease")
+	runtime_Semrelease(&s.lock)
 }
 
 // Ensure that sync and runtime agree on size of syncSema.

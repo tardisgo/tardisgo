@@ -553,6 +553,7 @@ func UnzipFS(nam string) {
 
 func unzip(data string) string {
 	log := ""
+	msg := ""
 	const (
 		zecheader   = 0x06054b50
 		zcheader    = 0x02014b50
@@ -592,7 +593,9 @@ func unzip(data string) string {
 		//	46+namelen+xlen+fclen - next header
 		//
 		if zget4(hdr) != zcheader {
-			log += "fs unzip: bad magic\n"
+			msg = "fs unzip: bad magic\n"
+			println(msg)
+			log += msg
 			break
 		}
 		meth := zget2(hdr[10:])
@@ -629,7 +632,9 @@ func unzip(data string) string {
 			zget2(buf[8:]) != meth ||
 			zget2(buf[26:]) != namelen ||
 			buf[30:30+namelen] != name {
-			log += "fs unzip: inconsistent zip file\n"
+			msg = "fs unzip: inconsistent zip file\n"
+			println(msg)
+			log += msg
 			return log
 		}
 		xlen = zget2(buf[28:])
@@ -647,7 +652,9 @@ func unzip(data string) string {
 			buf = data[off : off+csize]
 			fdata = inflate(buf)
 			if len(fdata) != size {
-				log += "fs unzip: inconsistent size in zip file\n"
+				msg = "fs unzip: inconsistent size in zip file\n"
+				println(msg)
+				log += msg
 				return log
 			}
 		}
@@ -664,9 +671,13 @@ func unzip(data string) string {
 			}
 		}
 
-		log += "syscall.unzip() file: " + name + "\n"
+		msg = "syscall.unzip() file: " + name + "\n"
+		println(msg)
+		log += msg
 		if err := create(name, xattr, zipToTime(mdate, mtime), fdata); err != nil {
-			log += "fs unzip: create " + name + " : " + err.Error() + "\n"
+			msg = "fs unzip: create " + name + " : " + err.Error() + "\n"
+			println(msg)
+			log += msg
 		}
 	}
 

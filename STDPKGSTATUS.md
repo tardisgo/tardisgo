@@ -1,7 +1,7 @@
 Standard Package Status
 -----------------------
 
-Currently the standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/haxetests.log) are shown below. If a standard package is not mentioned in the table below, please assume it does not work. 
+The standard packages that [pass their tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/haxetests.log) are shown below, those without any comment have not yet passed their tests. 
 
 The "testing" package is emulated in an ugly and part-working way. Packages "reflect", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime.
 
@@ -10,19 +10,19 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 
 | Name            | Passes Tests          | Comment                           |
 | --------------- | --------------------- | --------------------------------- |
-| archive         |                       |                                   |
+| archive         | no code               |                                   |
 | -- tar          |                       |                                   |
 | -- zip          |                       |                                   |
 | bufio           | yes                   |                                   |
-| builtin         | no tests              | all built-in fns are implemented  |
+| builtin         | no tests              | all built-in functions are implemented  |
 | bytes           | yes                   |                                   |
-| compress        |                       |                                   |
+| compress        | no code               |                                   |
 | -- bzip2        |                       |                                   |
 | -- flate        |                       |                                   |
 | -- gzip         |                       |                                   |
 | -- lzw          |                       |                                   |
 | -- zlib         |                       |                                   |
-| container       |                       |                                   |
+| container       | no code               |                                   |
 | -- heap         | yes                   |                                   |
 | -- list         | yes                   |                                   |
 | -- ring         | yes                   |                                   |
@@ -45,16 +45,16 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- tls          |                       |                                   |
 | -- x509         |                       |                                   |
 | -- -- pkix      |                       |                                   |
-| database        |                       |                                   |
+| database        | no code               |                                   |
 | -- sql          |                       |                                   |
 | -- -- driver    | yes                   |                                   |
-| debug           |                       |                                   |
+| debug           | no code               |                                   |
 | -- dwarf        |                       |                                   |
 | -- elf          |                       |                                   |
 | -- gosym        |                       |                                   |
 | -- macho        |                       |                                   |
 | -- pe           |                       |                                   |
-| encoding        |                       |                                   |
+| encoding        | no tests              |                                   |
 | -- ascii85      | yes                   |                                   |
 | -- asn1         |                       |                                   |
 | -- base32       | yes                   |                                   |
@@ -69,8 +69,8 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | errors          | yes                   |                                   |
 | expvar          |                       |                                   |
 | flag            | yes                   | but no way to pass flags in yet   |
-| fmt             |                       | print side works, minor differences in type names |
-| go              |                       |                                   |
+| fmt             | some                  | print side works, minor differences in type names |
+| go              | no code               |                                   |
 | -- ast          |                       |                                   |
 | -- build        |                       |                                   |
 | -- doc          |                       |                                   |
@@ -79,7 +79,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- printer      |                       |                                   |
 | -- scanner      | yes                   |                                   |
 | -- token        |                       |                                   |
-| hash            |                       |                                   |
+| hash            | no tests              |                                   |
 | -- adler32      | yes                   |                                   |
 | -- crc32        | yes                   |                                   |
 | -- crc64        | yes                   |                                   |
@@ -93,10 +93,10 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- gif          |                       |                                   |
 | -- jpeg         |                       |                                   |
 | -- png          |                       |                                   |
-| index           |                       |                                   |
+| index           | no code               |                                   |
 | -- suffixarray  | yes                   |                                   |
-| io              |                       |                                   |
-| -- ioutil       |                       |                                   |
+| io              | yes                   |                                   |
+| -- ioutil       | yes                   |                                   |
 | log             |                       |                                   |
 | -- syslog       |                       |                                   |
 | math            | yes                   |                                   |
@@ -128,11 +128,11 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | reflect         |                       | partially implemenented           |
 | regexp          |                       |                                   |
 | -- syntax       | yes                   |                                   |
-| runtime         |                       | some general tests pass, NaN handled differently as a Map key |
-| -- cgo          |                       | unsupported                       |
-| -- debug        |                       | unsupported                       |
-| -- pprof        |                       | unsupported                       |
-| -- race         |                       | unsupported                       |
+| runtime         | some                  | some general tests pass, NaN handled differently as a Map key |
+| -- cgo          | -                     | unsupported                       |
+| -- debug        | -                     | unsupported                       |
+| -- pprof        | -                     | unsupported                       |
+| -- race         | -                     | unsupported                       |
 | sort            | yes                   |                                   |
 | strconv         | yes                   |                                   |
 | strings         | yes                   |                                   |
@@ -142,7 +142,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | testing         |                       | dummy at present                  |
 | -- iotest       |                       |                                   |
 | -- quick        |                       |                                   |
-| text            |                       |                                   |
+| text            | no code               |                                   |
 | -- scanner      | yes                   |                                   |
 | -- tabwriter    | yes                   |                                   |
 | -- template     |                       |                                   |
@@ -151,8 +151,6 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | unicode         | yes                   |                                   |
 | -- utf16        | yes                   |                                   |
 | -- utf8         | yes                   |                                   |
-| unsafe          | no tests              | pointer arithmetic unsupported    |
-
-Score as at 6.3.15: 46/142 = 32%
+| unsafe          | no tests              | pointer arithmetic unsupported, but other functionalty should work |
 
 (With thanks to [GopherJS](https://github.com/gopherjs/gopherjs/blob/master/doc/packages.md) for the layout above)

@@ -25,7 +25,7 @@ do
 	fi
 	cd ../.. 
 done
-for onelevel in bufio flag fmt html math sort strings unicode 
+for onelevel in bufio flag fmt html io math sort strings unicode 
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $onelevel 
@@ -77,7 +77,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in image/draw regexp/syntax sync/atomic
+for twolevels in image/draw io/ioutil regexp/syntax sync/atomic
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $twolevels 

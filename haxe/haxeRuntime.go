@@ -1303,10 +1303,22 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 		val=v; 
 	}
 	public function toString():String {
+		var nam:String;
+		#if (js || neko || php)
+			if(typ==null) 
+				nam="nil";
+			else
+				nam=TypeInfo.getName(typ);
+		#else
+			nam=TypeInfo.getName(typ);			
+		#end
 		if(val==null)
-			return "Interface{nil:"+TypeInfo.getName(typ)+"}";
+			return "Interface{nil:"+nam+"}";
 		else
-			return "Interface{"+val+":"+TypeInfo.getName(typ)+"}";
+			if(Std.is(val,Pointer))
+				return "interface{"+val.toUniqueVal()+":"+nam+"}"; // To stop recursion
+			else
+				return "Interface{"+Std.string(val)+":"+nam+"}";
 	}
 	public static function toDynamic(v:Interface):Dynamic {
 		if(v==null)
@@ -2489,6 +2501,7 @@ public static function stackDump():String {
 							if(k.indexOf(".")==-1){ // not a global assignment, so showing only locals
 								var t:Dynamic=ent._debugVars.get(k);
 								if(t==null) t="nil";
+								if(Std.is(t,Pointer)) t=t.toUniqueVal();
 								ret += "\t\tvar "+k+" = "+t+"\n";
 							}
 						}
