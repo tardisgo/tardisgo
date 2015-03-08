@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 // Tests that involve both reading and writing.
 
 package zip
@@ -13,7 +15,6 @@ import (
 	"io"
 	"io/ioutil"
 	"sort"
-	"strings"
 	"testing"
 	"time"
 )
@@ -23,6 +24,9 @@ func TestOver65kFiles(t *testing.T) {
 	w := NewWriter(buf)
 	const nFiles = (1 << 16) + 42
 	for i := 0; i < nFiles; i++ {
+		//if i&0xff == 0 {
+		//	println("DEBUG writing file number ", i)
+		//}
 		_, err := w.CreateHeader(&FileHeader{
 			Name:   fmt.Sprintf("%d.dat", i),
 			Method: Store, // avoid Issue 6136 and Issue 6138
@@ -31,11 +35,17 @@ func TestOver65kFiles(t *testing.T) {
 			t.Fatalf("creating file %d: %v", i, err)
 		}
 	}
+	//println("DEBUG Close...")
 	if err := w.Close(); err != nil {
 		t.Fatalf("Writer.Close: %v", err)
 	}
-	s := buf.String()
-	zr, err := NewReader(strings.NewReader(s), int64(len(s)))
+	//println("DEBUG Closed buffer len:", buf.Len())
+
+	// NOTE tardisgo/haxe can't handle long strings, so two lines below re-written by the 3rd
+	//s := buf.String()
+	//zr, err := NewReader(strings.NewReader(s), int64(len(s)))
+	zr, err := NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
+
 	if err != nil {
 		t.Fatalf("NewReader: %v", err)
 	}
@@ -43,6 +53,9 @@ func TestOver65kFiles(t *testing.T) {
 		t.Fatalf("File contains %d files, want %d", got, nFiles)
 	}
 	for i := 0; i < nFiles; i++ {
+		//if i&0xff == 0 {
+		//	println("DEBUG reading file number ", i)
+		//}
 		want := fmt.Sprintf("%d.dat", i)
 		if zr.File[i].Name != want {
 			t.Fatalf("File(%d) = %q, want %q", i, zr.File[i].Name, want)
@@ -227,6 +240,7 @@ func (fakeHash32) Sum32() uint32               { return 0 }
 func TestZip64(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow test; skipping")
+		return
 	}
 	const size = 1 << 32 // before the "END\n" part
 	testZip64(t, size)

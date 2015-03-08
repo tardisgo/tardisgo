@@ -1006,7 +1006,7 @@ func (v Value) Len() int {
 		panic("reflect.value.Len chan not yet implemented")
 		return chanlen(v.pointer())
 	case Map:
-		panic("reflect.value.Len map not yet implemented")
+		//panic("reflect.value.Len map not yet implemented")
 		return maplen(*(*uintptr)(v.ptr)) //v.pointer())
 	case Slice:
 		// Slice is bigger than a word; assume flagIndir.

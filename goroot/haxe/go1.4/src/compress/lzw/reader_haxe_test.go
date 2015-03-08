@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package lzw
 
 import (
@@ -114,7 +116,7 @@ func TestReader(t *testing.T) {
 func benchmarkDecoder(b *testing.B, n int) {
 	b.StopTimer()
 	b.SetBytes(int64(n))
-	buf0, err := ioutil.ReadFile("../testdata/e.txt")
+	buf0, err := ioutil.ReadFile("testdata/e.txt")
 	if err != nil {
 		b.Fatal(err)
 	}

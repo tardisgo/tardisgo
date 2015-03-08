@@ -262,6 +262,14 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				switch v1.(ssa.Value).Type().Underlying().(type) {
 				case *types.Basic:
 					if (v1.(ssa.Value).Type().Underlying().(*types.Basic).Info() & types.IsUnsigned) != 0 {
+						if v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() == types.Uintptr {
+							// could be comparing pointers cast to uintptr, so force to uint
+							v1string = wrapForce_toUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+						}
+						if v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind() == types.Uintptr {
+							// could be comparing pointers cast to uintptr, so force to uint
+							v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+						}
 						ret = "(Force.uintCompare(" + v1string + "," + v2string + ")" + op + "0)"
 					} else {
 						switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {

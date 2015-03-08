@@ -9,6 +9,31 @@ import (
 	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
+// TB is the interface common to T and B.
+type TB interface {
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fail()
+	FailNow()
+	Failed() bool
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Log(args ...interface{})
+	Logf(format string, args ...interface{})
+	Skip(args ...interface{})
+	SkipNow()
+	Skipf(format string, args ...interface{})
+	Skipped() bool
+
+	// A private method to prevent users implementing the
+	// interface and so future additions to it will not
+	// violate Go 1 compatibility.
+	//private()
+}
+
+var _ TB = (*T)(nil)
+var _ TB = (*B)(nil)
+
 func header(s string) {
 	_, file, line, _ := runtime.Caller(2)
 	println(" ") // blank line

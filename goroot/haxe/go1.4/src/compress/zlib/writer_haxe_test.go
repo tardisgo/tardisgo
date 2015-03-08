@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package zlib
 
 import (
@@ -14,8 +16,8 @@ import (
 )
 
 var filenames = []string{
-	"../testdata/e.txt",
-	"../testdata/pi.txt",
+	"testdata/e.txt",
+	"testdata/pi.txt",
 }
 
 var data = []string{

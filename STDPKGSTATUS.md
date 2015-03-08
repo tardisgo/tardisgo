@@ -11,17 +11,17 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | Name            | Passes Tests          | Comment                           |
 | --------------- | --------------------- | --------------------------------- |
 | archive         | no code               |                                   |
-| -- tar          |                       |                                   |
-| -- zip          |                       |                                   |
+| -- tar          | yes                   |                                   |
+| -- zip          | yes                   |                                   |
 | bufio           | yes                   |                                   |
-| builtin         | no tests              | all built-in functions are implemented  |
+| builtin         | no tests              | all built-in functions are implemented |
 | bytes           | yes                   |                                   |
 | compress        | no code               |                                   |
-| -- bzip2        |                       |                                   |
+| -- bzip2        | yes                   |                                   |
 | -- flate        |                       |                                   |
 | -- gzip         |                       |                                   |
 | -- lzw          |                       |                                   |
-| -- zlib         |                       |                                   |
+| -- zlib         | yes                   |                                   |
 | container       | no code               |                                   |
 | -- heap         | yes                   |                                   |
 | -- list         | yes                   |                                   |
@@ -99,7 +99,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- ioutil       | yes                   |                                   |
 | log             |                       |                                   |
 | -- syslog       |                       |                                   |
-| math            | yes                   |                                   |
+| math            | yes                   | requires fullunsafe mode in js to pass all tests |
 | -- big          |                       |                                   |
 | -- cmplx        | yes                   |                                   |
 | -- rand         |                       |                                   |
@@ -124,7 +124,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- signal       |                       |                                   |
 | -- user         |                       | will return an error if called    |
 | path            | yes                   |                                   |
-| -- filepath     |                       |                                   |
+| -- filepath     | yes                   |                                   |
 | reflect         |                       | partially implemenented           |
 | regexp          | yes                   | requires fullunsafe mode in js to pass all tests |
 | -- syntax       | yes                   |                                   |
