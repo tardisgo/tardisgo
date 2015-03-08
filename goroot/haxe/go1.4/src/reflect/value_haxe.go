@@ -1250,6 +1250,9 @@ func (v Value) Pointer() uintptr {
 		return uintptr(v.pointer())
 	case Slice:
 		//return (*SliceHeader)(v.ptr).Data
+		if hx.IsNull(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", v.ptr)) {
+			return uintptr(unsafe.Pointer(nil))
+		}
 		return hx.CodeDynamic("",
 			"_a.itemAddr(0).load().val.load().len()==0?null:_a.itemAddr(0).load().val.load().itemAddr(0);",
 			v.ptr)

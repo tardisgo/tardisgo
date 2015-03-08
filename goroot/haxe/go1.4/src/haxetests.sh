@@ -25,7 +25,7 @@ do
 	fi
 	cd ../.. 
 done
-for onelevel in bufio flag fmt html io math sort strings unicode 
+for onelevel in bufio flag fmt html io math regexp sort strings unicode 
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $onelevel 

@@ -126,7 +126,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | path            | yes                   |                                   |
 | -- filepath     |                       |                                   |
 | reflect         |                       | partially implemenented           |
-| regexp          |                       |                                   |
+| regexp          | yes                   | requires fullunsafe mode in js to pass all tests |
 | -- syntax       | yes                   |                                   |
 | runtime         | some                  | some general tests pass, NaN handled differently as a Map key |
 | -- cgo          | -                     | unsupported                       |
@@ -152,5 +152,8 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- utf16        | yes                   |                                   |
 | -- utf8         | yes                   |                                   |
 | unsafe          | no tests              | pointer arithmetic unsupported, but other functionalty should work |
+
+
+TODO (requires serious auomation): add library status for each target
 
 (With thanks to [GopherJS](https://github.com/gopherjs/gopherjs/blob/master/doc/packages.md) for the layout above)

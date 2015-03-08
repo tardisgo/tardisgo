@@ -453,7 +453,7 @@ class Object { // this implementation will improve with typed array access
 	#end
 
 	public function new(byteSize:Int,?bytes:haxe.io.Bytes){ // size is in bytes
-		dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); 
+		dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); // +1 to make sure non-zero
 		if(bytes!=null) byteSize = bytes.length;
 		#if (js && fullunsafe)
 			arrayBuffer = new js.html.ArrayBuffer(byteSize);
@@ -1013,7 +1013,13 @@ class Pointer {
 	}
 `
 	} else {
-		ptrClass += "\tpublic inline static function check(p:Pointer):Pointer { return p; }\n"
+		ptrClass += `	public static function check(p:Pointer):Pointer { 
+		if(p==null) {
+			Scheduler.panicFromHaxe("nil pointer de-reference");
+			return null;
+		}
+		return p; 
+	}`
 	}
 	pogo.WriteAsClass("Pointer", ptrClass+
 		`	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
@@ -1113,8 +1119,7 @@ class Pointer {
 	}
 }
 `)
-	pogo.WriteAsClass("Slice", `
-
+	sliceClass := `
 @:keep
 class Slice {
 	private var baseArray:Pointer;
@@ -1158,7 +1163,7 @@ class Slice {
 		if(high==-1) high = length; //default upper bound is the length of the current slice
 		return new Slice(baseArray,low+start,high+start,capacity,itemSize);
 	}
-	public static function append(oldEnt:Slice,newEnt:Slice):Slice{
+	public static function append(oldEnt:Slice,newEnt:Slice):Slice{ // TODO optimize further - heavily used
 		if(newEnt==null || newEnt.len()==0) return oldEnt;
 		if(oldEnt==null) { // must create a copy rather than just return the new one
 			oldEnt=new Slice(new Pointer(new Object(0)),0,-1,0,newEnt.itemSize); // trigger newObj code below
@@ -1173,13 +1178,15 @@ class Slice {
 			}
 			return oldEnt;
 		}else{
-			var newObj:Object = new Object((oldEnt.length+newEnt.len())*oldEnt.itemSize);
+			var newLen = oldEnt.length+newEnt.len();
+			var newCap = newLen+(newLen>>2); // NOTE auto-create 50pc new capacity 
+			var newObj:Object = new Object(newCap*oldEnt.itemSize);
 			for(i in 0...oldEnt.length) 
 				newObj.set_object(oldEnt.itemSize,i*oldEnt.itemSize,oldEnt.itemAddr(i).load_object(oldEnt.itemSize));
 			for(i in 0...newEnt.len())
 				newObj.set_object(oldEnt.itemSize,
 					oldEnt.length*oldEnt.itemSize+i*oldEnt.itemSize,newEnt.itemAddr(i).load_object(oldEnt.itemSize));
-			return new Slice(new Pointer(newObj),0,oldEnt.length+newEnt.len(),oldEnt.length+newEnt.len(),oldEnt.itemSize);
+			return new Slice(new Pointer(newObj),0,newLen,newCap,oldEnt.itemSize);
 		}
 	}
 	public static function copy(target:Slice,source:Slice):Int{
@@ -1229,7 +1236,13 @@ class Slice {
 		return capacity-start;
 	}
 	public function itemAddr(idx:Int):Pointer {
+`
+	//if pogo.DebugFlag { // TODO test could be removed in some future NoChecking mode maybe?
+	sliceClass += `
 		if (idx<0 || idx>=len()) Scheduler.panicFromHaxe("Slice index out of range");
+`
+	//}
+	sliceClass += `
 		return baseArray.addr((idx+start)*itemSize);
 	}
 	public function toString():String {
@@ -1242,7 +1255,8 @@ class Slice {
 		return ret+"]}";
 	}
 }
-`)
+`
+	pogo.WriteAsClass("Slice", sliceClass)
 	pogo.WriteAsClass("Closure", `
 
 @:keep

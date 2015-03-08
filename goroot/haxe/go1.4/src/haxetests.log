@@ -8,7 +8,7 @@ testing.Main
 Executing test: TestErrorMethod 
 
 Executing test: TestNewEqual 
-        1.60 real         1.50 user         0.06 sys
+        1.33 real         1.26 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  path
@@ -38,7 +38,7 @@ Executing test: TestJoin
 Executing test: TestMatch 
 
 Executing test: TestSplit 
-       11.22 real        11.01 user         0.18 sys
+       10.09 real         9.89 user         0.15 sys
 
 =========================================
 Unit Test (via interpreter):  container/heap
@@ -60,7 +60,7 @@ Executing test: TestRemove0
 Executing test: TestRemove1 
 
 Executing test: TestRemove2 
-        3.76 real         3.66 user         0.09 sys
+        3.12 real         3.03 user         0.08 sys
 
 =========================================
 Unit Test (via interpreter):  container/list
@@ -88,7 +88,7 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
-        1.88 real         1.80 user         0.06 sys
+        1.50 real         1.44 user         0.05 sys
 
 =========================================
 Unit Test (via interpreter):  crypto/aes
@@ -118,7 +118,7 @@ Executing test: TestShortBlocks
 Executing test: TestTd 
 
 Executing test: TestTe 
-       23.75 real        23.38 user         0.22 sys
+       21.81 real        21.61 user         0.14 sys
 
 =========================================
 Unit Test (via interpreter):  crypto/cipher
@@ -144,7 +144,7 @@ Executing test: TestCryptBlocks
 Executing test: TestOFB 
 
 Executing test: TestXOR 
-       36.93 real        35.99 user         0.53 sys
+       34.20 real        33.70 user         0.38 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/ascii85
@@ -170,7 +170,7 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
-       16.33 real        16.02 user         0.25 sys
+       14.36 real        14.13 user         0.20 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base32
@@ -198,7 +198,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       16.31 real        15.96 user         0.29 sys
+       14.98 real        14.74 user         0.21 sys
 
 =========================================
 Unit Test (via interpreter):  image/color
@@ -208,7 +208,7 @@ Unit Test (via interpreter):  image/color
 testing.Main  
 
 Executing test: TestRoundtrip 
-       15.82 real        15.60 user         0.13 sys
+       14.57 real        14.49 user         0.06 sys
 
 =========================================
 Unit Test (via interpreter):  text/tabwriter
@@ -222,7 +222,7 @@ Executing test: Test
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
-       13.11 real        12.86 user         0.20 sys
+       12.25 real        12.06 user         0.17 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf8
@@ -254,7 +254,7 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-       16.43 real        16.06 user         0.20 sys
+       15.39 real        15.20 user         0.17 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf16
@@ -274,7 +274,7 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
-       13.11 real        12.87 user         0.21 sys
+       12.50 real        12.26 user         0.21 sys
 
 =========================================
 Unit Test (via js):  bufio
@@ -395,7 +395,7 @@ Console.hx:22:
 Executing test: TestWriterReset 
 Console.hx:22: 
 Executing test: TestZeroReader 
-       49.01 real        48.63 user         0.50 sys
+       48.35 real        47.92 user         0.51 sys
 
 =========================================
 Unit Test (via js):  flag
@@ -432,7 +432,7 @@ Console.hx:15:   -b=0: usage
 
 Console.hx:22: 
 Executing test: TestUserDefinedForCommandLine 
-        1.22 real         1.12 user         0.10 sys
+        1.24 real         1.13 user         0.10 sys
 
 =========================================
 Unit Test (via js):  fmt
@@ -483,7 +483,7 @@ Console.hx:22:
 Executing test: TestStructPrinter 
 Console.hx:22: 
 Executing test: TestWidthAndPrecision 
-       60.04 real        58.99 user         0.69 sys
+       41.64 real        41.36 user         0.40 sys
 
 =========================================
 Unit Test (via js):  html
@@ -496,7 +496,7 @@ Console.hx:22:
 Executing test: TestUnescape 
 Console.hx:22: 
 Executing test: TestUnescapeEscape 
-        0.78 real         0.70 user         0.07 sys
+        0.51 real         0.46 user         0.05 sys
 
 =========================================
 Unit Test (via js):  io
@@ -559,7 +559,7 @@ Console.hx:22:
 Executing test: TestWriteEmpty 
 Console.hx:22: 
 Executing test: TestWriteNil 
-        1.50 real         1.35 user         0.14 sys
+        0.97 real         0.87 user         0.10 sys
 
 =========================================
 Unit Test (via js):  math
@@ -688,7 +688,147 @@ Console.hx:22:
 Executing test: TestY1 
 Console.hx:22: 
 Executing test: TestYn 
-        2.51 real         2.34 user         0.14 sys
+        1.61 real         1.51 user         0.09 sys
+
+=========================================
+Unit Test (via js):  regexp
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: testing.Main  
+Console.hx:22: syscall.unzip() file: testdata/
+ 
+Console.hx:22: syscall.unzip() file: testdata/.DS_Store
+ 
+Console.hx:22: syscall.unzip() file: __MACOSX/
+ 
+Console.hx:22: syscall.unzip() file: __MACOSX/testdata/
+ 
+Console.hx:22: syscall.unzip() file: __MACOSX/testdata/._.DS_Store
+ 
+Console.hx:22: syscall.unzip() file: testdata/basic.dat
+ 
+Console.hx:22: syscall.unzip() file: testdata/nullsubexpr.dat
+ 
+Console.hx:22: syscall.unzip() file: testdata/re2-search.txt
+ 
+Console.hx:22: syscall.unzip() file: testdata/repetition.dat
+ 
+Console.hx:22: syscall.unzip() file: testdata/testregex.c
+ 
+Console.hx:22: 
+Executing test: TestBadCompile 
+Console.hx:22: 
+Executing test: TestCompileOnePass 
+Console.hx:22: 
+Executing test: TestFind 
+Console.hx:22: 
+Executing test: TestFindAll 
+Console.hx:22: 
+Executing test: TestFindAllIndex 
+Console.hx:22: 
+Executing test: TestFindAllString 
+Console.hx:22: 
+Executing test: TestFindAllStringIndex 
+Console.hx:22: 
+Executing test: TestFindAllStringSubmatch 
+Console.hx:22: 
+Executing test: TestFindAllStringSubmatchIndex 
+Console.hx:22: 
+Executing test: TestFindAllSubmatch 
+Console.hx:22: 
+Executing test: TestFindAllSubmatchIndex 
+Console.hx:22: 
+Executing test: TestFindIndex 
+Console.hx:22: 
+Executing test: TestFindReaderIndex 
+Console.hx:22: 
+Executing test: TestFindReaderSubmatchIndex 
+Console.hx:22: 
+Executing test: TestFindString 
+Console.hx:22: 
+Executing test: TestFindStringIndex 
+Console.hx:22: 
+Executing test: TestFindStringSubmatch 
+Console.hx:22: 
+Executing test: TestFindStringSubmatchIndex 
+Console.hx:22: 
+Executing test: TestFindSubmatch 
+Console.hx:22: 
+Executing test: TestFindSubmatchIndex 
+Console.hx:22: 
+Executing test: TestFowler 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Log /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 330  
+Console.hx:22: testdata/basic.dat  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 343  
+Console.hx:29:  { NOTE	all standard compliant implementations should pass these : 2002-05-31  } skip: %s  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Log /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 330  
+Console.hx:22: testdata/nullsubexpr.dat  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 343  
+Console.hx:29:  { NOTE	null subexpression matches : 2002-06-06  } skip: %s  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Log /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 330  
+Console.hx:22: testdata/repetition.dat  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 343  
+Console.hx:29:  { NOTE	implicit vs. explicit repetitions : 2009-02-02  } skip: %s  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 343  
+Console.hx:29:  { NOTE	additional repetition tests graciously provided by Chris Kuklewicz www.haskell.org 2009-02-02  } skip: %s  
+Console.hx:22: 
+Executing test: TestGoodCompile 
+Console.hx:22: 
+Executing test: TestLiteralPrefix 
+Console.hx:22: 
+Executing test: TestLongest 
+Console.hx:22: 
+Executing test: TestMatch 
+Console.hx:22: 
+Executing test: TestMatchFunction 
+Console.hx:22: 
+Executing test: TestMergeRuneSet 
+Console.hx:22: 
+Executing test: TestOnePassCutoff 
+Console.hx:22: 
+Executing test: TestQuoteMeta 
+Console.hx:22: 
+Executing test: TestRE2Exhaustive 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec2_haxe_test.go 15  
+Console.hx:22: skipping TestRE2Exhaustive during short test  
+Console.hx:22: 
+Executing test: TestRE2Search 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 69  
+Console.hx:29:  { Regexp.SearchTests  } %s
+  
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/regexp/exec_test.go 69  
+Console.hx:29:  { 1832  } %d cases tested  
+Console.hx:22: 
+Executing test: TestReplaceAll 
+Console.hx:22: 
+Executing test: TestReplaceAllFunc 
+Console.hx:22: 
+Executing test: TestReplaceAllLiteral 
+Console.hx:22: 
+Executing test: TestSplit 
+Console.hx:22: 
+Executing test: TestSubexp 
+       71.24 real        70.82 user         0.62 sys
 
 =========================================
 Unit Test (via js):  sort
@@ -789,7 +929,7 @@ Console.hx:22:
 Executing test: TestStableInts 
 Console.hx:22: 
 Executing test: TestStrings 
-       44.98 real        44.27 user         0.52 sys
+       27.83 real        27.63 user         0.24 sys
 
 =========================================
 Unit Test (via js):  strings
@@ -882,7 +1022,7 @@ Console.hx:22:
 Executing test: TestWriteStringError 
 Console.hx:22: 
 Executing test: TestWriteTo 
-       18.96 real        18.74 user         0.27 sys
+        5.00 real         4.86 user         0.15 sys
 
 =========================================
 Unit Test (via js):  unicode
@@ -943,7 +1083,7 @@ Console.hx:22:
 Executing test: TestToUpperCase 
 Console.hx:22: 
 Executing test: TestTurkishCase 
-        1.28 real         1.17 user         0.10 sys
+        1.21 real         1.12 user         0.09 sys
 
 =========================================
 Unit Test (via js):  container/ring
@@ -966,7 +1106,7 @@ Console.hx:22:
 Executing test: TestNew 
 Console.hx:22: 
 Executing test: TestUnlink 
-        1.37 real         1.29 user         0.07 sys
+        1.35 real         1.28 user         0.07 sys
 
 =========================================
 Unit Test (via js):  crypto/des
@@ -1011,7 +1151,7 @@ Console.hx:22:
 Executing test: TestVariablePlaintextKnownAnswer 
 Console.hx:22: 
 Executing test: TestWeakKeys 
-        2.62 real         2.55 user         0.08 sys
+        2.54 real         2.46 user         0.08 sys
 
 =========================================
 Unit Test (via js):  crypto/md5
@@ -1024,7 +1164,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestLarge 
-        3.28 real         3.16 user         0.12 sys
+        2.72 real         2.60 user         0.12 sys
 
 =========================================
 Unit Test (via js):  crypto/rc4
@@ -1037,7 +1177,7 @@ Console.hx:22:
 Executing test: TestBlockGeneric 
 Console.hx:22: 
 Executing test: TestGolden 
-       26.45 real        26.37 user         0.19 sys
+       28.45 real        28.25 user         0.23 sys
 
 =========================================
 Unit Test (via js):  crypto/sha1
@@ -1052,7 +1192,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        2.22 real         2.11 user         0.12 sys
+        1.84 real         1.73 user         0.11 sys
 
 =========================================
 Unit Test (via js):  crypto/sha256
@@ -1065,7 +1205,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        5.09 real         5.00 user         0.10 sys
+        3.03 real         2.93 user         0.10 sys
 
 =========================================
 Unit Test (via js):  crypto/sha512
@@ -1078,7 +1218,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-       13.98 real        13.88 user         0.15 sys
+        5.01 real         4.91 user         0.12 sys
 
 =========================================
 Unit Test (via js):  encoding/base64
@@ -1109,7 +1249,7 @@ Console.hx:22:
 Executing test: TestEncoderBuffering 
 Console.hx:22: 
 Executing test: TestNewLineCharacters 
-        1.12 real         1.04 user         0.08 sys
+        1.16 real         1.07 user         0.09 sys
 
 =========================================
 Unit Test (via js):  encoding/csv
@@ -1122,7 +1262,7 @@ Console.hx:22:
 Executing test: TestRead 
 Console.hx:22: 
 Executing test: TestWrite 
-        1.20 real         1.10 user         0.09 sys
+        1.28 real         1.17 user         0.10 sys
 
 =========================================
 Unit Test (via js):  encoding/hex
@@ -1145,7 +1285,7 @@ Console.hx:22:
 Executing test: TestInvalidErr 
 Console.hx:22: 
 Executing test: TestInvalidStringErr 
-        1.04 real         0.95 user         0.08 sys
+        1.07 real         0.98 user         0.09 sys
 
 =========================================
 Unit Test (via js):  go/format
@@ -1160,7 +1300,7 @@ Console.hx:22:
 Executing test: TestPartial 
 Console.hx:22: 
 Executing test: TestSource 
-      121.03 real       120.77 user         0.75 sys
+        5.94 real         5.80 user         0.16 sys
 
 =========================================
 Unit Test (via js):  go/scanner
@@ -1179,7 +1319,7 @@ Console.hx:22:
 Executing test: TestSemis 
 Console.hx:22: 
 Executing test: TestStdErrorHander 
-        6.05 real         5.93 user         0.14 sys
+        1.58 real         1.49 user         0.09 sys
 
 =========================================
 Unit Test (via js):  hash/adler32
@@ -1188,7 +1328,7 @@ Unit Test (via js):  hash/adler32
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        8.01 real         7.93 user         0.11 sys
+        7.53 real         7.45 user         0.11 sys
 
 =========================================
 Unit Test (via js):  hash/crc32
@@ -1197,7 +1337,7 @@ Unit Test (via js):  hash/crc32
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.21 real         0.18 user         0.02 sys
+        0.20 real         0.18 user         0.02 sys
 
 =========================================
 Unit Test (via js):  hash/crc64
@@ -1206,7 +1346,7 @@ Unit Test (via js):  hash/crc64
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.20 real         0.17 user         0.02 sys
+        0.19 real         0.16 user         0.02 sys
 
 =========================================
 Unit Test (via js):  hash/fnv
@@ -1229,7 +1369,7 @@ Console.hx:22:
 Executing test: TestIntegrity64 
 Console.hx:22: 
 Executing test: TestIntegrity64a 
-        0.56 real         0.50 user         0.05 sys
+        0.54 real         0.49 user         0.05 sys
 
 =========================================
 Unit Test (via js):  index/suffixarray
@@ -1238,7 +1378,7 @@ Unit Test (via js):  index/suffixarray
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestIndex 
-        3.49 real         3.39 user         0.11 sys
+        3.25 real         3.15 user         0.11 sys
 
 =========================================
 Unit Test (via js):  math/cmplx
@@ -1318,7 +1458,7 @@ Console.hx:22:
 Executing test: TestScanWhitespace 
 Console.hx:22: 
 Executing test: TestScanZeroMode 
-        3.16 real         3.05 user         0.12 sys
+        3.04 real         2.93 user         0.11 sys
 
 =========================================
 Unit Test (via js):  database/sql/driver
@@ -1327,7 +1467,7 @@ Unit Test (via js):  database/sql/driver
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestValueConverters 
-        1.12 real         1.04 user         0.07 sys
+        0.88 real         0.81 user         0.06 sys
 
 =========================================
 Unit Test (via C++):  bytes
@@ -1462,7 +1602,7 @@ Executing test: TestUnreadByte
 Executing test: TestUnreadRuneError 
 
 Executing test: TestWriteTo 
-       47.77 real        39.03 user        14.59 sys
+       43.12 real        35.28 user        13.06 sys
 
 =========================================
 Unit Test (via C++):  runtime
@@ -1513,7 +1653,7 @@ Executing test: TestSideEffectOrder
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-       56.90 real        62.26 user         1.11 sys
+       50.61 real        56.86 user         1.03 sys
 
 =========================================
 Unit Test (via C++):  strconv
@@ -1599,7 +1739,7 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/st
 Executing test: TestUitoa 
 
 Executing test: TestUnquote 
-       65.25 real        72.33 user         0.82 sys
+       52.20 real        62.94 user         0.87 sys
 
 =========================================
 Unit Test (via C++):  image/draw
@@ -1632,7 +1772,7 @@ Executing test: TestFloydSteinbergCheckerboard
 Executing test: TestNonZeroSrcPt 
 
 Executing test: TestPaletted 
-       15.57 real        17.27 user         0.26 sys
+        9.14 real        10.00 user         0.19 sys
 
 =========================================
 Unit Test (via C++):  io/ioutil
@@ -1669,7 +1809,7 @@ Executing test: TestTempDir
 Executing test: TestTempFile 
 
 Executing test: TestWriteFile 
-       27.73 real        29.79 user         0.42 sys
+        0.31 real         0.16 user         0.04 sys
 
 =========================================
 Unit Test (via C++):  regexp/syntax
@@ -1698,7 +1838,7 @@ Executing test: TestParseSimple
 Executing test: TestSimplify 
 
 Executing test: TestToStringEquivalentParse 
-       93.82 real       102.60 user         1.11 sys
+       85.89 real        94.38 user         0.93 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
@@ -1794,7 +1934,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       19.72 real        21.44 user         0.21 sys
+       18.19 real        20.00 user         0.18 sys
 
 =====================
 All Unit Tests Passed
