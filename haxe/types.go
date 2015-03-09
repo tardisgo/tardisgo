@@ -201,9 +201,9 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Slice":
 			switch v.(ssa.Value).Type().Underlying().(*types.Slice).Elem().Underlying().(*types.Basic).Kind() {
 			case types.Rune: // []rune
-				return "{var _r:Slice=Go_haxegoruntime_RRunes2RRaw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
-					register + "=\"\";for(_i in 0..._r.len())" +
-					register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
+				return register + 
+					"=Force.toRawString(this._goroutine,Go_haxegoruntime_RRunesTToUUTTFF8.callFromRT(this._goroutine," + 
+					l.IndirectValue(v, errorInfo) + "));"
 			case types.Byte: // []byte
 				return register + "=Force.toRawString(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 			default:

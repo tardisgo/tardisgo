@@ -41,7 +41,8 @@ func TestOver65kFiles(t *testing.T) {
 	}
 	//println("DEBUG Closed buffer len:", buf.Len())
 
-	// NOTE tardisgo/haxe can't handle long strings, so two lines below re-written by the 3rd
+	// NOTE tardisgo/haxe long string handling is relativly slow, so two lines below re-written by the 3rd
+	// NOTE for this test run using C++ the difference was around 20 seconds on 9-Mar-2015
 	//s := buf.String()
 	//zr, err := NewReader(strings.NewReader(s), int64(len(s)))
 	zr, err := NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))

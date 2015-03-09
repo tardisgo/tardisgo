@@ -304,13 +304,12 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return sl;
 	}
 	public static function toRawString(gr:Int,sl:Slice):String {
-		var ret:String="";
+		var ret = new StringBuf(); // use StringBuf for speed
 		if(sl!=null)
 			for(i in 0...sl.len()) {
-				var x = sl.itemAddr(i).load_uint8();
-				ret += String.fromCharCode( x );
+				ret.addChar( sl.itemAddr(i).load_uint8() );
 			}
-		return ret;
+		return ret.toString();
 	}
 
 	public static function toHaxeParam(v:Dynamic):Dynamic { // TODO optimize if we know it is a function or string

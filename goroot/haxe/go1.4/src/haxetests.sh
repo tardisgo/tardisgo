@@ -25,7 +25,7 @@ do
 	fi
 	cd ../.. 
 done
-for onelevel in bufio flag fmt html io math regexp sort strings unicode 
+for onelevel in bufio bytes flag fmt html io math regexp sort strings unicode 
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $onelevel 
@@ -64,7 +64,7 @@ do
 	fi
 	cd ../../.. 
 done
-for onelevel in bytes runtime strconv
+for onelevel in runtime strconv
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $onelevel 
