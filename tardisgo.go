@@ -372,7 +372,7 @@ func doTestable(args []string) error {
 			//}
 			mathCmds := [][][]string{
 				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-cpp", "tardis/cpp"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
 				},

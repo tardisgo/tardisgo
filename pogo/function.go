@@ -71,6 +71,9 @@ func emitFunctions() {
 
 	for _, f := range fnMapSorted() {
 		if !IsOverloaded(f) {
+			if err:= tgossa.CheckNames(f); err!=nil {
+				panic(err)
+			}
 			emitFunc(f)
 		}
 	}

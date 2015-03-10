@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package flate
 
 import (
@@ -126,6 +128,7 @@ func (r *sparseReader) Read(b []byte) (n int, err error) {
 func TestVeryLongSparseChunk(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping sparse chunk during short test")
+		return
 	}
 	w, err := NewWriter(ioutil.Discard, 1)
 	if err != nil {
@@ -331,12 +334,12 @@ type deflateInflateStringTest struct {
 
 var deflateInflateStringTests = []deflateInflateStringTest{
 	{
-		"../testdata/e.txt",
+		"testdata/e.txt",
 		"2.718281828...",
 		[...]int{100018, 50650, 50960, 51150, 50930, 50790, 50790, 50790, 50790, 50790},
 	},
 	{
-		"../testdata/Mark.Twain-Tom.Sawyer.txt",
+		"testdata/Mark.Twain-Tom.Sawyer.txt",
 		"Mark.Twain-Tom.Sawyer",
 		[...]int{407330, 187598, 180361, 172974, 169160, 163476, 160936, 160506, 160295, 160295},
 	},

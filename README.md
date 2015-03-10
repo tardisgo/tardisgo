@@ -110,6 +110,7 @@ To run cross-target command-line tests as quickly as possible, the "-haxe X" fla
 - "-haxe all" - all supported targets 
 - "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview), where float32 is correctly handled
 - "-haxe interp" - only runs the haxe interpreter (for automated testing, exits with an error if one occurs)
+- "-haxe js" - only compiles (-D fullunsafe) and runs nodeJS (for automated testing, exits with an error if one occurs)
 - "-haxe cpp" - only compiles and runs C++ (for automated testing, exits with an error if one occurs)
 
 Compiler output is suppressed and results appear in the order they complete, with an execution time, for example:

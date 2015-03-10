@@ -628,12 +628,12 @@ class Object { // this implementation will improve with typed array access
 		objBlit(this,from, so, 0, size); 
 		return so;
 	}
-	public function set_object(size:Int, to:Int, from:Object):Void {
+	public inline function set_object(size:Int, to:Int, from:Object):Void {
 		//#if php
-			if(!Std.is(from,Object)) { 
-				Scheduler.panicFromHaxe("Object.set_object() from parameter is not an Object - Value: "+Std.string(from)+" Type: "+Type.typeof(from));
-				return; // treat as null object (seen examples have been integer 0)
-			}
+		//	if(!Std.is(from,Object)) { 
+		//		Scheduler.panicFromHaxe("Object.set_object() from parameter is not an Object - Value: "+Std.string(from)+" Type: "+Type.typeof(from));
+		//		return; // treat as null object (seen examples have been integer 0)
+		//	}
 		//#end
 		objBlit(from,0,this,to,size);
 	}
@@ -983,10 +983,12 @@ class Pointer {
 	private var obj:Object; // reference to the object holding the value
 	private var off:Int; // the offset into the object, if any 
 
-	public inline function new(from:Object){
-		if(from==null) Scheduler.panicFromHaxe("new Pointer from nil object");
+	public function new(from:Object){
+		if(from==null) Scheduler.panicFromHaxe("attempt to make a new Pointer from a nil object");
 		obj = from; 
-		off = 0;
+		#if (js || neko || php)
+			off = 0; // to stop it being null
+		#end
 	}
 	public inline function len(){
 		if(obj==null) return 0;
@@ -1128,7 +1130,7 @@ class Slice {
 	private var capacity:Int; // in items
 
 	public var length(get, null):Int;
-	function get_length():Int {
+	inline function get_length():Int {
 		return end-start;
 	}
 

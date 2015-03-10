@@ -8,7 +8,7 @@ testing.Main
 Executing test: TestErrorMethod 
 
 Executing test: TestNewEqual 
-        1.43 real         1.38 user         0.04 sys
+        1.32 real         1.27 user         0.04 sys
 
 =========================================
 Unit Test (via interpreter):  path
@@ -38,41 +38,7 @@ Executing test: TestJoin
 Executing test: TestMatch 
 
 Executing test: TestSplit 
-       13.87 real        13.69 user         0.16 sys
-
-=========================================
-Unit Test (via interpreter):  compress/bzip2
-=========================================
-
-"Neko (haxe --interp):"
-testing.Main  
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/e.txt.bz2
- 
-syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt.bz2
- 
-
-Executing test: TestBitReader 
-
-Executing test: TestBitReaderLarge 
-
-Executing test: TestBufferOverrun 
-
-Executing test: TestConcat 
-
-Executing test: TestHelloWorldBZ2 
-
-Executing test: TestMTF 
-
-Executing test: TestOutOfRangeSelector 
-
-Executing test: TestRandomData1 
-
-Executing test: TestRandomData2 
-
-Executing test: TestRandomData3 
-       81.38 real        79.94 user         0.81 sys
+       15.07 real        14.78 user         0.21 sys
 
 =========================================
 Unit Test (via interpreter):  container/heap
@@ -94,7 +60,7 @@ Executing test: TestRemove0
 Executing test: TestRemove1 
 
 Executing test: TestRemove2 
-        3.42 real         3.32 user         0.08 sys
+        3.62 real         3.52 user         0.08 sys
 
 =========================================
 Unit Test (via interpreter):  container/list
@@ -122,7 +88,7 @@ Executing test: TestMoveUnkownMark
 Executing test: TestRemove 
 
 Executing test: TestZeroList 
-        1.59 real         1.53 user         0.05 sys
+        1.74 real         1.67 user         0.06 sys
 
 =========================================
 Unit Test (via interpreter):  crypto/aes
@@ -152,7 +118,7 @@ Executing test: TestShortBlocks
 Executing test: TestTd 
 
 Executing test: TestTe 
-       23.50 real        23.33 user         0.14 sys
+       23.95 real        23.75 user         0.16 sys
 
 =========================================
 Unit Test (via interpreter):  crypto/cipher
@@ -178,7 +144,7 @@ Executing test: TestCryptBlocks
 Executing test: TestOFB 
 
 Executing test: TestXOR 
-       47.06 real        45.80 user         0.55 sys
+       44.21 real        43.35 user         0.41 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/ascii85
@@ -204,7 +170,7 @@ Executing test: TestEncode
 Executing test: TestEncoder 
 
 Executing test: TestEncoderBuffering 
-       22.51 real        21.95 user         0.25 sys
+       20.34 real        20.08 user         0.23 sys
 
 =========================================
 Unit Test (via interpreter):  encoding/base32
@@ -232,7 +198,7 @@ Executing test: TestEncoder
 Executing test: TestEncoderBuffering 
 
 Executing test: TestNewLineCharacters 
-       24.40 real        23.80 user         0.26 sys
+       20.56 real        20.28 user         0.24 sys
 
 =========================================
 Unit Test (via interpreter):  image/color
@@ -242,7 +208,7 @@ Unit Test (via interpreter):  image/color
 testing.Main  
 
 Executing test: TestRoundtrip 
-       19.54 real        19.10 user         0.10 sys
+       16.66 real        16.30 user         0.08 sys
 
 =========================================
 Unit Test (via interpreter):  text/tabwriter
@@ -256,7 +222,7 @@ Executing test: Test
 Executing test: TestPanicDuringFlush 
 
 Executing test: TestPanicDuringWrite 
-       18.09 real        17.62 user         0.20 sys
+       15.40 real        15.20 user         0.18 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf8
@@ -288,7 +254,7 @@ Executing test: TestSequencing
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-       23.91 real        23.24 user         0.24 sys
+       19.96 real        19.74 user         0.19 sys
 
 =========================================
 Unit Test (via interpreter):  unicode/utf16
@@ -308,7 +274,7 @@ Executing test: TestEncode
 Executing test: TestEncodeRune 
 
 Executing test: TestIsSurrogate 
-       21.90 real        21.18 user         0.28 sys
+       18.97 real        18.71 user         0.23 sys
 
 =========================================
 Unit Test (via js):  bufio
@@ -429,7 +395,142 @@ Console.hx:22:
 Executing test: TestWriterReset 
 Console.hx:22: 
 Executing test: TestZeroReader 
-       55.68 real        55.22 user         0.52 sys
+       51.69 real        51.36 user         0.41 sys
+
+=========================================
+Unit Test (via js):  bytes
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: testing.Main  
+Console.hx:22: 
+Executing test: TestBasicOperations 
+Console.hx:22: 
+Executing test: TestBufferGrowNegative 
+Console.hx:22: 
+Executing test: TestBufferGrowth 
+Console.hx:22: 
+Executing test: TestBufferTruncateNegative 
+Console.hx:22: 
+Executing test: TestBufferTruncateOutOfRange 
+Console.hx:22: 
+Executing test: TestCompare 
+Console.hx:22: 
+Executing test: TestCompareBytes 
+Console.hx:22: 
+Executing test: TestCompareIdenticalSlice 
+Console.hx:22: 
+Executing test: TestContains 
+Console.hx:22: 
+Executing test: TestEmptyReaderConcurrent 
+Console.hx:22: 
+Executing test: TestEqual 
+Console.hx:22: 
+Executing test: TestEqualExhaustive 
+Console.hx:22: 
+Executing test: TestEqualFold 
+Console.hx:22: 
+Executing test: TestExplode 
+Console.hx:22: 
+Executing test: TestFields 
+Console.hx:22: 
+Executing test: TestFieldsFunc 
+Console.hx:22: 
+Executing test: TestGrow 
+Console.hx:22: 
+Executing test: TestIndex 
+Console.hx:22: 
+Executing test: TestIndexAny 
+Console.hx:22: 
+Executing test: TestIndexByte 
+Console.hx:22: 
+Executing test: TestIndexByteBig 
+Console.hx:22: 
+Executing test: TestIndexFunc 
+Console.hx:22: 
+Executing test: TestIndexRune 
+Console.hx:22: 
+Executing test: TestLargeByteReads 
+Console.hx:22: 
+Executing test: TestLargeByteWrites 
+Console.hx:22: 
+Executing test: TestLargeStringReads 
+Console.hx:22: 
+Executing test: TestLargeStringWrites 
+Console.hx:22: 
+Executing test: TestLastIndex 
+Console.hx:22: 
+Executing test: TestLastIndexAny 
+Console.hx:22: 
+Executing test: TestMap 
+Console.hx:22: 
+Executing test: TestMixedReadsAndWrites 
+Console.hx:22: 
+Executing test: TestNewBuffer 
+Console.hx:22: 
+Executing test: TestNewBufferString 
+Console.hx:22: 
+Executing test: TestNext 
+Console.hx:22: 
+Executing test: TestNil 
+Console.hx:22: 
+Executing test: TestNotEqual 
+Console.hx:22: 
+Executing test: TestReadAfterBigSeek 
+Console.hx:22: 
+Executing test: TestReadBytes 
+Console.hx:22: 
+Executing test: TestReadEmptyAtEOF 
+Console.hx:22: 
+Executing test: TestReadFrom 
+Console.hx:22: 
+Executing test: TestReadString 
+Console.hx:22: 
+Executing test: TestReader 
+Console.hx:22: 
+Executing test: TestReaderAt 
+Console.hx:22: 
+Executing test: TestReaderAtConcurrent 
+Console.hx:22: 
+Executing test: TestReaderCopyNothing 
+Console.hx:22: 
+Executing test: TestReaderDoubleUnreadRune 
+Console.hx:22: 
+Executing test: TestReaderLen 
+Console.hx:22: 
+Executing test: TestReaderWriteTo 
+Console.hx:22: 
+Executing test: TestRepeat 
+Console.hx:22: 
+Executing test: TestReplace 
+Console.hx:22: 
+Executing test: TestRuneIO 
+Console.hx:22: 
+Executing test: TestRunes 
+Console.hx:22: 
+Executing test: TestSplit 
+Console.hx:22: 
+Executing test: TestSplitAfter 
+Console.hx:22: 
+Executing test: TestTitle 
+Console.hx:22: 
+Executing test: TestToLower 
+Console.hx:22: 
+Executing test: TestToTitle 
+Console.hx:22: 
+Executing test: TestToUpper 
+Console.hx:22: 
+Executing test: TestTrim 
+Console.hx:22: 
+Executing test: TestTrimFunc 
+Console.hx:22: 
+Executing test: TestTrimSpace 
+Console.hx:22: 
+Executing test: TestUnreadByte 
+Console.hx:22: 
+Executing test: TestUnreadRuneError 
+Console.hx:22: 
+Executing test: TestWriteTo 
+      197.75 real       197.19 user         1.27 sys
 
 =========================================
 Unit Test (via js):  flag
@@ -466,7 +567,7 @@ Console.hx:15:   -b=0: usage
 
 Console.hx:22: 
 Executing test: TestUserDefinedForCommandLine 
-        1.37 real         1.26 user         0.11 sys
+        1.23 real         1.14 user         0.10 sys
 
 =========================================
 Unit Test (via js):  fmt
@@ -517,7 +618,7 @@ Console.hx:22:
 Executing test: TestStructPrinter 
 Console.hx:22: 
 Executing test: TestWidthAndPrecision 
-       42.20 real        41.96 user         0.38 sys
+       42.92 real        42.59 user         0.40 sys
 
 =========================================
 Unit Test (via js):  html
@@ -530,7 +631,7 @@ Console.hx:22:
 Executing test: TestUnescape 
 Console.hx:22: 
 Executing test: TestUnescapeEscape 
-        0.57 real         0.52 user         0.05 sys
+        0.60 real         0.54 user         0.06 sys
 
 =========================================
 Unit Test (via js):  io
@@ -593,7 +694,7 @@ Console.hx:22:
 Executing test: TestWriteEmpty 
 Console.hx:22: 
 Executing test: TestWriteNil 
-        1.09 real         0.98 user         0.10 sys
+        1.08 real         0.98 user         0.10 sys
 
 =========================================
 Unit Test (via js):  math
@@ -722,7 +823,7 @@ Console.hx:22:
 Executing test: TestY1 
 Console.hx:22: 
 Executing test: TestYn 
-        1.71 real         1.60 user         0.10 sys
+        1.62 real         1.53 user         0.10 sys
 
 =========================================
 Unit Test (via js):  regexp
@@ -862,7 +963,7 @@ Console.hx:22:
 Executing test: TestSplit 
 Console.hx:22: 
 Executing test: TestSubexp 
-       78.50 real        77.81 user         0.68 sys
+       78.44 real        77.87 user         0.72 sys
 
 =========================================
 Unit Test (via js):  sort
@@ -963,7 +1064,7 @@ Console.hx:22:
 Executing test: TestStableInts 
 Console.hx:22: 
 Executing test: TestStrings 
-       29.47 real        29.26 user         0.25 sys
+       25.73 real        25.60 user         0.25 sys
 
 =========================================
 Unit Test (via js):  strings
@@ -1056,7 +1157,7 @@ Console.hx:22:
 Executing test: TestWriteStringError 
 Console.hx:22: 
 Executing test: TestWriteTo 
-        5.91 real         5.74 user         0.16 sys
+        5.07 real         4.95 user         0.13 sys
 
 =========================================
 Unit Test (via js):  unicode
@@ -1117,7 +1218,7 @@ Console.hx:22:
 Executing test: TestToUpperCase 
 Console.hx:22: 
 Executing test: TestTurkishCase 
-        1.47 real         1.35 user         0.11 sys
+        1.39 real         1.28 user         0.10 sys
 
 =========================================
 Unit Test (via js):  archive/tar
@@ -1204,7 +1305,101 @@ Console.hx:22:
 Executing test: TestValidTypeflagWithPAXHeader 
 Console.hx:22: 
 Executing test: TestWriter 
-       14.49 real        14.17 user         0.24 sys
+       12.40 real        12.19 user         0.25 sys
+
+=========================================
+Unit Test (via js):  compress/bzip2
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: testing.Main  
+Console.hx:22: syscall.unzip() file: testdata/
+ 
+Console.hx:22: syscall.unzip() file: testdata/e.txt.bz2
+ 
+Console.hx:22: syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt.bz2
+ 
+Console.hx:22: 
+Executing test: TestBitReader 
+Console.hx:22: 
+Executing test: TestBitReaderLarge 
+Console.hx:22: 
+Executing test: TestBufferOverrun 
+Console.hx:22: 
+Executing test: TestConcat 
+Console.hx:22: 
+Executing test: TestHelloWorldBZ2 
+Console.hx:22: 
+Executing test: TestMTF 
+Console.hx:22: 
+Executing test: TestOutOfRangeSelector 
+Console.hx:22: 
+Executing test: TestRandomData1 
+Console.hx:22: 
+Executing test: TestRandomData2 
+Console.hx:22: 
+Executing test: TestRandomData3 
+       19.21 real        18.97 user         0.30 sys
+
+=========================================
+Unit Test (via js):  compress/gzip
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: testing.Main  
+Console.hx:22: syscall.unzip() file: testdata/
+ 
+Console.hx:22: syscall.unzip() file: testdata/issue6550.gz
+ 
+Console.hx:22: 
+Executing test: TestConcat 
+Console.hx:22: 
+Executing test: TestDecompressor 
+Console.hx:22: 
+Executing test: TestEmpty 
+Console.hx:22: 
+Executing test: TestInitialReset 
+Console.hx:22: 
+Executing test: TestIssue6550 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:22: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/gzip/gunzip_test.go 341  
+Console.hx:29:  { {
+	high : 0, 
+	low : 24
+}  } Copy failed (correctly): %v  
+Console.hx:22: 
+Executing test: TestLatin1 
+Console.hx:22: 
+Executing test: TestLatin1RoundTrip 
+Console.hx:22: 
+Executing test: TestMultistreamFalse 
+Console.hx:22: 
+Executing test: TestRoundTrip 
+Console.hx:22: 
+Executing test: TestWriterFlush 
+Console.hx:22: 
+Executing test: TestWriterReset 
+        8.85 real         8.66 user         0.22 sys
+
+=========================================
+Unit Test (via js):  compress/lzw
+=========================================
+"Node/JS using fullunsafe memory mode (js dataview):"
+Console.hx:22: testing.Main  
+Console.hx:22: syscall.unzip() file: testdata/
+ 
+Console.hx:22: syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt
+ 
+Console.hx:22: syscall.unzip() file: testdata/e.txt
+ 
+Console.hx:22: syscall.unzip() file: testdata/pi.txt
+ 
+Console.hx:22: 
+Executing test: TestReader 
+Console.hx:22: 
+Executing test: TestWriter 
+Console.hx:22: 
+Executing test: TestWriterReturnValues 
+      216.88 real       216.14 user         1.57 sys
 
 =========================================
 Unit Test (via js):  container/ring
@@ -1227,7 +1422,7 @@ Console.hx:22:
 Executing test: TestNew 
 Console.hx:22: 
 Executing test: TestUnlink 
-        1.78 real         1.69 user         0.08 sys
+        1.56 real         1.47 user         0.08 sys
 
 =========================================
 Unit Test (via js):  crypto/des
@@ -1272,7 +1467,7 @@ Console.hx:22:
 Executing test: TestVariablePlaintextKnownAnswer 
 Console.hx:22: 
 Executing test: TestWeakKeys 
-        3.33 real         3.21 user         0.10 sys
+        2.94 real         2.84 user         0.10 sys
 
 =========================================
 Unit Test (via js):  crypto/md5
@@ -1285,7 +1480,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestLarge 
-        3.25 real         3.08 user         0.15 sys
+        2.96 real         2.82 user         0.15 sys
 
 =========================================
 Unit Test (via js):  crypto/rc4
@@ -1298,7 +1493,7 @@ Console.hx:22:
 Executing test: TestBlockGeneric 
 Console.hx:22: 
 Executing test: TestGolden 
-       40.25 real        39.82 user         0.32 sys
+       29.32 real        29.12 user         0.29 sys
 
 =========================================
 Unit Test (via js):  crypto/sha1
@@ -1313,7 +1508,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        2.17 real         2.02 user         0.14 sys
+        1.94 real         1.81 user         0.12 sys
 
 =========================================
 Unit Test (via js):  crypto/sha256
@@ -1326,7 +1521,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        3.42 real         3.30 user         0.11 sys
+        3.04 real         2.94 user         0.10 sys
 
 =========================================
 Unit Test (via js):  crypto/sha512
@@ -1339,7 +1534,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        5.81 real         5.66 user         0.12 sys
+        5.81 real         5.71 user         0.12 sys
 
 =========================================
 Unit Test (via js):  encoding/base64
@@ -1370,7 +1565,7 @@ Console.hx:22:
 Executing test: TestEncoderBuffering 
 Console.hx:22: 
 Executing test: TestNewLineCharacters 
-        1.38 real         1.27 user         0.10 sys
+        1.23 real         1.14 user         0.09 sys
 
 =========================================
 Unit Test (via js):  encoding/csv
@@ -1383,7 +1578,7 @@ Console.hx:22:
 Executing test: TestRead 
 Console.hx:22: 
 Executing test: TestWrite 
-        1.35 real         1.25 user         0.10 sys
+        1.42 real         1.30 user         0.12 sys
 
 =========================================
 Unit Test (via js):  encoding/hex
@@ -1406,7 +1601,7 @@ Console.hx:22:
 Executing test: TestInvalidErr 
 Console.hx:22: 
 Executing test: TestInvalidStringErr 
-        1.26 real         1.16 user         0.09 sys
+        1.26 real         1.15 user         0.10 sys
 
 =========================================
 Unit Test (via js):  go/format
@@ -1421,7 +1616,7 @@ Console.hx:22:
 Executing test: TestPartial 
 Console.hx:22: 
 Executing test: TestSource 
-        6.39 real         6.22 user         0.19 sys
+        6.24 real         6.07 user         0.19 sys
 
 =========================================
 Unit Test (via js):  go/scanner
@@ -1440,7 +1635,7 @@ Console.hx:22:
 Executing test: TestSemis 
 Console.hx:22: 
 Executing test: TestStdErrorHander 
-        1.91 real         1.80 user         0.11 sys
+        1.83 real         1.72 user         0.11 sys
 
 =========================================
 Unit Test (via js):  hash/adler32
@@ -1449,7 +1644,7 @@ Unit Test (via js):  hash/adler32
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        8.07 real         7.97 user         0.12 sys
+        8.40 real         8.20 user         0.18 sys
 
 =========================================
 Unit Test (via js):  hash/crc32
@@ -1458,7 +1653,7 @@ Unit Test (via js):  hash/crc32
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.21 real         0.19 user         0.02 sys
+        0.23 real         0.19 user         0.03 sys
 
 =========================================
 Unit Test (via js):  hash/crc64
@@ -1467,7 +1662,7 @@ Unit Test (via js):  hash/crc64
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestGolden 
-        0.21 real         0.18 user         0.02 sys
+        0.22 real         0.19 user         0.02 sys
 
 =========================================
 Unit Test (via js):  hash/fnv
@@ -1490,7 +1685,7 @@ Console.hx:22:
 Executing test: TestIntegrity64 
 Console.hx:22: 
 Executing test: TestIntegrity64a 
-        0.69 real         0.62 user         0.07 sys
+        0.68 real         0.60 user         0.07 sys
 
 =========================================
 Unit Test (via js):  image/draw
@@ -1523,7 +1718,7 @@ Console.hx:22:
 Executing test: TestNonZeroSrcPt 
 Console.hx:22: 
 Executing test: TestPaletted 
-      128.90 real       128.48 user         0.92 sys
+      139.10 real       137.67 user         1.43 sys
 
 =========================================
 Unit Test (via js):  index/suffixarray
@@ -1532,7 +1727,7 @@ Unit Test (via js):  index/suffixarray
 Console.hx:22: testing.Main  
 Console.hx:22: 
 Executing test: TestIndex 
-        3.63 real         3.51 user         0.12 sys
+        3.41 real         3.30 user         0.12 sys
 
 =========================================
 Unit Test (via js):  io/ioutil
@@ -1569,7 +1764,7 @@ Console.hx:22:
 Executing test: TestTempFile 
 Console.hx:22: 
 Executing test: TestWriteFile 
-        3.71 real         3.58 user         0.13 sys
+        3.49 real         3.38 user         0.11 sys
 
 =========================================
 Unit Test (via js):  math/cmplx
@@ -1620,7 +1815,7 @@ Console.hx:22:
 Executing test: TestTan 
 Console.hx:22: 
 Executing test: TestTanh 
-        0.41 real         0.37 user         0.03 sys
+        0.38 real         0.34 user         0.03 sys
 
 =========================================
 Unit Test (via js):  path/filepath
@@ -1683,7 +1878,7 @@ Console.hx:22:
 Executing test: TestWalk 
 Console.hx:22: 
 Executing test: TestWalkFileError 
-        1.48 real         1.38 user         0.10 sys
+        1.39 real         1.30 user         0.09 sys
 
 =========================================
 Unit Test (via js):  text/scanner
@@ -1712,7 +1907,7 @@ Console.hx:22:
 Executing test: TestScanWhitespace 
 Console.hx:22: 
 Executing test: TestScanZeroMode 
-        3.91 real         3.76 user         0.16 sys
+        3.51 real         3.36 user         0.14 sys
 
 =========================================
 Unit Test (via js):  database/sql/driver
@@ -1722,141 +1917,6 @@ Console.hx:22: testing.Main
 Console.hx:22: 
 Executing test: TestValueConverters 
         1.00 real         0.92 user         0.08 sys
-
-=========================================
-Unit Test (via C++):  bytes
-=========================================
-"CPP:"
-testing.Main  
-
-Executing test: TestBasicOperations 
-
-Executing test: TestBufferGrowNegative 
-
-Executing test: TestBufferGrowth 
-
-Executing test: TestBufferTruncateNegative 
-
-Executing test: TestBufferTruncateOutOfRange 
-
-Executing test: TestCompare 
-
-Executing test: TestCompareBytes 
-
-Executing test: TestCompareIdenticalSlice 
-
-Executing test: TestContains 
-
-Executing test: TestEmptyReaderConcurrent 
-
-Executing test: TestEqual 
-
-Executing test: TestEqualExhaustive 
-
-Executing test: TestEqualFold 
-
-Executing test: TestExplode 
-
-Executing test: TestFields 
-
-Executing test: TestFieldsFunc 
-
-Executing test: TestGrow 
-
-Executing test: TestIndex 
-
-Executing test: TestIndexAny 
-
-Executing test: TestIndexByte 
-
-Executing test: TestIndexByteBig 
-
-Executing test: TestIndexFunc 
-
-Executing test: TestIndexRune 
-
-Executing test: TestLargeByteReads 
-
-Executing test: TestLargeByteWrites 
-
-Executing test: TestLargeStringReads 
-
-Executing test: TestLargeStringWrites 
-
-Executing test: TestLastIndex 
-
-Executing test: TestLastIndexAny 
-
-Executing test: TestMap 
-
-Executing test: TestMixedReadsAndWrites 
-
-Executing test: TestNewBuffer 
-
-Executing test: TestNewBufferString 
-
-Executing test: TestNext 
-
-Executing test: TestNil 
-
-Executing test: TestNotEqual 
-
-Executing test: TestReadAfterBigSeek 
-
-Executing test: TestReadBytes 
-
-Executing test: TestReadEmptyAtEOF 
-
-Executing test: TestReadFrom 
-
-Executing test: TestReadString 
-
-Executing test: TestReader 
-
-Executing test: TestReaderAt 
-
-Executing test: TestReaderAtConcurrent 
-
-Executing test: TestReaderCopyNothing 
-
-Executing test: TestReaderDoubleUnreadRune 
-
-Executing test: TestReaderLen 
-
-Executing test: TestReaderWriteTo 
-
-Executing test: TestRepeat 
-
-Executing test: TestReplace 
-
-Executing test: TestRuneIO 
-
-Executing test: TestRunes 
-
-Executing test: TestSplit 
-
-Executing test: TestSplitAfter 
-
-Executing test: TestTitle 
-
-Executing test: TestToLower 
-
-Executing test: TestToTitle 
-
-Executing test: TestToUpper 
-
-Executing test: TestTrim 
-
-Executing test: TestTrimFunc 
-
-Executing test: TestTrimSpace 
-
-Executing test: TestUnreadByte 
-
-Executing test: TestUnreadRuneError 
-
-Executing test: TestWriteTo 
-        7.82 real         8.41 user         0.12 sys
 
 =========================================
 Unit Test (via C++):  runtime
@@ -1907,7 +1967,7 @@ Executing test: TestSideEffectOrder
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-       59.12 real        63.44 user         0.94 sys
+       48.14 real        53.12 user         0.96 sys
 
 =========================================
 Unit Test (via C++):  strconv
@@ -1993,7 +2053,7 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/st
 Executing test: TestUitoa 
 
 Executing test: TestUnquote 
-       57.07 real        66.45 user         0.87 sys
+       55.02 real        67.11 user         1.17 sys
 
 =========================================
 Unit Test (via C++):  archive/zip
@@ -2062,7 +2122,979 @@ Executing test: TestZip64
   
 Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/archive/zip/zip_haxe_test.go 241  
 slow test; skipping  
-      255.42 real       466.25 user         4.59 sys
+      473.10 real      1227.77 user         5.18 sys
+
+=========================================
+Unit Test (via C++):  compress/flate
+=========================================
+"CPP:"
+testing.Main  
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt
+ 
+syscall.unzip() file: testdata/e.txt
+ 
+syscall.unzip() file: testdata/pi.txt
+ 
+
+Executing test: TestDeflate 
+
+Executing test: TestDeflateInflate 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 2 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 3 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 4 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 5 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 6 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 7 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 8 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 9 1 #1  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 0  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 2 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 3 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 4 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 5 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 6 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 7 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 8 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 9 2 #2  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 1  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1 2  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 1  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 2 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 3 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 4 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 5 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 6 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 7 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 8 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 9 8 #3  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 4  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4 8  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 4  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 2 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 3 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 4 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 5 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 6 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 7 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 8 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 9 11 #4  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 6  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 6  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 6 11  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 5  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 2 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 3 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 4 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 5 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 6 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 7 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 8 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 9 100000 #5  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50000  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000 100000  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50000  } #%d: read %d  
+Executing test: TestDeflateInflateString 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 2 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 3 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 4 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 5 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 6 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 7 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 8 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 9 100003 2.718281828...  } --testSync %d, %d, %s    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 0 50002  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 0 50002  } #%d: read %d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50002 100003  } #%d: write %d-%d    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 195  
+ { 1 50001  } #%d: read %d  
+Executing test: TestForwardCopy 
+
+Executing test: TestIssue5915 
+
+Executing test: TestIssue5962 
+
+Executing test: TestIssue6255 
+
+Executing test: TestNlitOutOfRange 
+
+Executing test: TestReaderDict 
+
+Executing test: TestRegression2508 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 414  
+ {  } test disabled with -short  
+Executing test: TestReset 
+
+Executing test: TestReverseBits 
+
+Executing test: TestUncompressedSource 
+
+Executing test: TestVeryLongSparseChunk 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 128  
+skipping sparse chunk during short test  
+
+Executing test: TestWriterDict 
+
+Executing test: TestWriterReset 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468  
+ { 11274  } got %d bytes    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468  
+ { 56  } got %d bytes    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468  
+ { 56  } got %d bytes    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468  
+ { 11274  } got %d bytes    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468  
+ { 49  } got %d bytes    
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468  
+ { 49  } got %d bytes         82.94 real        94.53 user         4.03 sys
 
 =========================================
 Unit Test (via C++):  compress/zlib
@@ -2089,7 +3121,7 @@ Executing test: TestWriterDict
 Executing test: TestWriterDictIsUsed 
 
 Executing test: TestWriterReset 
-      100.09 real       115.67 user         3.84 sys
+      101.21 real       114.61 user         4.05 sys
 
 =========================================
 Unit Test (via C++):  regexp/syntax
@@ -2118,7 +3150,7 @@ Executing test: TestParseSimple
 Executing test: TestSimplify 
 
 Executing test: TestToStringEquivalentParse 
-       88.90 real        97.16 user         0.88 sys
+       92.83 real       100.85 user         1.01 sys
 
 =========================================
 Unit Test (via C++):  sync/atomic
@@ -2214,7 +3246,7 @@ Executing test: TestValueConcurrent
 Executing test: TestValueLarge 
 
 Executing test: TestValuePanic 
-       18.86 real        20.66 user         0.19 sys
+       19.64 real        21.41 user         0.26 sys
 
 =====================
 All Unit Tests Passed

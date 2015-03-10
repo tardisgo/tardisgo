@@ -12,7 +12,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in compress/bzip2 container/heap container/list crypto/aes crypto/cipher encoding/ascii85 encoding/base32 image/color text/tabwriter unicode/utf8 unicode/utf16 
+for twolevels in container/heap container/list crypto/aes crypto/cipher encoding/ascii85 encoding/base32 image/color text/tabwriter unicode/utf8 unicode/utf16 
 do
 	echo "========================================="
 	echo "Unit Test (via interpreter): " $twolevels 
@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in archive/tar container/ring crypto/des crypto/md5 crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 encoding/base64 encoding/csv encoding/hex go/format go/scanner hash/adler32 hash/crc32 hash/crc64 hash/fnv image/draw index/suffixarray io/ioutil math/cmplx path/filepath text/scanner
+for twolevels in archive/tar compress/bzip2 compress/gzip compress/lzw container/ring crypto/des crypto/md5 crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 encoding/base64 encoding/csv encoding/hex go/format go/scanner hash/adler32 hash/crc32 hash/crc64 hash/fnv image/draw index/suffixarray io/ioutil math/cmplx path/filepath text/scanner
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $twolevels 
@@ -77,7 +77,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in archive/zip compress/zlib regexp/syntax sync/atomic
+for twolevels in archive/zip compress/flate compress/zlib regexp/syntax sync/atomic
 do
 	echo "========================================="
 	echo "Unit Test (via C++): " $twolevels 

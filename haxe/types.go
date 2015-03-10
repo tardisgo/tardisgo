@@ -1073,10 +1073,10 @@ func (l langType) EmitTypeInfo() string {
 	//emulation of: func type.AsertableTo(V *Interface, T Type) bool
 	ret += "public static function assertableTo(v:Int,t:Int):Bool {\n"
 	//ret += "trace(\"DEBUG assertableTo()\",v,t);\n"
-	ret += "\tfor(ae in isAssertableToArray) if(ae==(v<<16|t)) return true;\n"
-	ret += "\treturn false;\n}\n"
+	ret += "\treturn isAssertableToMap[(v<<16)|t];\n"
+	ret += "}\n"
 	//	ret += "if(v==t) return true;\nswitch(v){" + "\n"
-	ret += "static var isAssertableToArray:Array<Int> = ["
+	ret += "static var isAssertableToMap:Map<Int,Bool> = [ 0 => false, "
 	for tid, typ := range typesByID {
 		ret0 := ""
 		if typ != nil {
@@ -1086,7 +1086,7 @@ func (l langType) EmitTypeInfo() string {
 					iface, isIface := named.Underlying().(*types.Interface)
 					if isIface {
 						if tid != iid && types.AssertableTo(iface, typ) {
-							ret0 += fmt.Sprintf("0x%X, ", (tid<<16)|iid)
+							ret0 += fmt.Sprintf("0x%X => true, ", (tid<<16)|iid)
 							//ret0 += "\t" + `case ` + fmt.Sprintf("%d", iid) + `: return true; // ` + named.String() + "\n"
 							//println("DEBUG type ", tid, typ.String(), " Implemets interface ", iid, named.String(), iface.String())
 						}

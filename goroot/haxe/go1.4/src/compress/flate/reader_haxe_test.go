@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package flate
 
 import (
@@ -31,9 +33,9 @@ var testfiles = []string{
 	// Digits is the digits of the irrational number e. Its decimal representation
 	// does not repeat, but there are only 10 possible digits, so it should be
 	// reasonably compressible.
-	digits: "../testdata/e.txt",
+	digits: "testdata/e.txt",
 	// Twain is Project Gutenberg's edition of Mark Twain's classic English novel.
-	twain: "../testdata/Mark.Twain-Tom.Sawyer.txt",
+	twain: "testdata/Mark.Twain-Tom.Sawyer.txt",
 }
 
 func benchmarkDecode(b *testing.B, testfile, level, n int) {

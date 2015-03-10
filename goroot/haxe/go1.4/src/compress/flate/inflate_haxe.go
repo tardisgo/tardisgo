@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 //go:generate go run gen.go -output fixedhuff.go
 
 // Package flate implements the DEFLATE compressed data format, described in
@@ -689,13 +691,16 @@ func makeReader(r io.Reader) Reader {
 }
 
 func (f *decompressor) Reset(r io.Reader, dict []byte) error {
-	*f = decompressor{
+	// NOTE needed to add temp var d here because of SSA code gen bug
+	// SEE GOLANG ISSUE #10127 https://github.com/golang/go/issues/10127
+	d := decompressor{
 		r:        makeReader(r),
 		bits:     f.bits,
 		codebits: f.codebits,
 		hist:     f.hist,
 		step:     (*decompressor).nextBlock,
 	}
+	*f = d
 	if dict != nil {
 		f.setDict(dict)
 	}

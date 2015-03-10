@@ -18,9 +18,9 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | bytes           | yes                   |                                   |
 | compress        | no code               |                                   |
 | -- bzip2        | yes                   |                                   |
-| -- flate        |                       |                                   |
-| -- gzip         |                       |                                   |
-| -- lzw          |                       |                                   |
+| -- flate        | yes                   |                                   |
+| -- gzip         | yes                   |                                   |
+| -- lzw          | yes                   |                                   |
 | -- zlib         | yes                   |                                   |
 | container       | no code               |                                   |
 | -- heap         | yes                   |                                   |
@@ -134,7 +134,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- pprof        | -                     | unsupported                       |
 | -- race         | -                     | unsupported                       |
 | sort            | yes                   |                                   |
-| strconv         | yes                   |                                   |
+| strconv         | yes                   | only fully passes in C++ due to float -0 issues |
 | strings         | yes                   |                                   |
 | sync            |                       |                                   |
 | -- atomic       | yes                   |                                   |

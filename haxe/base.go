@@ -1250,6 +1250,11 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		}
 	}
 	if isBuiltin {
+		if isGo || isDefer {
+			pogo.LogError(errorInfo, "Haxe",
+				fmt.Errorf("calling a builtin function (%s) via 'go' or 'defer' is not supported",
+					fnToCall))
+		}
 		if register != "" {
 			//**************************
 			// ensure correct conversions for interface{} <-> Dynamic when isHaxeAPI
@@ -1272,6 +1277,11 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		return hashIf + ret + ";" + hashEnd
 	}
 	if isGo {
+		if isDefer {
+			pogo.LogError(errorInfo, "Haxe",
+				fmt.Errorf("calling a function (%s) using both 'go' and 'defer' is not supported",
+					fnToCall))
+		}
 		return ret + "; "
 	}
 	if isDefer {
@@ -1694,6 +1704,11 @@ func (l langType) EmitInvoke(register string, isGo, isDefer, usesGr bool, callCo
 	}
 	ret += "Interface.invoke(" + l.IndirectValue(val, errorInfo) + `,"` + meth + `",[`
 	if isGo {
+		if isDefer {
+			pogo.LogError(errorInfo, "Haxe",
+				fmt.Errorf("calling a method (%s) using both 'go' and 'defer' is not supported",
+					meth))
+		}
 		ret += "Scheduler.makeGoroutine()"
 	} else {
 		ret += "this._goroutine"

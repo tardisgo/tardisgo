@@ -119,7 +119,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	case *ssa.Go:
 		if instruction.(*ssa.Go).Call.IsInvoke() {
 			if grMap[instruction.(*ssa.Go).Parent()] != true {
-				panic("attempt to Go a method, from a function does not use goroutines at " + errorInfo)
+				panic("attempt to Go a method, from a function that does not use goroutines at " + errorInfo)
 			}
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].EmitInvoke(register, true, false, true, instruction.(*ssa.Go).Call, errorInfo)+
@@ -140,7 +140,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	case *ssa.Defer:
 		if instruction.(*ssa.Defer).Call.IsInvoke() {
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, true, true, grMap[instruction.(*ssa.Defer).Parent()],
+				LanguageList[l].EmitInvoke(register, false, true, grMap[instruction.(*ssa.Defer).Parent()],
 					instruction.(*ssa.Defer).Call, errorInfo)+
 					LanguageList[l].Comment(comment))
 		} else {
