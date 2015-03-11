@@ -95,7 +95,7 @@ func TestPSSGolden(t *testing.T) {
 	values := make(chan string)
 
 	go func() {
-		defer func() { close(values) }()
+		defer close(values)
 		scanner := bufio.NewScanner(bzip2.NewReader(inFile))
 		var partialValue string
 		lastWasValue := true

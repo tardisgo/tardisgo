@@ -38,7 +38,7 @@ do
 	fi
 	cd .. 
 done
-for twolevels in archive/tar compress/bzip2 compress/gzip compress/lzw container/ring crypto/des crypto/md5 crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 encoding/base64 encoding/csv encoding/hex go/format go/scanner hash/adler32 hash/crc32 hash/crc64 hash/fnv image/draw index/suffixarray io/ioutil math/cmplx path/filepath text/scanner
+for twolevels in archive/tar compress/bzip2 compress/gzip compress/lzw container/ring crypto/des crypto/hmac crypto/md5 crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 debug/gosym debug/pe debug/plan9obj encoding/base64 encoding/csv encoding/hex encoding/pem go/format go/scanner hash/adler32 hash/crc32 hash/crc64 hash/fnv image/draw image/gif image/jpeg index/suffixarray io/ioutil math/cmplx path/filepath text/scanner
 do
 	echo "========================================="
 	echo "Unit Test (via js): " $twolevels 

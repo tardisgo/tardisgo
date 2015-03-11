@@ -33,7 +33,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- dsa          |                       |                                   |
 | -- ecdsa        |                       |                                   |
 | -- elliptic     |                       |                                   |
-| -- hmac         |                       |                                   |
+| -- hmac         | yes                   |                                   |
 | -- md5          | yes                   |                                   |
 | -- rand         |                       |                                   |
 | -- rc4          | yes                   |                                   |
@@ -44,16 +44,17 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- subtle       |                       |                                   |
 | -- tls          |                       |                                   |
 | -- x509         |                       |                                   |
-| -- -- pkix      |                       |                                   |
+| -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       |                                   |
 | -- -- driver    | yes                   |                                   |
 | debug           | no code               |                                   |
 | -- dwarf        |                       |                                   |
 | -- elf          |                       |                                   |
-| -- gosym        |                       |                                   |
+| -- gosym        | yes                   |                                   |
 | -- macho        |                       |                                   |
-| -- pe           |                       |                                   |
+| -- pe           | yes                   |                                   |
+| -- plan9obj     | yes                   |                                   |
 | encoding        | no tests              |                                   |
 | -- ascii85      | yes                   |                                   |
 | -- asn1         |                       |                                   |
@@ -64,7 +65,7 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- gob          |                       |                                   |
 | -- hex          | yes                   |                                   |
 | -- json         |                       |                                   |
-| -- pem          |                       |                                   |
+| -- pem          | yes                   |                                   |
 | -- xml          |                       |                                   |
 | errors          | yes                   |                                   |
 | expvar          |                       |                                   |
@@ -88,10 +89,10 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | -- template     |                       |                                   |
 | image           |                       |                                   |
 | -- color        | yes                   |                                   |
-| -- -- palette   |                       |                                   |
+| -- -- palette   | no tests              |                                   |
 | -- draw         | yes                   |                                   |
-| -- gif          |                       |                                   |
-| -- jpeg         |                       |                                   |
+| -- gif          | yes                   |                                   |
+| -- jpeg         | yes                   |                                   |
 | -- png          |                       |                                   |
 | index           | no code               |                                   |
 | -- suffixarray  | yes                   |                                   |
@@ -154,6 +155,6 @@ Math-related packages may only fully work with cpp or js -D fullunsafe, partly d
 | unsafe          | no tests              | pointer arithmetic unsupported, but other functionalty should work |
 
 
-TODO (requires serious auomation): add library status for each target
+TODO (requires serious automation): add library status for each target
 
 (With thanks to [GopherJS](https://github.com/gopherjs/gopherjs/blob/master/doc/packages.md) for the layout above)

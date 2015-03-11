@@ -563,7 +563,7 @@ class Object { // this implementation will improve with typed array access
 				" dest.length= "+Std.string(dest.length));
 			return;			
 		}
-		if(size>(src.length-srcPos) ) size = src.length-srcPos ; // TODO review why this defensive code is needed
+		//if(size>(src.length-srcPos) ) size = src.length-srcPos ; // TODO review why this defensive code is needed
 		if(size<0 || size > (dest.length-destPos) || size>(src.length-srcPos) ) {
 			Scheduler.panicFromHaxe("Object.objBlt() size out-of-range - Value: "+Std.string(size)+
 				" DestSize: "+Std.string(dest.length-destPos)+
@@ -572,9 +572,9 @@ class Object { // this implementation will improve with typed array access
 		}
 `
 	} else {
-		objClass += `
+		/*objClass += `
 		if(size>(src.length-srcPos) ) size = src.length-srcPos ; // TODO review why this defensive code is needed
-		`
+		`*/
 	}
 	objClass += `
 		#if fullunsafe //(js && fullunsafe)
@@ -982,10 +982,18 @@ class Object { // this implementation will improve with typed array access
 class Pointer { 
 	private var obj:Object; // reference to the object holding the value
 	private var off:Int; // the offset into the object, if any 
-
+`
+	if pogo.DebugFlag {
+		ptrClass += `
 	public function new(from:Object){
 		if(from==null) Scheduler.panicFromHaxe("attempt to make a new Pointer from a nil object");
-		obj = from; 
+`
+	} else {
+		ptrClass += `
+	public inline function new(from:Object){
+`
+	}
+	ptrClass += `		obj = from; 
 		#if (js || neko || php)
 			off = 0; // to stop it being null
 		#end
@@ -1013,12 +1021,12 @@ class Pointer {
 		return null;
 	}
 `
-	} else {
-		ptrClass += `	public static function check(p:Pointer):Pointer { 
-		if(p==null) {
-			Scheduler.panicFromHaxe("nil pointer de-reference");
-			return null;
-		}
+	} else { // TODO null test could be removed in some future NoChecking mode maybe?
+		ptrClass += `	public inline static function check(p:Pointer):Pointer { 
+		//if(p==null) {
+		//	Scheduler.panicFromHaxe("nil pointer de-reference");
+		//	return null;
+		//}
 		return p; 
 	}`
 	}
@@ -1236,13 +1244,17 @@ class Slice {
 		}
 		return capacity-start;
 	}
-	public function itemAddr(idx:Int):Pointer {
 `
-	//if pogo.DebugFlag { // TODO test could be removed in some future NoChecking mode maybe?
-	sliceClass += `
+	if pogo.DebugFlag { // TODO test could be removed in some future NoChecking mode maybe?
+		sliceClass += `
+	public function itemAddr(idx:Int):Pointer {
 		if (idx<0 || idx>=len()) Scheduler.panicFromHaxe("Slice index out of range");
 `
-	//}
+	} else { // TODO should this function be inline?
+		sliceClass += `
+	public inline function itemAddr(idx:Int):Pointer {
+`
+	}
 	sliceClass += `
 		return baseArray.addr((idx+start)*itemSize);
 	}
