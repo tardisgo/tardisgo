@@ -40,7 +40,7 @@ The "testing" package is emulated in an ugly and part-working way, all tests are
 | -- sha512       | js                    |                                   |
 | -- subtle       |                       | waiting for reflect.Call          |
 | -- tls          |                       | panic: duplicate function name: crypto/tls.run$1 |
-| -- x509         |                       | modified tests (as for Windows) pass on js, but tests take >30 mins to run on nodejs, so not marked as working |
+| -- x509         |                       | modified tests (as for Windows) pass on js, but take >30 mins |
 | -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       | panic: duplicate function name: database/sql.Query$1 |
@@ -57,7 +57,7 @@ The "testing" package is emulated in an ugly and part-working way, all tests are
 | -- asn1         |                       | 2 errors, probably both UTF-8 encoding related |
 | -- base32       | js                    |                                   |
 | -- base64       | js                    |                                   |
-| -- binary       |                       | reflect: unknown method using value obtained using unexported field |
+| -- binary       |                       | reflect: unknown method using value from unexported field |
 | -- csv          | js                    |                                   |
 | -- gob          |                       | fatal error: stack overflow       |
 | -- hex          | js                    |                                   |
@@ -67,7 +67,7 @@ The "testing" package is emulated in an ugly and part-working way, all tests are
 | errors          | c++, c#, java, js     |                                   |
 | expvar          |                       | Haxe try-catch exception after JSON unmarshall |
 | flag            | js                    | but no way to pass flags in yet   |
-| fmt             | c++, js               | minor differences in type names, c#/java: type conversion error in reflect package |
+| fmt             | c++, js               | minor differences in type names, c#/java: error in reflect |
 | go              | no code               |                                   |
 | -- ast          |                       | multiple errors                   |
 | -- build        |                       | $GOROOT/$GOPATH not set           |
@@ -150,6 +150,6 @@ The "testing" package is emulated in an ugly and part-working way, all tests are
 | unicode         | c++, c#, java, js     |                                   |
 | -- utf16        | c++, c#, java, js     |                                   |
 | -- utf8         | c++, c#, java, js     |                                   |
-| unsafe          | no tests              | pointer arithmetic unsupported, but other functionalty should work |
+| unsafe          | no tests              | pointer arithmetic unsupported, other functionalty should work |
 
 (With thanks to [GopherJS](https://github.com/gopherjs/gopherjs/blob/master/doc/packages.md) for the layout above)

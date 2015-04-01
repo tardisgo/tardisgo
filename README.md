@@ -1,25 +1,23 @@
 # TARDIS Go -> Haxe transpiler
 
-#### Haxe -> JavaScript / C++ / C# / Java
+#### Haxe -> C++ / C# / Java / JavaScript 
 
 [![Build Status](https://travis-ci.org/tardisgo/tardisgo.png?branch=master)](https://travis-ci.org/tardisgo/tardisgo)
 [![GoDoc](https://godoc.org/github.com/tardisgo/tardisgo?status.png)](https://godoc.org/github.com/tardisgo/tardisgo)
 [![status](https://sourcegraph.com/api/repos/github.com/tardisgo/tardisgo/badges/status.png)](https://sourcegraph.com/github.com/tardisgo/tardisgo)
 
 ## Project status: a working proof of concept
-####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED, UNSTABLE API
+#### EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to allow other goroutines to run.  
 
-Over half of the standard packages are currently passing their tests for the JavaScript target, [full details here](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md). Other target languages have not yet been systematically tested.
+[Well over half of the standard packages pass their tests for at least one target](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md). 
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
-The code is developed and tested on OS X 10.10.2, using Go 1.4.2 and Haxe 3.2.0-rc.2. The short CI test runs on 64-bit Ubuntu. 
-
-No other platforms are currently regression tested. 
+The code is developed and tested on OS X 10.10.2, using Go 1.4.2 and Haxe 3.2.0-rc.2. The short CI test runs on 64-bit Ubuntu. No other platforms are currently regression tested. 
 
 ## Installation and use:
  
@@ -141,7 +139,7 @@ Target medium-term use-case will be to make the wider Haxe ecosystem available t
 
 Target long-term use-cases (once the generated code and runtime environment is more efficient):
 - For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
-- For the Go community: write code in Go and call to and/or from existing Haxe, JavaScript, ActionScript, Java, C# or PHP applications (in C++ you would probably just link as normal through CGO). 
+- For the Go community: write code in Go and call to-and-from existing Haxe, JavaScript, Java or C#  applications (in C++ you would probably just link as normal through CGo). 
 
 For more background and on-line examples see the links from: http://tardisgo.github.io/
 
