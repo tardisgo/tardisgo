@@ -96,8 +96,9 @@ func (v Value) pointer() unsafe.Pointer {
 // packEface converts v to the empty interface.
 func packEface(v Value) interface{} {
 	t := v.typ
-	var i interface{}
-	e := haxeInterfaceUnpack(i) //(*emptyInterface)(unsafe.Pointer(&i))
+	//println("DEBUG packEface: ", t.String())
+	//var i interface{}
+	e := &emptyInterface{} //(*emptyInterface)(unsafe.Pointer(&i))
 	// First, fill in the data portion of the interface.
 	switch {
 	case ifaceIndir(t):
@@ -644,7 +645,7 @@ func funcName(f func([]Value) []Value) string {
 // Cap returns v's capacity.
 // It panics if v's Kind is not Array, Chan, or Slice.
 func (v Value) Cap() int {
-	panic("reflect.Cap not yet implemented")
+	//panic("reflect.Cap not yet implemented")
 	k := v.kind()
 	switch k {
 	case Array:
@@ -653,7 +654,10 @@ func (v Value) Cap() int {
 		return int(chancap(v.pointer()))
 	case Slice:
 		// Slice is always bigger than a word; assume flagIndir.
-		return hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr) //(*sliceHeader)(v.ptr).Cap
+		if v.ptr == nil {
+			return 0
+		}
+		return hx.CodeInt("", "var s=_a.itemAddr(0).load().val.load();s==null?0:s.cap();", v.ptr) //(*sliceHeader)(v.ptr).Cap
 	}
 	panic(&ValueError{"reflect.Value.Cap", v.kind()})
 }
@@ -757,7 +761,7 @@ func (v Value) Field(i int) Value {
 // FieldByIndex returns the nested field corresponding to index.
 // It panics if v's Kind is not struct.
 func (v Value) FieldByIndex(index []int) Value {
-	panic("reflect.value.FieldByIndex not yet implemented")
+	//panic("reflect.value.FieldByIndex not yet implemented")
 	if len(index) == 1 {
 		return v.Field(index[0])
 	}
@@ -960,7 +964,7 @@ func (v Value) InterfaceData() [2]uintptr {
 func (v Value) IsNil() bool {
 	k := v.kind()
 	switch k {
-	case /*Chan, Func, Map,*/ Ptr:
+	case Chan, Func, Map, Ptr:
 		if v.flag&flagMethod != 0 {
 			return false
 		}
@@ -969,8 +973,13 @@ func (v Value) IsNil() bool {
 			ptr = *(*unsafe.Pointer)(ptr)
 		}
 		return ptr == nil
-	case Interface, Slice, Chan, Func, Map:
-		return hx.CodeBool("", "_a.itemAddr(0).load().val.load()==null;", v.ptr)
+	case Interface, Slice:
+		// new code below
+		if v.ptr == nil {
+			return true
+		}
+		return hx.CodeBool("", "cast(_a.itemAddr(0).load().val,Pointer).load()==null;", v.ptr)
+
 		// Both interface and slice are nil if first word is 0.
 		// Both are always bigger than a word; assume flagIndir.
 		//return *(*unsafe.Pointer)(v.ptr) == nil
@@ -1257,7 +1266,7 @@ func (v Value) Pointer() uintptr {
 			"_a.itemAddr(0).load().val.load().len()==0?null:_a.itemAddr(0).load().val.load().itemAddr(0);",
 			v.ptr)
 	case Map, Func, Chan:
-		return uintptr(unsafe.Pointer(&v.ptr)) // this is a dummy value
+		return uintptr(unsafe.Pointer(v.pointer())) // TODO this is an untested value
 	default:
 		panic("reflect.value.Pointer not yet implemented for " + v.Kind().String())
 	}
@@ -1332,7 +1341,7 @@ func (v Value) recv(nb bool) (val Value, ok bool) {
 // It panics if v's kind is not Chan or if x's type is not the same type as v's element type.
 // As in Go, x's value must be assignable to the channel's element type.
 func (v Value) Send(x Value) {
-	panic("reflect.value.Send not yet implemented")
+	//panic("reflect.value.Send not yet implemented")
 	v.mustBe(Chan)
 	v.mustBeExported()
 	v.send(x, false)
@@ -1567,7 +1576,7 @@ func (v Value) SetString(x string) {
 // It panics if v's Kind is not Array, Slice or String, or if v is an unaddressable array,
 // or if the indexes are out of bounds.
 func (v Value) Slice(i, j int) Value {
-	panic("reflect.value.Slice not yet implemented")
+	//panic("reflect.value.Slice not yet implemented")
 	var (
 		cap  int
 		typ  *sliceType
@@ -1590,7 +1599,11 @@ func (v Value) Slice(i, j int) Value {
 		typ = (*sliceType)(unsafe.Pointer(v.typ))
 		//s := (*sliceHeader)(v.ptr)
 		base = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", v.ptr)) //unsafe.Pointer(s.Data)
-		cap = hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr)                            // s.Cap
+		if base == nil {
+			cap = 0
+		} else {
+			cap = hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr) // s.Cap
+		}
 
 	case String:
 		s := *(*string)(v.ptr)            //(*stringHeader)(v.ptr)
@@ -1666,7 +1679,11 @@ func (v Value) Slice3(i, j, k int) Value {
 		//base = s.Data
 		//cap = s.Cap
 		base = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", v.ptr)) //unsafe.Pointer(s.Data)
-		cap = hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr)                            // s.Cap
+		if base == nil {
+			cap = 0
+		} else {
+			cap = hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr) // s.Cap
+		}
 	}
 
 	if i < 0 || j < i || k < j || k > cap {
@@ -1890,19 +1907,22 @@ func grow(s Value, extra int) (Value, int, int) {
 // Append appends the values x to a slice s and returns the resulting slice.
 // As in Go, each x's value must be assignable to the slice's element type.
 func Append(s Value, x ...Value) Value {
-	panic("reflect.Append not yet implemented")
+	//panic("reflect.Append not yet implemented")
 	s.mustBe(Slice)
+	//println("DEBUG slice before", s.Interface())
 	s, i0, i1 := grow(s, len(x))
+	//println("DEBUG slice after grow oldlen, newlen, xLen, slice after", i0, i1, len(x), s.Interface())
 	for i, j := i0, 0; i < i1; i, j = i+1, j+1 {
 		s.Index(i).Set(x[j])
 	}
+	//println("DEBUG slice after", s.Interface())
 	return s
 }
 
 // AppendSlice appends a slice t to a slice s and returns the resulting slice.
 // The slices s and t must have the same element type.
 func AppendSlice(s, t Value) Value {
-	panic("reflect.AppendSlice not yet implemented")
+	//panic("reflect.AppendSlice not yet implemented")
 	s.mustBe(Slice)
 	t.mustBe(Slice)
 	typesMustMatch("reflect.AppendSlice", s.Type().Elem(), t.Type().Elem())
@@ -1917,7 +1937,7 @@ func AppendSlice(s, t Value) Value {
 // Dst and src each must have kind Slice or Array, and
 // dst and src must have the same element type.
 func Copy(dst, src Value) int {
-	panic("reflect.Copy not yet implemented")
+	//panic("reflect.Copy not yet implemented")
 	dk := dst.kind()
 	if dk != Array && dk != Slice {
 		panic(&ValueError{"reflect.Copy", dk})
@@ -1951,6 +1971,7 @@ func Copy(dst, src Value) int {
 		da = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", dst.ptr))
 	}
 	if src.flag&flagIndir == 0 {
+		//println("DEBUG flagIndir")
 		sa = unsafe.Pointer(&src.ptr)
 	} else if sk == Array {
 		sa = src.ptr
@@ -2129,7 +2150,7 @@ func unsafe_NewArray(*rtype, int) unsafe.Pointer {
 // MakeSlice creates a new zero-initialized slice value
 // for the specified slice type, length, and capacity.
 func MakeSlice(typ Type, len, cap int) Value {
-	panic("reflect.MakeSlice not yet implemented")
+	//panic("reflect.MakeSlice not yet implemented")
 	if typ.Kind() != Slice {
 		panic("reflect.MakeSlice of non-slice type")
 	}
@@ -2160,7 +2181,7 @@ func MakeSlice(typ Type, len, cap int) Value {
 
 // MakeChan creates a new channel with the specified type and buffer size.
 func MakeChan(typ Type, buffer int) Value {
-	panic("reflect.MakeChan not yet implemented")
+	//panic("reflect.MakeChan not yet implemented")
 	if typ.Kind() != Chan {
 		panic("reflect.MakeChan of non-chan type")
 	}
@@ -2273,7 +2294,7 @@ func (v Value) assignTo(context string, dst *rtype, target unsafe.Pointer) Value
 		}
 		x := valueInterface(v, false)
 		if dst.NumMethod() == 0 {
-			panic("reflect.Value.assignTo unhandled *interface ")
+			//panic("reflect.Value.assignTo unhandled *interface ")
 			*(*interface{})(target) = x
 		} else {
 			ifaceE2I(dst, x, target)
@@ -2586,11 +2607,20 @@ func chanrecv(t *rtype, ch unsafe.Pointer, nb bool, val unsafe.Pointer) (selecte
 func chansend(t *rtype, ch unsafe.Pointer, val unsafe.Pointer, nb bool) bool {
 	panic("reflect.chansend() not yet implemented in haxe")
 	return false
+
+	// TODO
+	//v := hx.CodeDynamic("",
+	//	"_a.itemAddr(0).load().val.load_object(_a.itemAddr(1).load().val);",
+	//	val, t.Elem().Size())
 }
 
 func makechan(typ *rtype, size uint64) (ch unsafe.Pointer) {
-	panic("reflect.makechan() not yet implemented in haxe")
-	return nil
+	//panic("reflect.makechan() not yet implemented in haxe")
+	//return nil
+
+	chPtr := hx.Malloc(typ.Size())
+	*((*uintptr)(chPtr)) = hx.CallDynamic("", "new Channel", 1, uint(size))
+	return chPtr
 }
 func makemap(t *rtype) (m unsafe.Pointer) {
 	panic("reflectmakemap() not yet implemented in haxe")

@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
@@ -201,8 +200,8 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Slice":
 			switch v.(ssa.Value).Type().Underlying().(*types.Slice).Elem().Underlying().(*types.Basic).Kind() {
 			case types.Rune: // []rune
-				return register + 
-					"=Force.toRawString(this._goroutine,Go_haxegoruntime_RRunesTToUUTTFF8.callFromRT(this._goroutine," + 
+				return register +
+					"=Force.toRawString(this._goroutine,Go_haxegoruntime_RRunesTToUUTTFF8.callFromRT(this._goroutine," +
 					l.IndirectValue(v, errorInfo) + "));"
 			case types.Byte: // []byte
 				return register + "=Force.toRawString(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
@@ -448,85 +447,7 @@ func preprocessTypeName(v string) string {
 }
 
 func getTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
-	if t == nil {
-		return reflect.Invalid, ""
-	}
-	if tname != "" {
-		name = tname
-	}
-	switch t.(type) {
-	case *types.Basic:
-		tb := t.(*types.Basic)
-		switch tb.Kind() {
-		case types.Bool:
-			kind = reflect.Bool
-		case types.Int:
-			kind = reflect.Int
-		case types.Int8:
-			kind = reflect.Int8
-		case types.Int16:
-			kind = reflect.Int16
-		case types.Int32:
-			kind = reflect.Int32
-		case types.Int64:
-			kind = reflect.Int64
-		case types.Uint:
-			kind = reflect.Uint
-		case types.Uint8:
-			kind = reflect.Uint8
-		case types.Uint16:
-			kind = reflect.Uint16
-		case types.Uint32:
-			kind = reflect.Uint32
-		case types.Uint64:
-			kind = reflect.Uint64
-		case types.Uintptr:
-			kind = reflect.Uintptr
-		case types.Float32:
-			kind = reflect.Float32
-		case types.Float64:
-			kind = reflect.Float64
-		case types.Complex64:
-			kind = reflect.Complex64
-		case types.Complex128:
-			kind = reflect.Complex128
-		case types.UnsafePointer:
-			kind = reflect.UnsafePointer
-		case types.String:
-			kind = reflect.String
-		case types.UntypedBool, types.UntypedComplex, types.UntypedFloat, types.UntypedInt,
-			types.UntypedNil, types.UntypedRune, types.UntypedString:
-			kind = reflect.Invalid
-		default:
-			panic(fmt.Sprintf("pogo.getTypeinfo() unhandled basic kind: %s", tb.String()))
-		}
-
-	case *types.Array:
-		kind = reflect.Array
-	case *types.Chan:
-		kind = reflect.Chan
-	case *types.Signature:
-		kind = reflect.Func
-	case *types.Interface:
-		kind = reflect.Interface
-	case *types.Map:
-		kind = reflect.Map
-	case *types.Pointer:
-		kind = reflect.Ptr
-	case *types.Slice:
-		kind = reflect.Slice
-	case *types.Struct:
-		kind = reflect.Struct
-	case *types.Named:
-		if tname == "" {
-			tname = t.(*types.Named).Obj().Name() // only do this for the top-level type name
-		}
-		return getTypeInfo(t.Underlying(), tname)
-	default:
-		panic(fmt.Sprintf("haxe.getTypeinfo() unhandled type: %T", t))
-
-	}
-	return
+	return GetTypeInfo(t, tname)
 }
 
 func notInterface(t types.Type) bool {
@@ -569,9 +490,12 @@ func buildTBI() {
 }
 
 func (l langType) EmitTypeInfo() string {
+
+	BuildTypeHaxe() // generate the code to emulate compiler reflect data output
+
 	var ret string = ""
 
-	if pogo.UsingPackage("reflect") {
+	/*if false { // was: pogo.UsingPackage("reflect")
 
 		ret += "class PtrTypeInfo{\n"
 
@@ -897,89 +821,90 @@ func (l langType) EmitTypeInfo() string {
 		pogo.WriteAsClass("ArrayTypeInfo", ret)
 		ret = ""
 
-	} // end of Reflect-releated type info
+	}*/ // end of Reflect-releated type info
 
-	buildTBI()
+	/*if false {
+		buildTBI()
 
-	ret += "\nclass TypeInfoIDs{\n\n"
+		ret += "\nclass TypeInfoIDs{\n\n"
 
-	ret += "// mirrors reflect.rtype etc\n"
-	ret += "//\t[0] = isValid:Bool,\n"
-	ret += "//\t[1] = size:Int,\n"
-	ret += "//\t[2] = align:Int,\n"
-	ret += "//\t[3] = fieldAlign:Int,\n"
-	ret += "//\t[4] = kind:Int,\n"
-	ret += "//\t[5] = stringForm:String,\n"
-	ret += "//\t[6] = name:String,\n"
-	ret += "//\t[7] = ptrToThis:Int,\n"
-	ret += "//\t[8] = pkgPath:String,\n"
-	ret += "//\t[9] = numMethods:Int,\n"
-	ret += "public static var typesByID:Array<Array<Dynamic>>=haxe.Json.parse(\" [ "
-	for _, t := range typesByID {
-		kind, name := getTypeInfo(t, "")
-		if t == nil || kind == reflect.Invalid {
-			ret += "[false,0,0,0,0,\\\"\\\",\\\"\\\",0,\\\"\\\",0] " // the first one
-		} else {
-			ptrT := 0
-			for idp, tp := range typesByID {
-				switch tp.(type) {
+		ret += "// mirrors reflect.rtype etc\n"
+		ret += "//\t[0] = isValid:Bool,\n"
+		ret += "//\t[1] = size:Int,\n"
+		ret += "//\t[2] = align:Int,\n"
+		ret += "//\t[3] = fieldAlign:Int,\n"
+		ret += "//\t[4] = kind:Int,\n"
+		ret += "//\t[5] = stringForm:String,\n"
+		ret += "//\t[6] = name:String,\n"
+		ret += "//\t[7] = ptrToThis:Int,\n"
+		ret += "//\t[8] = pkgPath:String,\n"
+		ret += "//\t[9] = numMethods:Int,\n"
+		ret += "public static var typesByID:Array<Array<Dynamic>>=haxe.Json.parse(\" [ "
+		for _, t := range typesByID {
+			kind, name := getTypeInfo(t, "")
+			if t == nil || kind == reflect.Invalid {
+				ret += "[false,0,0,0,0,\\\"\\\",\\\"\\\",0,\\\"\\\",0] " // the first one
+			} else {
+				ptrT := 0
+				for idp, tp := range typesByID {
+					switch tp.(type) {
+					case *types.Pointer:
+						if pogo.LogTypeUse(tp.(*types.Pointer).Elem()) == pogo.LogTypeUse(t) {
+							ptrT = idp
+							goto ptrTfound
+						}
+					}
+				}
+				//ret += "\t// correct pointer to type not found, set to 0\n"
+			ptrTfound:
+				pkgPath := ""
+				numMethods := 0
+				tt := t
+				switch tt.(type) {
 				case *types.Pointer:
-					if pogo.LogTypeUse(tp.(*types.Pointer).Elem()) == pogo.LogTypeUse(t) {
-						ptrT = idp
-						goto ptrTfound
+					el, ok := tt.(*types.Pointer).Elem().(*types.Named)
+					if ok {
+						tt = el
 					}
 				}
-			}
-			//ret += "\t// correct pointer to type not found, set to 0\n"
-		ptrTfound:
-			pkgPath := ""
-			numMethods := 0
-			tt := t
-			switch tt.(type) {
-			case *types.Pointer:
-				el, ok := tt.(*types.Pointer).Elem().(*types.Named)
-				if ok {
-					tt = el
-				}
-			}
-			switch tt.(type) {
-			case *types.Named:
-				obj := tt.(*types.Named).Obj()
-				if obj != nil {
-					pkg := obj.Pkg()
-					if pkg != nil {
-						pkgPath = pkg.Path()
+				switch tt.(type) {
+				case *types.Named:
+					obj := tt.(*types.Named).Obj()
+					if obj != nil {
+						pkg := obj.Pkg()
+						if pkg != nil {
+							pkgPath = pkg.Path()
+						}
 					}
+					numMethods = types.NewMethodSet(t).Len()
 				}
-				numMethods = types.NewMethodSet(t).Len()
+				ret += ", ["
+				ret += fmt.Sprintf(" true,")
+				ret += fmt.Sprintf(" %d,", haxeStdSizes.Sizeof(t))
+				ret += fmt.Sprintf(" %d,", haxeStdSizes.Alignof(t))
+				ret += fmt.Sprintf(" %d,", haxeStdSizes.Alignof(t)) // TODO check correct for fieldAlign
+				ret += fmt.Sprintf(" %d,", kind)
+				ret += fmt.Sprintf(" \\\"%s\\\",",
+					strings.Trim(haxeStringConst(`"`+preprocessTypeName(t.String())+`"`, "CompilerInternal:haxe.EmitTypeInfo()"), `"`))
+				ret += fmt.Sprintf(" \\\"%s\\\",",
+					strings.Trim(haxeStringConst(`"`+name+`"`, "CompilerInternal:haxe.EmitTypeInfo()"), `"`))
+				ret += fmt.Sprintf(" %d,", ptrT)
+				ret += fmt.Sprintf(" \\\"%s\\\",",
+					strings.Trim(haxeStringConst(`"`+pkgPath+`"`, "CompilerInternal:haxe.EmitTypeInfo()"), `"`))
+				ret += fmt.Sprintf(" %d", numMethods)
+				ret += fmt.Sprintf("]")
 			}
-			ret += ", ["
-			ret += fmt.Sprintf(" true,")
-			ret += fmt.Sprintf(" %d,", haxeStdSizes.Sizeof(t))
-			ret += fmt.Sprintf(" %d,", haxeStdSizes.Alignof(t))
-			ret += fmt.Sprintf(" %d,", haxeStdSizes.Alignof(t)) // TODO check correct for fieldAlign
-			ret += fmt.Sprintf(" %d,", kind)
-			ret += fmt.Sprintf(" \\\"%s\\\",",
-				strings.Trim(haxeStringConst(`"`+preprocessTypeName(t.String())+`"`, "CompilerInternal:haxe.EmitTypeInfo()"), `"`))
-			ret += fmt.Sprintf(" \\\"%s\\\",",
-				strings.Trim(haxeStringConst(`"`+name+`"`, "CompilerInternal:haxe.EmitTypeInfo()"), `"`))
-			ret += fmt.Sprintf(" %d,", ptrT)
-			ret += fmt.Sprintf(" \\\"%s\\\",",
-				strings.Trim(haxeStringConst(`"`+pkgPath+`"`, "CompilerInternal:haxe.EmitTypeInfo()"), `"`))
-			ret += fmt.Sprintf(" %d", numMethods)
-			ret += fmt.Sprintf("]")
 		}
-	}
-	ret += "]\");\n}\n"
+		ret += "]\");\n}\n"
 
-	pogo.WriteAsClass("TypeInfoIDs", ret)
-	ret = ""
+		pogo.WriteAsClass("TypeInfoIDs", ret)
+		ret = ""
 
-	buildTBI()
-
+		buildTBI()
+	}*/
 	ret += "\nclass TypeInfo{\n\n"
 
-	// TODO review if this is  required
+	// TODO review if this is required
 	ret += "public static function isHaxeClass(id:Int):Bool {\nswitch(id){" + "\n"
 	for k := range pteKeys {
 		v := pte.At(pteKeys[k])
@@ -1001,8 +926,8 @@ func (l langType) EmitTypeInfo() string {
 	//}
 	ret += "\tif(id==0)return \"(haxeTypeID=0)\";" + "\n"
 	ret += "\t#if (js || php || node) if(id==null)return \"(haxeTypeID=null)\"; #end\n"
-	ret += "\t" + `return TypeInfoIDs.typesByID[id][5];` + "\n}\n"
-
+	//ret += "\t" + `return TypeInfoIDs.typesByID[id][5];` + "\n}\n"
+	ret += "\t" + `return Go_haxegoruntime_getTTypeSString.hx(id);` + "\n}\n"
 	ret += "public static function typeString(i:Interface):String {\nreturn getName(i.typ);\n}\n"
 
 	ret += "static var typIDs:Map<String,Int> = ["
@@ -1214,6 +1139,7 @@ func (l langType) EmitTypeInfo() string {
 	ret += "default:}\n Scheduler.panicFromHaxe( " + `"no method found!"` + "); return null;}\n" // TODO improve error
 
 	pogo.WriteAsClass("MethodTypeInfo", ret+"}\n")
+
 	return ""
 }
 
@@ -1278,7 +1204,7 @@ func (l langType) TypeStart(nt *types.Named, err string) string {
 		ret += "class " + typName
 		ret += " extends " + hxTyp + " {\n"
 	default:
-		ret += "abstract " + typName + "(" + hxTyp + ") from "+hxTyp+" to "+hxTyp+" {\n"
+		ret += "abstract " + typName + "(" + hxTyp + ") from " + hxTyp + " to " + hxTyp + " {\n"
 	}
 	switch nt.Underlying().(type) {
 	case *types.Struct:
@@ -1312,7 +1238,7 @@ func (l langType) TypeStart(nt *types.Named, err string) string {
 	case *types.Array:
 		ret += "inline public function new(){ super new(" + strconv.Itoa(int(haxeStdSizes.Sizeof(nt.Obj().Type()))) + "); }\n"
 	default: // TODO not yet sure how to handle named types that are not structs
-		ret += "inline public function new(v:"+hxTyp+") { this = v; }\n"
+		ret += "inline public function new(v:" + hxTyp + ") { this = v; }\n"
 	}
 
 	meths := []string{}

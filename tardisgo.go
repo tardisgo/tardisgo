@@ -79,8 +79,7 @@ Usage: tardisgo [<flag> ...] <args> ...
 A shameless copy of the ssadump utility, but also writes a 'Go.hx' Haxe file into the 'tardis' sub-directory of the current location (which you must create by hand).
 Example:
 % tardisgo hello.go
-Then to run the tardis/Go.hx file generated, type the command line: "haxe -main tardis.Go -cp tardis --interp", or whatever Haxe compilation options you want to use. 
-(Note that to compile for PHP you currently need to add the haxe compilation option "--php-prefix tardisgo" to avoid name confilcts).
+Then to compile the tardis/Go.hx file generated, type the command line: "haxe -main tardis.Go -cp tardis -js tardis/go.js", or whatever Haxe compilation options you want to use. 
 
 Use -help to display other options.
 `
@@ -151,7 +150,7 @@ func doTestable(args []string) error {
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
 
-	conf.TypeChecker.Sizes = &types.StdSizes{ // must equal haxeStdSizes when (!*runFlag)
+	conf.TypeChecker.Sizes = &types.StdSizes{ // must equal haxe.haxeStdSizes when (!*runFlag)
 		MaxAlign: 8,
 		WordSize: wordSize,
 	}
@@ -250,7 +249,7 @@ func doTestable(args []string) error {
 	// TARDIS GO additional line to add the language specific go runtime code
 	conf.Import(pogo.LanguageList[pogo.TargetLang].Goruntime) // TODO add code to set pogo.TargetLang when more than one of them
 
-	// Load, parse and type-check the whole program.
+	// Load, parse and type-check the whole program, including the type definitions.
 	iprog, err := conf.Load()
 	if err != nil {
 		return err
@@ -301,6 +300,8 @@ func doTestable(args []string) error {
 		// TARDIS Go additions: copy run interpreter code above, but call pogo class
 		var main *ssa.Package
 		pkgs := prog.AllPackages()
+		//fmt.Println("DEBUG pkgs:", pkgs)
+
 		if *testFlag {
 			// If -test, run all packages' tests.
 			if len(pkgs) > 0 {
@@ -365,7 +366,7 @@ func doTestable(args []string) error {
 				r.backChan <- true
 			}
 
-		case "math": // everything as correct as it can be
+		case "math": // which is faster for the test with correct math processing, cpp or js?
 			//err := os.RemoveAll("tardis/cpp")
 			//if err != nil {
 			//	fmt.Println("Error deleting existing '" + "tardis/cpp" + "' directory: " + err.Error())
@@ -391,7 +392,7 @@ func doTestable(args []string) error {
 				r.backChan <- true
 			}
 
-		case "interp", "cpp", "js": // for running tests
+		case "interp", "cpp", "cs", "js", "jsfu", "java": // for running tests
 			switch *allFlag {
 			case "interp":
 				go doTarget([][]string{
@@ -405,11 +406,29 @@ func doTestable(args []string) error {
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
 				}, results)
+			case "cs":
+				go doTarget([][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cs", "tardis/cs"},
+					[]string{"echo", `"CS:"`},
+					[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
+				}, results)
 			case "js":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*,  `-D`, `analyzer`*/, "-js", "tardis/go.js"},
+					[]string{"echo", `"Node/JS:"`},
+					[]string{"time", "node", "tardis/go.js"},
+				}, results)
+			case "jsfu":
+				go doTarget([][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, `-D`, `analyzer`*/, "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
 					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 					[]string{"time", "node", "tardis/go-fu.js"},
+				}, results)
+			case "java":
+				go doTarget([][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-java", "tardis/java"},
+					[]string{"echo", `"Java:"`},
+					[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
 				}, results)
 			}
 			r := <-results
@@ -426,7 +445,7 @@ func doTestable(args []string) error {
 	return nil
 }
 
-var dirs = []string{} // was: "tardis/cpp", "tardis/java", "tardis/cs", "tardis/php"}
+var dirs = []string{"tardis/cpp", "tardis/java", "tardis/cs" /*, "tardis/php"*/}
 
 var targets = [][][]string{
 	[][]string{
@@ -454,16 +473,18 @@ var targets = [][][]string{
 		[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 		[]string{"time", "node", "tardis/go-fu.js"},
 	},
-	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-swf", "tardis/go.swf"},
-		[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
-		[]string{"open", "tardis/go.swf"},
-	},
-	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo"},
-		[]string{"echo", `"PHP:"`},
-		[]string{"time", "php", "tardis/php/index.php"},
-	},
+	// Cannot automate testing for SWF so removed
+	//[][]string{
+	//	[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-swf", "tardis/go.swf"},
+	//	[]string{"echo", `"Opening swf file (Chrome as a file association for swf works to test on OSX):"` + "\n"},
+	//	[]string{"open", "tardis/go.swf"},
+	//},
+	// PHP will never be a reliable target, so removed
+	//[][]string{
+	//	[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-php", "tardis/php", "--php-prefix", "tgo"},
+	//	[]string{"echo", `"PHP:"`},
+	//	[]string{"time", "php", "tardis/php/index.php"},
+	//},
 	// Seldom works, so removed
 	//[][]string{
 	//	[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-neko", "tardis/go.n"},
@@ -471,11 +492,11 @@ var targets = [][][]string{
 	//	[]string{"time", "neko", "tardis/go.n"},
 	//},
 	// only really useful for testing, so can be run from the command line
-	[][]string{
-		[]string{"echo", ``}, // Output from this line is ignored
-		[]string{"echo", `"Neko (haxe --interp):"`},
-		[]string{"time", "haxe", "-main", "tardis.Go", "-cp", "tardis", "--interp"},
-	},
+	//[][]string{
+	//	[]string{"echo", ``}, // Output from this line is ignored
+	//	[]string{"echo", `"Neko (haxe --interp):"`},
+	//	[]string{"time", "haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "--interp"},
+	//},
 }
 
 type resChan struct {

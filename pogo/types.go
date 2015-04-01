@@ -85,6 +85,23 @@ func catchReferencedTypes(et types.Type) {
 		return
 	}
 	catchReferencedTypesSeen[id] = true
+
+	// check that we have all the required methods?
+	/*
+		for t := 1; t < NextTypeID; t++ { // make sure we do this in a consistent order
+			for _, k := range TypesEncountered.Keys() {
+				if TypesEncountered.At(k).(int) == t {
+					switch k.(type) {
+					case *types.Interface:
+						if types.Implements(et,k.(*types.Interface)) {
+							// TODO call missing method?
+						}
+					}
+				}
+			}
+		}
+	*/
+
 	//LogTypeUse(types.NewPointer(et))
 	switch et.(type) {
 	case *types.Named:
@@ -106,6 +123,9 @@ func catchReferencedTypes(et types.Type) {
 				catchReferencedTypes(et.(*types.Struct).Field(f).Type())
 			}
 		}
+	case *types.Map:
+		catchReferencedTypes(et.(*types.Map).Key())
+		catchReferencedTypes(et.(*types.Map).Elem())
 	case *types.Signature:
 		for i := 0; i < et.(*types.Signature).Params().Len(); i++ {
 			catchReferencedTypes(et.(*types.Signature).Params().At(i).Type())

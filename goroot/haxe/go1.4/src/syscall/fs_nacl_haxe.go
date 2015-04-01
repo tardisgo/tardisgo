@@ -854,26 +854,30 @@ func (f *zeroFile) pread(b []byte, offset int64) (int, error) {
 	return len(b), nil
 }
 
-type randomFile struct {
-	naclFD int
+type randomFile struct { // rewritten for Haxe
+	//naclFD int
 }
 
 func openRandom() (devFile, error) {
-	fd, err := openNamedService("SecureRandom", O_RDONLY)
-	if err != nil {
-		return nil, err
-	}
-	return &randomFile{naclFD: fd}, nil
+	//fd, err := openNamedService("SecureRandom", O_RDONLY)
+	//if err != nil {
+	//	return nil, err
+	//}
+	return &randomFile{ /*naclFD: fd*/}, nil
 }
 
 func (f *randomFile) close() error {
-	naclClose(f.naclFD)
-	f.naclFD = -1
+	//naclClose(f.naclFD)
+	//f.naclFD = -1
 	return nil
 }
 
 func (f *randomFile) pread(b []byte, offset int64) (int, error) {
-	return naclRead(f.naclFD, b)
+	//return naclRead(f.naclFD, b)
+	for i := range b {
+		b[i] = byte(hx.GetFloat("", "Math.random()") * 256.0)
+	}
+	return len(b), nil
 }
 
 func (f *randomFile) pwrite(b []byte, offset int64) (int, error) {

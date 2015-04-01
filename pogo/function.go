@@ -12,16 +12,23 @@ import (
 	"unsafe"
 
 	"github.com/tardisgo/tardisgo/tgossa"
+
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
 )
 
 var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the functions use goroutines/channels
 
+var Tardisgotypes *ssa.Package
+
 // For every function, maybe emit the code...
 func emitFunctions() {
 	//fnMap := ssautil.AllFunctions(rootProgram)
-	dceList := []*ssa.Package{mainPackage, rootProgram.ImportedPackage(LanguageList[TargetLang].Goruntime)}
+	//fmt.Println("DEBUG Tardisgotypes:",Tardisgotypes)
+	dceList := []*ssa.Package{
+		mainPackage,
+		rootProgram.ImportedPackage(LanguageList[TargetLang].Goruntime),
+		Tardisgotypes}
 	dceExceptions := []string{}
 	if LanguageList[TargetLang].TestFS != "" { // need to load file system
 		dceExceptions = append(dceExceptions, "syscall") // so that we keep UnzipFS()
@@ -31,6 +38,8 @@ func emitFunctions() {
 		exip := rootProgram.ImportedPackage(ex)
 		if exip != nil {
 			dceList = append(dceList, exip)
+		} else {
+			//fmt.Println("DEBUG exip nil for package: ",ex)
 		}
 	}
 	fnMap, grMap = tgossa.VisitedFunctions(rootProgram, dceList, IsOverloaded)
@@ -71,7 +80,7 @@ func emitFunctions() {
 
 	for _, f := range fnMapSorted() {
 		if !IsOverloaded(f) {
-			if err:= tgossa.CheckNames(f); err!=nil {
+			if err := tgossa.CheckNames(f); err != nil {
 				panic(err)
 			}
 			emitFunc(f)
@@ -372,7 +381,7 @@ func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool, m
 	pName, mName := GetFnNameParts(fn)
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
 	fmt.Fprintln(&LanguageList[l].buffer,
-		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap))
+		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode , canOptMap))
 }
 
 // Emit the end of a function.

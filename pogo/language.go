@@ -15,6 +15,7 @@ import (
 
 // The Language interface enables multiple target languages for TARDIS Go.
 type Language interface {
+	RegisterName(val ssa.Value) string 
 	DeclareTempVar(ssa.Value) string
 	LanguageName() string
 	FileTypeSuffix() string // e.g. ".go" ".js" ".hx"

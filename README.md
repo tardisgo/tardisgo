@@ -1,48 +1,25 @@
 # TARDIS Go -> Haxe transpiler
 
-#### Haxe -> JavaScript / ActionScript / Java / C++ / C# / PHP / Neko
+#### Haxe -> JavaScript / C++ / C# / Java
 
 [![Build Status](https://travis-ci.org/tardisgo/tardisgo.png?branch=master)](https://travis-ci.org/tardisgo/tardisgo)
 [![GoDoc](https://godoc.org/github.com/tardisgo/tardisgo?status.png)](https://godoc.org/github.com/tardisgo/tardisgo)
 [![status](https://sourcegraph.com/api/repos/github.com/tardisgo/tardisgo/badges/status.png)](https://sourcegraph.com/github.com/tardisgo/tardisgo)
 
-## Objectives:
-The objective of this project is to enable the same [Go](http://golang.org) code to be re-deployed in  as many different execution environments as possible, thus saving development time and effort. 
-The long-term vision is to provide a framework that makes it easy to target many languages as part of this project.
-
-The first language targeted is [Haxe](http://haxe.org), because the Haxe compiler generates 7 other languages and is already well-proven for making multi-platform client-side applications, mostly games. 
-
-Target short-term use-case is writing multi-platform client-side applications in Go using the APIs available in the Haxe ecosystem, including:
-- The standard [Haxe APIs](http://api.haxe.org/) for JavaScript and Flash.
-- [OpenFL](http://openfl.org) "Open Flash" to target HTML5, Windows, Mac, Linux, iOS, Android, BlackBerry, Firefox OS, Tizen and Flash, using compiled auto-generated C++ code where possible (star users are TiVo and Prezzi).
-
-Target medium-term use-case will be to make the wider Haxe ecosystem available to Go programmers, including:
-- [Flambe](https://github.com/aduros/flambe) cross-platform game engine targeting mobile via Adobe AIR (star users are Disney and Nickelodeon).
-- [Kha](http://kha.ktxsoftware.com/) "World's most portable software platform" additionaly targeting Xbox and Playstation.
-- Or see a list of many more projects [here](http://old.haxe.org/doc/libraries) (though that page is not exhaustive).
-
-Target long-term use-cases (once the generated code and runtime environment is more efficient):
-- For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
-- For the Go community: write code in Go and call to and/or from existing Haxe, JavaScript, ActionScript, Java, C# or PHP applications (in C++ you would probably just link as normal through CGO). 
-
-For more background and on-line examples see the links from: http://tardisgo.github.io/
-
 ## Project status: a working proof of concept
-####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED, UNSTABLE API, DEBUG MESSAGES
+####  DEMONSTRABLE, EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED, UNSTABLE API
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
-Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to give up control.  
+Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to allow other goroutines to run.  
 
-Some parts of the Go standard library work, as you can see in the [example TARDIS Go code](http://github.com/tardisgo/tardisgo-samples), but the bulk have not been tested or implemented yet. 
-
-Only around a third of the standard packages are currently passing their tests, [full details here](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md).
+Over half of the standard packages are currently passing their tests for the JavaScript target, [full details here](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md). Other target languages have not yet been systematically tested.
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
-The code is developed and tested on OS X 10.9.5, using Go 1.4 and Haxe 3.1.3. The short CI test runs on 64-bit Ubuntu. 
+The code is developed and tested on OS X 10.10.2, using Go 1.4.2 and Haxe 3.2.0-rc.2. The short CI test runs on 64-bit Ubuntu. 
 
-No other platforms are currently regression tested, although the project has been run on Ubuntu 32-bit and Windows 7 32-bit. Compilation to the C# target is suspect on Win-7 and PHP is flakey (but you probably knew that).
+No other platforms are currently regression tested. 
 
 ## Installation and use:
  
@@ -67,9 +44,10 @@ A large number of .hx files will be created in the tardis subdirectory, of which
 
 To run your transpiled code you will first need to install [Haxe](http://haxe.org).
 
-Then to run the tardis/Go.hx file generated above, type the command line: 
+Then to run the tardis/Go.hx file generated above, for example in JavaScript, type the command lines: 
 ```
-haxe -main tardis.Go -cp tardis --interp
+haxe -main tardis.Go -cp tardis -js tardis/go.js
+node < tardis/go.js
 ```
 ... or whatever [Haxe compilation options](http://haxe.org/documentation/introduction/compiler-usage.html) you want to use. 
 See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
@@ -81,7 +59,7 @@ haxe -main tardis.Go -cp tardis -D fullunsafe -js tardis/go-fu.js
 node < tardis/go-fu.js
 ```
 
-While on the subject of JS, the closure compiler seems to work using "ADVANCED_OPTIMIZATIONS" to significantly reduce the size of the generated code.
+While on the subject of JS, the closure compiler seems to work, but not using the "ADVANCED_OPTIMIZATIONS" option.
 
 The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/a.txt" thus (for example in JS):
 ```
@@ -108,9 +86,10 @@ To get a list of commands type "?" followed by carrage return, after the 1st bre
 
 To run cross-target command-line tests as quickly as possible, the "-haxe X" flag concurrently runs the Haxe compiler and executes the resulting code as follows:
 - "-haxe all" - all supported targets 
-- "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview), where float32 is correctly handled
+- "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview)
 - "-haxe interp" - only runs the haxe interpreter (for automated testing, exits with an error if one occurs)
-- "-haxe js" - only compiles (-D fullunsafe) and runs nodeJS (for automated testing, exits with an error if one occurs)
+- "-haxe js" - only compiles and runs nodeJS (for automated testing, exits with an error if one occurs)
+- "-haxe jsfu" - only compiles (-D fullunsafe) and runs nodeJS (for automated testing, exits with an error if one occurs)
 - "-haxe cpp" - only compiles and runs C++ (for automated testing, exits with an error if one occurs)
 
 Compiler output is suppressed and results appear in the order they complete, with an execution time, for example:
@@ -122,14 +101,20 @@ When using the -haxe flag with the -test flag, if the file "tgotestfs.zip" exist
 
 If you can't work-out what is going on prior to a panic, you can add the "-trace" tardisgo compilation flag to instrument the code even further, printing out every part of the code visited. But be warned, the output can be huge.
 
+Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 even when strings for that host are encoded as UTF-16. The system should automatically do the translation to/from the correct format at the Go/Haxe boundary, but there are certain to be some occasions when a translation has to be done explicitly (see Force.toHaxeString/Force.fromHaxeString in haxe/haxeruntime.go).
+
+## Unsupported Haxe targets: ActionScript, PHP, Python and Neko
+
+The nature of ActionScript/Flash means that it is not possible to run automated tests. 
+
+The PHP, Python and Neko targets may work to varying degress, but are not currently reliable enough to permit automated testing. 
+
 PHP specific issues:
 * to compile for PHP you currently need to add the haxe compilation option "--php-prefix tgo" to avoid name conflicts
 * very long PHP class/file names may cause name resolution problems on some platforms
 
-Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 even when strings for that host are encoded as UTF-16. The system should automatically do the translation to/from the correct format at the Go/Haxe boundary, but there are certain to be some occasions when a translation has to be done explicitly (see Force.toHaxeString/Force.fromHaxeString in haxe/haxeruntime.go).
-
 ## Next steps:
-Please go to http://github.com/tardisgo/tardisgo-samples for example Go code modified to work with tardisgo.
+Please go to http://github.com/tardisgo/tardisgo-samples for example Go code modified to work with tardisgo. Including some very simple [example code](http://github.com/tardisgo/tardisgo-samples). 
 
 For a small technical FAQ, please see the [Wiki page](https://github.com/tardisgo/tardisgo/wiki). 
 
@@ -139,14 +124,30 @@ The documentation is sparse at present, if there is some aspect of the system th
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
+## Why do it at all?:
+The objective of this project is to enable the same [Go](http://golang.org) code to be re-deployed in  as many different execution environments as possible, thus saving development time and effort. 
+The long-term vision is to provide a framework that makes it easy to target many languages as part of this project.
+
+The first language targeted is [Haxe](http://haxe.org), because the Haxe compiler generates 7 other languages and is already well-proven for making multi-platform client-side applications, mostly games. 
+
+Target short-term use-case is writing multi-platform client-side applications in Go using the APIs available in the Haxe ecosystem, including:
+- The standard [Haxe APIs](http://api.haxe.org/) for JavaScript and Flash.
+- [OpenFL](http://openfl.org) "Open Flash" to target HTML5, Windows, Mac, Linux, iOS, Android, BlackBerry, Firefox OS, Tizen and Flash, using compiled auto-generated C++ code where possible (star users are TiVo and Prezzi).
+
+Target medium-term use-case will be to make the wider Haxe ecosystem available to Go programmers, including:
+- [Flambe](https://github.com/aduros/flambe) cross-platform game engine targeting mobile via Adobe AIR (star users are Disney and Nickelodeon).
+- [Kha](http://kha.ktxsoftware.com/) "World's most portable software platform" additionaly targeting Xbox and Playstation.
+- Or see a list of many more projects [here](http://old.haxe.org/doc/libraries) (though that page is not exhaustive).
+
+Target long-term use-cases (once the generated code and runtime environment is more efficient):
+- For the Haxe community: provide access to the portable elements of Go's extensive libraries and open-source code base.
+- For the Go community: write code in Go and call to and/or from existing Haxe, JavaScript, ActionScript, Java, C# or PHP applications (in C++ you would probably just link as normal through CGO). 
+
+For more background and on-line examples see the links from: http://tardisgo.github.io/
+
 ## Future plans:
 
-The focus of short-term development is to get the Haxe implementation production ready. In particular, smooth interaction with external Haxe code is required to make the project useful for real work, [an experimental version of which is available](https://github.com/tardisgo/gohaxelib). 
-
-In speed terms, the planned next release of Haxe (3.2) will contain cross-platform implementation of JS [typed arrays](https://github.com/HaxeFoundation/haxe/issues/3073) which, with other improvements, will allow for faster execution times by making less use of the Haxe "Dynamic" type to store values on the heap. See the -D fullunsafe haxe compilation flag for JS to see a partial implementation.
-
-Longer term development priorities:
-- For all Go standard libraries, report testing and implementation status (in-progress, see above)
+- For all Go standard libraries, [report testing and implementation status](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md)
 - Improve integration with Haxe code and libraries, automating as far as possible - [in progress](https://github.com/tardisgo/gohaxelib)
 - Improve currently poor execution speeds and update benchmarking results
 - Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications - [in progress](https://github.com/tardisgo/tardisgo-samples/tree/master/openfl)
@@ -154,7 +155,7 @@ Longer term development priorities:
 - Add command line flags to control options
 - Publish more explanation and documentation
 - Move more of the runtime into Go (rather than Haxe) to make it more portable 
-- Implement other target languages...
+- Implement new target languages ;)
 
 If you would like to get involved in helping the project to advance, that would be wonderful. However, please contact [Elliott](https://github.com/elliott5) or discuss your plans in the [tardisgo](https://groups.google.com/d/forum/tardisgo) forum before writing any substantial amounts of code to avoid any conflicts. 
 

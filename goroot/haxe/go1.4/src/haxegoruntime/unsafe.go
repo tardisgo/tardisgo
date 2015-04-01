@@ -96,7 +96,13 @@ func Float32bits(f float32) uint32 {
 		var t float32 = f
 		return *(*uint32)(unsafe.Pointer(&t))
 	}
-	// TODO cpp/neko short-cut
+	// TODO cpp/neko/js short-cut
+	/*
+		switch runtime.GOARCH {
+		case "cpp", "neko", "js":
+			return uint32(hx.CallInt("", "Force.Float32bits", 1, f))
+		}
+	*/
 
 	// below logic from math.IsInf
 	if float64(f) > float64(MaxFloat32) {
@@ -173,7 +179,13 @@ func Float32frombits(b uint32) float32 {
 		var t uint32 = b
 		return *(*float32)(unsafe.Pointer(&t))
 	}
-	// TODO cpp/neko short-cut
+	// TODO cpp/neko/js short-cut
+	/*
+		switch runtime.GOARCH {
+		case "cpp", "neko", "js":
+			return float32(hx.CallFloat("", "Force.Float32frombits", 1, b))
+		}
+	*/
 
 	// first handle the special cases
 	switch b {
@@ -222,7 +234,13 @@ func Float64bits(f float64) uint64 {
 		var t float64 = f
 		return *(*uint64)(unsafe.Pointer(&t))
 	}
-	// TODO cpp/neko short-cut - using Force.f64byts
+	// TODO js/cpp/neko short-cut - using Force.f64byts
+	/*
+		switch runtime.GOARCH {
+		case "js", "cpp", "neko":
+			return uint64(hx.Int64(hx.CallDynamic("", "Force.Float64bits", 1, f)))
+		}
+	*/
 
 	// below from math.IsInf
 	if f > MaxFloat64 {
@@ -278,7 +296,13 @@ func Float64frombits(b uint64) float64 {
 		var t uint64 = b
 		return *(*float64)(unsafe.Pointer(&t))
 	}
-	// TODO cpp/neko short-cut
+	// TODO js/cpp/neko short-cut
+	/*
+		switch runtime.GOARCH {
+		case "js", "cpp", "neko":
+			return hx.CallFloat("", "Force.Float64frombits", 1, b)
+		}
+	*/
 
 	// first handle the special cases
 	switch b {

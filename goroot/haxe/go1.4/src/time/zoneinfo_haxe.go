@@ -20,33 +20,36 @@ import (
 )
 
 func initTestingZone() {
-	//z, err := loadZoneFile(runtime.GOROOT()+"/lib/time/zoneinfo.zip", "America/Los_Angeles")
-	//if err != nil {
-	//	panic("cannot load America/Los_Angeles for testing: " + err.Error())
-	//}
-	//z.name = "Local"
-	//localLoc = *z
+	go func(){
+	z, err := loadZoneFile("testdata/zoneinfo.zip", "America/Los_Angeles")
+	if err != nil {
+		panic("cannot load America/Los_Angeles for testing: " + err.Error())
+	}
+	z.name = "Local"
+	localLoc = *z
+	}() // hopefully this will finish before we need it... TODO (haxe) fix this problem in general
 }
 
 // Many systems use /usr/share/zoneinfo, Solaris 2 has
 // /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ.
 var zoneDirs = []string{
-//"/usr/share/zoneinfo/",
-//"/usr/share/lib/zoneinfo/",
-//"/usr/lib/locale/TZ/",
-//runtime.GOROOT() + "/lib/time/zoneinfo.zip",
+	//"/usr/share/zoneinfo/",
+	//"/usr/share/lib/zoneinfo/",
+	//"/usr/lib/locale/TZ/",
+	//runtime.GOROOT() + "/lib/time/zoneinfo.zip",
+	"testdata/zoneinfo.zip",
 }
 
 var origZoneDirs = zoneDirs
 
 func forceZipFileForTesting(zipOnly bool) {
-	//zoneDirs = make([]string, len(origZoneDirs))
-	//copy(zoneDirs, origZoneDirs)
-	//if zipOnly {
-	//	for i := 0; i < len(zoneDirs)-1; i++ {
-	//		zoneDirs[i] = "/XXXNOEXIST"
-	//	}
-	//}
+	zoneDirs = make([]string, len(origZoneDirs))
+	copy(zoneDirs, origZoneDirs)
+	if zipOnly {
+		for i := 0; i < len(zoneDirs)-1; i++ {
+			zoneDirs[i] = "/XXXNOEXIST"
+		}
+	}
 }
 
 func initLocal() {
@@ -74,15 +77,15 @@ func initLocal() {
 	*/
 
 	// Fall back to UTC.
-	localLoc.name = "UTC"
+		localLoc.name = "UTC"
 }
 
 func loadLocation(name string) (*Location, error) {
-	//for _, zoneDir := range zoneDirs {
-	//	if z, err := loadZoneFile(zoneDir, name); err == nil {
-	//		z.name = name
-	//		return z, nil
-	//	}
-	//}
+	for _, zoneDir := range zoneDirs {
+		if z, err := loadZoneFile(zoneDir, name); err == nil {
+			z.name = name
+			return z, nil
+		}
+	}
 	return nil, errors.New("unknown time zone " + name)
 }

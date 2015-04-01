@@ -1,6 +1,9 @@
+// +build haxe
+
 package reflect
 
 import (
+	"haxegoruntime"
 	"unsafe"
 
 	"github.com/tardisgo/tardisgo/haxe/hx"
@@ -20,6 +23,7 @@ func findHaxeID(p unsafe.Pointer) int {
 	return 0
 }
 
+/* removed by new implementation of rtype info
 const ( // keep in line with haxe/types.go
 	TBIDisValid int = iota
 	TBIDsize
@@ -32,18 +36,30 @@ const ( // keep in line with haxe/types.go
 	TBIDpkgPath
 	TBIDnumMethods
 )
+*/
 
 func createHaxeType(id int) *rtype {
 	if id <= 0 || id >= hx.GetInt("", "TypeInfo.nextTypeID") {
 		//panic("reflect.createHaxeType() invalid haxe id: " + hx.CallString("", "Std.string", 1, id))
 		return nil
 	}
+
+	// new version of type infomation:
+	return (*rtype)(unsafe.Pointer(haxegoruntime.TypeTable[id]))
+	//return createHaxeTypeA(id)
+}
+
+/* remove old version
+func createHaxeTypeA(id int) *rtype {
+
 	//println("createHaxeType:", id)
 	tptr, ok := haxeIDmap[id]
 	if ok {
 		//println("createHaxeType already in map")
 		return (*rtype)(tptr)
 	}
+
+	debug := (*rtype)(unsafe.Pointer(haxegoruntime.TypeTable[id]))
 
 	//println("DEBUG createHaxeType() id=", id)
 	typInfo := hx.CodeDynamic("", "TypeInfoIDs.typesByID[_a.itemAddr(0).load().val];", id)
@@ -63,15 +79,37 @@ func createHaxeType(id int) *rtype {
 
 	basicT := (*rtype)(space)
 	basicT.size = uintptr(hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDsize))
+	if basicT.size != debug.size {
+		panic("bad size")
+	}
 	basicT.align = uint8(hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDalign))
+	if basicT.align != debug.align {
+		panic("bad align")
+	}
 	basicT.fieldAlign = uint8(hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDfieldAlign))
+	if basicT.fieldAlign != debug.fieldAlign {
+		panic("bad fieldalign")
+	}
 	basicT.kind = uint8(hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDkind))
+	if basicT.kind != debug.kind {
+		panic("bad kind")
+	}
 	basicT.string = (*string)(hx.Malloc(unsafe.Sizeof("")))
 	basicT.zero = hx.Malloc(basicT.size) // assuming zeroes is always the right zero value
-	haxeIDmap[id] = space                // NOTE must bag a spot in the map before we recurse
+	for z := 0; z < int(basicT.size); z++ {
+		if basicT.size < 256 {
+			if ((*[256]byte)(basicT.zero))[z] != ((*[256]byte)(debug.zero))[z] {
+				panic("bad zero value")
+			}
+		}
+	}
+	haxeIDmap[id] = space // NOTE must bag a spot in the map before we recurse
 
 	*basicT.string = hx.CodeString("",
 		"_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDstringForm)
+	if *basicT.string != *debug.string {
+		panic("bad string")
+	}
 
 	ptt := hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDptrToThis)
 	pttHt := (*rtype)(nil)
@@ -84,6 +122,11 @@ func createHaxeType(id int) *rtype {
 		pttHt = createHaxeType(ptt)
 	}
 	basicT.ptrToThis = pttHt
+	if !(ptt == 0 && debug.ptrToThis == nil) {
+		if ptt != typeIdFromPtr(debug.ptrToThis) {
+			panic("bad pointer to type")
+		}
+	}
 
 	typeName := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDname)
 	pkgPath := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", typInfo, TBIDpkgPath)
@@ -93,7 +136,16 @@ func createHaxeType(id int) *rtype {
 			name:    &typeName,
 			pkgPath: &pkgPath,
 		}
+		if *debug.uncommonType.name != *basicT.uncommonType.name {
+			panic("bad name")
+		}
+		if *debug.uncommonType.pkgPath != *basicT.uncommonType.pkgPath {
+			panic("bad pkgPath")
+		}
 		basicT.uncommonType.methods = make([]method, numMethods)
+		if len(basicT.uncommonType.methods) != len(debug.uncommonType.methods) {
+			panic("bad number of methods")
+		}
 		//println("DEBUG uncommonType id,name,numMethods=", id, typeName, numMethods)
 		if numMethods > 0 {
 			//println("DEBUG createHaxeType() Methods id=", id)
@@ -120,14 +172,30 @@ func createHaxeType(id int) *rtype {
 						//ifn:     unsafe.Pointer(&ifnDynamic), // unsafe.Pointer // fn used in interface call (one-word receiver)
 						//tfn:     unsafe.Pointer(&tfnDynamic), // unsafe.Pointer // fn used for normal method call
 					}
+					if *(basicT.uncommonType.methods[mFound].name) != *(debug.uncommonType.methods[mFound].name) {
+						panic("bad method name")
+					}
+					if *(basicT.uncommonType.methods[mFound].pkgPath) != *(debug.uncommonType.methods[mFound].pkgPath) {
+						panic("bad method pkgPath")
+					}
+					if mt0 != typeIdFromPtr(debug.uncommonType.methods[mFound].mtyp) {
+						panic("bad method mtyp")
+					}
+					if t0 != typeIdFromPtr(debug.uncommonType.methods[mFound].typ) {
+						panic("bad method typ")
+					}
 					mFound++
 					//println("DEBUG createHaxeType() uncommonType method", id, mFound, m, mname)
 				}
 			}
 		}
+	} else {
+		if debug.uncommonType != nil {
+			panic("uncommon type set when it should be nil")
+		}
 	}
 
-	switch basicT.Kind() {
+	switch basicT.Kind() & kindMask {
 	case Invalid, Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Uintptr,
 		Float32, Float64, Complex64, Complex128, String, UnsafePointer:
 		// NoOp - basicT already in the map
@@ -136,13 +204,15 @@ func createHaxeType(id int) *rtype {
 		elemID := hx.CodeInt("", "PtrTypeInfo.ptrByID[_a.itemAddr(0).load().val];", id)
 		ptrT := (*ptrType)(space)
 		ptrT.elem = createHaxeType(elemID)
-		/*
-			if ptrT.elem.Kind() == Map {
-				///////////
-				m := (*mapType)(unsafe.Pointer(ptrT.elem))
-				println("DEBUG pointer-to-map ", id, elemID, m.String(), m.key, m.elem, m)
-			}
-		*/
+		if typeIdFromPtr((*ptrType)(unsafe.Pointer(debug)).elem) != elemID {
+			panic("bad ptr elem")
+		}
+
+			//if ptrT.elem.Kind() == Map {
+			//	///////////
+			//	m := (*mapType)(unsafe.Pointer(ptrT.elem))
+			//	println("DEBUG pointer-to-map ", id, elemID, m.String(), m.key, m.elem, m)
+			//}
 
 	case Array:
 		arrayInfo := hx.CodeDynamic("", "ArrayTypeInfo.arrayByID[_a.itemAddr(0).load().val];", id)
@@ -161,14 +231,26 @@ func createHaxeType(id int) *rtype {
 				hx.CallString("", "Std.string", 1, id))
 		}
 		arrayT := (*arrayType)(space)
-		arrayT.elem = el                                      //*rtype // array element type
-		arrayT.slice = sl                                     // *rtype // slice type
+		arrayT.elem = el //*rtype // array element type
+		if typeIdFromPtr((*arrayType)(unsafe.Pointer(debug)).elem) != hx.FgetInt("", arrayInfo, "", "elem") {
+			panic("bad array elem")
+		}
+		arrayT.slice = sl // *rtype // slice type
+		if typeIdFromPtr((*arrayType)(unsafe.Pointer(debug)).slice) != hx.FgetInt("", arrayInfo, "", "slice") {
+			panic("bad array slice")
+		}
 		arrayT.len = hx.FgetDynamic("", arrayInfo, "", "len") //  uintptr
+		if int((*arrayType)(unsafe.Pointer(debug)).len) != hx.FgetInt("", arrayInfo, "", "len") {
+			panic("bad array len")
+		}
 
 	case Slice:
 		elemID := hx.CodeInt("", "Force.toInt(SliceTypeInfo.sliceByID[_a.itemAddr(0).load().val]);", id)
 		sliceT := (*sliceType)(space)
 		sliceT.elem = createHaxeType(elemID)
+		if typeIdFromPtr((*sliceType)(unsafe.Pointer(debug)).elem) != elemID {
+			panic("bad slice elem")
+		}
 
 	case Struct:
 		var haxeFlds uintptr
@@ -183,24 +265,48 @@ func createHaxeType(id int) *rtype {
 		}
 		numFlds := hx.FgetInt("", haxeFlds, "", "length")
 		flds := make([]structField, numFlds)
+		structDebug := (*structType)(unsafe.Pointer(debug))
+		if len(structDebug.fields) != numFlds {
+			panic("struct wrong number of fields")
+		}
 		for f := 0; f < numFlds; f++ {
 			fldInfo := hx.CodeDynamic("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", haxeFlds, f)
 			fStr := structField{}
 			name := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 0)
-			if name != "" {
-				fStr.name = &name
+			//if name != "" {
+			fStr.name = &name
+			if *structDebug.fields[f].name != *fStr.name {
+				panic("bad struct field name")
 			}
+			//}
 			pkgPath := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 1)
-			if pkgPath != "" {
+			if pkgPath != "" { // very important for reflection to work!
 				fStr.pkgPath = &pkgPath
+				if *structDebug.fields[f].pkgPath != *fStr.pkgPath {
+					panic("bad struct field pkgPath")
+				}
+			} else {
+				if structDebug.fields[f].pkgPath != nil {
+					panic("bad struct field pkgPath should be nil")
+				}
 			}
-			fStr.typ = createHaxeType(
-				hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 2))
+			tid := hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 2)
+			fStr.typ = createHaxeType(tid)
+			if tid != typeIdFromPtr(structDebug.fields[f].typ) {
+				panic("bad struct field typ")
+			}
 			tag := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 3)
-			if tag != "" {
-				fStr.tag = &tag
+			//if tag != "" {
+			fStr.tag = &tag
+			if *structDebug.fields[f].tag != *fStr.tag {
+				panic("bad struct field tag")
 			}
+			//}
 			fStr.offset = uintptr(hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", fldInfo, 4))
+			if structDebug.fields[f].offset != fStr.offset {
+				panic("bad struct field offset")
+			}
+
 			flds[f] = fStr
 			//println("DEBUG struct.field ", basicT.Name(), *fStr.name, fStr.typ.Kind().String(), fStr.typ.Name(), fStr.typ.NumMethod())
 		}
@@ -209,25 +315,38 @@ func createHaxeType(id int) *rtype {
 
 	case Interface:
 		interfaceT := (*interfaceType)(space)
+		debugIface := (*interfaceType)(unsafe.Pointer(debug))
 		haxeMeths := hx.CodeDynamic("", "IfaceTypeInfo.ifaceByID[_a.itemAddr(0).load().val];", id)
 		if hx.IsNull(haxeMeths) {
 			panic("reflect.createHaxeType() can't find named type info for type: " + hx.CallString("", "Std.string", 1, id))
 		}
 		numMeths := hx.FgetInt("", haxeMeths, "", "length")
 		interfaceT.methods = make([]imethod, numMeths)
+		if numMethods != len(debugIface.methods) {
+			panic("interface wrong number of methods")
+		}
 		for m := 0; m < numMeths; m++ {
 			methInfo := hx.CodeDynamic("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", haxeMeths, m)
 			iStr := imethod{}
 			name := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", methInfo, 0)
-			if name != "" {
-				iStr.name = &name
+			//if name != "" {
+			iStr.name = &name
+			if *iStr.name != *debugIface.methods[m].name {
+				panic("interface bad method name")
 			}
+			//}
 			pkgPath := hx.CodeString("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", methInfo, 1)
-			if pkgPath != "" {
-				iStr.pkgPath = &pkgPath
+			//if pkgPath != "" {
+			iStr.pkgPath = &pkgPath
+			if *iStr.pkgPath != *debugIface.methods[m].pkgPath {
+				panic("interface bad method pkgPath")
 			}
-			iStr.typ = createHaxeType(
-				hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", methInfo, 2))
+			//}
+			typid := hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", methInfo, 2)
+			iStr.typ = createHaxeType(typid)
+			if typid != typeIdFromPtr(debugIface.methods[m].typ) {
+				panic("interface bad method id")
+			}
 			interfaceT.methods[m] = iStr
 		}
 		//println("DEBUG Interface name, methods=", basicT.string, interfaceT.methods)
@@ -251,30 +370,52 @@ func createHaxeType(id int) *rtype {
 		}
 
 		mapT := (*mapType)(space)
-		mapT.key = ky  // *rtype // map key type
+		mapT.key = ky // *rtype // map key type
+		if typeIdFromPtr((*mapType)(unsafe.Pointer(debug)).key) != hx.FgetInt("", mapInfo, "", "key") {
+			panic("bad map key")
+		}
 		mapT.elem = el // *rtype // map element (value) type
+		if typeIdFromPtr((*mapType)(unsafe.Pointer(debug)).elem) != hx.FgetInt("", mapInfo, "", "elem") {
+			panic("bad map elem")
+		}
 		//println("DEBUG mapT=", mapT, ky, el)
 
 	case Func:
 		funcT := (*funcType)(space)
+		debugFunc := (*funcType)(unsafe.Pointer(debug))
 		haxeFunc := hx.CodeDynamic("", "FuncTypeInfo.funcByID[_a.itemAddr(0).load().val];", id)
 		if hx.IsNull(haxeFunc) {
 			panic("reflect.createHaxeType() can't find func type info for type: " + hx.CallString("", "Std.string", 1, id))
 		}
 		funcT.dotdotdot = hx.FgetBool("", haxeFunc, "", "ddd")
+		if funcT.dotdotdot != debugFunc.dotdotdot {
+			panic("func bad dotdotdot")
+		}
 		pin := hx.FgetDynamic("", haxeFunc, "", "pin")
 		pout := hx.FgetDynamic("", haxeFunc, "", "pout")
 		pinL := hx.FgetInt("", pin, "", "length")
 		poutL := hx.FgetInt("", pout, "", "length")
 		funcT.in = make([]*rtype, pinL)
+		if pinL != len(debugFunc.in) {
+			panic("func bad len(in)")
+		}
 		funcT.out = make([]*rtype, poutL)
+		if poutL != len(debugFunc.out) {
+			panic("func bad len(out)")
+		}
 		for i := 0; i < pinL; i++ {
 			ht := hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", pin, i)
 			funcT.in[i] = createHaxeType(ht)
+			if ht != typeIdFromPtr(debugFunc.in[i]) {
+				panic("func bad in")
+			}
 		}
 		for o := 0; o < poutL; o++ {
 			ht := hx.CodeInt("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val];", pout, o)
 			funcT.out[o] = createHaxeType(ht)
+			if ht != typeIdFromPtr(debugFunc.out[o]) {
+				panic("func bad out")
+			}
 		}
 		//println("DEBUG func:", funcT.string, funcT.dotdotdot, funcT.in, funcT.out)
 
@@ -294,14 +435,20 @@ func createHaxeType(id int) *rtype {
 
 		chanT := (*chanType)(space)
 		chanT.dir = dir
+		if (*chanType)(unsafe.Pointer(debug)).dir != dir {
+			panic("bad chan dir")
+		}
 		chanT.elem = el
+		if typeIdFromPtr((*chanType)(unsafe.Pointer(debug)).elem) != hx.FgetInt("", chanInfo, "", "elem") {
+			panic("bad chan elem")
+		}
 		//println("DEBUG chanT=", chanT, el, dir)
 
 	}
 
 	return (*rtype)(haxeIDmap[id])
 
-}
+}*/
 
 func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 	ret := new(emptyInterface)
@@ -318,7 +465,7 @@ func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 func haxe2go(ret *emptyInterface, i interface{}) {
 	ret.word = hx.Malloc(ret.typ.size)
 
-	switch ret.typ.Kind() {
+	switch ret.typ.Kind() & kindMask {
 	case Bool:
 		*(*bool)(ret.word) = hx.CodeBool("", "_a.itemAddr(0).load().val;", i)
 	case Int:
@@ -352,7 +499,8 @@ func haxe2go(ret *emptyInterface, i interface{}) {
 	case Complex128:
 		*(*complex128)(ret.word) = hx.Complex(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
 	case UnsafePointer, Ptr:
-		*(*unsafe.Pointer)(ret.word) = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
+		//*(*unsafe.Pointer)(ret.word) = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
+		ret.word = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
 
 	case String:
 		*(*string)(ret.word) = hx.CodeString("", "_a.itemAddr(0).load().val;", i)
@@ -363,16 +511,47 @@ func haxe2go(ret *emptyInterface, i interface{}) {
 			i, ret.word, ret.typ.size)
 
 	case Slice, Interface, Map, Func, Chan:
-		//println("DEBUG ret.word", ret.word, hx.MethString("", uintptr(ret.word), "Pointer", "toUniqueVal", 0))
-		hx.Code("",
-			"_a.itemAddr(1).load().val.store(_a.itemAddr(0).load().val);",
-			i, ret.word)
-
+		val := hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i)
+		/*
+			htyp := "null"
+			if !hx.IsNull(val) {
+				htyp = hx.CallString("", "Type.getClassName", 1, val)
+			}
+			println("DEBUG unpack haxe type=", htyp, " Go type=", ret.typ.Kind().String(), "val=", val)
+		*/
+		*(*uintptr)(ret.word) = val
 	}
 
 }
 
+func typeIdFromPtr(ptr *rtype) int {
+	for typ := 0; typ < len(haxegoruntime.TypeTable); typ++ {
+		if unsafe.Pointer(ptr) == unsafe.Pointer(haxegoruntime.TypeTable[typ]) {
+			return typ
+		}
+	}
+	return 0
+}
 func haxeInterfacePack(ei *emptyInterface) interface{} {
+	i := haxeInterfacePackB(ei)
+
+	// TODO new version of type infomation
+	//if useTgotypes {
+	ityp := hx.CodeInt("", "_a.itemAddr(0).load().typ;", i)
+	if unsafe.Pointer(ei.typ) != unsafe.Pointer(haxegoruntime.TypeTable[ityp]) {
+		typ := typeIdFromPtr(ei.typ)
+		//println("DEBUG typ(new)!=ityp(old) ", typ, ityp)
+		hx.Code("",
+			"var x=cast(_a.itemAddr(0).load(),Interface); x.typ=_a.itemAddr(1).load().val; _a.itemAddr(2).store(x); ",
+			i, typ, &i)
+		//println("DEBUG amended to ", hx.CodeInt("", "_a.itemAddr(0).load().typ;", i))
+	}
+	//}
+
+	return i
+}
+
+func haxeInterfacePackB(ei *emptyInterface) interface{} {
 
 	// TODO deal with created types, if any ?
 
@@ -426,29 +605,18 @@ func haxeInterfacePack(ei *emptyInterface) interface{} {
 			"_a.itemAddr(0).load().val.load_object(_a.itemAddr(1).load().val);",
 			ei.word, ei.typ.size)
 
-	case Slice:
-		stp := (*sliceType)(unsafe.Pointer(ei.typ))
-		r := hx.CodeIface("", stp.String(),
-			"_a.itemAddr(0).load().val.load();",
-			ei.word)
-		//println("DEBUG slice pack r=", r)
-		return r
+	case Slice, Map, Interface, Func, Chan:
+		if ei.word == nil {
+			return hx.CodeIface("", ei.typ.String(), "null;")
+		}
+		//println("DEBUG pack haxe ptr type=", hx.CallString("", "Type.getClassName", 1, ei.word),
+		//	" Go type=", ei.typ.Kind().String(), "PtrVal=", ei.word)
+		val := uintptr(ei.word) //?????? TODO this must be wrong, but needed for fmt to pass
+		if ei.typ.Kind() != Map {
+			val = *(*uintptr)(unsafe.Pointer(ei.word))
+		}
+		return hx.CodeIface("", ei.typ.String(), "_a.itemAddr(0).load().val;", val)
 
-	case Map:
-		mtp := (*mapType)(unsafe.Pointer(ei.typ))
-		r := hx.CodeIface("", mtp.String(),
-			"_a.itemAddr(0).load().val.load();",
-			ei.word)
-		//println("DEBUG map pack r=", r)
-		return r
-
-	case Interface:
-		return hx.CodeIface("", ei.typ.String(),
-			"_a.itemAddr(0).load().val.load();",
-			ei.word)
-
-	case Chan:
-	case Func:
 	}
 
 	panic("reflect.haxeInterfacePack() not yet implemented for " + ei.typ.String() +

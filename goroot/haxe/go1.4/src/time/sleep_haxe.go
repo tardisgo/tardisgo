@@ -17,7 +17,7 @@ import ( // import is an Haxe addition
 var sleeping = false     // for testing only see interrupt()
 func Sleep(d Duration) { // function body is an Haxe addition
 	target := hx.CallFloat("", "haxe.Timer.stamp", 0)
-	target += d.Seconds()
+	target += float64(d.Nanoseconds()) / 1000000000
 	sleeping = true
 	haxeWait(target, &sleeping)
 }
@@ -27,6 +27,7 @@ func haxeWait(target float64, whileTrue *bool) {
 loop:
 	runtime.Gosched()
 	now := hx.CallFloat("", "haxe.Timer.stamp", 0)
+	//println("DEBUG haxeWait now, target, *whileTrue = ", now, target, *whileTrue)
 	if now < target && *whileTrue {
 		goto loop
 	}
@@ -34,7 +35,7 @@ loop:
 
 // runtimeNano returns the current value of the runtime clock in nanoseconds.
 func runtimeNano() int64 { // function body is an Haxe addition
-	return int64(hx.CallFloat("", "haxe.Timer.stamp", 0) * 1000)
+	return int64(hx.CallFloat("", "haxe.Timer.stamp", 0) * 1000000000)
 }
 
 // Interface to timers implemented in package runtime.
@@ -66,7 +67,7 @@ func when(d Duration) int64 {
 
 func haxeTimer(rt *runtimeTimer) {
 again:
-	haxeWait(float64(rt.when)/1000, &rt.haxeRuning) // rt.when is in nanoseconds, haxe works in seconds
+	haxeWait(float64(rt.when)/1000000000, &rt.haxeRuning) // rt.when is in nanoseconds, haxe works in seconds
 	if rt.haxeRuning {
 		rt.f(rt.arg, rt.seq)
 		rt.seq++
@@ -78,6 +79,7 @@ again:
 }
 
 func startTimer(rt *runtimeTimer) { // function body is an Haxe addition
+	rt.haxeRuning = true
 	go haxeTimer(rt)
 }
 func stopTimer(rt *runtimeTimer) bool { // function body is an Haxe addition

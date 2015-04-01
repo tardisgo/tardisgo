@@ -38,6 +38,7 @@ func VisitedFunctions(prog *ssa.Program, packs []*ssa.Package, isOvl isOverloade
 	}
 	visit.program(isOvl)
 	//fmt.Printf("DEBUG VisitedFunctions.usesGR %v\n", visit.usesGR)
+	//fmt.Printf("DEBUG VisitedFunctions.seen %v\n", visit.seen)
 	return visit.seen, visit.usesGR
 }
 
@@ -49,11 +50,13 @@ type visitor struct {
 }
 
 func (visit *visitor) program(isOvl isOverloaded) {
+	//fmt.Println("DEBUG base packages:", visit.packs)
 	for p := range visit.packs {
 		if visit.packs[p] != nil {
 			if visit.packs[p].Members != nil {
 				for _, mem := range visit.packs[p].Members { //was pkg.Members {
 					if fn, ok := mem.(*ssa.Function); ok {
+						//fmt.Println("DEBUG base function:", fn.String())
 						visit.function(fn, isOvl)
 						if visit.usesGR[fn] {
 							visit.refsUseGR(fn.Referrers(), make(map[*ssa.Function]bool))
@@ -92,19 +95,21 @@ func (visit *visitor) refsUseGR(refs *[]ssa.Instruction, refed map[*ssa.Function
 }
 
 func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
-	if !visit.seen[fn] {
+	if !visit.seen[fn] { // been, exists := visit.seen[fn]; !been || !exists {
+		//fmt.Println("DEBUG 1st visit to: ", fn.String())
+		visit.seen[fn] = true
+		visit.usesGR[fn] = false
 		if isOvl(fn) {
+			//fmt.Println("DEBUG overloaded: ", fn.String())
 			return
 		}
 		if len(fn.Blocks) == 0 { // exclude functions that reference C/assembler code
 			// NOTE: not marked as seen, because we don't want to include in output
 			// if used, the symbol will be included in the golibruntime replacement packages
 			// TODO review
-			visit.usesGR[fn] = false // external functions cannot use goroutines
-			return
+			//fmt.Println("DEBUG no code for: ", fn.String())
+			return // external functions cannot use goroutines
 		}
-		visit.seen[fn] = true
-		visit.usesGR[fn] = false
 		var buf [10]*ssa.Value // avoid alloc in common case
 		for _, b := range fn.Blocks {
 			for _, instr := range b.Instrs {
@@ -125,6 +130,24 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 							case *types.Chan, *types.Interface, *types.Signature:
 								// TODO use oracle techniques to determine which interfaces or functions may require GR
 								visit.usesGR[fn] = true // may be too conservative
+							}
+						}
+					}
+				}
+				if _, ok := instr.(*ssa.Call); ok {
+					switch instr.(*ssa.Call).Call.Value.(type) {
+					case *ssa.Builtin:
+						//NoOp
+					default:
+						cc := instr.(*ssa.Call).Common()
+						if cc != nil {
+							afn := cc.StaticCallee()
+							if afn != nil {
+								visit.function(afn, isOvl)
+								if visit.usesGR[afn] {
+									visit.usesGR[fn] = true
+								}
+								//println(fn.Name(), " calls ", afn.Name())
 							}
 						}
 					}

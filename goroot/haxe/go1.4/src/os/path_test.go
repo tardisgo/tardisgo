@@ -170,6 +170,7 @@ func TestMkdirAllWithSymlink(t *testing.T) {
 	switch runtime.GOOS {
 	case "nacl", "plan9":
 		t.Skipf("skipping on %s", runtime.GOOS)
+		return
 	case "windows":
 		if !supportsSymlinks {
 			t.Skipf("skipping on %s", runtime.GOOS)

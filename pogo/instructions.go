@@ -17,7 +17,7 @@ import (
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
 func RegisterName(val ssa.Value) string {
 	//NOTE the SSA code says that name() should not be relied on, so this code may need to alter
-	return "_" + val.Name()
+	return LanguageList[TargetLang].RegisterName(val)
 }
 
 var previousErrorInfo string // used to give some indication of the error's location, even if it is not given
@@ -146,7 +146,14 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		} else {
 			switch instruction.(*ssa.Defer).Call.Value.(type) {
 			case *ssa.Builtin: // no builtin functions can be defer'ed - TODO: the spec does allow this in some circumstances
-				LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be defer'ed"))
+				switch instruction.(*ssa.Defer).Call.Value.(*ssa.Builtin).Name() {
+				case "close":
+					//LogError(errorInfo, "pogo", fmt.Errorf("builtin function close() cannot be defer'ed"))
+					emitCall(true, false, true, grMap[instruction.(*ssa.Defer).Parent()],
+						register, instruction.(*ssa.Defer).Call, errorInfo, comment)
+				default:
+					LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be defer'ed"))
+				}
 			default:
 				emitCall(false, false, true, grMap[instruction.(*ssa.Defer).Parent()],
 					register, instruction.(*ssa.Defer).Call, errorInfo, comment)

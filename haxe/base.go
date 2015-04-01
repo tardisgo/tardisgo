@@ -65,8 +65,11 @@ func init() {
 	var langVar langType
 	var langEntry pogo.LanguageEntry
 	langEntry.Language = langVar
-	langEntry.InstructionLimit = 512      /* java is the most sensitive to this value */
-	langEntry.SubFnInstructionLimit = 256 /* 256 required for php */
+
+	il := 1024 // 1024 is an internal C# limit (`lvregs_len < 1024')
+
+	langEntry.InstructionLimit = il      /* size before we make subfns - java is the most sensitive to this value, was 512 */
+	langEntry.SubFnInstructionLimit = il /* 256 required for php, was 256 */
 	langEntry.PackageConstVarName = "tardisgoHaxePackage"
 	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"
 	langEntry.Goruntime = "haxegoruntime" // a string containing the location of the core language runtime functions delivered in Go
@@ -105,6 +108,22 @@ func (langType) FileStart(haxePackageName, headerText string) string {
 func (langType) FileEnd() string {
 	return haxeruntime() // this deals with the individual runtime class files
 }
+
+// RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
+func (langType) RegisterName(val ssa.Value) string {
+	//NOTE the SSA code says that name() should not be relied on, so this code may need to alter
+	if useRegisterArray { // we must use a register array when there are too many registers declared at class level for C++/Java to handle
+		reg := val.Name()
+		if reg[0] != 't' {
+			panic("Register Name does not begin with t: " + reg)
+		}
+		return "_t[" + reg[1:] + "]"
+	} else {
+		return "_" + val.Name()
+	}
+}
+
+var useRegisterArray bool // should we use an array rather than individual register vars
 
 var nextReturnAddress int       // what number is the next pseudo block return address?
 var hadReturn bool              // has there been a return statement in this function?
@@ -146,7 +165,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		if hadBlank && fn.Params[p].Name() == "_" {
 			prefix += fmt.Sprintf("%d", p)
 		}
-		ret += "var " + prefix + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type(), /*.Underlying()*/
+		ret += "private var " + prefix + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type(), /*.Underlying()*/
 			false, fn.Params[p].Name()+position) + ";\n"
 		if fn.Params[p].Name() == "_" {
 			hadBlank = true
@@ -201,7 +220,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		rTyp += "}"
 	}
 	if rTyp != "" {
-		ret += "var _res:" + rTyp + ";\n"
+		ret += "private var _res:" + rTyp + ";\n"
 		ret += "public inline function res():Dynamic " + "{return _res;}\n"
 	} else {
 		ret += "public inline function res():Dynamic {return null;}\n" // just to keep the interface definition happy
@@ -330,6 +349,10 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += l.runFunctionCode(packageName, objectName, "[ OPTIMIZED NON-GOROUTINE FUNCTION ]")
 	}
 
+	regCount := 0
+	regDefs := ""
+	useRegisterArray = false
+
 	pseudoNextReturnAddress = -1
 	for b := range fn.Blocks {
 		for i := range fn.Blocks[b].Instrs {
@@ -346,6 +369,9 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 					pp := getPackagePath(in.(*ssa.Call).Common())
 					ppBits := strings.Split(pp, "/")
 					if ppBits[len(ppBits)-1] != "hx" && !strings.HasPrefix(ppBits[len(ppBits)-1], "_") {
+						//if usesGr {
+						//	ret += "private "
+						//}
 						ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
 						if usesGr {
 							ret += " #if js =null #end ;\n"
@@ -397,13 +423,31 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 						} else {
 							init = "=" + init // when not using goroutines, they all need initializing
 						}
-						ret += haxeVar(reg, typ, init, position, "FuncStart()") + "\n"
+						//if usesGr {
+						//	ret += "private "
+						//}
+						hv := haxeVar(reg, typ, init, position, "FuncStart()") + "\n"
+						//if usesGr {
+						//	if strings.Contains(hv, ":") {
+						//		hv = strings.Replace(hv, ":", "(null,null):", 1)
+						//	}
+						//}
+						regDefs += hv
+						regCount++
 					}
 				}
 			}
 		}
 	}
 
+	if regCount > pogo.LanguageList[langIdx].InstructionLimit { // should only affect very large init() fns
+		fmt.Println("DEBUG regCount", currentfnName, regCount)
+		useRegisterArray = true
+		ret += "var _t=new Array<Dynamic>();\n"
+	} else {
+		useRegisterArray = false
+		ret += regDefs
+	}
 	//TODO optimise (again) for if only one block (as below) AND no calls (which create synthetic values for _Next)
 	//if len(fn.Blocks) > 1 { // if there is only one block then we don't need to track which one is next
 	if trackPhi {
@@ -415,8 +459,6 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	if usesGr {
 		ret += l.runFunctionCode(packageName, objectName, "")
 	}
-
-	ret += "#if !js while(true)switch(_Next){ #end"
 
 	//}
 	//TODO optimise (again) for if only one block (as below) AND no calls (which create synthetic values for _Next)
@@ -492,7 +534,11 @@ func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) str
 	hadBlockReturn = false
 	// TODO optimise is only 1 block AND no calls
 	// TODO if len(block) > 1 { // no need for a case statement if only one block
-	ret := fmt.Sprintf("#if !js case %d: #end", num) + l.Comment(block[num].Comment) + "\n"
+	ret := ""
+	if num == 0 {
+		ret += "#if !js while(true)switch(_Next){ #end\n"
+	}
+	ret += fmt.Sprintf("#if !js case %d: #end", num) + l.Comment(block[num].Comment) + "\n"
 	ret += fmt.Sprintf("#if js function _Block%d(){ #end\n", num)
 	ret += emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), num))
 	if pogo.DebugFlag {
@@ -782,45 +828,51 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 		ret += register + "=" + l.LangType(v.(ssa.Value).Type(), true, errorInfo) + ";\n" //initialize
 		ret += register + ".r0= -1;\n"                                                    // the returned index if nothing is found
 
-		// Spec requires a pseudo-random order to which item is processed
-		ret += fmt.Sprintf("{ var _states:Array<Bool> = new Array(); var _rnd=Std.random(%d);\n", len(sel.States))
-		for s := range sel.States {
-			switch sel.States[s].Dir {
-			case types.SendOnly:
-				ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-				ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasSpace();\n", s, ch, ch)
-			case types.RecvOnly:
-				ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-				ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasContents();\n", s, ch, ch)
-			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
-				return ""
+		if len(sel.States) > 0 { // only do the logic if there are states to choose between
+			// TODO a blocking select with no states could be further optimised to stop the goroutine
+
+			// Spec requires a pseudo-random order to which item is processed
+			ret += fmt.Sprintf("{ var _states:Array<Bool> = new Array(); var _rnd=Std.random(%d);\n", len(sel.States))
+			for s := range sel.States {
+				switch sel.States[s].Dir {
+				case types.SendOnly:
+					ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
+					ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasSpace();\n", s, ch, ch)
+				case types.RecvOnly:
+					ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
+					ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasContents();\n", s, ch, ch)
+				default:
+					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
+					return ""
+				}
 			}
-		}
-		ret += fmt.Sprintf("for(_s in 0...%d) {var _i=(_s+_rnd)%s%d; if(_states[_i]) {%s.r0=_i; break;};}\n",
-			len(sel.States), "%", len(sel.States), register)
-		ret += fmt.Sprintf("switch(%s.r0){", register)
-		rxIdx := 0
-		for s := range sel.States {
-			ret += fmt.Sprintf("case %d:\n", s)
-			switch sel.States[s].Dir {
-			case types.SendOnly:
-				ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-				snd := l.IndirectValue(sel.States[s].Send, errorInfo)
-				ret += fmt.Sprintf("%s.send(%s);\n", ch, snd)
-			case types.RecvOnly:
-				ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-				ret += fmt.Sprintf("{ var _v=%s.receive(%s); ", ch,
-					l.LangType(sel.States[s].Chan.(ssa.Value).Type().Underlying().(*types.Chan).Elem().Underlying(), true, errorInfo))
-				ret += fmt.Sprintf("%s.r%d= _v.r0; ", register, 2+rxIdx)
-				rxIdx++
-				ret += register + ".r1= _v.r1; }\n"
-			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
-				return ""
+			ret += fmt.Sprintf("for(_s in 0...%d) {var _i=(_s+_rnd)%s%d; if(_states[_i]) {%s.r0=_i; break;};}\n",
+				len(sel.States), "%", len(sel.States), register)
+			ret += fmt.Sprintf("switch(%s.r0){", register)
+			rxIdx := 0
+			for s := range sel.States {
+				ret += fmt.Sprintf("case %d:\n", s)
+				switch sel.States[s].Dir {
+				case types.SendOnly:
+					ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
+					snd := l.IndirectValue(sel.States[s].Send, errorInfo)
+					ret += fmt.Sprintf("%s.send(%s);\n", ch, snd)
+				case types.RecvOnly:
+					ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
+					ret += fmt.Sprintf("{ var _v=%s.receive(%s); ", ch,
+						l.LangType(sel.States[s].Chan.(ssa.Value).Type().Underlying().(*types.Chan).Elem().Underlying(), true, errorInfo))
+					ret += fmt.Sprintf("%s.r%d= _v.r0; ", register, 2+rxIdx)
+					rxIdx++
+					ret += register + ".r1= _v.r1; }\n"
+				default:
+					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
+					return ""
+				}
 			}
-		}
-		ret += "};}\n" // end switch; _states, _rnd scope
+			ret += "};}\n" // end switch; _states, _rnd scope
+
+		} // end only if len(sel.States)>0
+
 		if sel.Blocking {
 			ret += "if(" + register + ".r0 == -1) return this;\n"
 		}
@@ -909,6 +961,12 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 	hashIf := ""  // #if  - only if required
 	hashEnd := "" // #end - ditto
 	ret := ""
+
+	//special case of: defer close(x)
+	if isDefer && isBuiltin && fnToCall == "close" {
+		fnToCall = "(new Closure(Go_haxegoruntime_defer_close.call,[]))"
+		isBuiltin = false
+	}
 
 	if isBuiltin {
 		if register != "" {
@@ -1410,7 +1468,8 @@ func (l langType) Alloc(reg string, heap bool, v interface{}, errorInfo string) 
 		return fmt.Sprintf("%s=new Pointer(%s);", reg, allocNewObject(v.(types.Type)))
 	}
 	//fmt.Println("DEBUG Alloc on Stack", reg, errorInfo)
-	return fmt.Sprintf("%s=new Pointer(%s_stackalloc.clear());", reg, reg)
+	reg2 := strings.Replace(strings.Replace(reg, "[", "", 1), "]", "", 1) // just in case we're in a big init() and are using a register array
+	return fmt.Sprintf("%s=new Pointer(%s_stackalloc.clear());", reg, reg2)
 }
 
 func (l langType) MakeChan(reg string, v interface{}, errorInfo string) string {
@@ -1545,26 +1604,12 @@ func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
 func serializeKey(val, haxeTyp string) string { // can the key be serialized?
 	switch haxeTyp {
 	case "String", "Int", "Float", "Bool",
-		"Pointer", "Object", "GOint64", "Complex", "Interface":
+		"Pointer", "Object", "GOint64", "Complex", "Interface", "Channel", "Slice":
 		return val
 	default:
 		pogo.LogError("serializeKey", "haxe", errors.New("unsupported map key type: "+haxeTyp))
 		return ""
 	}
-
-	/*
-		switch haxeTyp {
-		case "String":
-			return val
-		case "Pointer":
-			return val + "==null?\"\":" + val + ".toUniqueVal()"
-		case "Object", "GOint64", "Complex", "Interface":
-			return val + "==null?\"\":" + val + ".toString()"
-			//TODO more here?
-		default:
-			return "Std.string(" + val + ")"
-		}
-	*/
 }
 
 func (l langType) MapUpdate(Map, Key, Value interface{}, errorInfo string) string {
@@ -1741,7 +1786,7 @@ func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 	if !mustSplitCode {
 		return "try {"
 	}
-	return fmt.Sprintf("private function SubFn%d():Void { try {", id)
+	return fmt.Sprintf("private "+"function SubFn%d():Void { try {", id)
 }
 
 func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
@@ -1753,10 +1798,13 @@ func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
 }
 
 func (l langType) SubFnCall(id int) string {
-	return fmt.Sprintf("this.SubFn%d();", id)
+	return fmt.Sprintf("SubFn%d();", id)
 }
 
 func (l langType) DeclareTempVar(v ssa.Value) string {
+	if useRegisterArray {
+		return ""
+	}
 	typ := l.LangType(v.Type(), false, "temp var declaration")
 	if typ == "" {
 		return ""

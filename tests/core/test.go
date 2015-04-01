@@ -8,9 +8,14 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"runtime"
+	"unicode"
 	"unicode/utf8"
 	"unsafe"
+
+	"haxegoruntime"
 
 	"github.com/tardisgo/tardisgo/haxe/hx"
 )
@@ -35,9 +40,9 @@ func loc(l string) string {
 func TEQ(l string, a, b interface{}) bool {
 	l = loc(l)
 	if a != b {
-		println("TEQ error " + l + " ")
-		println(a)
-		println(b)
+		fmt.Println("TEQ error " + l + " ")
+		fmt.Println(a)
+		fmt.Println(b)
 		return false
 	}
 	return true
@@ -46,11 +51,11 @@ func TEQ(l string, a, b interface{}) bool {
 func TEQuint64(l string, a, b uint64) bool {
 	l = loc(l)
 	if a != b {
-		println("TEQui64 error " + l + " ")
-		println("high a", uint(a>>32))
-		println("low a", uint(a&0xFFFFFFFF))
-		println("high b", uint(b>>32))
-		println("low b", uint(b&0xFFFFFFFF))
+		fmt.Println("TEQui64 error " + l + " ")
+		fmt.Println("high a", uint(a>>32))
+		fmt.Println("low a", uint(a&0xFFFFFFFF))
+		fmt.Println("high b", uint(b>>32))
+		fmt.Println("low b", uint(b&0xFFFFFFFF))
 		return false
 	}
 	return true
@@ -58,11 +63,11 @@ func TEQuint64(l string, a, b uint64) bool {
 func TEQint64(l string, a, b int64) bool {
 	l = loc(l)
 	if a != b {
-		println("TEQi64 error " + l + " ")
-		println("high a", int(a>>32))
-		println("low a", int(a&0xFFFFFFFF))
-		println("high b", int(b>>32))
-		println("low b", int(b&0xFFFFFFFF))
+		fmt.Println("TEQi64 error " + l + " ")
+		fmt.Println("high a", int(a>>32))
+		fmt.Println("low a", int(a&0xFFFFFFFF))
+		fmt.Println("high b", int(b>>32))
+		fmt.Println("low b", int(b&0xFFFFFFFF))
 		return false
 	}
 	return true
@@ -70,9 +75,9 @@ func TEQint64(l string, a, b int64) bool {
 func TEQuint32(l string, a, b uint32) bool {
 	l = loc(l)
 	if a != b {
-		println("TEQui32 error " + l + " ")
-		println(a)
-		println(b)
+		fmt.Println("TEQui32 error " + l + " ")
+		fmt.Println(a)
+		fmt.Println(b)
 		return false
 	}
 	return true
@@ -80,9 +85,9 @@ func TEQuint32(l string, a, b uint32) bool {
 func TEQint32(l string, a, b int32) bool {
 	l = loc(l)
 	if a != b {
-		println("TEQi32 error " + l + " ")
-		println(a)
-		println(b)
+		fmt.Println("TEQi32 error " + l + " ")
+		fmt.Println(a)
+		fmt.Println(b)
 		return false
 	}
 	return true
@@ -90,13 +95,13 @@ func TEQint32(l string, a, b int32) bool {
 func TEQbyteSlice(l string, a, b []byte) bool {
 	l = loc(l)
 	if len(a) != len(b) {
-		println("TEQbyteSlice error "+l+" ", a, b)
+		fmt.Println("TEQbyteSlice error "+l+" ", a, b)
 		return false
 	}
 	ret := true
 	for i := range a {
 		if a[i] != b[i] {
-			println("TEQbyteSlice error "+l+" ", a, b)
+			fmt.Println("TEQbyteSlice error "+l+" ", a, b)
 			ret = false
 		}
 	}
@@ -105,13 +110,13 @@ func TEQbyteSlice(l string, a, b []byte) bool {
 func TEQruneSlice(l string, a, b []rune) bool {
 	l = loc(l)
 	if len(a) != len(b) {
-		println("TEQruneSlice error "+l+" ", a, b)
+		fmt.Println("TEQruneSlice error "+l+" ", a, b)
 		return false
 	}
 	ret := true
 	for i := range a {
 		if a[i] != b[i] {
-			println("TEQruneSlice error "+l+" ", a, b)
+			fmt.Println("TEQruneSlice error "+l+" ", a, b)
 			ret = false
 		}
 	}
@@ -119,14 +124,14 @@ func TEQruneSlice(l string, a, b []rune) bool {
 }
 func TEQintSlice(l string, a, b []int) bool {
 	l = loc(l)
-	//println("TEQintSlice DEBUG: " + l + " ")
+	//fmt.Println("TEQintSlice DEBUG: " + l + " ")
 	if len(a) != len(b) {
-		println("TEQintSlice error "+l+" ", a, b)
+		fmt.Println("TEQintSlice error "+l+" ", a, b)
 		return false
 	}
 	for i := range a {
 		if a[i] != b[i] {
-			println("TEQintSlice error "+l+" ", a, b)
+			fmt.Println("TEQintSlice error "+l+" ", a, b)
 			return false
 		}
 	}
@@ -142,9 +147,9 @@ func TEQfloat(l string, a, b, maxDif float64) bool {
 		dif = -dif
 	}
 	if dif > maxDif {
-		println("TEQfloat error " + l + " ")
-		println(a)
-		println(b)
+		fmt.Println("TEQfloat error " + l + " ")
+		fmt.Println(a)
+		fmt.Println(b)
 		return false
 	}
 	return true
@@ -331,7 +336,7 @@ func testStruct() {
 	TEQ("", PublicStruct.c, PrivateStruct.c)
 	TEQfloat("", PublicStruct.d, PrivateStruct.d, 0.01)
 	TEQ("", PublicStruct.e, PrivateStruct.e)
-	//println("", PublicStruct.f[:], PrivateStruct.f[:])
+	//fmt.Println("", PublicStruct.f[:], PrivateStruct.f[:])
 	TEQintSlice("", PublicStruct.f[:], PrivateStruct.f[:])
 	PublicStruct.a = 42
 	PrivateStruct.a = 42
@@ -781,42 +786,42 @@ func testIntOverflow() { //TODO add int64
 	TEQint32(""+" int32 div special case", int32(int32_mostNeg/int32(-1)), int32_mostNeg)
 	TEQint32(""+" int32 mod special case", int32_mostNeg%int32(-1), 0)
 	if int16(int16_mostNeg/int16(-1)) != int16_mostNeg {
-		println("" + " int16 div special case")
+		fmt.Println("" + " int16 div special case")
 	}
 	if int16(int16_mostNeg%int16(-1)) != int16(0) {
-		println("" + " int16 mod special case")
+		fmt.Println("" + " int16 mod special case")
 	}
 	if int8(int8_mostNeg/int8(-1)) != int8_mostNeg {
-		println("" + " int8 div special case")
+		fmt.Println("" + " int8 div special case")
 	}
 	if int8(int8_mostNeg%int8(-1)) != int8(0) {
-		println("" + " int8 mod special case")
+		fmt.Println("" + " int8 mod special case")
 	}
 
 	/*THESE VALUES ARE NOT IN THE SPEC, SO UNTESTED
 	if uint64(int64_mostNeg)/0xFFFFFFFFFFFFFFFF == uint64(int64_mostNeg) {
-		println("" + " uint64 div special case")
+		fmt.Println("" + " uint64 div special case")
 	}
 	if uint64(int64_mostNeg)%0xFFFFFFFFFFFFFFFF == uint64(0) {
-		println("" + " uint64 mod special case")
+		fmt.Println("" + " uint64 mod special case")
 	}
 	if uint32(int32_mostNeg)/0xFFFFFFFF == uint32(int32_mostNeg) {
-		println("" + " uint32 div special case")
+		fmt.Println("" + " uint32 div special case")
 	}
 	if uint32(int32_mostNeg)%0xFFFFFFFF == uint32(0) {
-		println("" + " uint32 mod special case")
+		fmt.Println("" + " uint32 mod special case")
 	}
 	if uint16(int16_mostNeg)/0xFFFF == uint16(int16_mostNeg) {
-		println("" + " uint16 div special case")
+		fmt.Println("" + " uint16 div special case")
 	}
 	if uint16(int16_mostNeg)%0xFFFF == uint16(0) {
-		println("" + " uint16 mod special case")
+		fmt.Println("" + " uint16 mod special case")
 	}
 	if uint8(int8_mostNeg)/0xFF == uint8(int8_mostNeg) {
-		println("" + " uint8 div special case")
+		fmt.Println("" + " uint8 div special case")
 	}
 	if uint8(int8_mostNeg)%0xFF == uint8(0) {
-		println("" + " uint8 mod special case")
+		fmt.Println("" + " uint8 mod special case")
 	}
 	*/
 
@@ -832,8 +837,8 @@ func testIntOverflow() { //TODO add int64
 	TEQ("", uint64(int64_mostNeg) < uint64(0), false)
 
 	//TEQint64("", int64(int64_mostNeg), int64(uint64(0x8000000000000000)))
-	//println(float64(int64_mostNeg))
-	//println(int64_mostNeg)
+	//fmt.Println(float64(int64_mostNeg))
+	//fmt.Println(int64_mostNeg)
 	uint64Global = uint64(int64_mostNeg)
 	TEQuint64("", uint64Global, uint64(0x8000000000000000))
 
@@ -895,7 +900,7 @@ func testIntOverflow() { //TODO add int64
 		d := TEQfloat(""+" int64->Float conversion  ", myPi, float64(myPi64), 0)
 		e := TEQfloat(""+" uint64->Float conversion  ", myPi, float64(myPu64), 0)
 		if a == false || b == false || c == false || d == false || e == false {
-			println("i64 loops=", loops, "myPi=", myPi, "myPi64=", myPi64, "myPu64=", myPu64)
+			fmt.Println("i64 loops=", loops, "myPi=", myPi, "myPi64=", myPi64, "myPu64=", myPu64)
 			break
 		}
 		myPi *= myPi
@@ -908,7 +913,7 @@ func testIntOverflow() { //TODO add int64
 		f := float64(u)
 		fu := uint64(f)
 		if u != fu {
-			println("uint64/float64 conversion error", itter, u, f, fu, u == fu)
+			fmt.Println("uint64/float64 conversion error", itter, u, f, fu, u == fu)
 		}
 		itter++
 	}
@@ -959,7 +964,7 @@ func testUTF8() {
 	TEQ("", ' ', r)
 	TEQ("", size, 1)
 
-	//println("len(Zi)=", len("字"), hx.CodeInt(`'字'.length;`))
+	//fmt.Println("len(Zi)=", len("字"), hx.CodeInt(`'字'.length;`))
 
 	str := "Hello, 世界"
 	r, size = utf8.DecodeLastRuneInString(str)
@@ -1169,9 +1174,13 @@ func testMath() {
 	// comment out for quicker testing
 	/*
 		if int(math.Sqrt(16.0)) != 4 {
-			println("" + ": Incorrect square root of 16")
+			fmt.Println("" + ": Incorrect square root of 16")
 		}
 	*/
+
+	// test defer close
+	x := make(chan interface{})
+	defer close(x) // to make sure it is not removed by Dead Code Elimination
 }
 
 func testInterface() {
@@ -1179,19 +1188,19 @@ func testInterface() {
 
 	i = "test"
 	if i.(string) != "test" {
-		println("testInterface string not equal 'test':")
-		println(i)
+		fmt.Println("testInterface string not equal 'test':")
+		fmt.Println(i)
 	}
 
 	i = int(42)
 	if i.(int) != 42 {
-		println("testInterface int not equal 42:")
-		println(i)
+		fmt.Println("testInterface int not equal 42:")
+		fmt.Println(i)
 	}
 
 	j, ok := i.(rune)
 	if ok {
-		println("error rune!=int")
+		fmt.Println("error rune!=int")
 	}
 	TEQ("", j, rune(0))
 }
@@ -1280,9 +1289,9 @@ func testInterfaceMethods() {
 
 	a = f // a MyFloat implements Abser
 	x, ok := a.(Abser)
-	//println(reflect.TypeOf(x).String()) => main.MyFloat
+	//fmt.Println(reflect.TypeOf(x).String()) => main.MyFloat
 	if !ok {
-		println("Error in testInterfaceMethods(): MyFloat should be in Abser interface")
+		fmt.Println("Error in testInterfaceMethods(): MyFloat should be in Abser interface")
 	}
 	TEQ(""+"testInterfaceMethods():MyFloat in Abser", a, f)
 	TEQ(""+"testInterfaceMethods():MyFloat.Abs()", a.Abs(), float64(42))
@@ -1292,19 +1301,19 @@ func testInterfaceMethods() {
 
 	a = &vt // a *Vertex implements Abser
 	y, ok := a.(Abser)
-	//println(reflect.TypeOf(y).String()) //=> *main.Vertex
-	//println(y)
+	//fmt.Println(reflect.TypeOf(y).String()) //=> *main.Vertex
+	//fmt.Println(y)
 	if !ok {
-		println("Error in testInterfaceMethods(): Vertex should be in Abser interface")
+		fmt.Println("Error in testInterfaceMethods(): Vertex should be in Abser interface")
 	}
 	TEQ(""+"testInterfaceMethods():*Vertex in Abser", a, &vt)
 	TEQfloat(""+"testInterfaceMethods():*Vertex.Abs()", a.Abs(), float64(5), 0.000001)
 	TEQfloat(""+"testInterfaceMethods():y.Abs()", y.Abs(), float64(5), 0.000001)
 	TEQfloat(""+"testInterfaceMethods():*Vertex.Scale(10)", a.Scale(10), float64(50), 0.000001)
-	//println(y)
+	//fmt.Println(y)
 	TEQfloat(""+"testInterfaceMethods():y.Scale(10)", y.Scale(10),
 		float64(653.351098686295472), 0.01) // crazey number because Sqrt fn is an approximisation
-	//println(y)
+	//fmt.Println(y)
 
 	// a=vt // a Vertex, does NOT
 
@@ -1375,7 +1384,8 @@ func protect(g func(int)) {
 
 func g(i int) {
 	if i > 3 {
-		panic("test panic")
+		err := errors.New("test panic")
+		panic(err.Error())
 	}
 	for j := 0; j < i; j++ {
 		defer testDefer_d()
@@ -1471,26 +1481,26 @@ func receiveCakeAndPack(strbry_cs chan string, choco_cs chan string) {
 		if strbry_closed && choco_closed {
 			return
 		}
-		//println("Waiting for a new cake ...")
+		//fmt.Println("Waiting for a new cake ...")
 		select {
 		case cakeName, strbry_ok := <-strbry_cs:
 			if !strbry_ok {
 				strbry_closed = true
-				//println(" ... Strawberry channel closed!")
+				//fmt.Println(" ... Strawberry channel closed!")
 			} else {
-				//println("Received from Strawberry channel.  Now packing", cakeName)
+				//fmt.Println("Received from Strawberry channel.  Now packing", cakeName)
 				_ = cakeName
 			}
 		case cakeName, choco_ok := <-choco_cs:
 			if !choco_ok {
 				choco_closed = true
-				//println(" ... Chocolate channel closed!")
+				//fmt.Println(" ... Chocolate channel closed!")
 			} else {
-				//println("Received from Chocolate channel.  Now packing", cakeName)
+				//fmt.Println("Received from Chocolate channel.  Now packing", cakeName)
 				_ = cakeName
 			}
 		default:
-			//println("no cake!")
+			//fmt.Println("no cake!")
 		}
 	}
 }
@@ -1520,7 +1530,7 @@ func fibonacci(c, quit chan int) {
 		case c <- x:
 			x, y = y, x+y
 		case <-quit:
-			//println("quit")
+			//fmt.Println("quit")
 			return
 		}
 	}
@@ -1531,7 +1541,7 @@ func tourfib() {
 	quit := make(chan int)
 	go func() {
 		for i := 0; i < 10; i++ {
-			/*println(*/ <-c /*)*/
+			/*fmt.Println(*/ <-c /*)*/
 		}
 		quit <- 0
 	}()
@@ -1558,20 +1568,20 @@ func testUintDiv32() {
 		pwr2 = uint32(1)
 		for i := uint32(0); i < 32; i++ {
 			if !TEQuint32("testUintDiv32() T1 uint ", (uifs)>>i, (uifs)/pwr2) {
-				println("ProblemT1 uint i=", int(i))
+				fmt.Println("ProblemT1 uint i=", int(i))
 			}
 			if !TEQuint32("testUintDiv32() uint shift equivalence roundtrip  ", (uifs*pwr2)>>i, (uifs<<i)/pwr2) {
-				println("Problem uint seed,i=", seed, i)
+				fmt.Println("Problem uint seed,i=", seed, i)
 			}
 			if i < 31 {
 				if seed >= 0 {
 					if !TEQint32("testUintDiv32() T1 int ", (seed)>>i, (seed)/int32(pwr2)) {
-						println("ProblemT1 int i=", int(i))
+						fmt.Println("ProblemT1 int i=", int(i))
 					}
 				}
 				if !TEQint32("testUintDiv32() int shift equivalence roundtrip  ",
 					(seed*int32(pwr2))>>i, (seed<<i)/int32(pwr2)) {
-					println("Problem int seed,i=", seed, i)
+					fmt.Println("Problem int seed,i=", seed, i)
 				}
 			}
 			pwr2 <<= 1
@@ -1596,20 +1606,20 @@ func testUintDiv64() {
 		pwr2 = uint64(1)
 		for i := uint64(0); i < 64; i++ {
 			if !TEQuint64("testUintDiv64() uint ", uifs>>i, uifs/pwr2) {
-				println("Problem seed,i=", seed, i)
+				fmt.Println("Problem seed,i=", seed, i)
 			}
 			if !TEQuint64("testUintDiv64() uint shift equivalence roundtrip  ", (uifs*pwr2)>>i, (uifs<<i)/pwr2) {
-				println("Problem seed,i=", seed, i)
+				fmt.Println("Problem seed,i=", seed, i)
 			}
 			if i < 63 {
 				if seed >= 0 {
 					if !TEQint64("testUintDiv64() T1 int ", (seed)>>i, (seed)/int64(pwr2)) {
-						println("ProblemT1 int i=", int(i))
+						fmt.Println("ProblemT1 int i=", int(i))
 					}
 				}
 				if !TEQint64("testUintDiv64() int shift equivalence roundtrip  ",
 					(seed*int64(pwr2))>>i, (seed<<i)/int64(pwr2)) {
-					println("Problem int seed,i=", seed, i)
+					fmt.Println("Problem int seed,i=", seed, i)
 				}
 			}
 			pwr2 <<= 1
@@ -1622,7 +1632,7 @@ type foo struct {
 }
 
 func bar() *foo {
-	//println("bar() called")
+	//fmt.Println("bar() called")
 	return &foo{42}
 }
 
@@ -1634,7 +1644,7 @@ type foo2 struct {
 
 func testPtr() {
 	q := &bar().a
-	//println("pointer created")
+	//fmt.Println("pointer created")
 	*q = 40
 	TEQ("", *q, 40) // should be 40
 
@@ -1740,14 +1750,14 @@ func testFloatConv() {
 		if runtime.GOOS == "nacl" {
 			pi := tc64(hx.GetFloat("", "Math.POSITIVE_INFINITY"))
 			if pi <= MaxFloat64 {
-				println("testFloatConv() POSITIVE_INFINITY invalid")
+				fmt.Println("testFloatConv() POSITIVE_INFINITY invalid")
 			}
 			ni := tc64(hx.GetFloat("", "Math.NEGATIVE_INFINITY"))
 			if ni >= SmallestNonzeroFloat64 {
-				println("testFloatConv() NEGATIVE_INFINITY invalid")
+				fmt.Println("testFloatConv() NEGATIVE_INFINITY invalid")
 			}
 			if hx.GetFloat("", "Math.NaN") == tc64(hx.GetFloat("", "Math.NaN")) {
-				println("testFloatConv() NaN == NaN")
+				fmt.Println("testFloatConv() NaN == NaN")
 			}
 		}
 	}
@@ -1809,9 +1819,9 @@ func main() {
 	var array [4][5]int
 	array[3][2] = 12
 	if array[3][2] != 12 {
-		println("Array handling error:", array[3][2])
+		fmt.Println("Array handling error:", array[3][2])
 	}
-	//println("Start test running in: " + runtime.GOARCH)
+	//fmt.Println("Start test running in: " + runtime.GOARCH)
 	testManyGoroutines() // here to run alongside the other code execution
 	tourfib()
 	testCaseSensitivity()
@@ -1861,10 +1871,22 @@ func main() {
 		TEQ(""+"Num Haxe GR post-wait", runtime.NumGoroutine(), 1)
 		//panic("show GRs active")
 	} else {
-		//println(runtime.NumGoroutine())
+		//fmt.Println(runtime.NumGoroutine())
 		TEQ(""+"Num Haxe GR post-wait", runtime.NumGoroutine(), 3)
 	}
-	//println("End test running in: " + runtime.GOARCH)
-	//println("再见！Previous two chinese characters should say goodbye! (testing unicode output)")
-	//println()
+	TEQ("", unicode.IsSpace(' '), true) // makes the test longer but more complete
+	//fmt.Println("End test running in: " + runtime.GOARCH)
+	//fmt.Println("再见！Previous two chinese characters should say goodbye! (testing unicode output)")
+	//fmt.Println()
+	//hx.Call("", "Tgotypes.setup", 0)
+	//hx.Call("", "Go_haxegoruntime_typetest.hx", 0)
+	//testTypes()
+	//fmt.Println(hx.GetFloat("", "Object.MinFloat64"))
+}
+
+func testTypes() {
+	for id := 0; id < len(haxegoruntime.TypeTable); id++ {
+		r := unsafe.Pointer(haxegoruntime.TypeTable[id])
+		fmt.Println("DEBUG type", id, r)
+	}
 }

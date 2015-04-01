@@ -117,12 +117,11 @@ func haxeStringConst(sconst string, position string) string {
 		pogo.LogError(position, "Haxe", errors.New(err.Error()+" : "+sconst))
 		return ""
 	}
-
 	ret0 := ""
 	hadEsc := false
 	for i := 0; i < len(s); i++ {
 		c := rune(s[i])
-		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '\\' && !hadEsc {
+		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '`' && c != '\\' && !hadEsc {
 			ret0 += string(c)
 		} else {
 			ret0 += fmt.Sprintf("\\x%02X", c)
@@ -136,7 +135,7 @@ func haxeStringConst(sconst string, position string) string {
 	hadStr := false
 	for i := 0; i < len(s); i++ {
 		c := rune(s[i])
-		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '\\' {
+		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '`' && c != '\\' {
 			compound += string(c)
 		} else {
 			if hadStr {
@@ -162,7 +161,6 @@ func haxeStringConst(sconst string, position string) string {
 		return ret
 	}
 	return ` #if (cpp || neko || php) ` + ret0 + ` #else ` + ret + " #end "
-
 }
 
 func constFloat64(lit ssa.Const, bits int, position string) string {
@@ -178,71 +176,71 @@ func constFloat64(lit ssa.Const, bits int, position string) string {
 		f = float64(f32)
 	}
 	haxeVal := pogo.FloatVal(lit.Value, bits, position)
-	if math.IsInf(f, +1) {
+	switch {
+	case math.IsInf(f, +1):
 		haxeVal = "Math.POSITIVE_INFINITY"
-	} else {
-		if math.IsInf(f, -1) {
-			haxeVal = "Math.NEGATIVE_INFINITY"
-		} else {
-			if math.IsNaN(f) { // must come after infinity checks
-				haxeVal = "Math.NaN"
-			} else {
-				// there is a problem with haxe constant processing for some floats
-				// try to be as exact as the host can be ... but also concise
-				//if float64(int64(f)) != f { // not a simple integer
-				/*
-					frac, exp := math.Frexp(f)
-					intPart := int64(frac * float64(uint64(1)<<sigBits))
-					expPart := exp - int(sigBits)
-					if float64(intPart) == frac*float64(uint64(1)<<sigBits) &&
-						expPart >= -1022 && expPart <= 1023 {
-						//it is an integer in the correct range
-						haxeVal = fmt.Sprintf("(%d*Math.pow(2,%d))", intPart, expPart) // NOTE: need the Math.pow to avoid haxe constant folding
-					}
-				*/
-				/*
-					val := exact.MakeFloat64(frac)
-					num := exact.Num(val)
-					den := exact.Denom(val)
-					n64i, nok := exact.Int64Val(num)
-					d64i, dok := exact.Int64Val(den)
-					res := float64(n64i) * math.Pow(2, float64(exp)) / float64(d64i)
-					if !math.IsNaN(res) && !math.IsInf(res, +1) && !math.IsInf(res, -1) { //drop through
-						if nok && dok {
-							nh, nl := pogo.IntVal(num, position)
-							dh, dl := pogo.IntVal(den, position)
-							n := fmt.Sprintf("%d", nl)
-							if n64i < 0 {
-								n = "(" + n + ")"
-							}
-							if nh != 0 && nh != -1 {
-								n = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(nh), uint32(nl))
-							}
-							if float64(d64i) == math.Pow(2, float64(exp)) {
-								haxeVal = n // divisor and multiplier the same
-							} else {
-								d := fmt.Sprintf("%d", dl)
-								if dh != 0 && dh != -1 {
-									d = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(dh), uint32(dl))
-								}
-								if n64i == 1 {
-									n = "" // no point multiplying by 1
-								} else {
-									n = n + "*"
-								}
-								if d64i == 1 {
-									d = "" // no point in dividing by 1
-								} else {
-									d = "/" + d
-								}
-								haxeVal = fmt.Sprintf("(%sMath.pow(2,%d)%s)", n, exp, d) // NOTE: need the Math.pow to avoid haxe constant folding
-							}
-						}
-					}
-				*/
-				//}
+	case math.IsInf(f, -1):
+		haxeVal = "Math.NEGATIVE_INFINITY"
+	case math.IsNaN(f): // must come after infinity checks
+		haxeVal = "Math.NaN"
+	//case f == 0 && math.Signbit(f): // -0 is zero, but it has a -ve sign
+	//	//println("DEBUG -0") // TODO this code never seems to get executed
+	//	haxeVal = "({var f:Float=0; f*=-1; f;})"
+	default:
+		// there is a problem with haxe constant processing for some floats
+		// try to be as exact as the host can be ... but also concise
+		//if float64(int64(f)) != f { // not a simple integer
+		/*
+			frac, exp := math.Frexp(f)
+			intPart := int64(frac * float64(uint64(1)<<sigBits))
+			expPart := exp - int(sigBits)
+			if float64(intPart) == frac*float64(uint64(1)<<sigBits) &&
+				expPart >= -1022 && expPart <= 1023 {
+				//it is an integer in the correct range
+				haxeVal = fmt.Sprintf("(%d*Math.pow(2,%d))", intPart, expPart) // NOTE: need the Math.pow to avoid haxe constant folding
 			}
-		}
+		*/
+		/*
+			val := exact.MakeFloat64(frac)
+			num := exact.Num(val)
+			den := exact.Denom(val)
+			n64i, nok := exact.Int64Val(num)
+			d64i, dok := exact.Int64Val(den)
+			res := float64(n64i) * math.Pow(2, float64(exp)) / float64(d64i)
+			if !math.IsNaN(res) && !math.IsInf(res, +1) && !math.IsInf(res, -1) { //drop through
+				if nok && dok {
+					nh, nl := pogo.IntVal(num, position)
+					dh, dl := pogo.IntVal(den, position)
+					n := fmt.Sprintf("%d", nl)
+					if n64i < 0 {
+						n = "(" + n + ")"
+					}
+					if nh != 0 && nh != -1 {
+						n = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(nh), uint32(nl))
+					}
+					if float64(d64i) == math.Pow(2, float64(exp)) {
+						haxeVal = n // divisor and multiplier the same
+					} else {
+						d := fmt.Sprintf("%d", dl)
+						if dh != 0 && dh != -1 {
+							d = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(dh), uint32(dl))
+						}
+						if n64i == 1 {
+							n = "" // no point multiplying by 1
+						} else {
+							n = n + "*"
+						}
+						if d64i == 1 {
+							d = "" // no point in dividing by 1
+						} else {
+							d = "/" + d
+						}
+						haxeVal = fmt.Sprintf("(%sMath.pow(2,%d)%s)", n, exp, d) // NOTE: need the Math.pow to avoid haxe constant folding
+					}
+				}
+			}
+		*/
+		//}
 	}
 	return haxeVal
 	/*

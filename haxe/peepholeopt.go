@@ -82,7 +82,11 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 				ret += fmt.Sprintf("\t\tvar tmp_%s=%s;\n", ent.reg, ent.val) // need temp vars for a,b = b,a
 			}
 			for _, ent := range opt {
-				ret += fmt.Sprintf("\t\t_%s=tmp_%s;\n", ent.reg, ent.reg)
+				rn := "_" + ent.reg
+				if useRegisterArray {
+					rn = rn[:2] + "[" + rn[2:] + "]"
+				}
+				ret += fmt.Sprintf("\t\t%s=tmp_%s;\n", rn, ent.reg)
 			}
 		}
 		ret += "}\n"

@@ -693,6 +693,7 @@ func makeReader(r io.Reader) Reader {
 func (f *decompressor) Reset(r io.Reader, dict []byte) error {
 	// NOTE needed to add temp var d here because of SSA code gen bug
 	// SEE GOLANG ISSUE #10127 https://github.com/golang/go/issues/10127
+	// fix now in progress - TODO change code back when complete
 	d := decompressor{
 		r:        makeReader(r),
 		bits:     f.bits,

@@ -276,10 +276,10 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 						case types.Float32:
 							// make sure we only compare the float32 bits
 							ret = "(" +
-								"Go_haxegoruntime_FFloat32frombits.hx(Go_haxegoruntime_FFloat32bits.hx(" +
-								v1string + "))" + op +
-								"Go_haxegoruntime_FFloat32frombits.hx(Go_haxegoruntime_FFloat32bits.hx(" +
-								v2string + "))" + ")"
+								"Force.toFloat32(" +
+								v1string + ")" + op +
+								"Force.toFloat32(" +
+								v2string + ")" + ")"
 						default:
 							ret = "(" + v1string + op + v2string + ")"
 						}
@@ -288,6 +288,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 					ret = "(" + v1string + op + v2string + ")"
 				}
 			case ">>", "<<":
+				//v1string = wrapForce_toUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 				v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned bit shift
@@ -295,7 +296,22 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 						op = ">>>" // logical right shift if unsigned
 					}
 				}
-				ret = "({var _v1:Int=" + v1string + "; var _v2:Int=" + v2string + "; _v2==0?_v1:_v1" + op + "_v2;})" //NoOp if v2==0
+				bitlenMinus1:=fmt.Sprintf("%d",(haxeStdSizes.Sizeof(v1.(ssa.Value).Type().Underlying())*8)-1)
+				// TODO consider  putting this code in a Haxe function
+				ret = "({var _v1:Int=" + v1string + " ; var _v2:Int=" + v2string + " ; _v2==0?_v1" //NoOp if v2==0
+				// js requires this out-of-range test - TODO check other targets
+				ret += ":(_v2<0||_v2>"+bitlenMinus1+"?" // outside chance very large shift appears -ve
+				switch op {
+				case ">>": // signed right shift >= bitlen
+					ret += "(_v1&(1<<"+bitlenMinus1+")!=0?-1:0)" // the sign must be extended if -ve
+				case ">>>": // unsigned right shift >= bitlen
+					ret += "0"
+				case "<<": // left shift >= bitlen
+					ret += "0"
+				default:
+					panic("haxe unhandled shift operation")
+				}
+				ret += ":_v1" + op + "_v2);})" // the actual op
 
 			case "/":
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
@@ -348,10 +364,19 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				}
 
 			case "&^":
-				op = "&~" // Haxe has a different operator for bit-wise complement
-				fallthrough
-			default:
+				// Haxe has a different operator for bit-wise complement ~, but using xor below
+				ret = "((" + v1string + ")&((" + v2string + ")^0xffffffff))"
+
+			case "&", "|", "^":
+				//v1string = wrapForce_toUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				//v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				ret = "((" + v1string +")" + op + "(" + v2string + "))"
+
+			case "+", "-":
 				ret = "(" + v1string + op + v2string + ")"
+
+			default:
+				panic("haxe unhandled binary operator: " + op)
 			}
 			ret = l.intTypeCoersion(
 				regTyp.Underlying(),

@@ -782,9 +782,9 @@ func daysIn(m Month, year int) int {
 
 // Provided by package runtime.
 func now() (sec int64, nsec int32) {
-	haxeNow := hx.GetFloat("", "Date.now().getTime()")
+	haxeNow := hx.GetFloat("", "Date.now().getTime()") // milliseconds
 	secFloat := hx.CallFloat("", "Math.ffloor", 1, haxeNow/1000)
-	return int64(secFloat), int32(1000000000 * (haxeNow - secFloat))
+	return int64(secFloat), int32(1000000000 * ((haxeNow/1000) - secFloat))
 }
 
 // Now returns the current local time.

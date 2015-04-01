@@ -88,7 +88,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return v & 0xFFFF;
 	}	
 	public static inline function toUint32(v:Int):Int { 
-		#if js
+		#if js 
 			return v >>> untyped __js__("0"); // using GopherJS method (with workround to stop it being optimized away by Haxe)
 		#elseif php
        		return v & untyped __php__("0xffffffff");
@@ -163,25 +163,16 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return v;
 		#end
 	}	
-	public static inline function toFloat32(v:Float):Float { // TODO refactor to remove "safe" version
-			return toFloat32safe(v);
-	}
 	#if (cpp || neko)
 		static public var f64byts = haxe.io.Bytes.alloc(8);
-		//static public function Float64frombits(v:GOint64):Float{
-			// TODO
-		//}
-		//static public function Float64bits(v:Float):GOint64{
-			// TODO 	
-		//}
-	#elseif (js && fullunsafe)
+	#elseif js  // NOTE this code uses js dataview even when not in fullunsafe mode
 		static private var f32dView = new js.html.DataView(new js.html.ArrayBuffer(8),0,8); 
 	#end
-	public static function toFloat32safe(v:Float):Float {
+	public static function toFloat32(v:Float):Float {
 		#if (cpp || neko)
 			f64byts.setFloat(0,v);
 			return f64byts.getFloat(0);
-		#elseif (js && fullunsafe)
+		#elseif js 
 			f32dView.setFloat32(0,v); 
 			return f32dView.getFloat32(0); 
 		#else
@@ -192,25 +183,89 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			}
 		#end
 	}
+	/* TODO implement speed improvements when code below is correct
+	//START POTENTIAL SPEED-UP CODE
+	public static function Float32bits(v:Float):Int {
+		#if (cpp || neko)
+			f64byts.setFloat(0,v);
+			return toUint32( f64byts.get(0) | (f64byts.get(1)<<8)  | (f64byts.get(2)<<16)  | (f64byts.get(3)<<24) ); //little-endian
+		#elseif js 
+			f32dView.setFloat32(0,v); 
+			return toUint32(f32dView.getUint32(0)); 
+		#else
+			Scheduler.panicFromHaxe("Force.Float32bits unreachable code");
+			return 0; 
+		#end
+	}
+	public static function Float32frombits(v:Int):Float {
+		#if (cpp || neko)
+			f64byts.set(0,v&0xff);
+			f64byts.set(1,(v>>8)&0xff);
+			f64byts.set(2,(v>>16)&0xff);
+			f64byts.set(3,(v>>24)&0xff); //little-endian
+			return f64byts.getFloat(0);
+		#elseif js 
+			f32dView.setUint32(0,v);
+			return f32dView.getFloat32(0); 
+		#else
+			Scheduler.panicFromHaxe("Force.Float32frombits unreachable code"); 
+			return 0;
+		#end
+	}
+	public static function Float64bits(v:Float):GOint64 {
+		#if (cpp || neko)
+			f64byts.setDouble(0,v);
+			return GOint64.make(
+				f64byts.get(4) | (f64byts.get(5)<<8)  | (f64byts.get(6)<<16)  | (f64byts.get(7)<<24) ,
+				f64byts.get(0) | (f64byts.get(1)<<8)  | (f64byts.get(2)<<16)  | (f64byts.get(3)<<24) ); //little-endian
+		#elseif js 
+			f32dView.setFloat64(0,v); 
+			return GOint64.make(f32dView.getUint32(4),f32dView.getUint32(0)); 
+		#else
+			Scheduler.panicFromHaxe("Force.Float64bits unreachable code");
+			return GOint64.ofInt(0); 
+		#end
+	}
+	public static function Float64frombits(v:GOint64):Float {
+		#if (cpp || neko)
+			var v0 = GOint64.getLow(v);
+			var v1 = GOint64.getHigh(v);
+			f64byts.set(0,v0&0xff);
+			f64byts.set(1,(v0>>8)&0xff);
+			f64byts.set(2,(v0>>16)&0xff);
+			f64byts.set(3,(v0>>24)&0xff); //little-endian
+			f64byts.set(4,v1&0xff);
+			f64byts.set(5,(v1>>8)&0xff);
+			f64byts.set(6,(v1>>16)&0xff);
+			f64byts.set(7,(v1>>24)&0xff); //little-endian
+			return f64byts.getDouble(0);
+		#elseif js 
+			f32dView.setUint32(0,GOint64.getLow(v));
+			f32dView.setUint32(4,GOint64.getHigh(v));
+			return f32dView.getFloat64(0); 
+		#else
+			Scheduler.panicFromHaxe("Force.Float64frombits unreachable code"); 
+			return 0;
+		#end
+	}
+	//END POTENTIAL SPEED-UP CODE
+	*/
 	public static function uintCompare(x:Int,y:Int):Int { // +ve if uint(x)>unint(y), 0 equal, else -ve 
-		// use method in 64bit haxe library code
-		return x < 0 ? (y < 0 ? (~y - ~x) : 1) : (y < 0 ? -1 : (x - y));
-		/*was:
-			if(x==y) return 0; // simple case first for speed TODO is it faster with this in or out?
-			if(x>=0) {
-				if(y>=0){ // both +ve so normal comparison
-					return (x-y);
-				}else{ // y -ve and so larger than x
-					return -1;
-				}
-			}else { // x -ve
-				if(y>=0){ // -ve x larger than +ve y
-					return 1;
-				}else{ // both are -ve so the normal comparison
-					return (x-y); //eg -1::-7 gives -1--7 = +6 meaning -1 > -7
-				}
+		#if js x=x>>>untyped __js__("0");y=y>>>untyped __js__("0"); #end
+		if(x==y) return 0; // simple case first for speed TODO is it faster with this in or out?
+		if(x>=0) {
+			if(y>=0){ // both +ve so normal comparison
+				return (x-y);
+			}else{ // y -ve and so larger than x
+				return -1;
 			}
-		*/
+		}else { // x -ve
+			if(y>=0){ // -ve x larger than +ve y
+				return 1;
+			}else{ // both are -ve so the normal comparison
+				return (x-y); //eg -1::-7 gives -1--7 = +6 meaning -1 > -7
+			}
+		}
 	}
 	private static function checkIntDiv(x:Int,y:Int,byts:Int):Int { // implement the special processing required by Go
 		var r:Int=y;
@@ -347,6 +402,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 
 	public static #if (cpp || neko || php) inline #end function fromHaxeString(v:String):String {
 		#if !( cpp || neko || php ) // need to translate from UTF16 to UTF8 when passing back to Go
+			#if (js || php) if(v==null) return ""; #end
 			var sli:Slice=new Slice(new Pointer(new Object(v.length<<1)),0,-1,v.length,2);
 			var allSmall = true;
 			for(i in 0...v.length){
@@ -595,7 +651,7 @@ class Object { // this implementation will improve with typed array access
 				var d:Int=destPos;
 				for(i in 0...size) {
 					dest.set_uint8(d,src.get_uint8(s));
-					if((s&3)==0){ 
+					if(((size-i)>3)&&(s&3)==0){ 
 						dest.set(d,src.get(s));
 					}
 					s+=1;
@@ -738,37 +794,21 @@ class Object { // this implementation will improve with typed array access
 		return get(i); 
 	} 
 	public function get_float32(i:Int):Float { 
-		var r:Float=get(i)==null?0.0:get(i); 
 		#if (js && fullunsafe)
-			var d:Float = dView.getFloat32(i,true); // little-endian
+			return dView.getFloat32(i,true); // little-endian
 		#elseif !fullunsafe
-			return r; 
+			return get(i)==null?0.0:get(i); 
 		#else 
-			var d:Float = byts.getFloat(i); // Go_haxegoruntime_FFloat32frombits.callFromRT(0,get_uint32(i)); 
-		#end
-		#if fullunsafe
-			if( ( Math.isNaN(r) && Math.isNaN(d) ) || 
-				( !Math.isFinite(r) && !Math.isFinite(d) ) || 
-				( r==0.0 && d==0.0) ) // to handle -0 
-				return r;
-			return d;
+			return byts.getFloat(i); // Go_haxegoruntime_FFloat32frombits.callFromRT(0,get_uint32(i)); 
 		#end
 	}
 	public function get_float64(i:Int):Float { 
-		var r:Float=get(i)==null?0.0:get(i); 
 		#if (js && fullunsafe)
-			var d:Float = dView.getFloat64(i,true); // little-endian
+			return dView.getFloat64(i,true); // little-endian
 		#elseif !fullunsafe
-			return r;
+			return get(i)==null?0.0:get(i); 
 		#else
-			var d:Float = byts.getDouble(i); // Go_haxegoruntime_FFloat64frombits.callFromRT(0,get_uint64(i)); 		
-		#end
-		#if fullunsafe
-			if( ( Math.isNaN(r) && Math.isNaN(d) ) || 
-				( !Math.isFinite(r) && !Math.isFinite(d) ) ||
-				( r==0.0 && d==0.0) ) // to handle -0 
-				return r;
-			return d;
+			return byts.getDouble(i); // Go_haxegoruntime_FFloat64frombits.callFromRT(0,get_uint64(i)); 		
 		#end
 	}
 	public inline function get_complex64(i:Int):Complex {
@@ -903,22 +943,29 @@ class Object { // this implementation will improve with typed array access
 		#end
 	} 
 	public inline function set_uintptr(i:Int,v:Dynamic):Void { 
-		set(i,v);
 		if(Std.is(v,Int)) {
-			set_uint32(i,v); // write through to ordinary memory if the type is Int
+			set(i,Force.toUint32(v)); // make sure we only store 32 bits if int
+			set_uint32(i,v); // also write through to ordinary memory if the type is Int
 			return;
 		}
+		set(i,v);
 		set_uint32(i,0); // value overwritten
 	}
+	public static var MinFloat64:Float = -1.797693134862315708145274237317043567981e+308; // 2**1023 * (2**53 - 1) / 2**52
 	public inline function set_float32(i:Int,v:Float):Void {
-		set(i,Force.toFloat32safe(v)); // for NaN compatability
 		#if (js && fullunsafe)
 			dView.setFloat32(i,v,true); // little-endian
 		#elseif !fullunsafe
-			//set(i,Force.toFloat32safe(v));
 			#if (js || php || neko ) 
-				if(get(i)==0.0) set(i,null); 
+				if(v==0.0) {
+					#if !php
+					var t:Float=1/v; // result is +/- infinity
+					if(t>MinFloat64) // ie not -0
+					#end
+						v=null; 
+				}
 			#end
+			set(i,Force.toFloat32(v));
 		#else 
 			#if (cpp||neko)
 				byts.setFloat(i,v);
@@ -928,14 +975,19 @@ class Object { // this implementation will improve with typed array access
 		#end	
 	}
 	public inline function set_float64(i:Int,v:Float):Void {
-		set(i,v); // for NaN compatability
 	 	#if (js && fullunsafe)
 			dView.setFloat64(i,v,true); // little-endian
 		#elseif !fullunsafe
-			// set(i,v);
 			#if (js || php || neko ) 
-				if(get(i)==0.0) set(i,null); 
+				if(v==0.0) {
+					#if !php
+					var t:Float=1/v; // result is +/- infinity
+					if(t>MinFloat64) // ie not -0
+					#end
+						v=null;
+				} 
 			#end
+			set(i,v);
 		#else
 			#if (cpp||neko)
 				byts.setDouble(i,v);
@@ -1135,7 +1187,7 @@ class Slice {
 	public var itemSize:Int; // for the size of each item in bytes 
 	private var start:Int;
 	private var end:Int;
-	private var capacity:Int; // in items
+	private var capacity:Int; // of the array, in items
 
 	public var length(get, null):Int;
 	inline function get_length():Int {
@@ -1163,7 +1215,9 @@ class Slice {
 		}
 	} 
 	public static function fromResource(name:String):Slice {
-		var res = haxe.Resource.getBytes(name);
+		return fromBytes(haxe.Resource.getBytes(name));
+	}
+	public static function fromBytes(res:haxe.io.Bytes):Slice {
 		var obj = res==null?new Object(0):new Object(res.length,res);
 		var ptr = new Pointer(obj);
 		return new Slice(ptr,0,-1,res==null?0:res.length,1); // []byte
@@ -1173,19 +1227,24 @@ class Slice {
 		return new Slice(baseArray,low+start,high+start,capacity,itemSize);
 	}
 	public static function append(oldEnt:Slice,newEnt:Slice):Slice{ // TODO optimize further - heavily used
-		if(newEnt==null || newEnt.len()==0) return oldEnt;
+		if(oldEnt==null && newEnt==null) return null;
+		if(newEnt==null || newEnt.len()==0) {
+			return oldEnt; // NOTE not a clone as with the line below 
+			//return new Slice(oldEnt.baseArray.addr(oldEnt.start*oldEnt.itemSize),0,oldEnt.len(),oldEnt.cap(),oldEnt.itemSize);
+		}
 		if(oldEnt==null) { // must create a copy rather than just return the new one
-			oldEnt=new Slice(new Pointer(new Object(0)),0,-1,0,newEnt.itemSize); // trigger newObj code below
+			oldEnt=new Slice(new Pointer(new Object(0)),0,0,0,newEnt.itemSize); // trigger newObj code below
 		}
 		if(oldEnt.itemSize!=newEnt.itemSize)
 			Scheduler.panicFromHaxe("new Slice() internal error: itemSizes do not match");
 		if(oldEnt.cap()>=(oldEnt.len()+newEnt.len())){
-			var offset=oldEnt.len();
+			var retEnt=new Slice(oldEnt.baseArray,oldEnt.start,oldEnt.end,oldEnt.capacity,oldEnt.itemSize);
+			var offset=retEnt.len();
 			for(i in 0...newEnt.len()){
-				oldEnt.end++;
-				oldEnt.itemAddr(offset+i).store_object(oldEnt.itemSize,newEnt.itemAddr(i).load_object(newEnt.itemSize));
+				retEnt.end++;
+				retEnt.itemAddr(offset+i).store_object(oldEnt.itemSize,newEnt.itemAddr(i).load_object(newEnt.itemSize));
 			}
-			return oldEnt;
+			return retEnt;
 		}else{
 			var newLen = oldEnt.length+newEnt.len();
 			var newCap = newLen+(newLen>>2); // NOTE auto-create 50pc new capacity 
@@ -1234,7 +1293,7 @@ class Slice {
 		return length;
 	}
 	public function cap():Int {
-		// TODO remove when stable
+		// TODO remove null and capacity test when stable
 		if(baseArray==null){
 			if(capacity!=0) Scheduler.panicFromHaxe("Slice interal error: BaseArray==null but capacity="+capacity);
 		}else{
@@ -1279,7 +1338,7 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 
 	public function new(f:Dynamic,b:Dynamic) {
 		if(Std.is(f,Closure))	{
-			if(!Reflect.isFunction(f.fn)) Scheduler.panicFromHaxe( "invalid function reference passed to make Closure(): "+f.fn);
+			if(!Reflect.isFunction(f.fn)) Scheduler.panicFromHaxe( "invalid function reference in existing Closure passed to make Closure(): "+f.fn);
 			fn=f.fn; 
 		} else{
 			if(!Reflect.isFunction(f)) Scheduler.panicFromHaxe("invalid function reference passed to make Closure(): "+f); 
@@ -1416,28 +1475,29 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 		the operation will fail iff the operand is nil. (Contrast with ChangeInterface, which performs no nil-check.)
 	*/
 	public static function assert(assTyp:Int,ifce:Interface):Dynamic{
-		// TODO add code to deal with overloaded types?
+		// TODO add code to deal with overloaded types? i.e. those created by reflect
 		if(ifce==null) {
 			Scheduler.panicFromHaxe( "Interface.assert null Interface");
-			return null;
+		} else {
+			if(TypeInfo.isConcrete(assTyp))	{
+				if(ifce.typ==assTyp)
+					return ifce.val;
+				else
+					Scheduler.panicFromHaxe( "concrete type assert failed: expected "+TypeInfo.getName(assTyp)+", got "+TypeInfo.getName(ifce.typ) );	
+			} else {
+				if(ifce.typ==assTyp||TypeInfo.assertableTo(ifce.typ,assTyp)){
+					return new Interface(ifce.typ,ifce.val);
+				} else {
+					Scheduler.panicFromHaxe( "interface type assert failed: cannot assert to "+TypeInfo.getName(assTyp)+" from "+TypeInfo.getName(ifce.typ) );
+				}
+			}
 		}
-		if(!(ifce.typ==assTyp||TypeInfo.assertableTo(ifce.typ,assTyp))){
-			//||TypeInfo.typeImplements(ifce.typ,assTyp)||TypeInfo.isAssignableTo(ifce.typ,assTyp)||
-			//TypeInfo.isIdentical(assTyp,ifce.typ))) { // TODO review need for isIdentical 
-			Scheduler.panicFromHaxe( "type assert failed: expected "+TypeInfo.getName(assTyp)+", got "+TypeInfo.getName(ifce.typ) );
-			return null;
-		}
-		if(TypeInfo.isConcrete(assTyp))	
-			return ifce.val;
-		else	
-			return new Interface(ifce.typ,ifce.val);
+		return null;
 	}
 	public static function assertOk(assTyp:Int,ifce:Interface):{r0:Dynamic,r1:Bool} {
 		if(ifce==null) 
 			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
 		if(!(ifce.typ==assTyp||TypeInfo.assertableTo(ifce.typ,assTyp)))
-			//TypeInfo.typeImplements(ifce.typ,assTyp)||TypeInfo.isAssignableTo(ifce.typ,assTyp)||
-			//TypeInfo.isIdentical(assTyp,ifce.typ))) // TODO review need for isIdentical 
 			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
 		if(TypeInfo.isConcrete(assTyp))	
 			return {r0:ifce.val,r1:true};
@@ -1464,6 +1524,9 @@ var num_entries:Int;
 var oldest_entry:Int;	
 var closed:Bool;
 var capa:Int;
+var uniqueId:Int;
+
+static var nextId:Int=0;
 
 public function new(how_many_entries:Int) {
 	capa = how_many_entries;
@@ -1474,6 +1537,8 @@ public function new(how_many_entries:Int) {
 	oldest_entry = 0;
 	num_entries = 0;
 	closed = false;
+	uniqueId = nextId;
+	nextId++;
 }
 public function hasSpace():Bool {
 	if(this==null) return false; // non-existant channels never have space
@@ -1526,6 +1591,9 @@ public inline function close() {
 	if(this==null) Scheduler.panicFromHaxe( "attempt to close a nil channel" ); 
 	closed = true;
 }
+public function toString():String{
+	return "<ChanId:"+Std.string(uniqueId)+">";
+}
 }
 `)
 	pogo.WriteAsClass("Complex", `
@@ -1574,12 +1642,12 @@ public static function toString(x:Complex):String {
 	pogo.WriteAsClass("GOint64", `
 
 // TODO optimize to use cs and java base i64 types, as with cpp below
-#if ( cpp )
-	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
-#else
+//#if ( cpp ) // TODO revert to native type when fixed for Haxe 3.2.0
+//	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
+//#else
 	typedef HaxeInt64Typedef = Int64;  // use the copied and modified version of the standard library class below
 	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
-#end
+//#end
 
 // this abstract type to enable correct handling for Go of HaxeInt64Typedef
 abstract HaxeInt64abs(HaxeInt64Typedef) 
@@ -1588,10 +1656,18 @@ from HaxeInt64Typedef to HaxeInt64Typedef
 inline function new(v:HaxeInt64Typedef) this=v;
 
 public static inline function getLow(v:HaxeInt64abs):Int {
-	return HaxeInt64Typedef.getLow(v);
+	//#if ( cpp )
+	//	return v.low;
+	//#else
+		return HaxeInt64Typedef.getLow(v);
+	//#end
 }
 public static inline function getHigh(v:HaxeInt64abs):Int {
-	return HaxeInt64Typedef.getHigh(v);
+	//#if ( cpp )
+	//	return v.high;
+	//#else
+		return HaxeInt64Typedef.getHigh(v);
+	//#end
 }
 
 public static inline function toInt(v:HaxeInt64abs):Int {
@@ -2448,9 +2524,10 @@ static inline function runOne(gr:Int,entryCount:Int){ // called from above to ca
 				run1(gr);
 		} else {
 			while(grInPanic[gr]){
-				if(grStacks[gr].isEmpty())
-					throw "Panic in goroutine "+gr+"\n"+panicStackDump; // use stored stack dump
-				else {
+				if(grStacks[gr].isEmpty()){
+					 Console.naclWrite("Panic in goroutine "+gr+"\n"+panicStackDump); // use stored stack dump
+					 throw "Go panic";
+				} else {
 					var sf:StackFrame=grStacks[gr].pop();
 					while(!sf._deferStack.isEmpty() && grInPanic[gr]) { 
 						// NOTE this will run all of the defered code for a function, 
@@ -2621,7 +2698,8 @@ public static function panicFromHaxe(err:String) {
 		panic(0,new Interface(TypeInfo.getId("string"),"Runtime panic, unknown goroutine, "+err+" "));
 	else
 		panic(currentGR,new Interface(TypeInfo.getId("string"),"Runtime panic, "+err+" "));
-	throw panicStackDump; // NOTE can't be recovered!
+	Console.naclWrite(panicStackDump); 
+	throw "Haxe panic"; // NOTE can't be recovered!
 }
 public static function bbi() {
 	panicFromHaxe("bad block ID (internal phi error)");
@@ -2685,8 +2763,12 @@ class GOmap {
 				return Complex.toString(a);
 			}
 			if(Std.is(a,Interface))
-				return cast(a,Interface).toString(); 
-			if(Std.is(a,GOmap)||Std.is(a,Closure)||Std.is(a,Slice)||Std.is(a,Channel)) {
+				return cast(a,Interface).toString();
+			if(Std.is(a,Slice)) 
+				return a.toString();
+			if(Std.is(a,Channel))
+				return a.toString();
+			if(Std.is(a,GOmap)||Std.is(a,Closure)) {
 				Scheduler.panicFromHaxe("haxeruntime.GOmap.makeKey() unsupported haxe type: "+a);
 				return "";
 			}

@@ -469,6 +469,7 @@ func (t *rtype) String() string {
 	}
 	l := hx.CodeInt("", "cast(_a.itemAddr(0).load().val,Pointer).len();", t)
 	if l < 6 {
+		//println("DEBUG BAD *rtype len: ", t)
 		panic("reflect.*rtype.String() internal error: *t only has length " +
 			hx.CallString("", "Std.string", 1, l))
 		return ""
@@ -594,7 +595,7 @@ func (t *rtype) Name() string {
 }
 
 func (t *rtype) ChanDir() ChanDir {
-	panic("reflect.ChanDir not yet implemented")
+	//panic("reflect.ChanDir not yet implemented")
 	if t.Kind() != Chan {
 		panic("reflect: ChanDir of non-chan type")
 	}
@@ -603,7 +604,7 @@ func (t *rtype) ChanDir() ChanDir {
 }
 
 func (t *rtype) IsVariadic() bool {
-	panic("reflect.IsVariadic not yet implemented")
+	//panic("reflect.IsVariadic not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: IsVariadic of non-func type")
 	}
@@ -617,11 +618,11 @@ func (t *rtype) Elem() Type {
 		tt := (*arrayType)(unsafe.Pointer(t))
 		return toType(tt.elem)
 	case Chan:
-		panic("reflect.Elem not yet implemented")
+		//panic("reflect.Elem not yet implemented")
 		tt := (*chanType)(unsafe.Pointer(t))
 		return toType(tt.elem)
 	case Map:
-		panic("reflect.Elem not yet implemented")
+		//panic("reflect.Elem not yet implemented")
 		tt := (*mapType)(unsafe.Pointer(t))
 		return toType(tt.elem)
 	case Ptr:
@@ -644,7 +645,7 @@ func (t *rtype) Field(i int) StructField {
 }
 
 func (t *rtype) FieldByIndex(index []int) StructField {
-	panic("reflect.FieldByIndex not yet implemented")
+	//panic("reflect.FieldByIndex not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: FieldByIndex of non-struct type")
 	}
@@ -653,7 +654,7 @@ func (t *rtype) FieldByIndex(index []int) StructField {
 }
 
 func (t *rtype) FieldByName(name string) (StructField, bool) {
-	panic("reflect.FieldByName not yet implemented")
+	//panic("reflect.FieldByName not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: FieldByName of non-struct type")
 	}
@@ -662,7 +663,7 @@ func (t *rtype) FieldByName(name string) (StructField, bool) {
 }
 
 func (t *rtype) FieldByNameFunc(match func(string) bool) (StructField, bool) {
-	panic("reflect.FieldByNameFunc not yet implemented")
+	//panic("reflect.FieldByNameFunc not yet implemented")
 	if t.Kind() != Struct {
 		panic("reflect: FieldByNameFunc of non-struct type")
 	}
@@ -680,7 +681,7 @@ func (t *rtype) In(i int) Type {
 }
 
 func (t *rtype) Key() Type {
-	panic("reflect.Key not yet implemented")
+	//panic("reflect.Key not yet implemented")
 	if t.Kind() != Map {
 		panic("reflect: Key of non-map type")
 	}
@@ -725,7 +726,7 @@ func (t *rtype) NumOut() int {
 }
 
 func (t *rtype) Out(i int) Type {
-	panic("reflect.Out not yet implemented")
+	//panic("reflect.Out not yet implemented")
 	if t.Kind() != Func {
 		panic("reflect: Out of non-func type")
 	}
@@ -814,7 +815,7 @@ type StructTag string
 // If the tag does not have the conventional format, the value
 // returned by Get is unspecified.
 func (tag StructTag) Get(key string) string {
-	panic("reflect.Get not yet implemented")
+	//panic("reflect.Get not yet implemented")
 	for tag != "" {
 		// skip leading space
 		i := 0
@@ -902,7 +903,7 @@ func (t *structType) Field(i int) (f StructField) {
 
 // FieldByIndex returns the nested field corresponding to index.
 func (t *structType) FieldByIndex(index []int) (f StructField) {
-	panic("reflect.FieldByIndex not yet implemented")
+	//panic("reflect.FieldByIndex not yet implemented")
 	f.Type = toType(&t.rtype)
 	for i, x := range index {
 		if i > 0 {
@@ -926,7 +927,7 @@ type fieldScan struct {
 // FieldByNameFunc returns the struct field with a name that satisfies the
 // match function and a boolean to indicate if the field was found.
 func (t *structType) FieldByNameFunc(match func(string) bool) (result StructField, ok bool) {
-	panic("reflect.FieldByNameFunc not yet implemented")
+	//panic("reflect.FieldByNameFunc not yet implemented")
 	// This uses the same condition that the Go language does: there must be a unique instance
 	// of the match at a given depth level. If there are multiple instances of a match at the
 	// same depth, they annihilate each other and inhibit any possible match at a lower level.
@@ -1037,7 +1038,7 @@ func (t *structType) FieldByNameFunc(match func(string) bool) (result StructFiel
 // FieldByName returns the struct field with the given name
 // and a boolean to indicate if the field was found.
 func (t *structType) FieldByName(name string) (f StructField, present bool) {
-	panic("reflect.FieldByName not yet implemented")
+	//panic("reflect.FieldByName not yet implemented")
 	// Quick check for top-level name, or struct without anonymous fields.
 	hasAnon := false
 	if name != "" {
@@ -1081,7 +1082,7 @@ func (t *rtype) ptrTo() *rtype {
 	if p := t.ptrToThis; p != nil {
 		return p
 	}
-	panic("reflect.PtrTo pointer synthesis not yet implemented")
+	//panic("reflect.PtrTo pointer synthesis not yet implemented")
 
 	// Otherwise, synthesize one.
 	// This only happens for pointers with no methods.
@@ -1110,8 +1111,8 @@ func (t *rtype) ptrTo() *rtype {
 	// Create a new ptrType starting with the description
 	// of an *unsafe.Pointer.
 	p = new(ptrType)
-	var iptr interface{} = (*unsafe.Pointer)(nil)
-	prototype := *(**ptrType)(unsafe.Pointer(&iptr))
+	var iptr = haxeInterfaceUnpack((*unsafe.Pointer)(nil)) //var iptr interface{} = (*unsafe.Pointer)(nil)
+	prototype := (*ptrType)(unsafe.Pointer(iptr.typ))      //prototype := *(**ptrType)(unsafe.Pointer(&iptr))
 	*p = *prototype
 
 	s := "*" + *t.string
@@ -1760,6 +1761,9 @@ func SliceOf(t Type) Type {
 //
 // TODO(rsc): TestArrayOf is also disabled. Re-enable.
 func arrayOf(count int, elem Type) Type {
+
+	panic("reflect.arrayOf not yet implemented (in Go or Haxe)")
+
 	typ := elem.(*rtype)
 	slice := SliceOf(elem)
 

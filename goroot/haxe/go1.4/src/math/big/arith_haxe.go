@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 // This file provides Go implementations of elementary multi-precision
 // arithmetic operations on word vectors. Needed for platforms without
 // assembly implementations of these routines.
@@ -9,7 +11,7 @@
 package big
 
 // A Word represents a single digit of a multi-precision unsigned integer.
-type Word uintptr
+type Word uint32 // uintptr
 
 const (
 	// Compute the size _S of a Word in bytes.

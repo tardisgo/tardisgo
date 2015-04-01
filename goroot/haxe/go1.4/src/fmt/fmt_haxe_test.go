@@ -414,10 +414,11 @@ var fmtTests = []struct {
 
 	// go syntax
 	{"%#v", A{1, 2, "a", []int{1, 2}}, `fmt_test.A{i:1, j:0x2, s:"a", x:[]int{1, 2}}`},
-	//{"%#v", &b, "(*uint8)(0xPTR)"}, // intermittent failure on tardisgo ... randomly byte/uint8 - TODO
+	{"%#v", &b, "(*uint8)(0xPTR)"}, // intermittent failure on tardisgo ... randomly byte/uint8 - TODO
 	//{"%#v", TestFmtInterface, "(func(*testing.T))(0xPTR)"},
 	{"%#v", TestFmtInterface, "(func(t *testing.T))(0xPTR)"}, // tardisgo replacement line
 	{"%#v", make(chan int), "(chan int)(0xPTR)"},
+	//{"%#v", make(chan int), "(chan int)(nil)"}, // tardisgo replacement line
 	{"%#v", uint64(1<<64 - 1), "0xffffffffffffffff"},
 	{"%#v", 1000000000, "1000000000"},
 	{"%#v", map[string]int{"a": 1}, `map[string]int{"a":1}`},
@@ -434,7 +435,7 @@ var fmtTests = []struct {
 	//{"%#v", &iarray, `&[4]interface {}{1, "hello", 2.5, interface {}(nil)}`},
 	{"%#v", &iarray, `&[4]interface{}{1, "hello", 2.5, interface{}(nil)}`}, // tardisgo replacement line
 	//{"%#v", map[int]byte(nil), `map[int]uint8(nil)`},
-	{"%#v", map[int]byte(nil), `map[int]byte(nil)`}, // tardisgo replacement line
+	{"%#v", map[int]byte(nil), `map[int]byte{}`}, // tardisgo replacement line
 	//{"%#v", map[int]byte{}, `map[int]uint8{}`},
 	{"%#v", map[int]byte{}, `map[int]byte{}`}, // tardisgo replacement line
 	{"%#v", "foo", `"foo"`},
