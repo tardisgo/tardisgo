@@ -122,7 +122,7 @@ The documentation is sparse at present, if there is some aspect of the system th
 
 If you transpile your own code using TARDIS Go, please report the bugs that you find here, so that they can be fixed.
 
-## Why do it at all?:
+## Why do it at all?
 The objective of this project is to enable the same [Go](http://golang.org) code to be re-deployed in  as many different execution environments as possible, thus saving development time and effort. 
 The long-term vision is to provide a framework that makes it easy to target many languages as part of this project.
 

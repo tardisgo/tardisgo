@@ -37,21 +37,37 @@ var js = `
 	 hash/adler32 hash/fnv image image/draw image/gif image/jpeg 
 `
 
-var cs = `bytes strings unicode unicode/utf8 unicode/utf16 
- math/cmplx io io/ioutil archive/zip 
-	 compress/bzip2   compress/flate   compress/lzw  compress/zlib 
- errors sort container/ring container/list container/heap`
+var cs = `bytes strings unicode unicode/utf8 unicode/utf16 debug/elf debug/gosym debug/pe debug/plan9obj 
+ hash/adler32 hash/crc32 hash/crc64 hash/fnv image/color image image/draw image/gif image/jpeg
+ math/cmplx io io/ioutil archive/zip html index/suffixarray database/sql/driver os sync/atomic 
+	 compress/bzip2   compress/flate   compress/lzw  compress/zlib flag  go/token mime 
+	  crypto/aes crypto/cipher crypto/des  crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac 
+	   crypto/md5 crypto/rand crypto/rc4 crypto/sha1  crypto/sha256 crypto/sha512 
+	  path path/filepath encoding/ascii85 encoding/base32 encoding/csv encoding/hex go/format go/scanner 
+ errors sort container/ring container/list container/heap regexp regexp/syntax  
+  net/http/internal net/mail  net/textproto net/url text/tabwriter text/scanner 
+ `
 
-var cpp = `errors sort container/ring container/list container/heap strconv 
- archive/tar  bufio 
-  compress/bzip2   compress/flate  compress/gzip  compress/lzw  compress/zlib 
- math math/cmplx unicode unicode/utf8 unicode/utf16 io io/ioutil fmt bytes strings 
+var cpp = `errors sort container/ring container/list container/heap strconv debug/elf debug/gosym 
+ hash/adler32 hash/crc32 hash/crc64 hash/fnv image/color image image/draw image/gif image/jpeg
+ archive/tar  bufio html index/suffixarray database/sql/driver debug/pe debug/plan9obj mime  
+  compress/bzip2   compress/flate  compress/gzip  compress/lzw  compress/zlib flag  go/token 
+   crypto/aes crypto/cipher crypto/des  crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac regexp regexp/syntax 
+    crypto/md5 crypto/rand crypto/rc4 crypto/sha1  crypto/sha256 crypto/sha512 go/format go/scanner 
+   path path/filepath encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex encoding/pem   
+ math math/cmplx unicode unicode/utf8 unicode/utf16 io io/ioutil fmt bytes strings os sync/atomic 
+  net/http/internal net/mail  net/textproto net/url text/tabwriter text/scanner 
 `
 
-var java = `errors sort container/ring container/list container/heap
- archive/zip  
-  compress/bzip2    compress/flate  compress/gzip  compress/lzw  compress/zlib 
- math/cmplx unicode unicode/utf8 unicode/utf16  io io/ioutil bytes strings 
+var java = `errors sort container/ring container/list container/heap mime os sync/atomic 
+ hash/adler32 hash/crc32 hash/crc64 hash/fnv image/color image image/draw image/gif image/jpeg
+ archive/zip html index/suffixarray database/sql/driver debug/gosym debug/pe debug/plan9obj  
+  compress/bzip2    compress/flate  compress/gzip  compress/lzw  compress/zlib flag 
+   crypto/aes crypto/cipher crypto/des  crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac 
+    crypto/md5 crypto/rand crypto/rc4 crypto/sha1  crypto/sha256 crypto/sha512 regexp regexp/syntax 
+   path path/filepath encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex go/token 
+ math/cmplx unicode unicode/utf8 unicode/utf16  io io/ioutil bytes strings go/format go/scanner 
+ net/http/internal net/mail  net/textproto net/url text/tabwriter text/scanner 
 `
 
 func pkgList(jumble string) []string {

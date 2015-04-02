@@ -468,11 +468,12 @@ var targets = [][][]string{
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},
-	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
-		[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
-		[]string{"time", "node", "tardis/go-fu.js"},
-	},
+	// as this mode is no longer used for testing, remove it from the "all" tests
+	//[][]string{
+	//	[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+	//	[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
+	//	[]string{"time", "node", "tardis/go-fu.js"},
+	//},
 	// Cannot automate testing for SWF so removed
 	//[][]string{
 	//	[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-swf", "tardis/go.swf"},
