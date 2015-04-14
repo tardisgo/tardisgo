@@ -73,10 +73,10 @@ The "testing" package is emulated in an ugly and part-working way, all tests are
 | go              | no code               |                                   |
 | -- ast          |                       | multiple errors                   |
 | -- build        |                       | $GOROOT/$GOPATH not set           |
-| -- doc          |                       | os.PathError, probably test-data set-up issue |
+| -- doc          |                       | os.PathError, test-data set-up & fs access during init issues |
 | -- format       | c++, c#, java, js     |                                   |
-| -- parser       |                       | os.PathError, probably test-data set-up issue |
-| -- printer      |                       | os.PathError, probably test-data set-up issue |
+| -- parser       | c++, c#, java, js     |                                   |
+| -- printer      | c++, java, js         | C# runs too slowly (even with higher limit 10->300 secs) |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- token        | c++, c#, java, js     |                                   |
 | hash            | no tests              |                                   |
@@ -146,8 +146,8 @@ The "testing" package is emulated in an ugly and part-working way, all tests are
 | text            | no code               |                                   |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- tabwriter    | c++, c#, java, js     |                                   |
-| -- template     |                       | hangs                             |
-| -- -- parse     |                       | 2 errors related to integer 1e19  |
+| -- template     |                       | hangs in init phase at exec_test.go:136 |
+| -- -- parse     | c++, c#, java, js     |                                   |
 | time            |                       | duration error and waiting for reflect.Call |
 | unicode         | c++, c#, java, js     |                                   |
 | -- utf16        | c++, c#, java, js     |                                   |

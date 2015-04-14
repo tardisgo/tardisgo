@@ -1740,7 +1740,7 @@ public static function ofFloat(v):HaxeInt64abs { // float to signed int64 (TODO 
 public static function ofUFloat(v):HaxeInt64abs { // float to un-signed int64 
 		//TODO native versions for java & cs
 		if(v<0.0){
-			Scheduler.panicFromHaxe("-ve value passed to internal haxe function ofUFloat()");
+			//Scheduler.panicFromHaxe("-ve value passed to internal haxe function ofUFloat()");
 			return make(0,0); // -ve values are invalid here, so return 0
 		} 
 		if(Math.isNaN(v)) return make(0x80000000,0); // largest -ve number is returned by Go in this situation
@@ -2730,7 +2730,7 @@ public static inline function wrapnilchk(p:Pointer):Pointer {
 	pogo.WriteAsClass("GOmap", `
 
 class GOmap {
-	// TODO a more sophisticated (and hopefully faster) version of this code 
+	// TODO write a more sophisticated (and hopefully faster) version of this code 
 	// TODO in Haxe, the keys can be Int, String or "object" (by reference)
 	// TODO there is also a very sophisticated go implementation in runtime
 
@@ -2772,8 +2772,15 @@ class GOmap {
 				Scheduler.panicFromHaxe("haxeruntime.GOmap.makeKey() unsupported haxe type: "+a);
 				return "";
 			}
-			return a.toString(); // must be an Int64
+			return GOint64.toString(a); // must be an Int64
 		}
+		#if (cpp || cs)	
+			// in cpp & cs, Std.string(1.9999999999999998) => "2"
+			// TODO consider how to deal with this issue in the compound types above
+			if(Std.is(a,Float)) {
+				return GOint64.toString(Go_haxegoruntime_FFloat64bits.hx(a));
+			}
+		#end
 		return Std.string(a);
 	}
 

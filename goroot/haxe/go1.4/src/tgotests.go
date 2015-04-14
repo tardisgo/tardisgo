@@ -35,6 +35,7 @@ var js = `
 	 regexp  strconv  crypto/aes 
 	 compress/bzip2 compress/gzip compress/lzw compress/zlib debug/elf 
 	 hash/adler32 hash/fnv image image/draw image/gif image/jpeg 
+	 text/template/parse go/printer go/parser 
 `
 
 var cs = `bytes strings unicode unicode/utf8 unicode/utf16 debug/elf debug/gosym debug/pe debug/plan9obj 
@@ -46,6 +47,7 @@ var cs = `bytes strings unicode unicode/utf8 unicode/utf16 debug/elf debug/gosym
 	  path path/filepath encoding/ascii85 encoding/base32 encoding/csv encoding/hex go/format go/scanner 
  errors sort container/ring container/list container/heap regexp regexp/syntax  
   net/http/internal net/mail  net/textproto net/url text/tabwriter text/scanner 
+  text/template/parse go/parser 
  `
 
 var cpp = `errors sort container/ring container/list container/heap strconv debug/elf debug/gosym 
@@ -57,6 +59,7 @@ var cpp = `errors sort container/ring container/list container/heap strconv debu
    path path/filepath encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex encoding/pem   
  math math/cmplx unicode unicode/utf8 unicode/utf16 io io/ioutil fmt bytes strings os sync/atomic 
   net/http/internal net/mail  net/textproto net/url text/tabwriter text/scanner 
+  text/template/parse go/printer go/parser 
 `
 
 var java = `errors sort container/ring container/list container/heap mime os sync/atomic 
@@ -68,6 +71,7 @@ var java = `errors sort container/ring container/list container/heap mime os syn
    path path/filepath encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex go/token 
  math/cmplx unicode unicode/utf8 unicode/utf16  io io/ioutil bytes strings go/format go/scanner 
  net/http/internal net/mail  net/textproto net/url text/tabwriter text/scanner 
+ text/template/parse go/printer go/parser 
 `
 
 func pkgList(jumble string) []string {

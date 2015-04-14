@@ -15,7 +15,7 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"haxegoruntime"
+	//"haxegoruntime"
 
 	"github.com/tardisgo/tardisgo/haxe/hx"
 )
@@ -1884,9 +1884,11 @@ func main() {
 	//fmt.Println(hx.GetFloat("", "Object.MinFloat64"))
 }
 
+/*
 func testTypes() {
 	for id := 0; id < len(haxegoruntime.TypeTable); id++ {
 		r := unsafe.Pointer(haxegoruntime.TypeTable[id])
 		fmt.Println("DEBUG type", id, r)
 	}
 }
+*/

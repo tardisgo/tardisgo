@@ -273,7 +273,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			return register + "=GOint64.ofInt(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Float":
 			if destType.Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
-				return register + "=GOint64.ofFloat(" + l.IndirectValue(v, errorInfo) + ");" // same as signed
+				return register + "=GOint64.ofUFloat(" + l.IndirectValue(v, errorInfo) + ");" 
 			}
 			return register + "=GOint64.ofFloat(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Dynamic": // uintptr
