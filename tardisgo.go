@@ -351,18 +351,21 @@ func doTestable(args []string) error {
 		switch *allFlag {
 		case "": // NoOp
 		case "all":
-			for _, dir := range dirs {
-				err := os.RemoveAll(dir)
-				if err != nil {
-					fmt.Println("Error deleting existing '" + dir + "' directory: " + err.Error())
-				}
-			}
+			//for _, dir := range dirs {
+			//	err := os.RemoveAll(dir)
+			//	if err != nil {
+			//		fmt.Println("Error deleting existing '" + dir + "' directory: " + err.Error())
+			//	}
+			//}
 			for _, cmd := range targets {
 				go doTarget(cmd, results)
 			}
 			for _ = range targets {
 				r := <-results
 				fmt.Println(r.output)
+				if r.err != nil || len(strings.TrimSpace(r.output)) == 0 {
+					os.Exit(1) // exit with an error if the test fails
+				}
 				r.backChan <- true
 			}
 
@@ -389,6 +392,9 @@ func doTestable(args []string) error {
 			for _ = range mathCmds {
 				r := <-results
 				fmt.Println(r.output)
+				if r.err != nil {
+					os.Exit(1) // exit with an error if the test fails
+				}
 				r.backChan <- true
 			}
 
@@ -445,7 +451,7 @@ func doTestable(args []string) error {
 	return nil
 }
 
-var dirs = []string{"tardis/cpp", "tardis/java", "tardis/cs" /*, "tardis/php"*/}
+//var dirs = []string{"tardis/cpp", "tardis/java", "tardis/cs" /*, "tardis/php"*/}
 
 var targets = [][][]string{
 	[][]string{

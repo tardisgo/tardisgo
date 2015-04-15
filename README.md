@@ -60,7 +60,7 @@ haxe -main tardis.Go -cp tardis -D fullunsafe -js tardis/go-fu.js
 node < tardis/go-fu.js
 ```
 
-While on the subject of JS, the closure compiler seems to work, but not using the "ADVANCED_OPTIMIZATIONS" option.
+While on the subject of JS, the closure compiler seems to work, but only using the "SIMPLE_OPTIMIZATIONS" option.
 
 The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/a.txt" thus (for example in JS):
 ```
@@ -75,7 +75,7 @@ To load a zipped file system (very slow to un-zip, but useful for testing) use g
 and include 
 `-resource myfs.zip` on the haxe command line.
 
-To add Go build tags, use -tags 'name1 name2'. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
+To add Go build tags, use the "-tags 'name1 name2'" tardisgo compilation flag. Note that particular Go build tags are required when compiling for OpenFL using the [pre-built Haxe API definitions](https://github.com/tardisgo/gohaxelib). 
 
 Use the "-debug" tardisgo compilation flag to instrument the code and add automated comments to the Haxe. When you experience a panic in this mode the latest Go source code line information and local variables appears in the stack dump. For the C++ & Neko (--interp) targets, a very simple debugger is also available by using the "-D godebug" Haxe flag, for example to use it in C++ type:
 ```
@@ -86,12 +86,14 @@ haxe -main tardis.Go -cp tardis -dce full -D godebug -cpp tardis/cpp
 To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). 
 
 To run cross-target command-line tests as quickly as possible, the "-haxe X" flag concurrently runs the Haxe compiler and executes the resulting code as follows:
-- "-haxe all" - all supported targets 
-- "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview)
-- "-haxe interp" - only runs the haxe interpreter (for automated testing, exits with an error if one occurs)
+- "-haxe all" - all supported targets (C++, C#, Java, JavaScript)
 - "-haxe js" - only compiles and runs nodeJS (for automated testing, exits with an error if one occurs)
 - "-haxe jsfu" - only compiles (-D fullunsafe) and runs nodeJS (for automated testing, exits with an error if one occurs)
 - "-haxe cpp" - only compiles and runs C++ (for automated testing, exits with an error if one occurs)
+- "-haxe cs" - only compiles and runs C# (for automated testing, exits with an error if one occurs)
+- "-haxe java" - only compiles and runs Java (for automated testing, exits with an error if one occurs)
+- "-haxe math" - only runs C++ and JS with the -D fullunsafe haxe flag (using JS dataview)
+- "-haxe interp" - only runs the haxe interpreter (for automated testing, exits with an error if one occurs)
 
 Compiler output is suppressed and results appear in the order they complete, with an execution time, for example:
 ```
@@ -106,7 +108,7 @@ Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 ev
 
 ## Unsupported Haxe targets: ActionScript, PHP, Python and Neko
 
-The nature of ActionScript/Flash means that it is not possible to run automated tests. 
+The nature of ActionScript/Flash means that it is not possible to run automated tests, although it seems to be a reliable target. 
 
 The PHP, Python and Neko targets may work to varying degress, but are not currently reliable enough to permit automated testing. 
 
