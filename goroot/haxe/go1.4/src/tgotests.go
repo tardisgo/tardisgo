@@ -31,18 +31,17 @@ var allList = []string{
 
 var js1 = "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar archive/zip bufio
-	 compress/bzip2 compress/flate compress/gzip compress/lzw compress/zlib
-	 debug/elf debug/gosym debug/pe debug/plan9obj encoding/base64  encoding/pem fmt
-	 go/format go/parser go/printer  image image/draw image/gif image/jpeg io/ioutil
-	 math mime net/http/fcgi  os path/filepath regexp  strconv
+ compress/bzip2 compress/flate compress/gzip compress/lzw compress/zlib
+ debug/elf debug/gosym debug/pe debug/plan9obj encoding/base64  encoding/pem fmt
+ go/format go/parser go/printer  image image/draw image/gif image/jpeg io/ioutil
+ math mime net/http/fcgi  os path/filepath regexp  strconv
 `
 
 var cs = ` 
  archive/zip compress/bzip2 compress/flate compress/lzw compress/zlib  crypto/x509
  debug/elf debug/gosym debug/pe debug/plan9obj
- go/format go/parser go/scanner
-  image image/draw image/gif image/jpeg io/ioutil mime os
-	 path/filepath regexp
+ go/format go/parser go/scanner image image/draw image/gif image/jpeg io/ioutil mime os
+ path/filepath regexp
 `
 
 var cpp = ` 

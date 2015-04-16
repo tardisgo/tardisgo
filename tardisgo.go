@@ -525,13 +525,11 @@ func doTarget(cl [][]string, results chan resChan) {
 		} else {
 			_, err := exec.LookPath(exe)
 			if err != nil {
-				switch exe {
-				case "node":
-					exe = "nodejs" // for Ubuntu
-				default:
-					res += "TARDISgo error - executable not found: " + exe + "\n"
-					exe = "" // nothing to execute
-				}
+				res += "TARDISgo error - executable not found: " + exe + "\n"
+				exe = "" // nothing to execute
+			}
+			if c[1] == "node" && runtime.GOOS == "linux" {
+				exe = "nodejs" // for Ubuntu
 			}
 			if (exe == "haxe" || (exe == "time" && c[1] == "haxe")) && LoadTestZipFS {
 				c = append(c, "-resource")
