@@ -2822,7 +2822,11 @@ class GOmap {
 	}
 
 	public function range():GOmapRange {
-		return new GOmapRange(baseMap.keys(),this);
+		var keys = new Array<String>();
+		var k = baseMap.keys(); // in C# and Java, this may not work if new items are added to the map
+		while(k.hasNext()) 
+			keys.push(k.next());
+		return new GOmapRange(keys,this);
 	}
 
 }
@@ -2830,18 +2834,18 @@ class GOmap {
 	pogo.WriteAsClass("GOmapRange", `
 
 class GOmapRange {
-	private var k:Iterator<String>;
+	private var k:Array<String>;
 	private var m:GOmap;
 
-	public function new(kv:Iterator<String>, mv:GOmap){
+	public function new(kv:Array<String>, mv:GOmap){
 		k=kv;
 		m=mv;
 	}
 
 	public function next():{r0:Bool,r1:Dynamic,r2:Dynamic} {
-		var _hn:Bool=k.hasNext();
+		var _hn:Bool=k.length>0;
 		if(_hn){
-			var _nxt=k.next();
+			var _nxt=k.pop();
 			if(m.baseMap.exists(_nxt))
 				return {r0:true,r1:m.baseMap.get(_nxt).key,r2:m.baseMap.get(_nxt).val};
 			else

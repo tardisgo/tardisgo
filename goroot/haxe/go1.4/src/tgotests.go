@@ -16,47 +16,46 @@ import (
 
 // space required before and after package names
 
-// time tardisgo -haxe all -test bytes container/heap container/list container/ring crypto/aes crypto/cipher crypto/des crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 database/sql/driver encoding/ascii85 encoding/base32 encoding/csv encoding/hex errors flag
+// the allList only contains package tests that pass for all 4 targets and do not read any files
+// for speed of compilation, they are grouped together into as large sets as will work
 var allList = []string{
 	"bytes container/heap container/list container/ring ",
 	"crypto/aes crypto/cipher crypto/des crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac " +
 		"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 ",
-	"database/sql/driver encoding/ascii85 encoding/base32 encoding/csv encoding/hex errors flag",
+	"database/sql/driver encoding/ascii85 encoding/base32 encoding/csv encoding/hex errors flag ",
 	"go/scanner go/token hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
 	"index/suffixarray io math/cmplx net/http/internal net/mail net/textproto net/url path ",
-	"regexp/syntax sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
+	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
 	"unicode unicode/utf16 unicode/utf8 ",
 }
 
 var js1 = "crypto/x509" //runtime very long at 30+ mins
-var js = ` archive/tar archive/zip bufio 	
-	 compress/bzip2 compress/flate compress/gzip compress/lzw compress/zlib	 
+var js = ` archive/tar archive/zip bufio
+	 compress/bzip2 compress/flate compress/gzip compress/lzw compress/zlib
 	 debug/elf debug/gosym debug/pe debug/plan9obj encoding/base64  encoding/pem fmt
-	 go/format go/parser go/printer  image image/draw image/gif image/jpeg io/ioutil  	
-	 math mime net/http/fcgi  os path/filepath regexp  strconv  
+	 go/format go/parser go/printer  image image/draw image/gif image/jpeg io/ioutil
+	 math mime net/http/fcgi  os path/filepath regexp  strconv
 `
 
-// TODO reorder list below
-var cs = ` debug/elf debug/gosym debug/pe debug/plan9obj
-  image image/draw image/gif image/jpeg
- io/ioutil archive/zip  os 	 compress/bzip2   compress/flate   compress/lzw  compress/zlib mime
- crypto/x509	 path/filepath go/format go/scanner regexp  go/parser
- `
-
-// TODO reorder list below
-var cpp = ` strconv debug/elf debug/gosym
-  image image/draw image/gif image/jpeg
- archive/tar  bufio  debug/pe debug/plan9obj mime
-  compress/bzip2   compress/flate  compress/gzip  compress/lzw  compress/zlib 
-    regexp  go/format path/filepath  encoding/base64 encoding/pem
- math  io/ioutil fmt  os  go/printer go/parser archive/zip
+var cs = ` 
+ archive/zip compress/bzip2 compress/flate compress/lzw compress/zlib  crypto/x509
+ debug/elf debug/gosym debug/pe debug/plan9obj
+ go/format go/parser go/scanner
+  image image/draw image/gif image/jpeg io/ioutil mime os
+	 path/filepath regexp
 `
 
-// TODO reorder list below
-var java = ` mime os  image image/draw image/gif image/jpeg
- archive/zip  debug/gosym debug/pe debug/plan9obj
-  compress/bzip2    compress/flate compress/lzw  compress/zlib flag
-   regexp path/filepath encoding/base64 io/ioutil go/format go/printer go/parser
+var cpp = ` 
+  archive/tar archive/zip bufio compress/bzip2 compress/flate compress/gzip compress/lzw compress/zlib 
+  debug/elf debug/gosym debug/pe debug/plan9obj encoding/base64 encoding/pem fmt 
+  go/format go/parser go/printer image image/draw image/gif image/jpeg io/ioutil 
+  math mime os path/filepath regexp strconv
+`
+
+var java = ` 
+ archive/zip compress/bzip2 compress/flate compress/lzw compress/zlib 
+ debug/gosym debug/pe debug/plan9obj encoding/base64 flag go/format go/parser go/printer 
+ image image/draw image/gif image/jpeg io/ioutil mime os path/filepath regexp
 `
 
 func pkgList(jumble string) []string {
@@ -69,6 +68,7 @@ func pkgList(jumble string) []string {
 		}
 	}
 	sort.Strings(edited)
+	//println("DEBUG sorted list: ", strings.Join(edited, " "))
 	return edited
 }
 
@@ -117,11 +117,11 @@ type params struct {
 	pkg []string
 }
 
-var parallelism = runtime.NumCPU()
+var parallelism = 1 + runtime.NumCPU()/2 // control cpu usage here
 
 var limit = make(chan params)
 
-var results = make(chan resChan)
+var results = make(chan resChan, parallelism)
 
 func limiter() {
 	for {
@@ -148,14 +148,14 @@ func main() {
 		}
 	}()
 
-	go limiter() // need this in case only 1 cpu
-	for pll := 1; pll < parallelism/2; pll++ {
+	go limiter()                               // need this in case parallism == 1
+	for pll := 1; pll < parallelism/2; pll++ { // the "all" option runs 4 target tests in parallel
 		go limiter()
 	}
 	for _, ap := range allList {
 		limit <- params{"all", pkgList(ap)}
 	}
-	for pll := parallelism / 2; pll < parallelism; pll++ {
+	for pll := parallelism / 2; pll < parallelism; pll++ { // other options run 1 test each
 		go limiter()
 	}
 	for _, pkg := range jsl1 { //very long js tests 1st

@@ -131,7 +131,7 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | reflect         |                       | partially implemenented - 1st error: invalid function reference |
 | regexp          | c++, c#, java, js (*) |                                   |
 | -- syntax       | c++, c#, java, js     |                                   |
-| runtime         |                       | some tests pass, NaN Map key handled differently, Java: map err |
+| runtime         | (c++, c#, java, js)   | only a sub-set of tests pass, NaN Map key handled differently |
 | -- cgo          | -                     | unsupported                       |
 | -- debug        | -                     | unsupported                       |
 | -- pprof        | -                     | unsupported                       |
