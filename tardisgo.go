@@ -528,8 +528,8 @@ func doTarget(cl [][]string, results chan resChan) {
 				res += "TARDISgo error - executable not found: " + exe + "\n"
 				exe = "" // nothing to execute
 			}
-			if c[1] == "node" && runtime.GOOS == "linux" {
-				exe = "nodejs" // for Ubuntu
+			if exe == "time" && c[1] == "node" && runtime.GOOS == "linux" {
+				c[1] = "nodejs" // for Ubuntu
 			}
 			if (exe == "haxe" || (exe == "time" && c[1] == "haxe")) && LoadTestZipFS {
 				c = append(c, "-resource")
