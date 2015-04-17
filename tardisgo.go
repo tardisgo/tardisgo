@@ -26,6 +26,7 @@ import (
 	"golang.org/x/tools/go/loader"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/interp"
+	"golang.org/x/tools/go/ssa/ssautil"
 	"golang.org/x/tools/go/types"
 
 	// TARDIS Go additions
@@ -35,6 +36,7 @@ import (
 	"github.com/tardisgo/tardisgo/pogo"
 )
 
+/*
 var buildFlag = flag.String("build", "", `Options controlling the SSA builder.
 The value is a sequence of zero or more of these letters:
 C	perform sanity [C]hecking of the SSA form.
@@ -46,6 +48,7 @@ G	use binary object files from gc to provide imports (no code).
 L	build distinct packages seria[L]ly instead of in parallel.
 N	build [N]aive SSA form: don't replace local loads/stores with registers.
 `)
+*/
 
 var testFlag = flag.Bool("test", false, "Loads test code (*_test.go) for imported packages.")
 var LoadTestZipFS = false
@@ -66,6 +69,8 @@ var debugFlag = flag.Bool("debug", false, "Instrument the code to enable debuggi
 var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
 var buidTags = flag.String("tags", "", "build tags separated by spaces")
 var tgoroot = flag.String("tgoroot", "", "set goroot to the given value")
+
+var modeFlag = ssa.BuilderModeFlag(flag.CommandLine, "build", 0)
 
 // TODO
 //var traceFlag = flag.Bool("v", false, "Verbose compiler mode (including files written)")
@@ -130,8 +135,7 @@ func doMain() error {
 func doTestable(args []string) error {
 
 	conf := loader.Config{
-		Build:            &build.Default,
-		ImportFromBinary: false,
+		Build: &build.Default,
 	}
 
 	// TODO(adonovan): make go/types choose its default Sizes from
@@ -156,30 +160,30 @@ func doTestable(args []string) error {
 	}
 
 	var mode ssa.BuilderMode
-	for _, c := range *buildFlag {
-		switch c {
-		case 'D':
-			mode |= ssa.GlobalDebug
-		case 'P':
-			mode |= ssa.PrintPackages
-		case 'F':
-			mode |= ssa.PrintFunctions
-		case 'S':
-			mode |= ssa.LogSource | ssa.BuildSerially
-		case 'C':
-			mode |= ssa.SanityCheckFunctions
-		case 'N':
-			mode |= ssa.NaiveForm
-		case 'G':
-			conf.ImportFromBinary = true
-		case 'L':
-			mode |= ssa.BuildSerially
-		case 'I':
-			mode |= ssa.BareInits
-		default:
-			return fmt.Errorf("unknown -build option: '%c'", c)
+	/*
+		for _, c := range *buildFlag {
+			switch c {
+			case 'D':
+				mode |= ssa.GlobalDebug
+			case 'P':
+				mode |= ssa.PrintPackages
+			case 'F':
+				mode |= ssa.PrintFunctions
+			case 'S':
+				mode |= ssa.LogSource | ssa.BuildSerially
+			case 'C':
+				mode |= ssa.SanityCheckFunctions
+			case 'N':
+				mode |= ssa.NaiveForm
+			case 'L':
+				mode |= ssa.BuildSerially
+			case 'I':
+				mode |= ssa.BareInits
+			default:
+				return fmt.Errorf("unknown -build option: '%c'", c)
+			}
 		}
-	}
+	*/
 
 	// TARDIS go addition
 	if *debugFlag {
@@ -256,7 +260,8 @@ func doTestable(args []string) error {
 	}
 
 	// Create and build SSA-form program representation.
-	prog := ssa.Create(iprog, mode)
+	*modeFlag |= mode
+	prog := ssautil.CreateProgram(iprog, *modeFlag)
 
 	prog.BuildAll()
 

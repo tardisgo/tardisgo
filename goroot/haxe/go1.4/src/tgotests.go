@@ -44,7 +44,7 @@ var allList = []string{
 
 var js1 = "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar 
- debug/elf   encoding/pem fmt
+ debug/elf encoding/pem fmt
  math net/http/fcgi  strconv
 `
 
