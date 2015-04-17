@@ -14,13 +14,13 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | archive         | no code               |                                   |
 | -- tar          | c++, js           (*) | c#/java: issue relating to incorrect map handling in reflect |
 | -- zip          | c++, c#, java, js (*) | c++ test takes >15 mins, optimization TODO |
-| bufio           | c++, js               | c#/java: endless loop in ReadByte?     |
+| bufio           | c++, c#, java, js     |                                   |
 | builtin         | no tests              | all built-in functions are implemented |
 | bytes           | c++, c#, java, js     |                                   |
 | compress        | no code               |                                   |
 | -- bzip2        | c++, c#, java, js (*) |                                   |
 | -- flate        | c++, c#, java, js (*) |                                   |
-| -- gzip         | c++, js           (*) | c#/Java: Copy hung                |
+| -- gzip         | c++, c#, java, js (*) |                                   |
 | -- lzw          | c++, c#, java, js (*) |                                   |
 | -- zlib         | c++, c#, java, js (*) |                                   |
 | container       | no code               |                                   |
@@ -60,7 +60,7 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- ascii85      | c++, c#, java, js     |                                   |
 | -- asn1         |                       | 2 errors, probably both UTF-8 encoding related |
 | -- base32       | c++, c#, java, js     |                                   |
-| -- base64       | c++, java, js         | c#: timeout                       |
+| -- base64       | c++, c#, java, js     |                                   |
 | -- binary       |                       | reflect: unknown method using value from unexported field |
 | -- csv          | c++, c#, java, js     |                                   |
 | -- gob          |                       | fatal error: stack overflow       |
@@ -78,7 +78,7 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- doc          |                   (*) | os.PathError, test-data set-up & fs access during init issues |
 | -- format       | c++, c#, java, js (*) |                                   |
 | -- parser       | c++, c#, java, js (*) |                                   |
-| -- printer      | c++, java, js     (*) | C# runs too slowly (even with higher limit 10->300 secs) |
+| -- printer      | c++, c#, java, js (*) |                                   |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- token        | c++, c#, java, js     |                                   |
 | hash            | no tests              |                                   |
@@ -128,7 +128,7 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- user         | -                     | tests run with (correct) errors   |
 | path            | c++, c#, java, js     |                                   |
 | -- filepath     | c++, c#, java, js (*) |                                   |
-| reflect         |                       | partially implemenented - 1st error: invalid function reference |
+| reflect         |                       | partially implemented - 1st error: invalid function reference |
 | regexp          | c++, c#, java, js (*) |                                   |
 | -- syntax       | c++, c#, java, js     |                                   |
 | runtime         | (c++, c#, java, js)   | only a sub-set of tests pass, NaN Map key handled differently |
@@ -148,9 +148,9 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | text            | no code               |                                   |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- tabwriter    | c++, c#, java, js     |                                   |
-| -- template     |                   (*) | hangs in init phase at exec_test.go:136 |
+| -- template     |                   (*) | waiting for reflect.Call          |
 | -- -- parse     | c++, c#, java, js     |                                   |
-| time            |                   (*) | duration error and waiting for reflect.Call |
+| time            |                   (*) | waiting for reflect.Call          |
 | unicode         | c++, c#, java, js     |                                   |
 | -- utf16        | c++, c#, java, js     |                                   |
 | -- utf8         | c++, c#, java, js     |                                   |

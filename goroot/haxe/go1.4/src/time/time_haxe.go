@@ -564,7 +564,7 @@ func fmtFrac(buf []byte, v uint64, prec int) (nw int, nv uint64) {
 
 // fmtInt formats v into the tail of buf.
 // It returns the index where the output begins.
-func fmtInt(buf []byte, v uint64) int {
+func fmtInt(buf []byte, v uint64) int { 
 	w := len(buf)
 	if v == 0 {
 		w--

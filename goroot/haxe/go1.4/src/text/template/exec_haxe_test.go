@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package template
 
 import (
@@ -98,42 +100,46 @@ func (w *W) Error() string {
 	return fmt.Sprintf("[%d]", w.k)
 }
 
-var tVal = &T{
-	True:   true,
-	I:      17,
-	U16:    16,
-	X:      "x",
-	U:      &U{"v"},
-	V0:     V{6666},
-	V1:     &V{7777}, // leave V2 as nil
-	W0:     W{888},
-	W1:     &W{999}, // leave W2 as nil
-	SI:     []int{3, 4, 5},
-	SB:     []bool{true, false},
-	MSI:    map[string]int{"one": 1, "two": 2, "three": 3},
-	MSIone: map[string]int{"one": 1},
-	MXI:    map[interface{}]int{"one": 1},
-	MII:    map[int]int{1: 1},
-	SMSI: []map[string]int{
-		{"one": 1, "two": 2},
-		{"eleven": 11, "twelve": 12},
-	},
-	Empty1:            3,
-	Empty2:            "empty2",
-	Empty3:            []int{7, 8},
-	Empty4:            &U{"UinEmpty"},
-	NonEmptyInterface: new(T),
-	Str:               bytes.NewBuffer([]byte("foozle")),
-	Err:               errors.New("erroozle"),
-	PI:                newInt(23),
-	PS:                newString("a string"),
-	PSI:               newIntSlice(21, 22, 23),
-	BinaryFunc:        func(a, b string) string { return fmt.Sprintf("[%s=%s]", a, b) },
-	VariadicFunc:      func(s ...string) string { return fmt.Sprint("<", strings.Join(s, "+"), ">") },
-	VariadicFuncInt:   func(a int, s ...string) string { return fmt.Sprint(a, "=<", strings.Join(s, "+"), ">") },
-	NilOKFunc:         func(s *int) bool { return s == nil },
-	ErrFunc:           func() (string, error) { return "bla", nil },
-	Tmpl:              Must(New("x").Parse("test template")), // "x" is the value of .X
+var tVal = &T{}
+
+func tValSetup() { // must be done after init in Haxe, because "Tmpl:" entry reads from the file system
+	tVal = &T{
+		True:   true,
+		I:      17,
+		U16:    16,
+		X:      "x",
+		U:      &U{"v"},
+		V0:     V{6666},
+		V1:     &V{7777}, // leave V2 as nil
+		W0:     W{888},
+		W1:     &W{999}, // leave W2 as nil
+		SI:     []int{3, 4, 5},
+		SB:     []bool{true, false},
+		MSI:    map[string]int{"one": 1, "two": 2, "three": 3},
+		MSIone: map[string]int{"one": 1},
+		MXI:    map[interface{}]int{"one": 1},
+		MII:    map[int]int{1: 1},
+		SMSI: []map[string]int{
+			{"one": 1, "two": 2},
+			{"eleven": 11, "twelve": 12},
+		},
+		Empty1:            3,
+		Empty2:            "empty2",
+		Empty3:            []int{7, 8},
+		Empty4:            &U{"UinEmpty"},
+		NonEmptyInterface: new(T),
+		Str:               bytes.NewBuffer([]byte("foozle")),
+		Err:               errors.New("erroozle"),
+		PI:                newInt(23),
+		PS:                newString("a string"),
+		PSI:               newIntSlice(21, 22, 23),
+		BinaryFunc:        func(a, b string) string { return fmt.Sprintf("[%s=%s]", a, b) },
+		VariadicFunc:      func(s ...string) string { return fmt.Sprint("<", strings.Join(s, "+"), ">") },
+		VariadicFuncInt:   func(a int, s ...string) string { return fmt.Sprint(a, "=<", strings.Join(s, "+"), ">") },
+		NilOKFunc:         func(s *int) bool { return s == nil },
+		ErrFunc:           func() (string, error) { return "bla", nil },
+		Tmpl:              Must(New("x").Parse("test template")), // "x" is the value of .X
+	}
 }
 
 // A non-empty interface.
@@ -648,6 +654,7 @@ func testExecute(execTests []execTest, template *Template, t *testing.T) {
 }
 
 func TestExecute(t *testing.T) {
+	tValSetup()
 	testExecute(execTests, nil, t)
 }
 

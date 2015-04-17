@@ -16,27 +16,39 @@ import ( // import is an Haxe addition
 // A negative or zero duration causes Sleep to return immediately.
 var sleeping = false     // for testing only see interrupt()
 func Sleep(d Duration) { // function body is an Haxe addition
-	target := hx.CallFloat("", "haxe.Timer.stamp", 0)
-	target += float64(d.Nanoseconds()) / 1000000000
+	target := runtimeNano()
+	target += d.Nanoseconds()
 	sleeping = true
 	haxeWait(target, &sleeping)
 }
 
-func haxeWait(target float64, whileTrue *bool) {
+func haxeWait(target int64, whileTrue *bool) {
 	// TODO(haxe): optimize to use the Timer call-back methods for the targets - flash, flash8, java, js, python
-loop:
-	runtime.Gosched()
-	now := hx.CallFloat("", "haxe.Timer.stamp", 0)
-	//println("DEBUG haxeWait now, target, *whileTrue = ", now, target, *whileTrue)
-	if now < target && *whileTrue {
-		goto loop
+	now := runtimeNano()
+	//println("DEBUG haxeWait:start now, target, *whileTrue diff = ", now, target, *whileTrue, target-now)
+	for now < target && *whileTrue {
+		for wait := int((target - now) / 10000000); wait > 0; wait-- { // one wait per 10 miliseconds
+			runtime.Gosched() // let other code run
+		}
+		now = runtimeNano()
+		//println("DEBUG haxeWait:loop now, target, *whileTrue diff = ", now, target, *whileTrue, target-now)
 	}
 }
 
 // runtimeNano returns the current value of the runtime clock in nanoseconds.
 func runtimeNano() int64 { // function body is an Haxe addition
-	return int64(hx.CallFloat("", "haxe.Timer.stamp", 0) * 1000000000)
+	fv := hx.CallFloat("", "haxe.Timer.stamp", 0)
+	// cs and maybe Java have stamp values too large for int64, so set a baseline
+	if !runtimeNanoHaveBase {
+		runtimeNanoBase = float64(uint64(fv))
+		runtimeNanoHaveBase = true
+	}
+	fv -= runtimeNanoBase
+	return int64(fv * 1000000000)
 }
+
+var runtimeNanoHaveBase bool
+var runtimeNanoBase float64
 
 // Interface to timers implemented in package runtime.
 // Must be in sync with ../runtime/runtime.h:/^struct.Timer$
@@ -56,9 +68,14 @@ type runtimeTimer struct {
 // zero because of an overflow, MaxInt64 is returned.
 func when(d Duration) int64 {
 	if d <= 0 {
+		//println("DEBUG -ve duration")
 		return runtimeNano()
 	}
-	t := runtimeNano() + int64(d)
+	t := runtimeNano()
+	//println("DEBUG when runtimeNano()", t)
+	//println("DEBUG when duration", int64(d))
+	t += int64(d)
+	//println("DEBUG when +duration", t)
 	if t < 0 {
 		t = 1<<63 - 1 // math.MaxInt64
 	}
@@ -67,7 +84,7 @@ func when(d Duration) int64 {
 
 func haxeTimer(rt *runtimeTimer) {
 again:
-	haxeWait(float64(rt.when)/1000000000, &rt.haxeRuning) // rt.when is in nanoseconds, haxe works in seconds
+	haxeWait(rt.when, &rt.haxeRuning) // rt.when is in nanoseconds
 	if rt.haxeRuning {
 		rt.f(rt.arg, rt.seq)
 		rt.seq++

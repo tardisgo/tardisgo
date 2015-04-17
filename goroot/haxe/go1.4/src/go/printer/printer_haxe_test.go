@@ -170,8 +170,8 @@ func check(t *testing.T, source, golden string, mode checkMode) {
 
 	// wait with timeout
 	select {
-		// TARDISGO Haxe 10->300 seconds for timeout (CS worst)
-	case <-time.After(300 * time.Second): // plenty of a safety margin, even for very slow machines
+		// TARDISGO Haxe 10->100 seconds for timeout 
+	case <-time.After(100 * time.Second): // plenty of a safety margin, even for very slow machines
 		// test running past time out
 		t.Errorf("%s: running too slowly", source)
 	case <-cc:

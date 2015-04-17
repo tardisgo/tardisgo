@@ -1833,7 +1833,11 @@ public static function div(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt6
 public static function mod(x:HaxeInt64abs,y:HaxeInt64abs,isSigned:Bool):HaxeInt64abs {
 	y=checkDiv(x,y,isSigned);
 	if(HaxeInt64Typedef.compare(y,HaxeInt64Typedef.ofInt(1))==0) return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));
-	return new HaxeInt64abs(HaxeInt64Typedef.mod(x,y));
+	if(isSigned)
+		return new HaxeInt64abs(HaxeInt64Typedef.mod(x,y));
+	else {
+		return new HaxeInt64abs(sub(x,mul(div(x,y,false),y)));
+	}
 }
 public static inline function mul(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.mul(x,y));
