@@ -23,8 +23,8 @@ var allList = []string{
 	"bufio bytes container/heap container/list container/ring ",
 	"crypto/aes crypto/cipher crypto/des crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac " +
 		"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 ",
-	"debug/gosym database/sql/driver encoding/ascii85 encoding/base32 encoding/base64 " +
-		"encoding/csv encoding/hex errors flag ",
+	"database/sql/driver debug/gosym",
+	"encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex errors flag ",
 	"go/scanner go/token hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
 	"index/suffixarray io math/cmplx net/http/internal net/mail net/textproto net/url path ",
 	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
@@ -153,17 +153,17 @@ func main() {
 	}()
 
 	go limiter()                               // need this in case parallism == 1
-	for pll := 0; pll < parallelism/2; pll++ { // the "all" option runs 4 target tests in parallel
+	for pll := 1; pll < parallelism/2; pll++ { // the "all" option runs 4 target tests in parallel
 		go limiter()
 	}
 	for _, ap := range allList {
 		limit <- params{"all", pkgList(ap)}
 	}
-	for _, pkg := range jsl1 { //very long js tests 1st, with lower contention
-		limit <- params{"js", []string{pkg}}
-	}
 	for pll := parallelism / 2; pll < parallelism; pll++ { // other options run 1 test each
 		go limiter()
+	}
+	for _, pkg := range jsl1 { //very long js tests 1st
+		limit <- params{"js", []string{pkg}}
 	}
 	for _, pkg := range cppl {
 		limit <- params{"cpp", []string{pkg}}
