@@ -4,7 +4,7 @@ haxe:
 
 install: 
   - ./goinstall.sh
-  - . ~/.bashrc
+  - source ~/.bashrc
   - go get -d -v . 
   - go install -v .
 
