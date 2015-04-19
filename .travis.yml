@@ -4,6 +4,8 @@ haxe:
 
 install: 
   - ./goinstall.sh
+  - export GOROOT=/usr/local/go
+  - export GOPATH=/usr/local/gopath
   - source ~/.bashrc
   - go get -d -v . 
   - go install -v .
