@@ -9,7 +9,7 @@ before_install:
   - travis_retry git clone --depth=50 --branch=master git://github.com/waneck/travis-hx.git ~/travis-hx
 
 install: 
-  - ~/travis-hx/setup.sh
+  - $TRAVIS_BUILD_DIR/travis-hx/setup.sh
   - go get -d -v . 
   - go install -v .
 
