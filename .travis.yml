@@ -1,6 +1,6 @@
 language: haxe
 haxe:
- - 3.2.0-rc.2
+  - development
 
 install: 
   - ./goinstall.sh
