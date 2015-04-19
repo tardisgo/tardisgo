@@ -4,7 +4,7 @@ echo "Download and install Go, as well as create GOPATH directory"
 cd ~
 wget https://storage.googleapis.com/golang/go1.4.1.linux-amd64.tar.gz 
 tar -xf go1.4.1.linux-amd64.tar.gz && rm go1.4.1.linux-amd64.tar.gz
-mv go /usr/local && mkdir -p /usr/local/gopath 
+sudo mv go /usr/local && mkdir -p /usr/local/gopath 
 echo "set enviornment variables required for Go"
 export GOROOT=/usr/local/go
 export GOPATH=/usr/local/gopath
