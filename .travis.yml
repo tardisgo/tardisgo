@@ -1,15 +1,10 @@
-language: go
-go: 1.4
-
-env:
-  HAXE_VER:
-    - 3.2.0-rc.2
-
-before_install:
-  - travis_retry git clone --depth=50 --branch=master git://github.com/waneck/travis-hx.git ~/travis-hx
+language: haxe
+haxe:
+ - 3.2.0-rc.2
 
 install: 
-  - $TRAVIS_BUILD_DIR/travis-hx/setup.sh
+  - ./goinstall.sh
+  - . ~/.bashrc
   - go get -d -v . 
   - go install -v .
 
