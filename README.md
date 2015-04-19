@@ -43,7 +43,7 @@ tardisgo yourfilename.go
 ``` 
 A large number of .hx files will be created in the tardis subdirectory, of which Go.hx contains the entry-point. The use of a file per Haxe class makes second and subsequent compilations using C++ much faster, as only the altered classes are recompiled.
 
-To run your transpiled code you will first need to install [Haxe](http://haxe.org).
+To run your transpiled code you will first need to install [Haxe](http://haxe.org), version 3.2.0-rc.2 or later.
 
 Then to run the tardis/Go.hx file generated above, for example in JavaScript, type the command lines: 
 ```
