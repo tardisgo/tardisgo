@@ -477,7 +477,7 @@ func haxe2go(ret *emptyInterface, i interface{}) {
 	case Int32:
 		*(*int32)(ret.word) = int32(hx.CodeInt("", "_a.itemAddr(0).load().val;", i))
 	case Int64:
-		*(*int64)(ret.word) = int64(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
+		*(*int64)(ret.word) = hx.Int64(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
 	case Uint:
 		*(*uint)(ret.word) = uint(hx.CodeInt("", "_a.itemAddr(0).load().val;", i))
 	case Uint8:
@@ -487,7 +487,7 @@ func haxe2go(ret *emptyInterface, i interface{}) {
 	case Uint32:
 		*(*uint32)(ret.word) = uint32(hx.CodeInt("", "_a.itemAddr(0).load().val;", i))
 	case Uint64:
-		*(*uint64)(ret.word) = uint64(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
+		*(*uint64)(ret.word) = uint64(hx.Int64(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i)))
 	case Uintptr:
 		*(*uintptr)(ret.word) = uintptr(hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i))
 	case Float32:

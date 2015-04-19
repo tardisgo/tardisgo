@@ -140,7 +140,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 					//Scheduler.panicFromHaxe("attempt to do Pointer arithmetic"); 
 					return v.hashInt();
 				}else
-					return GOint64.toInt(v);	
+					return GOint64.toInt(v);	// may never get here if GOint64 is an abstract
 		else
 			if(Std.is(v,Int))
 				return v;
@@ -148,7 +148,10 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				if(Std.is(v,Float)) 			
 					return v>=0?Math.floor(v):Math.ceil(v);
 				else
-					return cast(v,Int);			// cast required for uintptr/Dynamic
+					if(haxe.Int64.is(v)) // detect the abstract
+						return haxe.Int64.toInt(v);
+					else
+						return cast(v,Int);	// cast required for uintptr/Dynamic
 	}
 	public static inline function toFloat(v:Float):Float {
 		// neko target platform requires special handling because it auto-converts whole-number Float into Int without asking
@@ -471,8 +474,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return GOint64.compare(a,b)==0;
 		}
 		if(Std.is(a,Float)&&Std.is(b,Float)){
-			if(Math.isNaN(a)&&Math.isNaN(b))
-				return true;
+			return GOint64.compare(
+				Go_haxegoruntime_FFloat64bits.callFromRT(0,a),
+				Go_haxegoruntime_FFloat64bits.callFromRT(0,b))==0;
 		}
 		return false;	
 	}
@@ -745,8 +749,8 @@ class Object { // this implementation will improve with typed array access
 	}
 	public inline function get_int64(i:Int):GOint64 {
 		#if !fullunsafe
-			var r:GOint64=get(i); 
-			return r==null?GOint64.ofInt(0):r;			
+			if(get(i)==null) return GOint64.ofInt(0);	
+			return get(i); 
 		#else
 			return Force.toInt64(GOint64.make(get_uint32(i+4),get_uint32(i)));
 		#end
@@ -783,8 +787,8 @@ class Object { // this implementation will improve with typed array access
 	}
 	public inline function get_uint64(i:Int):GOint64 { 
 		#if !fullunsafe
-			var r:GOint64=get(i); 
-			return r==null?GOint64.ofInt(0):r;			
+			if(get(i)==null) return GOint64.ofInt(0); 
+			return get(i); 
 		#else
 			return Force.toUint64(GOint64.make(get_uint32(i+4),get_uint32(i)));
 		#end
@@ -931,12 +935,8 @@ class Object { // this implementation will improve with typed array access
 	}
 	public inline function set_uint64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
-			#if (js || php || neko ) 
-				if(GOint64.isZero(v)) 	set(i,null);
-				else					set(i,v);  
-			#else
-				set(i,v);
-			#end
+			if(GOint64.isZero(v)) 	set(i,null);
+			else					set(i,v);  
 		#else
 			set_uint32(i,GOint64.getLow(v));
 			set_uint32(i+4,GOint64.getHigh(v));
@@ -1641,47 +1641,36 @@ public static function toString(x:Complex):String {
 `)
 	pogo.WriteAsClass("GOint64", `
 
-// TODO optimize to use cs and java base i64 types, as with cpp below
-//#if ( cpp ) // TODO revert to native type when fixed for Haxe 3.2.0
-//	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
-//#else
+#if ( neko || cpp || cs || java ) 
+	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
+#else
 	typedef HaxeInt64Typedef = Int64;  // use the copied and modified version of the standard library class below
 	// TODO revert to haxe.Int64 when the version below (or better) reaches the released libray
-//#end
+#end
 
 // this abstract type to enable correct handling for Go of HaxeInt64Typedef
 abstract HaxeInt64abs(HaxeInt64Typedef) 
 from HaxeInt64Typedef to HaxeInt64Typedef 
 { 
-inline function new(v:HaxeInt64Typedef) this=v;
+public inline function new(v:HaxeInt64Typedef) this=v;
 
-public static inline function getLow(v:HaxeInt64abs):Int {
-	//#if ( cpp )
-	//	return v.low;
-	//#else
+public static inline function getLow(v:HaxeInt64Typedef):Int {
+	#if ( neko || cpp || cs || java )
+		return v.low;
+	#else
 		return HaxeInt64Typedef.getLow(v);
-	//#end
+	#end
 }
-public static inline function getHigh(v:HaxeInt64abs):Int {
-	//#if ( cpp )
-	//	return v.high;
-	//#else
+public static inline function getHigh(v:HaxeInt64Typedef):Int {
+	#if ( neko || cpp || cs || java )
+		return v.high;
+	#else
 		return HaxeInt64Typedef.getHigh(v);
-	//#end
+	#end
 }
 
 public static inline function toInt(v:HaxeInt64abs):Int {
-
-// TODO re-optimize to use cs and java base i64 types once all working
-//	#if java 
-//		return HaxeInt64Typedef.toInt(v); // NOTE: java version just returns low 32 bits
-//	#else
-//
-		return HaxeInt64Typedef.getLow(v); // NOTE: does not throw an error if value overflows Int
-
-// TODO re-optimize to use cs and java base i64 types once all working
-//	#end
-
+	return HaxeInt64abs.getLow(v); // NOTE: does not throw an error if value overflows Int
 }
 public static inline function ofInt(v:Int):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.ofInt(v));
@@ -1716,7 +1705,7 @@ public static function toUFloat(vp:HaxeInt64abs):Float{ // unsigned int64 to flo
 		}
 		return ret;
 }
-public static function ofFloat(v):HaxeInt64abs { // float to signed int64 (TODO auto-cast of Unsigned is a posible problem)
+public static function ofFloat(v:Float):HaxeInt64abs { // float to signed int64 (TODO auto-cast of Unsigned is a posible problem)
 		//TODO native versions for java & cs
 		if(v==0.0) return make(0,0); 
 		if(Math.isNaN(v)) return make(0x80000000,0); // largest -ve number is returned by Go in this situation
@@ -1737,7 +1726,7 @@ public static function ofFloat(v):HaxeInt64abs { // float to signed int64 (TODO 
 		if(isNegVal) return new HaxeInt64abs(HaxeInt64Typedef.neg(res));
 		return new HaxeInt64abs(res);
 }
-public static function ofUFloat(v):HaxeInt64abs { // float to un-signed int64 
+public static function ofUFloat(v:Float):HaxeInt64abs { // float to un-signed int64 
 		//TODO native versions for java & cs
 		if(v<0.0){
 			//Scheduler.panicFromHaxe("-ve value passed to internal haxe function ofUFloat()");

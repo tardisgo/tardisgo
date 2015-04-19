@@ -29,7 +29,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	case "CComplex":
 		return "cast(" + l.IndirectValue(args[0], errorInfo) + ",Complex);"
 	case "IInt64":
-		return "cast(" + l.IndirectValue(args[0], errorInfo) + ",GOint64);"
+		return "new GOint64(" + l.IndirectValue(args[0], errorInfo) + ");"
 	case "CCallbackFFunc":
 		// NOTE there will be a preceeding MakeInterface call that is made redundant by this code
 		if len(args) == 1 {

@@ -51,7 +51,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				return "Int"
 			case types.Int64, types.Uint64:
 				if retInitVal {
-					return "GOint64.make(0,0)"
+					return "GOint64.ofInt(0)"
 				}
 				return "GOint64"
 			case types.UntypedInt: // TODO: investigate further the situations in which this warning is generated

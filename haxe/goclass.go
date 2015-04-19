@@ -78,15 +78,15 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	pos += fmt.Sprintf(`if (pos==%d) return "(pogo.NoPosHash)";`, pogo.NoPosHash) + "\n"
 	pos += "if (pos<0) { pos = -pos; prefix= \"near \";}\n"
 	for p := len(pogo.PosHashFileList) - 1; p >= 0; p-- {
-		if p != len(pogo.PosHashFileList)-1 {
-			pos += "else "
-		}
+		//if p != len(pogo.PosHashFileList)-1 {
+		//	pos += "else "
+		//}
 		pos += fmt.Sprintf(`if(pos>%d) return prefix+"%s:"+Std.string(pos-%d);`,
 			pogo.PosHashFileList[p].BasePosHash,
 			strings.Replace(pogo.PosHashFileList[p].FileName, "\\", "\\\\", -1),
 			pogo.PosHashFileList[p].BasePosHash) + "\n"
 	}
-	pos += "else return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";\n}\n"
+	pos += /*"else*/ "return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";\n}\n"
 
 	if pogo.DebugFlag {
 		pos += "\npublic static function getStartCPos(s:String):Int {\n"

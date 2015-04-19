@@ -405,7 +405,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 					//strings.HasPrefix(init, "new UnsafePointer") ||
 					strings.HasPrefix(init, "new Object") || strings.HasPrefix(init, "new Slice") ||
 					strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new GOmap") ||
-					strings.HasPrefix(init, "new Complex") || strings.HasPrefix(init, "GOint64.make") { // stop unnecessary initialisation
+					strings.HasPrefix(init, "new Complex") { // stop unnecessary initialisation
 					// all SSA registers are actually assigned to before use, so minimal initialisation is required, except for maps
 					init = "null"
 				}

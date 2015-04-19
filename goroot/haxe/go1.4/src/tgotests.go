@@ -32,7 +32,7 @@ var allList = []string{
 	// below are those packages that require their own testdata zip file, and so must be run individually
 	"archive/zip ",
 	"compress/bzip2", "compress/flate", "compress/gzip", "compress/lzw", "compress/zlib",
-	"debug/pe", "debug/plan9obj",
+	"debug/macho", "debug/pe", "debug/plan9obj",
 	"go/format", "go/parser", "go/printer",
 	"image", "image/draw", "image/gif", "image/jpeg",
 	"io/ioutil",
@@ -54,7 +54,7 @@ var cs = `
 `
 
 var cpp = ` 
-  archive/tar 
+  archive/tar crypto/x509 
   debug/elf  encoding/pem fmt   
   math  strconv
 `

@@ -44,7 +44,7 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- sha512       | c++, c#, java, js     |                                   |
 | -- subtle       |                       | waiting for reflect.Call          |
 | -- tls          |                   (*) | panic: duplicate function name: crypto/tls.run$1 |
-| -- x509         | c#, js                | modified tests (as Windows) js >30 mins; c++/java fail compile |
+| -- x509         | c++, c#, js           | mod tests (as Windows) but slow js>30m, java: TypeInfo too big |
 | -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       | panic: duplicate function name: database/sql.Query$1 |
@@ -53,7 +53,7 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- dwarf        |                   (*) | interface type assert failed      |
 | -- elf          | c++, c#, js       (*) | java: error TypeInfo code too large |
 | -- gosym        | c++, c#, java, js     |                                   |
-| -- macho        |                   (*) | file_test.go 169: duplicate architecture |
+| -- macho        | c++, c#, java, js (*) |                                   |
 | -- pe           | c++, c#, java, js (*) |                                   |
 | -- plan9obj     | c++, c#, java, js (*) |                                   |
 | encoding        | no tests              |                                   |
@@ -65,9 +65,9 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- csv          | c++, c#, java, js     |                                   |
 | -- gob          |                       | fatal error: stack overflow       |
 | -- hex          | c++, c#, java, js     |                                   |
-| -- json         |                       | 2 errors related to seeing fields |
+| -- json         |                       | cast to map fails, reflect map issue |
 | -- pem          | c++, js               | c#/java: type cast exception Pointer/GOmap |
-| -- xml          |                       | multiple errors, then crashes     |
+| -- xml          |                       | multiple errors, then panics      |
 | errors          | c++, c#, java, js     |                                   |
 | expvar          |                       | Haxe try-catch exception after JSON unmarshall |
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
