@@ -7,7 +7,7 @@ install:
   - export GOROOT=/usr/local/go
   - export GOPATH=~/gopath
   - source ~/.bashrc
-  - chmod 777 $GOPATH
+  - sudo chmod 777 $GOPATH
   - go get -d -v . 
   - go install -v .
 
