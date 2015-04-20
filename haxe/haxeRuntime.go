@@ -81,11 +81,24 @@ class Console {
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 class Force { // TODO maybe this should not be a separate haxe class, as no non-Go code needs access to it
-	public static inline function toUint8(v:Int):Int {
-		return v & 0xFF;
+	public static inline function toUint8(v:Int): #if cpp cpp.UInt8 #else Int #end
+	{
+		#if cpp 
+			return v;
+		#elseif cs
+			return cast(cast(v,cs.StdTypes.UInt8),Int);
+		#else
+			return v & 0xFF;
+		#end
 	}	
-	public static inline function toUint16(v:Int):Int {
-		return v & 0xFFFF;
+	public static inline function toUint16(v:Int): #if cpp cpp.UInt16 #else Int #end {
+		#if cpp 
+			return v; 
+		#elseif cs
+			return cast(cast(v,cs.StdTypes.UInt16),Int);
+		#else
+			return v & 0xFFFF;
+		#end
 	}	
 	public static inline function toUint32(v:Int):Int { 
 		#if js 
@@ -99,19 +112,35 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static inline function toUint64(v:GOint64):GOint64 {
 		return v;
 	}	
-	public static function toInt8(v:Int):Int {
-		var r:Int = v & 0xFF;
-		if ((r & 0x80) != 0){ // it should be -ve
-			return -1 - 0xFF + r;
-		}
-		return r;
+	public static #if (cpp||java||cs) inline #end function toInt8(v:Int): #if cpp cpp.Int8 #else Int #end  {
+		#if cpp 
+			return v; 
+		#elseif java
+			return cast(cast(v,java.StdTypes.Int8),Int);
+		#elseif cs
+			return cast(cast(v,cs.StdTypes.Int8),Int);
+		#else
+			var r:Int = v & 0xFF;
+			if ((r & 0x80) != 0){ // it should be -ve
+				return -1 - 0xFF + r;
+			}
+			return r;
+		#end
 	}	
-	public static function toInt16(v:Int):Int {
-		var r:Int = v & 0xFFFF;
-		if ((r & 0x8000) != 0){ // it should be -ve
-			return -1 - 0xFFFF + r;
-		}
-		return r;
+	public static #if (cpp||java||cs) inline #end function toInt16(v:Int): #if cpp cpp.Int16 #else Int #end {
+		#if cpp 
+			return v; 
+		#elseif java
+			return cast(cast(v,java.StdTypes.Int16),Int);
+		#elseif cs
+			return cast(cast(v,cs.StdTypes.Int16),Int);
+		#else
+			var r:Int = v & 0xFFFF;
+			if ((r & 0x8000) != 0){ // it should be -ve
+				return -1 - 0xFFFF + r;
+			}
+			return r;
+		#end
 	}	
 	public static inline function toInt32(v:Int):Int {
 		#if js 

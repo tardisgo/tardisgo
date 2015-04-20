@@ -13,7 +13,7 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | --------------- | --------------------- | --------------------------------- |
 | archive         | no code               |                                   |
 | -- tar          | c++, js           (*) | c#/java: issue relating to incorrect map handling in reflect |
-| -- zip          | c++, c#, java, js (*) | c++ test takes >15 mins, optimization TODO |
+| -- zip          | c++, c#, java, js (*) |                                   |
 | bufio           | c++, c#, java, js     |                                   |
 | builtin         | no tests              | all built-in functions are implemented |
 | bytes           | c++, c#, java, js     |                                   |
