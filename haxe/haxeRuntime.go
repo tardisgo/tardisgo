@@ -180,7 +180,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 					if(haxe.Int64.is(v)) // detect the abstract
 						return haxe.Int64.toInt(v);
 					else
-						return cast(v,Int);	// cast required for uintptr/Dynamic
+						return cast(v,Int);	// default cast
 	}
 	public static inline function toFloat(v:Float):Float {
 		// neko target platform requires special handling because it auto-converts whole-number Float into Int without asking
@@ -375,7 +375,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return x%y;
 	}
 
-	public static function toUTF8length(gr:Int,s:String):Int {
+	public static inline function toUTF8length(gr:Int,s:String):Int {
 		return s.length;
 	}
 	// return the UTF8 version of a string in a Slice
@@ -470,14 +470,14 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		var c = s.charCodeAt(i);
 		if(c==null) 
 			Scheduler.panicFromHaxe("string index out of range");
-		return c&0xFF;
+		return toUint8(c);
 	}
 	public static function stringAtOK(s:String,i:Int):Dynamic {
 		var c = s.charCodeAt(i);
 		if(c==null)
 			return {r0:0,r1:false};
 		else 
-			return {r0:c&0xff,r1:true};
+			return {r0:toUint8(c),r1:true};
 	}
 	public static function isEqualDynamic(a:Dynamic,b:Dynamic):Bool{
 		if(a==b) 
@@ -729,10 +729,10 @@ class Object { // this implementation will improve with typed array access
 	public inline function copy():Object{
 		return this.get_object(length,0);
 	}
-	public inline function get(i:Int):Dynamic {
+	public function get(i:Int):Dynamic {
 			return dVec4[i>>2];
 	}
-	public inline function get_bool(i:Int):Bool { 
+	public function get_bool(i:Int):Bool { 
 		#if (js && fullunsafe)
 			return dView.getUint8(i)==0?false:true;
 		#elseif !fullunsafe
@@ -746,7 +746,7 @@ class Object { // this implementation will improve with typed array access
 			return byts.get(i)==0?false:true;
 		#end
 	}
-	public inline function get_int8(i:Int):Int { 
+	public function get_int8(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getInt8(i);
 		#elseif !fullunsafe
@@ -756,7 +756,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt8(byts.get(i));
 		#end
 	}
-	public inline function get_int16(i:Int):Int { 
+	public function get_int16(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getInt16(i,true); // little-endian
 		#elseif !fullunsafe
@@ -766,7 +766,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
 	}
-	public inline function get_int32(i:Int):Int {
+	public function get_int32(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getInt32(i,true); // little-endian
 		#elseif !fullunsafe
@@ -776,7 +776,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st			
 		#end
 	}
-	public inline function get_int64(i:Int):GOint64 {
+	public function get_int64(i:Int):GOint64 {
 		#if !fullunsafe
 			if(get(i)==null) return GOint64.ofInt(0);	
 			return get(i); 
@@ -784,7 +784,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt64(GOint64.make(get_uint32(i+4),get_uint32(i)));
 		#end
 	} 
-	public inline function get_uint8(i:Int):Int { 
+	public function get_uint8(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getUint8(i);
 		#elseif !fullunsafe
@@ -794,7 +794,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toUint8(byts.get(i));
 		#end
 	}
-	public inline function get_uint16(i:Int):Int {
+	public function get_uint16(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getUint16(i,true); // little-endian
 		#elseif !fullunsafe
@@ -804,7 +804,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toUint16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
 	}
-	public inline function get_uint32(i:Int):Int {
+	public function get_uint32(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getUint32(i,true); // little-endian
 		#elseif !fullunsafe
@@ -814,7 +814,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toUint32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st
 		#end
 	}
-	public inline function get_uint64(i:Int):GOint64 { 
+	public function get_uint64(i:Int):GOint64 { 
 		#if !fullunsafe
 			if(get(i)==null) return GOint64.ofInt(0); 
 			return get(i); 
@@ -844,24 +844,24 @@ class Object { // this implementation will improve with typed array access
 			return byts.getDouble(i); // Go_haxegoruntime_FFloat64frombits.callFromRT(0,get_uint64(i)); 		
 		#end
 	}
-	public inline function get_complex64(i:Int):Complex {
+	public function get_complex64(i:Int):Complex {
 		// TODO optimize for dataview & unsafe
 		var r:Complex=get(i); 
 		return r==null?new Complex(0.0,0.0):r;			
 	}
-	public inline function get_complex128(i:Int):Complex { 
+	public function get_complex128(i:Int):Complex { 
 		// TODO optimize for dataview & unsafe
 		var r:Complex=get(i); 
 		return r==null?new Complex(0.0,0.0):r;			
 	}
-	public inline function get_string(i:Int):String { 
+	public function get_string(i:Int):String { 
 		var r=get(i); 
 		return r==null?"":Std.string(r);
 	}
-	public inline function set(i:Int,v:Dynamic):Void { 
+	public function set(i:Int,v:Dynamic):Void { 
 		dVec4[i>>2]=v;
 	}
-	public inline function set_bool(i:Int,v:Bool):Void { 
+	public function set_bool(i:Int,v:Bool):Void { 
 		#if (js && fullunsafe)
 			dView.setUint8(i,v?1:0);
 		#elseif !fullunsafe
@@ -873,7 +873,7 @@ class Object { // this implementation will improve with typed array access
 			byts.set(i,v?1:0); 
 		#end
 	} 
-	public inline function set_int8(i:Int,v:Int):Void { 
+	public function set_int8(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt8(i,v);
 		#elseif !fullunsafe
@@ -885,7 +885,7 @@ class Object { // this implementation will improve with typed array access
 			byts.set(i,v&0xff); 
 		#end
 	}
-	public inline function set_int16(i:Int,v:Int):Void { 
+	public function set_int16(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt16(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -898,7 +898,7 @@ class Object { // this implementation will improve with typed array access
 			set_int8(i+1,v>>8);
 		#end
 	}
-	public inline function set_int32(i:Int,v:Int):Void { 
+	public function set_int32(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt32(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -911,7 +911,7 @@ class Object { // this implementation will improve with typed array access
 			set_int16(i+2,v>>16); 
 		#end
 	}
-	public inline function set_int64(i:Int,v:GOint64):Void { 
+	public function set_int64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
 			#if (js || php || neko ) 
 				if(GOint64.isZero(v)) 	set(i,null);
@@ -924,11 +924,11 @@ class Object { // this implementation will improve with typed array access
 			set_uint32(i+4,GOint64.getHigh(v));
 		#end
 	} 
-	public inline function set_uint8(i:Int,v:Int):Void { 
+	public function set_uint8(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint8(i,v);
 		#elseif !fullunsafe
-			iVec[i]=v&0xff;
+			iVec[i]=Force.toUint8(v);
 			#if (js || php || neko ) 
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
@@ -936,11 +936,11 @@ class Object { // this implementation will improve with typed array access
 			byts.set(i,v&0xff);
 		#end
 	}
-	public inline function set_uint16(i:Int,v:Int):Void { 
+	public function set_uint16(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint16(i,v,true); // little-endian
 		#elseif !fullunsafe
-			iVec[i]=v&0xffff;
+			iVec[i]=Force.toUint16(v);
 			#if (js || php || neko ) 
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
@@ -949,7 +949,7 @@ class Object { // this implementation will improve with typed array access
 			set_uint8(i+1,v>>8); 
 		#end
 	}
-	public inline function set_uint32(i:Int,v:Int):Void { 
+	public function set_uint32(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint32(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -962,7 +962,7 @@ class Object { // this implementation will improve with typed array access
 			set_uint16(i+2,v>>16); 
 		#end
 	}
-	public inline function set_uint64(i:Int,v:GOint64):Void { 
+	public function set_uint64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
 			if(GOint64.isZero(v)) 	set(i,null);
 			else					set(i,v);  
@@ -971,7 +971,7 @@ class Object { // this implementation will improve with typed array access
 			set_uint32(i+4,GOint64.getHigh(v));
 		#end
 	} 
-	public inline function set_uintptr(i:Int,v:Dynamic):Void { 
+	public function set_uintptr(i:Int,v:Dynamic):Void { 
 		if(Std.is(v,Int)) {
 			set(i,Force.toUint32(v)); // make sure we only store 32 bits if int
 			set_uint32(i,v); // also write through to ordinary memory if the type is Int
@@ -981,7 +981,7 @@ class Object { // this implementation will improve with typed array access
 		set_uint32(i,0); // value overwritten
 	}
 	public static var MinFloat64:Float = -1.797693134862315708145274237317043567981e+308; // 2**1023 * (2**53 - 1) / 2**52
-	public inline function set_float32(i:Int,v:Float):Void {
+	public function set_float32(i:Int,v:Float):Void {
 		#if (js && fullunsafe)
 			dView.setFloat32(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -1003,7 +1003,7 @@ class Object { // this implementation will improve with typed array access
 			#end 
 		#end	
 	}
-	public inline function set_float64(i:Int,v:Float):Void {
+	public function set_float64(i:Int,v:Float):Void {
 	 	#if (js && fullunsafe)
 			dView.setFloat64(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -1026,22 +1026,22 @@ class Object { // this implementation will improve with typed array access
 		#end	
 	}
 	
-	public inline function set_complex64(i:Int,v:Complex):Void { 
+	public function set_complex64(i:Int,v:Complex):Void { 
 		if(v.real==0 && v.imag==0) set(i,null);
 		else set(i,v); // TODO review
 	} 
-	public inline function set_complex128(i:Int,v:Complex):Void { 
+	public function set_complex128(i:Int,v:Complex):Void { 
 		if(v.real==0 && v.imag==0) set(i,null);
 		else set(i,v); // TODO review
 	} 
-	public inline function set_string(i:Int,v:String):Void { 
+	public function set_string(i:Int,v:String):Void { 
 		if(v=="") set(i,null);
 		else set(i,v); 
 	}
-	private inline static function str(v:Dynamic):String{
+	private static function str(v:Dynamic):String{
 		return v==null?"nil":Std.is(v,Pointer)?v.toUniqueVal():Std.string(v);
 	}
-	public inline function toString(addr:Int=0,count:Int=-1):String{
+	public function toString(addr:Int=0,count:Int=-1):String{
 		if(count==-1) count=this.length;
 		if(addr<0) addr=0;
 		if(count<0 || count>(this.length-addr)) count = this.length-addr;
@@ -1071,7 +1071,7 @@ class Pointer {
 `
 	} else {
 		ptrClass += `
-	public inline function new(from:Object){
+	public function new(from:Object){
 `
 	}
 	ptrClass += `		obj = from; 
@@ -1079,7 +1079,7 @@ class Pointer {
 			off = 0; // to stop it being null
 		#end
 	}
-	public inline function len(){
+	public function len(){
 		if(obj==null) return 0;
 		return obj.length-off;
 	}
@@ -1118,7 +1118,7 @@ class Pointer {
 		if(p1.obj.uniqueRef==p2.obj.uniqueRef && p1.off==p2.off) return true; // point to same object & offset
 		return false;
 	}
-	public inline function addr(byteOffset:Int):Pointer {
+	public function addr(byteOffset:Int):Pointer {
 		var ret:Pointer = new Pointer(this.obj);
 		ret.off = this.off+byteOffset;
 		return ret;
@@ -1180,10 +1180,10 @@ class Pointer {
 	public inline function load_string():String { 
 		return obj.get_string(off);
 	}
-	public function store_object(sz:Int,v:Object):Void {
+	public inline function store_object(sz:Int,v:Object):Void {
 		obj.set_object(sz,off,v);
 	}
-	public function store(v:Dynamic):Void {
+	public inline function store(v:Dynamic):Void {
 		obj.set(off,v);
 	}
 	public inline function store_bool(v:Bool):Void { obj.set_bool(off,v); }
@@ -1201,10 +1201,10 @@ class Pointer {
 	public inline function store_complex64(v:Complex):Void { obj.set_complex64(off,v); }
 	public inline function store_complex128(v:Complex):Void { obj.set_complex128(off,v); }
 	public inline function store_string(v:String):Void { obj.set_string(off,v); }
-	public inline function toString(sz:Int=-1):String {
+	public function toString(sz:Int=-1):String {
 		return " &{ "+obj.toString(off,sz)+" } ";
 	}
-	public inline function toUniqueVal():String {
+	public function toUniqueVal():String {
 		return "&<"+Std.string(obj.uniqueRef)+":"+Std.string(off)+">";
 	}
 }
@@ -1340,7 +1340,7 @@ class Slice {
 `
 	} else { // TODO should this function be inline?
 		sliceClass += `
-	public inline function itemAddr(idx:Int):Pointer {
+	public function itemAddr(idx:Int):Pointer {
 `
 	}
 	sliceClass += `
@@ -1616,7 +1616,7 @@ public inline function len():Int {
 public inline function cap():Int { 
 	return capa; // give back the cap we were told
 }
-public inline function close() {
+public function close() {
 	if(this==null) Scheduler.panicFromHaxe( "attempt to close a nil channel" ); 
 	closed = true;
 }
@@ -1630,20 +1630,20 @@ public function toString():String{
 class Complex {
 	public var real:Float;
 	public var imag:Float;
-public inline function new(r:Float, i:Float) {
+public function new(r:Float, i:Float) {
 	real = r;
 	imag = i;
 }
-public static inline function neg(x:Complex):Complex {
+public static function neg(x:Complex):Complex {
 	return new Complex(0.0-x.real,0.0-x.imag);
 }
-public static inline function add(x:Complex,y:Complex):Complex {
+public static function add(x:Complex,y:Complex):Complex {
 	return new Complex(x.real+y.real,x.imag+y.imag);
 }
-public static inline function sub(x:Complex,y:Complex):Complex {
+public static function sub(x:Complex,y:Complex):Complex {
 	return new Complex(x.real-y.real,x.imag-y.imag);
 }
-public static inline function mul(x:Complex,y:Complex):Complex {
+public static function mul(x:Complex,y:Complex):Complex {
 	return new Complex( (x.real * y.real) - (x.imag * y.imag), (x.imag * y.real) + (x.real * y.imag));
 }
 public static function div(x:Complex,y:Complex):Complex {
@@ -1656,10 +1656,10 @@ public static function div(x:Complex,y:Complex):Complex {
 			((x.imag * y.real) - (x.real * y.imag)) / ((y.real * y.real) + (y.imag * y.imag)) );
 	}
 }
-public static inline function eq(x:Complex,y:Complex):Bool { // "=="
+public static function eq(x:Complex,y:Complex):Bool { // "=="
 	return (x.real == y.real) && (x.imag == y.imag);
 }
-public static inline function neq(x:Complex,y:Complex):Bool { // "!="
+public static function neq(x:Complex,y:Complex):Bool { // "!="
 	return (x.real != y.real) || (x.imag != y.imag);
 }
 public static function toString(x:Complex):String {
@@ -1863,7 +1863,7 @@ public static inline function mul(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
 public static inline function or(x:HaxeInt64abs,y:HaxeInt64abs):HaxeInt64abs {
 	return new HaxeInt64abs(HaxeInt64Typedef.or(x,y));
 }
-public static inline function shl(x:HaxeInt64abs,y:Int):HaxeInt64abs {
+public static function shl(x:HaxeInt64abs,y:Int):HaxeInt64abs {
 	if(y==0) return new HaxeInt64abs(x);
 	if(y<0 || y>=64) // this amount of shl is not handled correcty by the underlying code
 		return new HaxeInt64abs(HaxeInt64Typedef.ofInt(0));	
@@ -2261,7 +2261,7 @@ public function setLatest(ph:Int,blk:Int){ // this can be done inline, but gener
 	// TODO optionally profile block entry here
 }
 
-public inline function breakpoint(){
+public function breakpoint(){
 	#if (godebug && (cpp || neko))
 		trace("GODEBUG: runtime.Breakpoint()");
 		_debugBP.set(_latestPH,true); // set a constant debug trap
@@ -2733,7 +2733,7 @@ public static function htc(c:Dynamic,pos:Int) {
 	panicFromHaxe("Haxe try-catch exception <"+Std.string(c)+"> position "+Std.string(pos)+
 		" at or before: "+Go.CPos(pos));
 }
-public static inline function wraprangechk(val:Int,sz:Int) {
+public static function wraprangechk(val:Int,sz:Int) {
 	if((val<0)||(val>=sz)) ioor();
 }
 public static function unt():Dynamic {
@@ -2743,7 +2743,7 @@ public static function unt():Dynamic {
 static function unp() {
 		panicFromHaxe("unexpected nil pointer (ssa:wrapnilchk)");	
 }
-public static inline function wrapnilchk(p:Pointer):Pointer {
+public static function wrapnilchk(p:Pointer):Pointer {
 	if(p==null) unp();
 	return p;
 }
