@@ -7,7 +7,6 @@ import (
 	"unicode/utf8"
 
 	"golang.org/x/tools/go/types"
-	//"golang.org/x/tools/go/types/typeutil"
 
 	"github.com/tardisgo/tardisgo/pogo"
 )
@@ -28,29 +27,7 @@ func escapedTypeString(s string) string {
 	return r
 } 
 
-func synthTypesFor(t types.Type) {
-	// remove to cut down size of generated type code
-	/*
-	// synthesize a pointer to the type
-	np := (*types.Pointer)(nil)
-	for _, tt := range typesByID {
-		if tp, ok := tt.(*types.Pointer); ok {
-			if pte.At(tp.Elem()).(int) == pte.At(t).(int) {
-				np = tp
-				break
-			}
-		}
-	}
-	if np == nil {
-		pogo.LogTypeUse(types.NewPointer(t))
-	}
-
-	// if an array, synthesize a slice
-	if arr, isArr := t.(*types.Array); isArr {
-		pogo.LogTypeUse(types.NewSlice(arr.Elem()))
-	}
-	*/
-}
+func synthTypesFor(t types.Type) {}
 
 func GetTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
 	if t == nil {
@@ -442,7 +419,6 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 			meths += "\t\t\tnull, null )"
 		}
 		ret += meths
-		//ret += "\t\t},\n"
 		return ret + "\t)"
 	}
 	return "null"

@@ -21,7 +21,7 @@ import (
 // Start the main Go class in haxe
 func (langType) GoClassStart() string {
 	// the code below makes the Go class globally visible in JS as window.Go in the browser or exports.Go in nodejs
-	//TODO consider how to make Go/Haxe libs available across all platforms
+	// TODO consider how to make Go/Haxe libs available across all platforms
 	return `
 #if js
 @:expose("Go")
@@ -78,15 +78,12 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	pos += fmt.Sprintf(`if (pos==%d) return "(pogo.NoPosHash)";`, pogo.NoPosHash) + "\n"
 	pos += "if (pos<0) { pos = -pos; prefix= \"near \";}\n"
 	for p := len(pogo.PosHashFileList) - 1; p >= 0; p-- {
-		//if p != len(pogo.PosHashFileList)-1 {
-		//	pos += "else "
-		//}
 		pos += fmt.Sprintf(`if(pos>%d) return prefix+"%s:"+Std.string(pos-%d);`,
 			pogo.PosHashFileList[p].BasePosHash,
 			strings.Replace(pogo.PosHashFileList[p].FileName, "\\", "\\\\", -1),
 			pogo.PosHashFileList[p].BasePosHash) + "\n"
 	}
-	pos += /*"else*/ "return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";\n}\n"
+	pos += "return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";\n}\n"
 
 	if pogo.DebugFlag {
 		pos += "\npublic static function getStartCPos(s:String):Int {\n"
@@ -166,10 +163,6 @@ func haxeStringConst(sconst string, position string) string {
 func constFloat64(lit ssa.Const, bits int, position string) string {
 	var f float64
 	var f32 float32
-	//sigBits := uint(53)
-	//if bits == 32 {
-	//	sigBits = 24
-	//}
 	f, _ /*f64ok*/ = exact.Float64Val(lit.Value)
 	f32, _ /*f32ok*/ = exact.Float32Val(lit.Value)
 	if bits == 32 {
@@ -183,73 +176,8 @@ func constFloat64(lit ssa.Const, bits int, position string) string {
 		haxeVal = "Math.NEGATIVE_INFINITY"
 	case math.IsNaN(f): // must come after infinity checks
 		haxeVal = "Math.NaN"
-	//case f == 0 && math.Signbit(f): // -0 is zero, but it has a -ve sign
-	//	//println("DEBUG -0") // TODO this code never seems to get executed
-	//	haxeVal = "({var f:Float=0; f*=-1; f;})"
-	default:
-		// there is a problem with haxe constant processing for some floats
-		// try to be as exact as the host can be ... but also concise
-		//if float64(int64(f)) != f { // not a simple integer
-		/*
-			frac, exp := math.Frexp(f)
-			intPart := int64(frac * float64(uint64(1)<<sigBits))
-			expPart := exp - int(sigBits)
-			if float64(intPart) == frac*float64(uint64(1)<<sigBits) &&
-				expPart >= -1022 && expPart <= 1023 {
-				//it is an integer in the correct range
-				haxeVal = fmt.Sprintf("(%d*Math.pow(2,%d))", intPart, expPart) // NOTE: need the Math.pow to avoid haxe constant folding
-			}
-		*/
-		/*
-			val := exact.MakeFloat64(frac)
-			num := exact.Num(val)
-			den := exact.Denom(val)
-			n64i, nok := exact.Int64Val(num)
-			d64i, dok := exact.Int64Val(den)
-			res := float64(n64i) * math.Pow(2, float64(exp)) / float64(d64i)
-			if !math.IsNaN(res) && !math.IsInf(res, +1) && !math.IsInf(res, -1) { //drop through
-				if nok && dok {
-					nh, nl := pogo.IntVal(num, position)
-					dh, dl := pogo.IntVal(den, position)
-					n := fmt.Sprintf("%d", nl)
-					if n64i < 0 {
-						n = "(" + n + ")"
-					}
-					if nh != 0 && nh != -1 {
-						n = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(nh), uint32(nl))
-					}
-					if float64(d64i) == math.Pow(2, float64(exp)) {
-						haxeVal = n // divisor and multiplier the same
-					} else {
-						d := fmt.Sprintf("%d", dl)
-						if dh != 0 && dh != -1 {
-							d = fmt.Sprintf("GOint64.toFloat(Force.toInt64(GOint64.make(0x%x,0x%x)))", uint32(dh), uint32(dl))
-						}
-						if n64i == 1 {
-							n = "" // no point multiplying by 1
-						} else {
-							n = n + "*"
-						}
-						if d64i == 1 {
-							d = "" // no point in dividing by 1
-						} else {
-							d = "/" + d
-						}
-						haxeVal = fmt.Sprintf("(%sMath.pow(2,%d)%s)", n, exp, d) // NOTE: need the Math.pow to avoid haxe constant folding
-					}
-				}
-			}
-		*/
-		//}
 	}
 	return haxeVal
-	/*
-		bits64 := *(*uint64)(unsafe.Pointer(&f))
-		bitVal := exact.MakeUint64(bits64)
-		h, l := pogo.IntVal(bitVal, position)
-		bitStr := fmt.Sprintf("GOint64.make(0x%x,0x%x)", uint32(h), uint32(l))
-		return "Force.float64const(" + bitStr + "," + haxeVal + ")"
-	*/
 }
 
 func (langType) Const(lit ssa.Const, position string) (typ, val string) {
@@ -367,34 +295,6 @@ func (l langType) NamedConst(packageName, objectName string, lit ssa.Const, posi
 
 func (l langType) Global(packageName, objectName string, glob ssa.Global, position string, isPublic bool) string {
 	pub := "public " // all globals have to be public in Haxe terms
-	//gTyp := glob.Type().Underlying().(*types.Pointer).Elem().Underlying() // globals are always pointers to an underlying element
-	/*
-		ptrTyp := "Pointer"
-		//ltDesc := "Dynamic" // these values suitable for *types.Struct
-		ltInit := "null"
-		switch gTyp.(type) {
-		case *types.Basic, *types.Pointer, *types.Interface, *types.Chan, *types.Map, *types.Signature:
-			ptrTyp = "Pointer"
-			//ltDesc = l.LangType(gTyp, false, position)
-			ltInit = l.LangType(gTyp, true, position)
-		case *types.Array:
-			ptrTyp = "Pointer"
-			//ltDesc = "Array<" + l.LangType(gTyp.(*types.Array).Elem().Underlying(), false, position) + ">"
-			ltInit = l.LangType(gTyp, true, position)
-		case *types.Slice:
-			ptrTyp = "Pointer"
-			//ltDesc = "Slice" // was: l.LangType(gTyp.(*types.Slice).Elem().Underlying(), false, position)
-			ltInit = l.LangType(gTyp, true, position)
-		case *types.Struct:
-			ptrTyp = "Pointer"
-			//ltDesc = "Dynamic" // TODO improve!
-			ltInit = l.LangType(gTyp, true, position)
-		}
-		init := "new " + ptrTyp + "(" + ltInit + ")" // initialize basic types only
-	*/
-	//return fmt.Sprintf("%sstatic %s %s",
-	//	pub, haxeVar(l.LangName(packageName, objectName), ptrTyp, init, position, "Global()"),
-	//	l.Comment(position))
 	obj := allocNewObject(glob.Type().Underlying().(*types.Pointer))
 	return fmt.Sprintf("%sstatic var %s:Pointer=new Pointer(%s); %s",
 		pub, l.LangName(packageName, objectName), obj, l.Comment(position))

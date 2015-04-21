@@ -379,22 +379,28 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		return s.length;
 	}
 	// return the UTF8 version of a string in a Slice
-	public static function toUTF8slice(gr:Int,s:String):Slice {
-		var sl:Slice=new Slice(new Pointer(new Object(s.length)),0,-1,s.length,1);
-		for(i in 0...s.length){
-				var t:Null<Int>=s.charCodeAt(i) ;
-				if(t==null) 
-					Scheduler.panicFromHaxe("Haxe runtime Force.toUTF8slice() unexpected null encountered");
-				else
-					sl.itemAddr(i).store_uint8(t);
+	public static function toUTF8slice(gr:Int,s:String):Slice { // TODO remove gr param
+		var obj = new Object(s.length);
+		for(i in 0...s.length) {
+			#if (js || php || neko ) // nullable targets
+				var t:Null<Int>=s.charCodeAt(i);
+				if(t==null) t=0;
+				obj.set_uint8(i,t);
+			#else
+				obj.set_uint8(i,s.charCodeAt(i));
+			#end
 		}
-		return sl;
+		return new Slice(new Pointer(obj),0,-1,s.length,1);
 	}
-	public static function toRawString(gr:Int,sl:Slice):String {
+	public static function toRawString(gr:Int,sl:Slice):String { // TODO remove gr param
+		if(sl==null) return "";
 		var ret = new StringBuf(); // use StringBuf for speed
+		var ptr = sl.itemAddr(0); // pointer to the start of the slice
+		var obj = ptr.obj; // the object containing the slice data
+		var off = ptr.off; // the offset to the start of that data
 		if(sl!=null)
-			for(i in 0...sl.len()) {
-				ret.addChar( sl.itemAddr(i).load_uint8() );
+			for( i in off...(sl.len()+off) ) {
+				ret.addChar( obj.get_uint8(i) );
 			}
 		return ret.toString();
 	}
@@ -453,17 +459,6 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static function checkTuple(t:Dynamic):Dynamic {
 		if(t==null) Scheduler.panicFromHaxe("tuple returned from function or range is null");
 		return t;
-	}
-
-	static var i2f = new Object(8);
-	public static function float64const(i:GOint64,f:Float):Float{
-		if(Object.nativeFloats) {
-			i2f.set_int64(0,i);
-			var r=i2f.get_float64(0);
-			//trace("i2f",r);
-			return r;
-		}
-		return f;
 	}
 
 	public static function stringAt(s:String,i:Int):Int{
@@ -629,8 +624,8 @@ class Object { // this implementation will improve with typed array access
 		}
 		return true;
 	}
-	private static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
-		if(size==0) return;
+	public static inline function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
+		if(size<=0) return;
 `
 	if pogo.DebugFlag {
 		objClass += `
@@ -695,24 +690,9 @@ class Object { // this implementation will improve with typed array access
 			if((size>>2)>0)
 				haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, size>>2); 
 			haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
-			/*{
-				var s:Int=srcPos;
-				var d:Int=destPos;
-				for(i in 0...size) {
-					dest.set_int32(d,src.get_int32(s));
-					if((s&3)==0){ 
-						dest.set(d,src.get(s));
-					}
-					s+=1;
-					d+=1;
-				}
-			}*/
-		//#else
-		//	haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, 1+(size>>2)); 
-		//	dest.byts.blit(destPos,src.byts,srcPos,size);
 		#end
 	}
-	public function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
+	public inline function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
 		var so:Object = new Object(size);
 		objBlit(this,from, so, 0, size); 
 		return so;
@@ -729,10 +709,10 @@ class Object { // this implementation will improve with typed array access
 	public inline function copy():Object{
 		return this.get_object(length,0);
 	}
-	public function get(i:Int):Dynamic {
+	public inline function get(i:Int):Dynamic {
 			return dVec4[i>>2];
 	}
-	public function get_bool(i:Int):Bool { 
+	public inline function get_bool(i:Int):Bool { 
 		#if (js && fullunsafe)
 			return dView.getUint8(i)==0?false:true;
 		#elseif !fullunsafe
@@ -746,7 +726,7 @@ class Object { // this implementation will improve with typed array access
 			return byts.get(i)==0?false:true;
 		#end
 	}
-	public function get_int8(i:Int):Int { 
+	public inline function get_int8(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getInt8(i);
 		#elseif !fullunsafe
@@ -756,7 +736,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt8(byts.get(i));
 		#end
 	}
-	public function get_int16(i:Int):Int { 
+	public inline function get_int16(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getInt16(i,true); // little-endian
 		#elseif !fullunsafe
@@ -766,7 +746,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
 	}
-	public function get_int32(i:Int):Int {
+	public inline function get_int32(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getInt32(i,true); // little-endian
 		#elseif !fullunsafe
@@ -776,7 +756,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st			
 		#end
 	}
-	public function get_int64(i:Int):GOint64 {
+	public inline function get_int64(i:Int):GOint64 {
 		#if !fullunsafe
 			if(get(i)==null) return GOint64.ofInt(0);	
 			return get(i); 
@@ -784,7 +764,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toInt64(GOint64.make(get_uint32(i+4),get_uint32(i)));
 		#end
 	} 
-	public function get_uint8(i:Int):Int { 
+	public inline function get_uint8(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getUint8(i);
 		#elseif !fullunsafe
@@ -794,7 +774,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toUint8(byts.get(i));
 		#end
 	}
-	public function get_uint16(i:Int):Int {
+	public inline function get_uint16(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getUint16(i,true); // little-endian
 		#elseif !fullunsafe
@@ -804,7 +784,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toUint16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
 	}
-	public function get_uint32(i:Int):Int {
+	public inline function get_uint32(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getUint32(i,true); // little-endian
 		#elseif !fullunsafe
@@ -814,7 +794,7 @@ class Object { // this implementation will improve with typed array access
 			return Force.toUint32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st
 		#end
 	}
-	public function get_uint64(i:Int):GOint64 { 
+	public inline function get_uint64(i:Int):GOint64 { 
 		#if !fullunsafe
 			if(get(i)==null) return GOint64.ofInt(0); 
 			return get(i); 
@@ -826,7 +806,7 @@ class Object { // this implementation will improve with typed array access
 		// TODO consider some type of read-from-mem if Dynamic type is Int 
 		return get(i); 
 	} 
-	public function get_float32(i:Int):Float { 
+	public inline function get_float32(i:Int):Float { 
 		#if (js && fullunsafe)
 			return dView.getFloat32(i,true); // little-endian
 		#elseif !fullunsafe
@@ -835,7 +815,7 @@ class Object { // this implementation will improve with typed array access
 			return byts.getFloat(i); // Go_haxegoruntime_FFloat32frombits.callFromRT(0,get_uint32(i)); 
 		#end
 	}
-	public function get_float64(i:Int):Float { 
+	public inline function get_float64(i:Int):Float { 
 		#if (js && fullunsafe)
 			return dView.getFloat64(i,true); // little-endian
 		#elseif !fullunsafe
@@ -844,24 +824,24 @@ class Object { // this implementation will improve with typed array access
 			return byts.getDouble(i); // Go_haxegoruntime_FFloat64frombits.callFromRT(0,get_uint64(i)); 		
 		#end
 	}
-	public function get_complex64(i:Int):Complex {
+	public inline function get_complex64(i:Int):Complex {
 		// TODO optimize for dataview & unsafe
 		var r:Complex=get(i); 
 		return r==null?new Complex(0.0,0.0):r;			
 	}
-	public function get_complex128(i:Int):Complex { 
+	public inline function get_complex128(i:Int):Complex { 
 		// TODO optimize for dataview & unsafe
 		var r:Complex=get(i); 
 		return r==null?new Complex(0.0,0.0):r;			
 	}
-	public function get_string(i:Int):String { 
+	public inline function get_string(i:Int):String { 
 		var r=get(i); 
 		return r==null?"":Std.string(r);
 	}
-	public function set(i:Int,v:Dynamic):Void { 
+	public inline function set(i:Int,v:Dynamic):Void { 
 		dVec4[i>>2]=v;
 	}
-	public function set_bool(i:Int,v:Bool):Void { 
+	public inline function set_bool(i:Int,v:Bool):Void { 
 		#if (js && fullunsafe)
 			dView.setUint8(i,v?1:0);
 		#elseif !fullunsafe
@@ -873,7 +853,7 @@ class Object { // this implementation will improve with typed array access
 			byts.set(i,v?1:0); 
 		#end
 	} 
-	public function set_int8(i:Int,v:Int):Void { 
+	public inline function set_int8(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt8(i,v);
 		#elseif !fullunsafe
@@ -885,7 +865,7 @@ class Object { // this implementation will improve with typed array access
 			byts.set(i,v&0xff); 
 		#end
 	}
-	public function set_int16(i:Int,v:Int):Void { 
+	public inline function set_int16(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt16(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -898,7 +878,7 @@ class Object { // this implementation will improve with typed array access
 			set_int8(i+1,v>>8);
 		#end
 	}
-	public function set_int32(i:Int,v:Int):Void { 
+	public inline function set_int32(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt32(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -911,7 +891,7 @@ class Object { // this implementation will improve with typed array access
 			set_int16(i+2,v>>16); 
 		#end
 	}
-	public function set_int64(i:Int,v:GOint64):Void { 
+	public inline function set_int64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
 			#if (js || php || neko ) 
 				if(GOint64.isZero(v)) 	set(i,null);
@@ -924,7 +904,7 @@ class Object { // this implementation will improve with typed array access
 			set_uint32(i+4,GOint64.getHigh(v));
 		#end
 	} 
-	public function set_uint8(i:Int,v:Int):Void { 
+	public inline function set_uint8(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint8(i,v);
 		#elseif !fullunsafe
@@ -936,7 +916,7 @@ class Object { // this implementation will improve with typed array access
 			byts.set(i,v&0xff);
 		#end
 	}
-	public function set_uint16(i:Int,v:Int):Void { 
+	public inline function set_uint16(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint16(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -949,7 +929,7 @@ class Object { // this implementation will improve with typed array access
 			set_uint8(i+1,v>>8); 
 		#end
 	}
-	public function set_uint32(i:Int,v:Int):Void { 
+	public inline function set_uint32(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint32(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -962,7 +942,7 @@ class Object { // this implementation will improve with typed array access
 			set_uint16(i+2,v>>16); 
 		#end
 	}
-	public function set_uint64(i:Int,v:GOint64):Void { 
+	public inline function set_uint64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
 			if(GOint64.isZero(v)) 	set(i,null);
 			else					set(i,v);  
@@ -971,7 +951,7 @@ class Object { // this implementation will improve with typed array access
 			set_uint32(i+4,GOint64.getHigh(v));
 		#end
 	} 
-	public function set_uintptr(i:Int,v:Dynamic):Void { 
+	public inline function set_uintptr(i:Int,v:Dynamic):Void { 
 		if(Std.is(v,Int)) {
 			set(i,Force.toUint32(v)); // make sure we only store 32 bits if int
 			set_uint32(i,v); // also write through to ordinary memory if the type is Int
@@ -981,7 +961,7 @@ class Object { // this implementation will improve with typed array access
 		set_uint32(i,0); // value overwritten
 	}
 	public static var MinFloat64:Float = -1.797693134862315708145274237317043567981e+308; // 2**1023 * (2**53 - 1) / 2**52
-	public function set_float32(i:Int,v:Float):Void {
+	public inline function set_float32(i:Int,v:Float):Void {
 		#if (js && fullunsafe)
 			dView.setFloat32(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -1003,7 +983,7 @@ class Object { // this implementation will improve with typed array access
 			#end 
 		#end	
 	}
-	public function set_float64(i:Int,v:Float):Void {
+	public inline function set_float64(i:Int,v:Float):Void {
 	 	#if (js && fullunsafe)
 			dView.setFloat64(i,v,true); // little-endian
 		#elseif !fullunsafe
@@ -1026,15 +1006,15 @@ class Object { // this implementation will improve with typed array access
 		#end	
 	}
 	
-	public function set_complex64(i:Int,v:Complex):Void { 
+	public inline function set_complex64(i:Int,v:Complex):Void { 
 		if(v.real==0 && v.imag==0) set(i,null);
 		else set(i,v); // TODO review
 	} 
-	public function set_complex128(i:Int,v:Complex):Void { 
+	public inline function set_complex128(i:Int,v:Complex):Void { 
 		if(v.real==0 && v.imag==0) set(i,null);
 		else set(i,v); // TODO review
 	} 
-	public function set_string(i:Int,v:String):Void { 
+	public inline function set_string(i:Int,v:String):Void { 
 		if(v=="") set(i,null);
 		else set(i,v); 
 	}
@@ -1061,8 +1041,8 @@ class Object { // this implementation will improve with typed array access
 	ptrClass := `
 @:keep
 class Pointer { 
-	private var obj:Object; // reference to the object holding the value
-	private var off:Int; // the offset into the object, if any 
+	public var obj:Object; // reference to the object holding the value
+	public var off:Int; // the offset into the object, if any 
 `
 	if pogo.DebugFlag {
 		ptrClass += `
@@ -1129,78 +1109,78 @@ class Pointer {
 	public inline function copy():Pointer {
 		return this;
 	}
-	public inline function load_object(sz:Int):Object { 
+	public function load_object(sz:Int):Object { 
 		return obj.get_object(sz,off);
 	}
-	public inline function load():Dynamic {
+	public function load():Dynamic {
 		return obj.get(off);
 	}
-	public inline function load_bool():Bool { 
+	public function load_bool():Bool { 
 		return obj.get_bool(off);
 	}
-	public inline function load_int8():Int { 
+	public function load_int8():Int { 
 		return obj.get_int8(off);
 	}
-	public inline function load_int16():Int { 
+	public function load_int16():Int { 
 		return obj.get_int16(off);
 	}
-	public inline function load_int32():Int {
+	public function load_int32():Int {
 		return obj.get_int32(off);
 	}
-	public inline function load_int64():GOint64 { 
+	public function load_int64():GOint64 { 
 		return obj.get_int64(off);
 	} 
-	public inline function load_uint8():Int { 
+	public function load_uint8():Int { 
 		return obj.get_uint8(off);
 	}
-	public inline function load_uint16():Int {
+	public function load_uint16():Int {
 		return obj.get_uint16(off);
 	}
-	public inline function load_uint32():Int {
+	public function load_uint32():Int {
 		return obj.get_uint32(off);
 	}
-	public inline function load_uint64():GOint64 { 
+	public function load_uint64():GOint64 { 
 		return obj.get_uint64(off);
 	} 
-	public inline function load_uintptr():Dynamic { 
+	public function load_uintptr():Dynamic { 
 		return obj.get_uintptr(off);
 	} 
-	public inline function load_float32():Float { 
+	public function load_float32():Float { 
 		return obj.get_float32(off);
 	}
-	public inline function load_float64():Float { 
+	public function load_float64():Float { 
 		return obj.get_float64(off);
 	}
-	public inline function load_complex64():Complex {
+	public function load_complex64():Complex {
 		return obj.get_complex64(off);
 	}
-	public inline function load_complex128():Complex { 
+	public function load_complex128():Complex { 
 		return obj.get_complex128(off);
 	}
-	public inline function load_string():String { 
+	public function load_string():String { 
 		return obj.get_string(off);
 	}
-	public inline function store_object(sz:Int,v:Object):Void {
+	public function store_object(sz:Int,v:Object):Void {
 		obj.set_object(sz,off,v);
 	}
-	public inline function store(v:Dynamic):Void {
+	public function store(v:Dynamic):Void {
 		obj.set(off,v);
 	}
-	public inline function store_bool(v:Bool):Void { obj.set_bool(off,v); }
-	public inline function store_int8(v:Int):Void { obj.set_int8(off,v); }
-	public inline function store_int16(v:Int):Void { obj.set_int16(off,v); }
-	public inline function store_int32(v:Int):Void { obj.set_int32(off,v); }
-	public inline function store_int64(v:GOint64):Void { obj.set_int64(off,v); }  
-	public inline function store_uint8(v:Int):Void { obj.set_uint8(off,v); }
-	public inline function store_uint16(v:Int):Void { obj.set_uint16(off,v); }
-	public inline function store_uint32(v:Int):Void { obj.set_uint32(off,v); }
-	public inline function store_uint64(v:GOint64):Void { obj.set_uint64(off,v); } 
-	public inline function store_uintptr(v:Dynamic):Void { obj.set_uintptr(off,v); }
-	public inline function store_float32(v:Float):Void { obj.set_float32(off,v); }
-	public inline function store_float64(v:Float):Void { obj.set_float64(off,v); }
-	public inline function store_complex64(v:Complex):Void { obj.set_complex64(off,v); }
-	public inline function store_complex128(v:Complex):Void { obj.set_complex128(off,v); }
-	public inline function store_string(v:String):Void { obj.set_string(off,v); }
+	public function store_bool(v:Bool):Void { obj.set_bool(off,v); }
+	public function store_int8(v:Int):Void { obj.set_int8(off,v); }
+	public function store_int16(v:Int):Void { obj.set_int16(off,v); }
+	public function store_int32(v:Int):Void { obj.set_int32(off,v); }
+	public function store_int64(v:GOint64):Void { obj.set_int64(off,v); }  
+	public function store_uint8(v:Int):Void { obj.set_uint8(off,v); }
+	public function store_uint16(v:Int):Void { obj.set_uint16(off,v); }
+	public function store_uint32(v:Int):Void { obj.set_uint32(off,v); }
+	public function store_uint64(v:GOint64):Void { obj.set_uint64(off,v); } 
+	public function store_uintptr(v:Dynamic):Void { obj.set_uintptr(off,v); }
+	public function store_float32(v:Float):Void { obj.set_float32(off,v); }
+	public function store_float64(v:Float):Void { obj.set_float64(off,v); }
+	public function store_complex64(v:Complex):Void { obj.set_complex64(off,v); }
+	public function store_complex128(v:Complex):Void { obj.set_complex128(off,v); }
+	public function store_string(v:String):Void { obj.set_string(off,v); }
 	public function toString(sz:Int=-1):String {
 		return " &{ "+obj.toString(off,sz)+" } ";
 	}
@@ -1270,42 +1250,63 @@ class Slice {
 			var retEnt=new Slice(oldEnt.baseArray,oldEnt.start,oldEnt.end,oldEnt.capacity,oldEnt.itemSize);
 			var offset=retEnt.len();
 			for(i in 0...newEnt.len()){
-				retEnt.end++;
-				retEnt.itemAddr(offset+i).store_object(oldEnt.itemSize,newEnt.itemAddr(i).load_object(newEnt.itemSize));
+				retEnt.end++; 
+				//retEnt.itemAddr(offset+i).store_object(oldEnt.itemSize,newEnt.itemAddr(i).load_object(newEnt.itemSize));
+				Object.objBlit(newEnt.baseArray.obj,newEnt.itemOff(i)+newEnt.baseArray.off,
+					retEnt.baseArray.obj,retEnt.itemOff(offset+i)+retEnt.baseArray.off,oldEnt.itemSize);
 			}
 			return retEnt;
 		}else{
 			var newLen = oldEnt.length+newEnt.len();
 			var newCap = newLen+(newLen>>2); // NOTE auto-create 50pc new capacity 
 			var newObj:Object = new Object(newCap*oldEnt.itemSize);
-			for(i in 0...oldEnt.length) 
-				newObj.set_object(oldEnt.itemSize,i*oldEnt.itemSize,oldEnt.itemAddr(i).load_object(oldEnt.itemSize));
-			for(i in 0...newEnt.len())
-				newObj.set_object(oldEnt.itemSize,
-					oldEnt.length*oldEnt.itemSize+i*oldEnt.itemSize,newEnt.itemAddr(i).load_object(oldEnt.itemSize));
+			for(i in 0...oldEnt.length) {
+				//newObj.set_object(oldEnt.itemSize,i*oldEnt.itemSize,oldEnt.itemAddr(i).load_object(oldEnt.itemSize));
+				Object.objBlit(oldEnt.baseArray.obj,oldEnt.itemOff(i)+oldEnt.baseArray.off,
+					newObj,i*oldEnt.itemSize,oldEnt.itemSize);
+			}
+			for(i in 0...newEnt.len()){
+				//newObj.set_object(oldEnt.itemSize,
+				//	oldEnt.length*oldEnt.itemSize+i*oldEnt.itemSize,newEnt.itemAddr(i).load_object(oldEnt.itemSize));
+				Object.objBlit(newEnt.baseArray.obj,newEnt.itemOff(i)+newEnt.baseArray.off,
+					newObj,(oldEnt.length*oldEnt.itemSize)+(i*oldEnt.itemSize),oldEnt.itemSize);
+			}
 			return new Slice(new Pointer(newObj),0,newLen,newCap,oldEnt.itemSize);
 		}
 	}
-	public static function copy(target:Slice,source:Slice):Int{
+	public static function copy(target:Slice,source:Slice):Int{ 
 		if(target==null) return 0;
 		if(source==null) return 0;
 		var copySize:Int=target.len();
 		if(source.len()<copySize) 
 			copySize=source.len(); 
+		if(copySize==0) return 0;
+		// Optimise not to create any temporary objects
 		if(target.baseArray==source.baseArray){ // copy within the same slice
 			if(target.start<=source.start){
-				for(i in 0...copySize)
-					target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
+				for(i in 0...copySize){
+					//target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
+					Object.objBlit(source.baseArray.obj,source.itemOff(i)+source.baseArray.off,
+						target.baseArray.obj,target.itemOff(i)+target.baseArray.off,
+						target.itemSize);
+				}
 			}else{
 				var i = copySize-1;
 				while(i>=0){
-					target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
+					//target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
+					Object.objBlit(source.baseArray.obj,source.itemOff(i)+source.baseArray.off,
+						target.baseArray.obj,target.itemOff(i)+target.baseArray.off,
+						target.itemSize);
 					i-=1;
 				}
 			}
 		}else{
-			for(i in 0...copySize)
-				target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
+			for(i in 0...copySize){
+				//target.itemAddr(i).store_object(target.itemSize,source.itemAddr(i).load_object(target.itemSize));
+				Object.objBlit(source.baseArray.obj,source.itemOff(i)+source.baseArray.off,
+					target.baseArray.obj,target.itemOff(i)+target.baseArray.off,
+					target.itemSize);
+			}
 		}
 		return copySize;
 	}
@@ -1344,7 +1345,10 @@ class Slice {
 `
 	}
 	sliceClass += `
-		return baseArray.addr((idx+start)*itemSize);
+		return baseArray.addr(itemOff(idx));
+	}
+	private inline function itemOff(idx:Int):Int {
+		return (idx+start)*itemSize;
 	}
 	public function toString():String {
 		var ret:String = "Slice{[";
@@ -1682,6 +1686,17 @@ abstract HaxeInt64abs(HaxeInt64Typedef)
 from HaxeInt64Typedef to HaxeInt64Typedef 
 { 
 public inline function new(v:HaxeInt64Typedef) this=v;
+
+#if !( neko || cpp || cs || java ) // allow casting to/from haxe.Int64 if using own version
+  @:from
+  static public function fromHI64(v:haxe.Int64) {
+  	return HaxeInt64abs.make(v.high,v.low); 
+  }
+  @:to
+  public inline function toHI64():haxe.Int64 {
+  	return haxe.Int64.make(Int64.getHigh(this),Int64.getLow(this));
+  }
+#end
 
 public static inline function getLow(v:HaxeInt64Typedef):Int {
 	#if ( neko || cpp || cs || java )
