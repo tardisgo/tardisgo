@@ -394,14 +394,14 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}
 	public static function toRawString(gr:Int,sl:Slice):String { // TODO remove gr param
 		if(sl==null) return "";
+		if(sl.len()==0) return "";
 		var ret = new StringBuf(); // use StringBuf for speed
 		var ptr = sl.itemAddr(0); // pointer to the start of the slice
 		var obj = ptr.obj; // the object containing the slice data
 		var off = ptr.off; // the offset to the start of that data
-		if(sl!=null)
-			for( i in off...(sl.len()+off) ) {
-				ret.addChar( obj.get_uint8(i) );
-			}
+		for( i in off...(sl.len()+off) ) {
+			ret.addChar( obj.get_uint8(i) );
+		}
 		return ret.toString();
 	}
 
@@ -908,7 +908,7 @@ class Object { // this implementation will improve with typed array access
 		#if (js && fullunsafe)
 			dView.setUint8(i,v);
 		#elseif !fullunsafe
-			iVec[i]=Force.toUint8(v);
+			iVec[i]=v;
 			#if (js || php || neko ) 
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
@@ -920,7 +920,7 @@ class Object { // this implementation will improve with typed array access
 		#if (js && fullunsafe)
 			dView.setUint16(i,v,true); // little-endian
 		#elseif !fullunsafe
-			iVec[i]=Force.toUint16(v);
+			iVec[i]=v;
 			#if (js || php || neko ) 
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
@@ -933,7 +933,7 @@ class Object { // this implementation will improve with typed array access
 		#if (js && fullunsafe)
 			dView.setUint32(i,v,true); // little-endian
 		#elseif !fullunsafe
-			iVec[i]=Force.toUint32(v);
+			iVec[i]=v;
 			#if (js || php || neko ) 
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
@@ -965,6 +965,7 @@ class Object { // this implementation will improve with typed array access
 		#if (js && fullunsafe)
 			dView.setFloat32(i,v,true); // little-endian
 		#elseif !fullunsafe
+			v=Force.toFloat32(v);
 			#if (js || php || neko ) 
 				if(v==0.0) {
 					#if !php
@@ -974,7 +975,7 @@ class Object { // this implementation will improve with typed array access
 						v=null; 
 				}
 			#end
-			set(i,Force.toFloat32(v));
+			set(i,v);
 		#else 
 			#if (cpp||neko)
 				byts.setFloat(i,v);
@@ -1334,15 +1335,20 @@ class Slice {
 		return capacity-start;
 	}
 `
-	if pogo.DebugFlag { // TODO test could be removed in some future NoChecking mode maybe?
+	if pogo.DebugFlag { // Normal range checking should cover this, so only in debug mode
 		sliceClass += `
 	public function itemAddr(idx:Int):Pointer {
-		if (idx<0 || idx>=len()) Scheduler.panicFromHaxe("Slice index out of range");
+		if (idx<0 || idx>=len()) 
+			Scheduler.panicFromHaxe(
+				"Slice index "+Std.string(idx)+" out of range 0 <= index < "+Std.string(len())+
+				"\nSlice itemSize,capacity,start,end,baseArray: "+
+				Std.string(itemSize)+","+Std.string(capacity)+","+
+				Std.string(start)+","+Std.string(end)+","+Std.string(baseArray));
 `
 	} else { // TODO should this function be inline?
 		sliceClass += `
-	public function itemAddr(idx:Int):Pointer {
-`
+		public function itemAddr(idx:Int):Pointer {
+	`
 	}
 	sliceClass += `
 		return baseArray.addr(itemOff(idx));

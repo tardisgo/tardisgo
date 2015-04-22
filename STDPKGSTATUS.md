@@ -7,22 +7,24 @@ The "testing" package is emulated in an ugly and part-working way, all tests are
 
 The [standard library tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/tgotests.go) take more than 2 hours to run on an 8 core Mac.
 
-Some tests marked (*) below use testdata in the pseudo file system, passed in via a local "tgotestfs.zip".
+Some tests marked "*" below use testdata in the pseudo file system, passed in via a local "tgotestfs.zip".
+
+Tests bracketed by "[]" work, but currently take too long, so are excluded from the automated tests. 
 
 | Name            | Passes in? (*=testfs) | Comment                           |
 | --------------- | --------------------- | --------------------------------- |
 | archive         | no code               |                                   |
-| -- tar          | c++, js           (*) | c#/java: issue relating to incorrect map handling in reflect |
-| -- zip          | c++, c#, java, js (*) |                                   |
+| -- tar          | c++, js             * | c#/java: issue relating to incorrect map handling in reflect |
+| -- zip          | [c++] c#, java, js  * | c++: tests take >30mins           |
 | bufio           | c++, c#, java, js     |                                   |
 | builtin         | no tests              | all built-in functions are implemented |
 | bytes           | c++, c#, java, js     |                                   |
 | compress        | no code               |                                   |
-| -- bzip2        | c++, c#, java, js (*) |                                   |
-| -- flate        | c++, c#, java, js (*) |                                   |
-| -- gzip         | c++, c#, java, js (*) |                                   |
-| -- lzw          | c++, c#, java, js (*) |                                   |
-| -- zlib         | c++, c#, java, js (*) |                                   |
+| -- bzip2        | c++, c#, java, js   * |                                   |
+| -- flate        | c++, c#, java, js   * |                                   |
+| -- gzip         | c++, c#, java, js   * |                                   |
+| -- lzw          | c++, c#, java, js   * |                                   |
+| -- zlib         | c++, c#, java, js   * |                                   |
 | container       | no code               |                                   |
 | -- heap         | c++, c#, java, js     |                                   |
 | -- list         | c++, c#, java, js     |                                   |
@@ -38,24 +40,24 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- md5          | c++, c#, java, js     |                                   |
 | -- rand         | c++, c#, java, js     |                                   |
 | -- rc4          | c++, c#, java, js     |                                   |
-| -- rsa          |                   (*) | waiting for reflect.Call          |
+| -- rsa          |                     * | waiting for reflect.Call          |
 | -- sha1         | c++, c#, java, js     |                                   |
 | -- sha256       | c++, c#, java, js     |                                   |
 | -- sha512       | c++, c#, java, js     |                                   |
 | -- subtle       |                       | waiting for reflect.Call          |
-| -- tls          |                   (*) | panic: duplicate function name: crypto/tls.run$1 |
-| -- x509         | c++, c#, js           | mod tests (as Windows) but slow js>30m, java: TypeInfo too big |
+| -- tls          |                     * | panic: duplicate function name: crypto/tls.run$1 |
+| -- x509         | [c++, c#, js]         | mod tests (as Windows) but slow js>30m, java: TypeInfo too big |
 | -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       | panic: duplicate function name: database/sql.Query$1 |
 | -- -- driver    | c++, c#, java, js     |                                   |
 | debug           | no code               |                                   |
-| -- dwarf        |                   (*) | interface type assert failed      |
-| -- elf          | c++, c#, js       (*) | java: error TypeInfo code too large |
+| -- dwarf        |                     * | interface type assert failed      |
+| -- elf          | c++, c#, js         * | java: error TypeInfo code too large |
 | -- gosym        | c++, c#, java, js     |                                   |
-| -- macho        | c++, c#, java, js (*) |                                   |
-| -- pe           | c++, c#, java, js (*) |                                   |
-| -- plan9obj     | c++, c#, java, js (*) |                                   |
+| -- macho        | c++, c#, java, js   * |                                   |
+| -- pe           | c++, c#, java, js   * |                                   |
+| -- plan9obj     | c++, c#, java, js   * |                                   |
 | encoding        | no tests              |                                   |
 | -- ascii85      | c++, c#, java, js     |                                   |
 | -- asn1         |                       | 2 errors, probably both UTF-8 encoding related |
@@ -74,11 +76,11 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | fmt             | c++, js               | minor differences in type names, c#/java: error in reflect |
 | go              | no code               |                                   |
 | -- ast          |                       | multiple errors                   |
-| -- build        |                   (*) | $GOROOT/$GOPATH not set           |
-| -- doc          |                   (*) | os.PathError, test-data set-up & fs access during init issues |
-| -- format       | c++, c#, java, js (*) |                                   |
-| -- parser       | c++, c#, java, js (*) |                                   |
-| -- printer      | c++, c#, java, js (*) |                                   |
+| -- build        |                     * | $GOROOT/$GOPATH not set           |
+| -- doc          |                     * | internal error: underlying array capacity < slice capacity |
+| -- format       | c++, c#, java, js   * |                                   |
+| -- parser       | c++, c#, java, js   * |                                   |
+| -- printer      | c++, c#, java, js   * |                                   |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- token        | c++, c#, java, js     |                                   |
 | hash            | no tests              |                                   |
@@ -88,25 +90,25 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- fnv          | c++, c#, java, js     |                                   |
 | html            | c++, c#, java, js     |                                   |
 | -- template     |                       | waiting for reflect.Call          |
-| image           | c++, c#, java, js (*) |                                   |
+| image           | c++, c#, java, js   * |                                   |
 | -- color        | c++, c#, java, js     |                                   |
 | -- -- palette   | no tests              |                                   |
-| -- draw         | c++, c#, java, js (*) |                                   |
-| -- gif          | c++, c#, java, js (*) |                                   |
-| -- jpeg         | c++, c#, java, js (*) |                                   |
-| -- png          |                   (*) | concrete type assert failed       |
+| -- draw         | c++, c#, java, js   * |                                   |
+| -- gif          | c++, c#, java, js   * |                                   |
+| -- jpeg         | c++, c#, java, js   * |                                   |
+| -- png          |                     * | concrete type assert failed       |
 | index           | no code               |                                   |
 | -- suffixarray  | c++, c#, java, js     |                                   |
 | io              | c++, c#, java, js     |                                   |
-| -- ioutil       | c++, c#, java, js (*) |                                   |
+| -- ioutil       | c++, c#, java, js   * |                                   |
 | log             |                       | multiple matching errors          |
 | -- syslog       | no tests              |                                   |
 | math            | c++, js               | c#/java: float32/int overflow issues |
 | -- big          |                       | waiting for reflect.Call          |
 | -- cmplx        | c++, c#, java, js     |                                   |
 | -- rand         |                       | waiting for reflect.Method        |
-| mime            | c++, c#, java, js (*) |                                   |
-| -- multipart    |                   (*) | hangs                             |
+| mime            | c++, c#, java, js   * |                                   |
+| -- multipart    |                     * | hangs                             |
 | net             |                       | hangs                             |
 | -- http         |                       | M not declared by dummy package testing |
 | -- -- cgi       | no                    | fork/exec not implemented         |
@@ -122,14 +124,14 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | -- smtp         |                       | panic: syscall.stopTimer()        |
 | -- textproto    | c++, c#, java, js     |                                   |
 | -- url          | c++, c#, java, js     |                                   |
-| os              | c++, c#, java, js (*) | passes modified tests (no system files to read) |
+| os              | c++, c#, java, js   * | passes modified tests (no system files to read) |
 | -- exec         | -                     | tests fail, dummy testing T.Skip() not properly implemented |
 | -- signal       | -                     | no tests (for nacl)               |
 | -- user         | -                     | tests run with (correct) errors   |
 | path            | c++, c#, java, js     |                                   |
-| -- filepath     | c++, c#, java, js (*) |                                   |
+| -- filepath     | c++, c#, java, js   * |                                   |
 | reflect         |                       | partially implemented - 1st error: invalid function reference |
-| regexp          | c++, c#, java, js (*) |                                   |
+| regexp          | c++, c#, java, js   * |                                   |
 | -- syntax       | c++, c#, java, js     |                                   |
 | runtime         | (c++, c#, java, js)   | only a sub-set of tests pass, NaN Map key handled differently |
 | -- cgo          | -                     | unsupported                       |
@@ -148,9 +150,9 @@ Some tests marked (*) below use testdata in the pseudo file system, passed in vi
 | text            | no code               |                                   |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- tabwriter    | c++, c#, java, js     |                                   |
-| -- template     |                   (*) | waiting for reflect.Call          |
+| -- template     |                     * | waiting for reflect.Call          |
 | -- -- parse     | c++, c#, java, js     |                                   |
-| time            |                   (*) | waiting for reflect.Call          |
+| time            |                     * | waiting for reflect.Call          |
 | unicode         | c++, c#, java, js     |                                   |
 | -- utf16        | c++, c#, java, js     |                                   |
 | -- utf8         | c++, c#, java, js     |                                   |

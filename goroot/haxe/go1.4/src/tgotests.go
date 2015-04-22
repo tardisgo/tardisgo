@@ -30,7 +30,6 @@ var allList = []string{
 	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
 	"unicode unicode/utf16 unicode/utf8 ",
 	// below are those packages that require their own testdata zip file, and so must be run individually
-	"archive/zip ",
 	"compress/bzip2", "compress/flate", "compress/gzip", "compress/lzw", "compress/zlib",
 	"debug/macho", "debug/pe", "debug/plan9obj",
 	"go/format", "go/parser", "go/printer",
@@ -42,24 +41,23 @@ var allList = []string{
 	"regexp",
 }
 
-var js1 = "crypto/x509" //runtime very long at 30+ mins
-var js = ` archive/tar 
+var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
+var js = ` archive/tar archive/zip 
  debug/elf encoding/pem fmt
  math net/http/fcgi  strconv
 `
 
 var cs = ` 
- crypto/x509
- debug/elf    
+ debug/elf  archive/zip   
 `
 
 var cpp = ` 
-  archive/tar crypto/x509 
+  archive/tar 
   debug/elf  encoding/pem fmt   
   math  strconv
 `
 
-var java = ` 
+var java = ` archive/zip 
 `
 
 func pkgList(jumble string) []string {
