@@ -25,7 +25,7 @@ var allList = []string{
 		"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 ",
 	"database/sql/driver debug/gosym",
 	"encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex errors flag ",
-	"go/scanner go/token hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
+	"go/ast go/scanner go/token hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
 	"index/suffixarray io math/cmplx net/http/internal net/mail net/textproto net/url path ",
 	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
 	"unicode unicode/utf16 unicode/utf8 ",

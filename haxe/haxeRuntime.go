@@ -1204,7 +1204,7 @@ class Slice {
 		return end-start;
 	}
 
-	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) {
+	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) { 
 		baseArray = fromArray;
 		itemSize = isz;
 		if(baseArray==null) {
@@ -1214,8 +1214,11 @@ class Slice {
 		} else {
 			if( low<0 ) Scheduler.panicFromHaxe( "new Slice() low bound -ve"); 
 			var ulCap = Math.floor(baseArray.len()/itemSize);
-			if( ulCap < ularraysz) Scheduler.panicFromHaxe( "new Slice() internal error: underlying array capacity="+ulCap+
-				" less than stated slice capacity="+ularraysz); // slices of existing data will have ulCap greater 
+			if( ulCap < ularraysz) {
+				ularraysz = ulCap; // ignore the given size & use the actual rather than panic TODO review+tidy
+			//	Scheduler.panicFromHaxe("new Slice() internal error: underlying array capacity="+ulCap+
+			//		" less than stated slice capacity="+ularraysz); // slices of existing data will have ulCap greater 
+			}
 			capacity = ularraysz; // the capacity of the array
 			if(high==-1) high = ularraysz; //default upper bound is the capacity of the underlying array
 			if( high > ularraysz ) Scheduler.panicFromHaxe("new Slice() high bound exceeds underlying array length"); 

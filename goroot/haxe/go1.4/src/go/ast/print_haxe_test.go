@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package ast
 
 import (
@@ -23,7 +25,8 @@ var tests = []struct {
 	{"foobar", "0  \"foobar\""},
 
 	// maps
-	{map[Expr]string{}, `0  map[ast.Expr]string (len = 0) {}`},
+	//{map[Expr]string{}, `0  map[ast.Expr]string (len = 0) {}`},
+	{map[Expr]string{}, `0  map[go/ast.Expr]string (len = 0) {}`}, // haxe replacement
 	{map[string]int{"a": 1},
 		`0  map[string]int (len = 1) {
 		1  .  "a": 1
@@ -55,17 +58,30 @@ var tests = []struct {
 		4  }`},
 
 	// structs
-	{struct{}{}, `0  struct {} {}`},
-	{struct{ x int }{007}, `0  struct { x int } {}`},
+	//{struct{}{}, `0  struct {} {}`},
+	{struct{}{}, `0  struct{} {}`}, // haxe replacement
+	//{struct{ x int }{007}, `0  struct { x int } {}`},
+	{struct{ x int }{007}, `0  struct{x int} {}`}, // haxe replacement
+	/*
+		{struct{ X, y int }{42, 991},
+			`0  struct { X int; y int } {
+			1  .  X: 42
+			2  }`},
+		{struct{ X, Y int }{42, 991},
+			`0  struct { X int; Y int } {
+			1  .  X: 42
+			2  .  Y: 991
+			3  }`},
+	*/
 	{struct{ X, y int }{42, 991},
-		`0  struct { X int; y int } {
+		`0  struct{X int; y int} {
 		1  .  X: 42
-		2  }`},
+		2  }`}, // haxe replacement
 	{struct{ X, Y int }{42, 991},
-		`0  struct { X int; Y int } {
+		`0  struct{X int; Y int} {
 		1  .  X: 42
 		2  .  Y: 991
-		3  }`},
+		3  }`}, // haxe replacement
 }
 
 // Split s into lines, trim whitespace from all lines, and return

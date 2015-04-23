@@ -75,9 +75,9 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
 | fmt             | c++, js               | minor differences in type names, c#/java: error in reflect |
 | go              | no code               |                                   |
-| -- ast          |                       | multiple errors                   |
+| -- ast          |                       | minor changes to testdata whitespace and paths |
 | -- build        |                     * | $GOROOT/$GOPATH not set           |
-| -- doc          |                     * | internal error: underlying array capacity < slice capacity |
+| -- doc          |                     * | waiting for reflect.MethodByName  |
 | -- format       | c++, c#, java, js   * |                                   |
 | -- parser       | c++, c#, java, js   * |                                   |
 | -- printer      | c++, c#, java, js   * |                                   |
@@ -111,7 +111,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- multipart    |                     * | hangs                             |
 | net             |                       | hangs                             |
 | -- http         |                       | M not declared by dummy package testing |
-| -- -- cgi       | no                    | fork/exec not implemented         |
+| -- -- cgi       | -                     | fork/exec not implemented         |
 | -- -- cookiejar |                       | errors in TestUpdateAndDelete     |
 | -- -- fcgi      | js                    | other targets fail or take too long to compile |
 | -- -- httptest  |                       | hangs                             |
