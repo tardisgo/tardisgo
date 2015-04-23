@@ -75,7 +75,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
 | fmt             | c++, js               | minor differences in type names, c#/java: error in reflect |
 | go              | no code               |                                   |
-| -- ast          |                       | minor changes to testdata whitespace and paths |
+| -- ast          | c++, c#, java, js     | minor changes to testdata whitespace and paths |
 | -- build        |                     * | $GOROOT/$GOPATH not set           |
 | -- doc          |                     * | waiting for reflect.MethodByName  |
 | -- format       | c++, c#, java, js   * |                                   |
