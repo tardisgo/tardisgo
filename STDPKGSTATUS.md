@@ -14,7 +14,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | Name            | Passes in? (*=testfs) | Comment                           |
 | --------------- | --------------------- | --------------------------------- |
 | archive         | no code               |                                   |
-| -- tar          | c++, js             * | c#/java: issue relating to incorrect map handling in reflect |
+| -- tar          | c++, js, java       * | c#: header mis-match              |
 | -- zip          | [c++] c#, java, js  * | c++: tests take >30mins           |
 | bufio           | c++, c#, java, js     |                                   |
 | builtin         | no tests              | all built-in functions are implemented |
@@ -60,20 +60,20 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- plan9obj     | c++, c#, java, js   * |                                   |
 | encoding        | no tests              |                                   |
 | -- ascii85      | c++, c#, java, js     |                                   |
-| -- asn1         |                       | 2 errors, probably both UTF-8 encoding related |
+| -- asn1         | c++                   | UTF-8 encoding issues on UTF-16 targets |
 | -- base32       | c++, c#, java, js     |                                   |
 | -- base64       | c++, c#, java, js     |                                   |
 | -- binary       |                       | reflect: unknown method using value from unexported field |
 | -- csv          | c++, c#, java, js     |                                   |
 | -- gob          |                       | fatal error: stack overflow       |
 | -- hex          | c++, c#, java, js     |                                   |
-| -- json         |                       | cast to map fails, reflect map issue |
-| -- pem          | c++, js               | c#/java: type cast exception Pointer/GOmap |
+| -- json         |                       | some field names not found        |
+| -- pem          | c++, c#, java, js     |                                   |
 | -- xml          |                       | multiple errors, then panics      |
 | errors          | c++, c#, java, js     |                                   |
 | expvar          |                       | Haxe try-catch exception after JSON unmarshall |
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
-| fmt             | c++, js               | minor differences in type names, c#/java: error in reflect |
+| fmt             | c++, c#, java, js     | minor differences in type names   |
 | go              | no code               |                                   |
 | -- ast          | c++, c#, java, js     | minor changes to testdata whitespace and paths |
 | -- build        |                     * | $GOROOT/$GOPATH not set           |

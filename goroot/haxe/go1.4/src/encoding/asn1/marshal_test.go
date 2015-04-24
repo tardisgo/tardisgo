@@ -10,6 +10,8 @@ import (
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
 type intStruct struct {
@@ -151,12 +153,17 @@ func TestMarshal(t *testing.T) {
 		out, _ := hex.DecodeString(test.out)
 		if !bytes.Equal(out, data) {
 			t.Errorf("#%d got: %x want %x\n\t%q\n\t%q", i, data, out, data, out)
-
+			println("DEBUG as strings data:", string(data), " out:", string(out))
 		}
 	}
 }
 
 func TestInvalidUTF8(t *testing.T) {
+	badStr := string([]byte{0xff, 0xff})
+	for i := range badStr {
+		println("DEBUG:", i, hx.CodeInt("",
+			"_a.itemAddr(0).load().val.charCodeAt(_a.itemAddr(1).load().val);", badStr, i))
+	}
 	_, err := Marshal(string([]byte{0xff, 0xff}))
 	if err == nil {
 		t.Errorf("invalid UTF8 string was accepted")

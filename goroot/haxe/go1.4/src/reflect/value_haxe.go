@@ -87,6 +87,10 @@ func (v Value) pointer() unsafe.Pointer {
 	if v.typ.size != ptrSize || !v.typ.pointers() {
 		panic("can't call pointer on a non-pointer Value")
 	}
+	switch v.Kind() { // Haxe addition
+	case Map: //  TODO add ,Chan???
+		return v.ptr
+	}
 	if v.flag&flagIndir != 0 {
 		return *(*unsafe.Pointer)(v.ptr)
 	}
@@ -118,7 +122,7 @@ func packEface(v Value) interface{} {
 	case v.flag&flagIndir != 0:
 		// Value is indirect, but interface is direct.  We need
 		// to load the data at v.ptr into the interface data word.
-		e.word = *(*unsafe.Pointer)(v.ptr)
+		e.word = v.pointer() // *(*unsafe.Pointer)(v.ptr)
 	default:
 		// Value is direct, and so is the interface.
 		e.word = v.ptr
@@ -722,6 +726,16 @@ func (v Value) Elem() Value {
 		typ := tt.elem
 		fl := v.flag&flagRO | flagIndir | flagAddr
 		fl |= flag(typ.Kind())
+
+		if !hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", uintptr(ptr)) {
+			//println("DEBUG re-created pointer for non-pointer to ",
+			//	typ.Kind().String(), typ.String(), ptr)
+			var ei emptyInterface
+			ei.typ = typ
+			haxe2go(&ei, ptr)
+			ptr = ei.word
+		}
+
 		return Value{typ, ptr, fl}
 	}
 	panic(&ValueError{"reflect.Value.Elem", v.kind()})
@@ -970,7 +984,7 @@ func (v Value) IsNil() bool {
 		}
 		ptr := v.ptr
 		if v.flag&flagIndir != 0 {
-			ptr = *(*unsafe.Pointer)(ptr)
+			ptr = v.pointer() //*(*unsafe.Pointer)(ptr)
 		}
 		return ptr == nil
 	case Interface, Slice:
@@ -1016,7 +1030,7 @@ func (v Value) Len() int {
 		return chanlen(v.pointer())
 	case Map:
 		//panic("reflect.value.Len map not yet implemented")
-		return maplen(*(*uintptr)(v.ptr)) //v.pointer())
+		return maplen(v.pointer())
 	case Slice:
 		// Slice is bigger than a word; assume flagIndir.
 		if hx.IsNull(*(*uintptr)(unsafe.Pointer(v.ptr))) { // nil slice
@@ -1057,7 +1071,7 @@ func (v Value) MapIndex(key Value) Value {
 	} else {
 		k = unsafe.Pointer(&key.ptr)
 	}
-	e := mapaccess(v.typ, *(*uintptr)(v.ptr) /*v.pointer()*/, k)
+	e := mapaccess(v.typ, v.pointer(), k)
 	if e == nil {
 		return Value{}
 	}
@@ -1087,9 +1101,9 @@ func (v Value) MapKeys() []Value {
 
 	fl := v.flag&flagRO | flag(keyType.Kind())
 
-	m := *(*uintptr)(v.ptr) //v.pointer()
+	m := v.pointer()
 	mlen := int(0)
-	if !hx.IsNull(m) /*!= nil*/ {
+	if m != nil {
 		mlen = maplen(m)
 	}
 	//println("DEBUG maplen map", mlen, m)
@@ -1255,7 +1269,7 @@ func (v Value) OverflowUint(x uint64) bool {
 // is 0.  If the slice is empty but non-nil the return value is non-zero.
 func (v Value) Pointer() uintptr {
 	switch v.kind() {
-	case Ptr, UnsafePointer:
+	case Chan, Map, Func, Ptr, UnsafePointer:
 		return uintptr(v.pointer())
 	case Slice:
 		//return (*SliceHeader)(v.ptr).Data
@@ -1265,8 +1279,6 @@ func (v Value) Pointer() uintptr {
 		return hx.CodeDynamic("",
 			"_a.itemAddr(0).load().val.load().len()==0?null:_a.itemAddr(0).load().val.load().itemAddr(0);",
 			v.ptr)
-	case Map, Func, Chan:
-		return uintptr(unsafe.Pointer(v.pointer())) // TODO this is an untested value
 	default:
 		panic("reflect.value.Pointer not yet implemented for " + v.Kind().String())
 	}
@@ -2627,7 +2639,7 @@ func makemap(t *rtype) (m unsafe.Pointer) {
 	return nil
 }
 
-func mapaccess(t *rtype, m uintptr /*unsafe.Pointer*/, key unsafe.Pointer) (val unsafe.Pointer) {
+func mapaccess(t *rtype, mp unsafe.Pointer, key unsafe.Pointer) (val unsafe.Pointer) {
 	if t == nil {
 		panic("reflect.mapaccess() nil pointer to type info")
 	}
@@ -2636,21 +2648,24 @@ func mapaccess(t *rtype, m uintptr /*unsafe.Pointer*/, key unsafe.Pointer) (val 
 	kt := (*mapType)(unsafe.Pointer(t)).key
 	et := (*mapType)(unsafe.Pointer(t)).elem
 	ei := new(emptyInterface)
-	var el uintptr
-	if !hx.IsNull(m) /*m != nil*/ {
-		if key != nil {
-			ei.typ = kt
-			ei.word = key
-			hk := haxeInterfacePack(ei)
-			el = hx.CodeDynamic("",
-				"cast(_a.itemAddr(0).load().val,GOmap).get(_a.itemAddr(1).load().val);",
-				m, hk)
-			//println("DEBUG mapaccess key,val=", hk, el)
-		} else {
-			el = hx.CodeDynamic("",
-				"cast(_a.itemAddr(0).load().val,GOmap).vz;",
-				m)
-			//println("DEBUG mapaccess default val=", el)
+	var el uintptr = hx.Null()
+	if mp != nil {
+		m := *(*uintptr)(mp)
+		if !hx.IsNull(m) {
+			if key != nil {
+				ei.typ = kt
+				ei.word = key
+				hk := haxeInterfacePack(ei)
+				el = hx.CodeDynamic("",
+					"cast(_a.itemAddr(0).load().val,GOmap).get(_a.itemAddr(1).load().val);",
+					m, hk)
+				//println("DEBUG mapaccess key,val=", hk, el)
+			} else {
+				el = hx.CodeDynamic("",
+					"cast(_a.itemAddr(0).load().val,GOmap).vz;",
+					m)
+				//println("DEBUG mapaccess default val=", el)
+			}
 		}
 	}
 	ei.typ = et
@@ -2673,13 +2688,17 @@ type mapIter struct {
 	elem uintptr // TODO remove if not used
 }
 
-func mapiterinit(t *rtype, m uintptr /*unsafe.Pointer*/) unsafe.Pointer {
+func mapiterinit(t *rtype, mp unsafe.Pointer) unsafe.Pointer {
 	//panic("reflect.mapiterinit() not yet implemented in haxe")
-	if t == nil || hx.IsNull(m) /* == nil */ {
+	if t == nil || mp == nil {
 		if t == nil {
 			panic("reflect.mapiterinit() nil pointer to type info")
 		}
 		//println("DEBUG reflect.mapiterinit() nil pointer to map")
+		return nil
+	}
+	m := *(*uintptr)(mp)
+	if hx.IsNull(m) {
 		return nil
 	}
 	mi := new(mapIter)
@@ -2716,10 +2735,14 @@ func mapiternext(it unsafe.Pointer) {
 	mi.elem = hx.CodeDynamic("", "_a.itemAddr(0).load().val.r2;", tuple)
 	//println("DEBUG reflect.mapiternext() tuple=", mi.ok, mi.key, mi.elem)
 }
-func maplen(m uintptr /*unsafe.Pointer*/) int {
+func maplen(mp unsafe.Pointer) int {
 	//panic("reflect.maplen() not yet implemented in haxe")
 	//println("DEBUG maplen XXX", m)
-	if hx.IsNull(m) /*== nil*/ {
+	if mp == nil {
+		return 0
+	}
+	m := *(*uintptr)(mp)
+	if hx.IsNull(m) {
 		return 0
 	}
 	return hx.CodeInt("", "cast(_a.itemAddr(0).load().val,GOmap).len();", m)

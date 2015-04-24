@@ -95,14 +95,15 @@ func haxe2go(ret *emptyInterface, i interface{}) {
 
 	case Slice, Interface, Map, Func, Chan:
 		val := hx.CodeDynamic("", "_a.itemAddr(0).load().val;", i)
+		*(*uintptr)(ret.word) = val
+
 		/*
 			htyp := "null"
 			if !hx.IsNull(val) {
 				htyp = hx.CallString("", "Type.getClassName", 1, val)
 			}
-			println("DEBUG unpack haxe type=", htyp, " Go type=", ret.typ.Kind().String(), "val=", val)
+			println("DEBUG unpack haxe type=", htyp, " Go type=", ret.typ.Kind().String(), "val=", val, "encoded=", ret)
 		*/
-		*(*uintptr)(ret.word) = val
 	}
 
 }
@@ -118,8 +119,6 @@ func typeIdFromPtr(ptr *rtype) int {
 func haxeInterfacePack(ei *emptyInterface) interface{} {
 	i := haxeInterfacePackB(ei)
 
-	// TODO new version of type infomation
-	//if useTgotypes {
 	ityp := hx.CodeInt("", "_a.itemAddr(0).load().typ;", i)
 	if unsafe.Pointer(ei.typ) != unsafe.Pointer(haxegoruntime.TypeTable[ityp]) {
 		typ := typeIdFromPtr(ei.typ)
@@ -129,7 +128,6 @@ func haxeInterfacePack(ei *emptyInterface) interface{} {
 			i, typ, &i)
 		//println("DEBUG amended to ", hx.CodeInt("", "_a.itemAddr(0).load().typ;", i))
 	}
-	//}
 
 	return i
 }
@@ -192,14 +190,18 @@ func haxeInterfacePackB(ei *emptyInterface) interface{} {
 		if ei.word == nil {
 			return hx.CodeIface("", ei.typ.String(), "null;")
 		}
-		//println("DEBUG pack haxe ptr type=", hx.CallString("", "Type.getClassName", 1, ei.word),
-		//	" Go type=", ei.typ.Kind().String(), "PtrVal=", ei.word)
-		val := uintptr(ei.word) //?????? TODO this must be wrong, but needed for fmt to pass
-		if ei.typ.Kind() != Map {
-			val = *(*uintptr)(unsafe.Pointer(ei.word))
-		}
-		return hx.CodeIface("", ei.typ.String(), "_a.itemAddr(0).load().val;", val)
-
+		/*
+			htyp := "null"
+			if !hx.IsNull(uintptr(ei.word)) {
+				htyp = hx.CallString("", "Type.getClassName", 1, ei.word)
+			}
+			println("DEBUG pack haxe type=", htyp, " Go type=", ei.typ.Kind().String(), "val=", ei.word, "encoded=", ei)
+		*/
+		val := *(*uintptr)(unsafe.Pointer(ei.word))
+		r := hx.CodeIface("", ei.typ.String(), "_a.itemAddr(0).load().val;", val)
+		//println("DEBUG pack haxe encoded=", ei, "type=", hx.CallString("", "Type.getClassName", 1, ei.word),
+		//	"Go type=", ei.typ.Kind().String(), "PtrVal=", ei.word, "Return=", r)
+		return r
 	}
 
 	panic("reflect.haxeInterfacePack() not yet implemented for " + ei.typ.String() +

@@ -1958,6 +1958,7 @@ func (bv *bitVector) append2(bits uint8) {
 }
 
 func addTypeBits(bv *bitVector, offset *uintptr, t *rtype) {
+	panic("reflect.addTypeBits() not yet implemented ... suspect code")
 	*offset = align(*offset, uintptr(t.align))
 	if t.kind&kindNoPointers != 0 {
 		*offset += t.size

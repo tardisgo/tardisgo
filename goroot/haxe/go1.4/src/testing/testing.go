@@ -1,7 +1,8 @@
 package testing
 
 import (
-	fmt "fmt_dummy" // use the dummy version to improve C++ compile times
+	//fmt "fmt_dummy" // use the dummy version to improve C++ compile times
+	"fmt"
 	"runtime"
 	"sort"
 	"time"

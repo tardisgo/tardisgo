@@ -24,8 +24,10 @@ var allList = []string{
 	"crypto/aes crypto/cipher crypto/des crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac " +
 		"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 ",
 	"database/sql/driver debug/gosym",
-	"encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex errors flag ",
-	"go/ast go/scanner go/token hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
+	"encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex encoding/pem ",
+	"errors flag fmt ",
+	"go/ast go/scanner go/token",
+	"hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
 	"index/suffixarray io math/cmplx net/http/internal net/mail net/textproto net/url path ",
 	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
 	"unicode unicode/utf16 unicode/utf8 ",
@@ -43,7 +45,7 @@ var allList = []string{
 
 var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar archive/zip 
- debug/elf encoding/pem fmt
+ debug/elf  
  math net/http/fcgi  strconv
 `
 
@@ -53,11 +55,11 @@ var cs = `
 
 var cpp = ` 
   archive/tar 
-  debug/elf  encoding/pem fmt   
+  debug/elf encoding/asn1    
   math  strconv
 `
 
-var java = ` archive/zip 
+var java = ` archive/zip archive/tar 
 `
 
 func pkgList(jumble string) []string {
