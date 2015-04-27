@@ -307,7 +307,7 @@ func (v Value) CanSet() bool {
 // If v is a variadic function, Call creates the variadic slice parameter
 // itself, copying in the corresponding values.
 func (v Value) Call(in []Value) []Value {
-	panic("reflect.Call not yet implemented")
+	//panic("reflect.Call not yet implemented")
 	v.mustBe(Func)
 	v.mustBeExported()
 	return v.call("Call", in)
@@ -321,7 +321,7 @@ func (v Value) Call(in []Value) []Value {
 // As in Go, each input argument must be assignable to the
 // type of the function's corresponding input parameter.
 func (v Value) CallSlice(in []Value) []Value {
-	panic("reflect.CallSlice not yet implemented")
+	//panic("reflect.CallSlice not yet implemented")
 	v.mustBe(Func)
 	v.mustBeExported()
 	return v.call("CallSlice", in)
@@ -330,6 +330,10 @@ func (v Value) CallSlice(in []Value) []Value {
 var callGC bool // for testing; see TestCallMethodJump
 
 func (v Value) call(op string, in []Value) []Value {
+	println("DEBUG call target", v)
+	println("DEBUG call arguments", in)
+	panic("DEBUG call method " + op)
+
 	// Get function pointer, type.
 	t := v.typ
 	var (
@@ -767,8 +771,10 @@ func (v Value) Field(i int) Value {
 	// In the latter case, we must be have field.offset = 0,
 	// so v.ptr + field.offset is still okay.
 	//ptr:=unsafe.Pointer(uintptr(v.ptr) + field.offset)
-	ptr := unsafe.Pointer(hx.MethDynamic("", uintptr(v.ptr), "Pointer", "addr", 1, field.offset))
-	//println("DEBUG field()", i, typ.Name(), typ.NumMethod(), ptr, fl)
+	ptr := unsafe.Pointer(hx.CodeDynamic("",
+		"_a.itemAddr(0).load().val.addr(_a.itemAddr(1).load().val);",
+		v.ptr, field.offset))
+	//println("DEBUG Field()", i, typ.Name(), typ.NumMethod(), ptr, fl)
 	return Value{typ, ptr, fl}
 }
 
@@ -777,6 +783,7 @@ func (v Value) Field(i int) Value {
 func (v Value) FieldByIndex(index []int) Value {
 	//panic("reflect.value.FieldByIndex not yet implemented")
 	if len(index) == 1 {
+		//println("DEBUG FieldByIndex()", index, v.Field(index[0]))
 		return v.Field(index[0])
 	}
 	v.mustBe(Struct)
@@ -791,6 +798,7 @@ func (v Value) FieldByIndex(index []int) Value {
 		}
 		v = v.Field(x)
 	}
+	//println("DEBUG FieldByIndex()", index, v)
 	return v
 }
 
@@ -851,7 +859,9 @@ func (v Value) Index(i int) Value {
 		// In the latter case, we must be doing Index(0), so offset = 0,
 		// so v.ptr + offset is still okay.
 		//val := unsafe.Pointer(uintptr(v.ptr) + offset)
-		val := unsafe.Pointer(hx.MethDynamic("", uintptr(v.ptr), "", "addr", 1, offset))
+		val := unsafe.Pointer(hx.CodeDynamic("",
+			"_a.itemAddr(0).load().val.addr(_a.itemAddr(1).load().val);",
+			v.ptr, offset))
 		fl := v.flag&(flagRO|flagIndir|flagAddr) | flag(typ.Kind()) // bits same as overall array
 		return Value{typ, val, fl}
 
@@ -1137,7 +1147,7 @@ func (v Value) MapKeys() []Value {
 // a receiver; the returned function will always use v as the receiver.
 // Method panics if i is out of range or if v is a nil interface value.
 func (v Value) Method(i int) Value {
-	panic("reflect.value.Method not yet implemented")
+	//panic("reflect.value.Method not yet implemented")
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.Method", Invalid})
 	}
@@ -1171,7 +1181,7 @@ func (v Value) NumMethod() int {
 // a receiver; the returned function will always use v as the receiver.
 // It returns the zero Value if no method was found.
 func (v Value) MethodByName(name string) Value {
-	panic("reflect.value.MethodByName not yet implemented")
+	//panic("reflect.value.MethodByName not yet implemented")
 	if v.typ == nil {
 		panic(&ValueError{"reflect.Value.MethodByName", Invalid})
 	}
@@ -1483,14 +1493,16 @@ func (v Value) SetInt(x int64) {
 // It panics if v's Kind is not Slice or if n is negative or
 // greater than the capacity of the slice.
 func (v Value) SetLen(n int) {
-	panic("reflect.value.SetLEN not yet implemented")
+	//panic("reflect.value.SetLEN not yet implemented")
 	v.mustBeAssignable()
 	v.mustBe(Slice)
 	//s := (*sliceHeader)(v.ptr)
 	if uint(n) > uint(hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr)) { //s.Cap) {
 		panic("reflect: slice length out of range in SetLen")
 	}
-	panic("reflect.value.SetLEN - not sure how to do: s.Len = n") // TODO
+	//panic("reflect.value.SetLEN - not sure how to do: s.Len = " +
+	//	hx.CallString("", "Std.string", 1, n))
+	hx.Code("", "_a.itemAddr(0).load().val.load().setLen(_a.itemAddr(1).load().val);", v.ptr, n)
 }
 
 // SetCap sets v's capacity to n.
@@ -1516,7 +1528,7 @@ func (v Value) SetCap(n int) {
 // As in Go, key's value must be assignable to the map's key type,
 // and val's value must be assignable to the map's value type.
 func (v Value) SetMapIndex(key, val Value) {
-	panic("reflect.value.SetMapIndex not yet implemented")
+	//panic("reflect.value.SetMapIndex not yet implemented")
 	v.mustBe(Map)
 	v.mustBeExported()
 	key.mustBeExported()
@@ -1980,7 +1992,12 @@ func Copy(dst, src Value) int {
 		da = dst.ptr
 	} else {
 		//da = (*sliceHeader)(dst.ptr).Data
-		da = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", dst.ptr))
+		sl := hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", dst.ptr)
+		if hx.IsNull(sl) {
+			panic("reflect.Copy destination slice is nil")
+		}
+		da = unsafe.Pointer(hx.CodeDynamic("",
+			"cast(_a.itemAddr(0).load().val.load(),Slice).itemAddr(0);", dst.ptr))
 	}
 	if src.flag&flagIndir == 0 {
 		//println("DEBUG flagIndir")
@@ -1989,7 +2006,13 @@ func Copy(dst, src Value) int {
 		sa = src.ptr
 	} else {
 		//sa = (*sliceHeader)(src.ptr).Data
-		sa = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", src.ptr))
+		sl := hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", src.ptr)
+		if hx.IsNull(sl) {
+			//panic("reflect.Copy source slice is nil")
+			return 0
+		}
+		sa = unsafe.Pointer(hx.CodeDynamic("",
+			"cast(_a.itemAddr(0).load().val.load(),Slice).itemAddr(0);", src.ptr))
 	}
 	memmove(da, sa, uintptr(n)*de.Size())
 	return n
@@ -2631,12 +2654,22 @@ func makechan(typ *rtype, size uint64) (ch unsafe.Pointer) {
 	//return nil
 
 	chPtr := hx.Malloc(typ.Size())
-	*((*uintptr)(chPtr)) = hx.CallDynamic("", "new Channel", 1, uint(size))
+	*((*uintptr)(chPtr)) = hx.CodeDynamic("", "new Channel(_a.itemAddr(0).load().val);", uint(size))
 	return chPtr
 }
 func makemap(t *rtype) (m unsafe.Pointer) {
-	panic("reflectmakemap() not yet implemented in haxe")
-	return nil
+	//panic("reflectmakemap() not yet implemented in haxe")
+	if t == nil {
+		panic("reflect.makemap() nil pointer to type info")
+	}
+	mapPtr := hx.Malloc(t.Size())
+	kt := (*mapType)(unsafe.Pointer(t)).key
+	et := (*mapType)(unsafe.Pointer(t)).elem
+	kv := haxeInterfacePack(&emptyInterface{typ: kt, word: hx.Malloc(kt.Size())})
+	ev := haxeInterfacePack(&emptyInterface{typ: et, word: hx.Malloc(et.Size())})
+	*(*uintptr)(mapPtr) = hx.CodeDynamic("",
+		"new GOmap(_a.itemAddr(0).load().val,_a.itemAddr(1).load().val);", kv, ev)
+	return mapPtr
 }
 
 func mapaccess(t *rtype, mp unsafe.Pointer, key unsafe.Pointer) (val unsafe.Pointer) {
@@ -2673,8 +2706,34 @@ func mapaccess(t *rtype, mp unsafe.Pointer, key unsafe.Pointer) (val unsafe.Poin
 	haxe2go(ei, el)
 	return ei.word
 }
-func mapassign(t *rtype, m unsafe.Pointer, key, val unsafe.Pointer) {
-	panic("reflect.mapassign() not yet implemented in haxe")
+func mapassign(t *rtype, mp unsafe.Pointer, key, val unsafe.Pointer) {
+	//panic("reflect.mapassign() not yet implemented in haxe")
+	if t == nil {
+		panic("reflect.mapassign() nil pointer to type info")
+	}
+	if mp == nil {
+		panic("reflect.mapassign() nil pointer to map")
+	}
+	if !hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", mp) {
+		panic("reflect.mapassign() not a pointer to map")
+	}
+	m := *(*uintptr)(mp)
+	if hx.IsNull(uintptr(m)) {
+		panic("reflect.mapassign() null Haxe map") // as it does in the real runtime version
+		/*
+			println("DEBUG auto-create empty map")
+			*(*uintptr)(mp) = *(*uintptr)(makemap(t)) // make a suitable map TODO review if correct, required for encoding/gob
+			m = *(*uintptr)(mp)
+		*/
+	}
+	if !hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,GOmap);", m) {
+		panic("reflect.mapassign() not a Haxe map: " + hx.CallString("", "Std.string", 1, m))
+	}
+	kv := haxeInterfacePack(&emptyInterface{typ: (*mapType)(unsafe.Pointer(t)).key, word: key})
+	ev := haxeInterfacePack(&emptyInterface{typ: (*mapType)(unsafe.Pointer(t)).elem, word: val})
+	hx.Code("",
+		"cast(_a.itemAddr(0).load().val,GOmap).set(_a.itemAddr(1).load().val,_a.itemAddr(2).load().val);",
+		m, kv, ev)
 }
 func mapdelete(t *rtype, m unsafe.Pointer, key unsafe.Pointer) {
 	panic("reflect.mapdelete() not yet implemented in haxe")

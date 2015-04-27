@@ -1038,7 +1038,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		case "runtime_UUnzipTTestFFSS":
 			nextReturnAddress-- //decrement to set new return address for next call generation
 			if pogo.LanguageList[langIdx].TestFS != "" {
-				return `Go_syscall_UUnzipFFSS.hx("` + pogo.LanguageList[langIdx].TestFS + `");`
+				return `Go_syscall_UUnzipFFSS.callFromRT(0,"` + pogo.LanguageList[langIdx].TestFS + `");`
 			}
 			return ""
 		//case "math_Inf":

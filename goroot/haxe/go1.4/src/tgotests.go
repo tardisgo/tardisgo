@@ -24,11 +24,11 @@ var allList = []string{
 	"crypto/aes crypto/cipher crypto/des crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac " +
 		"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 ",
 	"database/sql/driver debug/gosym",
-	"encoding/ascii85 encoding/base32 encoding/base64 encoding/csv encoding/hex encoding/pem ",
+	"encoding/asn1 encoding/ascii85 encoding/binary encoding/base32 encoding/base64 encoding/csv encoding/hex encoding/pem ",
 	"errors flag fmt ",
 	"go/ast go/scanner go/token",
 	"hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
-	"index/suffixarray io math/cmplx net/http/internal net/mail net/textproto net/url path ",
+	"index/suffixarray io log math/cmplx net/http/internal net/mail net/textproto net/url path ",
 	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
 	"unicode unicode/utf16 unicode/utf8 ",
 	// below are those packages that require their own testdata zip file, and so must be run individually
@@ -45,17 +45,17 @@ var allList = []string{
 
 var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar archive/zip 
- debug/elf  
+ debug/elf expvar 
  math net/http/fcgi  strconv
 `
 
 var cs = ` 
- debug/elf  archive/zip   
+ archive/zip  debug/elf expvar   
 `
 
 var cpp = ` 
   archive/tar 
-  debug/elf encoding/asn1    
+  debug/elf    
   math  strconv
 `
 

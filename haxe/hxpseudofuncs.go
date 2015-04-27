@@ -79,7 +79,10 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		wrapEnd = " #else " + defVal + "; #end "
 	}
 
-	if strings.HasSuffix(fnToCall, "SString") && !strings.HasPrefix(fnToCall, "Fset") && !strings.HasPrefix(fnToCall, "Set") {
+	if strings.HasSuffix(fnToCall, "SString") &&
+		!strings.HasPrefix(fnToCall, "CCode") &&
+		!strings.HasPrefix(fnToCall, "FFset") &&
+		!strings.HasPrefix(fnToCall, "SSet") {
 		wrapStart += " Force.fromHaxeString({"
 		wrapEnd = "});" + wrapEnd
 	}

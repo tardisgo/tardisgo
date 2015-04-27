@@ -33,9 +33,10 @@ func Complex(x uintptr) complex128 { return 0 + 0i }
 // Int64 provides a cast from haxe Dynamic type
 func Int64(x uintptr) int64 { return 0 }
 
-// Code inserts the given constant Haxe code at this point.
+// Code inserts the given constant Haxe code at this point. This is not suitable for the casual programmer.
 // ifLogic = a constant string giving the logic for wrapping Haxe complie time condition, ignored if "": #if (ifLogic) ... #end
 // resTyp = a constant string giving the Go name of the type of the data to be returned as an interface. "" if nothing is returned.
+// NOTE: the returned values are not converted from Haxe format, e.g. String values will not be converted back to UTF-8 on UTF-16 targets.
 // code = must be a constant string containing a well-formed Haxe statement, probably terminated with a ";".
 // args = whatever aguments are passed (as interfaces), typical haxe code to access the value of an argument is "_a[3].val".
 // Try the Go code:

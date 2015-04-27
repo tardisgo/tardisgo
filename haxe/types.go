@@ -98,9 +98,14 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			return "Channel" //was: <" + l.LangType(t.(*types.Chan).Elem(), false, errorInfo) + ">"
 		case *types.Map:
 			if retInitVal {
-				return "new GOmap(" +
-					l.LangType(t.(*types.Map).Key(), true, errorInfo) + "," +
-					l.LangType(t.(*types.Map).Elem(), true, errorInfo) + ")"
+				k := t.(*types.Map).Key().Underlying()
+				kv := l.LangType(k, true, errorInfo)
+				e := t.(*types.Map).Elem().Underlying()
+				ev := "null" // TODO review, required for encode/gob to stop recursion
+				if _, isMap := e.(*types.Map); !isMap {
+					ev = l.LangType(e, true, errorInfo)
+				}
+				return "new GOmap(" + kv + "," + ev + ")"
 			}
 			return "GOmap"
 		case *types.Slice:
@@ -273,7 +278,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			return register + "=GOint64.ofInt(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Float":
 			if destType.Underlying().(*types.Basic).Info()&types.IsUnsigned != 0 {
-				return register + "=GOint64.ofUFloat(" + l.IndirectValue(v, errorInfo) + ");" 
+				return register + "=GOint64.ofUFloat(" + l.IndirectValue(v, errorInfo) + ");"
 			}
 			return register + "=GOint64.ofFloat(" + l.IndirectValue(v, errorInfo) + ");"
 		case "Dynamic": // uintptr
@@ -500,7 +505,7 @@ func (l langType) EmitTypeInfo() string {
 	ret += "\tif(id<0||id>=nextTypeID)return \"reflect.CREATED\"+Std.string(id);\n"
 	ret += "\tif(id==0)return \"(haxeTypeID=0)\";" + "\n"
 	ret += "\t#if (js || php || node) if(id==null)return \"(haxeTypeID=null)\"; #end\n"
-	ret += "\t" + `return Go_haxegoruntime_getTTypeSString.hx(id);` + "\n}\n"
+	ret += "\t" + `return Go_haxegoruntime_getTTypeSString.callFromRT(0,id);` + "\n}\n"
 	ret += "public static function typeString(i:Interface):String {\nreturn getName(i.typ);\n}\n"
 
 	ret += "static var typIDs:Map<String,Int> = ["

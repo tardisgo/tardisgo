@@ -9,7 +9,7 @@ The [standard library tests](https://github.com/tardisgo/tardisgo/blob/master/go
 
 Some tests marked "*" below use testdata in the pseudo file system, passed in via a local "tgotestfs.zip".
 
-Tests bracketed by "[]" work, but currently take too long, so are excluded from the automated tests. 
+Tests bracketed by "[]" work, but currently take too long, so are excluded from the automated tests.
 
 | Name            | Passes in? (*=testfs) | Comment                           |
 | --------------- | --------------------- | --------------------------------- |
@@ -60,18 +60,18 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- plan9obj     | c++, c#, java, js   * |                                   |
 | encoding        | no tests              |                                   |
 | -- ascii85      | c++, c#, java, js     |                                   |
-| -- asn1         | c++                   | UTF-8 encoding issues on UTF-16 targets |
+| -- asn1         | c++, c#, java, js     |                                   |
 | -- base32       | c++, c#, java, js     |                                   |
 | -- base64       | c++, c#, java, js     |                                   |
-| -- binary       |                       | reflect: unknown method using value from unexported field |
+| -- binary       | c++, c#, java, js     |                                   |
 | -- csv          | c++, c#, java, js     |                                   |
-| -- gob          |                       | fatal error: stack overflow       |
+| -- gob          |                       | reflect.mapassign() null Haxe map |
 | -- hex          | c++, c#, java, js     |                                   |
-| -- json         |                       | some field names not found        |
+| -- json         |                     * | field name not found, then fatal  |
 | -- pem          | c++, c#, java, js     |                                   |
-| -- xml          |                       | multiple errors, then panics      |
+| -- xml          |                       | multiple errors, then fatal       |
 | errors          | c++, c#, java, js     |                                   |
-| expvar          |                       | Haxe try-catch exception after JSON unmarshall |
+| expvar          | js, cs                | c++: clang seg fault, java: Tgotypes code too big |
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
 | fmt             | c++, c#, java, js     | minor differences in type names   |
 | go              | no code               |                                   |
@@ -101,7 +101,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- suffixarray  | c++, c#, java, js     |                                   |
 | io              | c++, c#, java, js     |                                   |
 | -- ioutil       | c++, c#, java, js   * |                                   |
-| log             |                       | multiple matching errors          |
+| log             | c++, c#, java, js     |                                   |
 | -- syslog       | no tests              |                                   |
 | math            | c++, js               | c#/java: float32/int overflow issues |
 | -- big          |                       | waiting for reflect.Call          |

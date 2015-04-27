@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package xml
 
 import (
@@ -974,7 +976,7 @@ var marshalErrorTests = []struct {
 	},
 	{
 		Value: map[*Ship]bool{nil: false},
-		Err:   "xml: unsupported type: map[*xml.Ship]bool",
+		Err:   "xml: unsupported type: map[*encoding/xml.Ship]bool", // add "encoding/"
 		Kind:  reflect.Map,
 	},
 	{

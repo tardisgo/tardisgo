@@ -511,7 +511,7 @@ func (t *rtype) pointers() bool {
 func (t *rtype) common() *rtype { return t }
 
 func (t *uncommonType) Method(i int) (m Method) {
-	panic("reflect.Method not yet implemented")
+	//panic("reflect.Method not yet implemented")
 	if t == nil || i < 0 || i >= len(t.methods) {
 		panic("reflect: Method index out of range")
 	}
@@ -541,7 +541,7 @@ func (t *uncommonType) NumMethod() int {
 }
 
 func (t *uncommonType) MethodByName(name string) (m Method, ok bool) {
-	panic("reflect.MethodByName not yet implemented")
+	//panic("reflect.MethodByName not yet implemented")
 	if t == nil {
 		return
 	}
@@ -569,7 +569,7 @@ func (t *rtype) NumMethod() int {
 }
 
 func (t *rtype) Method(i int) (m Method) {
-	panic("reflect.Method not yet implemented - *interfce")
+	//panic("reflect.Method not yet implemented - *interfce")
 	if t.Kind() == Interface {
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.Method(i)
@@ -578,7 +578,7 @@ func (t *rtype) Method(i int) (m Method) {
 }
 
 func (t *rtype) MethodByName(name string) (m Method, ok bool) {
-	panic("reflect.MethodByName not yet implemented - *interface")
+	//panic("reflect.MethodByName not yet implemented - *interface")
 	if t.Kind() == Interface {
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.MethodByName(name)
@@ -748,7 +748,7 @@ func (d ChanDir) String() string {
 
 // Method returns the i'th method in the type's method set.
 func (t *interfaceType) Method(i int) (m Method) {
-	panic("reflect.Method not yet implemented")
+	//panic("reflect.Method not yet implemented")
 	if i < 0 || i >= len(t.methods) {
 		return
 	}
@@ -770,7 +770,7 @@ func (t *interfaceType) NumMethod() int {
 
 // MethodByName method with the given name in the type's method set.
 func (t *interfaceType) MethodByName(name string) (m Method, ok bool) {
-	panic("reflect.MethodByName not yet implemented")
+	//panic("reflect.MethodByName not yet implemented")
 	if t == nil {
 		return
 	}
@@ -863,6 +863,7 @@ func (tag StructTag) Get(key string) string {
 
 // Field returns the i'th struct field.
 func (t *structType) Field(i int) (f StructField) {
+	//println("DEBUG Field", i)
 	//panic("reflect.Field not yet implemented")
 	if i < 0 || i >= len(t.fields) {
 		return
@@ -903,6 +904,7 @@ func (t *structType) Field(i int) (f StructField) {
 
 // FieldByIndex returns the nested field corresponding to index.
 func (t *structType) FieldByIndex(index []int) (f StructField) {
+	//println("DEBUG FieldByIndex input", index)
 	//panic("reflect.FieldByIndex not yet implemented")
 	f.Type = toType(&t.rtype)
 	for i, x := range index {
@@ -915,6 +917,7 @@ func (t *structType) FieldByIndex(index []int) (f StructField) {
 		}
 		f = f.Type.Field(x)
 	}
+	//println("DEBUG FieldByIndex output", f)
 	return
 }
 
@@ -927,6 +930,7 @@ type fieldScan struct {
 // FieldByNameFunc returns the struct field with a name that satisfies the
 // match function and a boolean to indicate if the field was found.
 func (t *structType) FieldByNameFunc(match func(string) bool) (result StructField, ok bool) {
+	//println("DEBUG FieldByNameFunc")
 	//panic("reflect.FieldByNameFunc not yet implemented")
 	// This uses the same condition that the Go language does: there must be a unique instance
 	// of the match at a given depth level. If there are multiple instances of a match at the
@@ -1038,6 +1042,7 @@ func (t *structType) FieldByNameFunc(match func(string) bool) (result StructFiel
 // FieldByName returns the struct field with the given name
 // and a boolean to indicate if the field was found.
 func (t *structType) FieldByName(name string) (f StructField, present bool) {
+	//println("DEBUG FieldByName ", name)
 	//panic("reflect.FieldByName not yet implemented")
 	// Quick check for top-level name, or struct without anonymous fields.
 	hasAnon := false

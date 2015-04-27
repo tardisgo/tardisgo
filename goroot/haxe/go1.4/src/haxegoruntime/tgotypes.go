@@ -6,9 +6,21 @@ import (
 	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
-// addrString is an utility function
+var stringList = make([]string, 0, 128)
+
+// addrString is an utility function, strings with the same content must have the same address
+// very simple implementation TODO optimize
 func addrString(s string) *string {
-	return &s
+	if s == "" {
+		return nil
+	}
+	for i := range stringList {
+		if s == stringList[i] {
+			return &stringList[i]
+		}
+	}
+	stringList = append(stringList, s)
+	return &stringList[len(stringList)-1]
 }
 
 // NOTE types below MUST be clones of the reflect package structs
@@ -48,11 +60,11 @@ type method struct {
 	pkgPath *string        // nil for exported Names; otherwise import path
 	mtyp    unsafe.Pointer // *rtype         // method type (without receiver)
 	typ     unsafe.Pointer // *rtype         // .(*FuncType) underneath (with receiver)
-	ifn     unsafe.Pointer // fn used in interface call (one-word receiver)
-	tfn     unsafe.Pointer // fn used for normal method call
+	ifn     uintptr        //unsafe.Pointer // fn used in interface call (one-word receiver)
+	tfn     uintptr        //unsafe.Pointer // fn used for normal method call
 }
 
-func addMethod(meths []method, name, pkgPath string, mtyp, typ, ifn, tfn unsafe.Pointer) []method {
+func addMethod(meths []method, name, pkgPath string, mtyp, typ unsafe.Pointer, ifn, tfn uintptr) []method {
 	return append(meths, method{
 		name: addrString(name), pkgPath: addrString(pkgPath), mtyp: mtyp, typ: typ, ifn: ifn, tfn: tfn,
 	})
@@ -196,15 +208,11 @@ func newStructFieldSlice() []structField {
 
 func addStructFieldSlice(sl []structField, name, pkgPath string, typ *rtype, tag string, offset uintptr) []structField {
 	sf := structField{
-		name:   addrString(name),
-		typ:    typ,
-		tag:    addrString(tag),
-		offset: offset,
-	}
-
-	// VERY important that pkgPath = nil rather than "" for reflection to work!
-	if pkgPath != "" {
-		sf.pkgPath = addrString(pkgPath)
+		name:    addrString(name),
+		pkgPath: addrString(pkgPath), // VERY important that pkgPath = nil rather than "" for reflection to work!
+		typ:     typ,
+		tag:     addrString(tag),
+		offset:  offset,
 	}
 	return append(sl, sf)
 }

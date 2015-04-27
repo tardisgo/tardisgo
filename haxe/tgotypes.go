@@ -18,14 +18,28 @@ const ( // from reflect package
 	kindMask        = (1 << 5) - 1
 )
 
+var tta []types.Type
+
+func typeHasMethodSet(typ types.Type) bool {
+	if len(tta) == 0 {
+		tta = pogo.TypesWithMethodSets() //[]types.Type
+	}
+	for m := range tta { // brute force search, TODO optimize
+		if typ == tta[m] {
+			return true
+		}
+	}
+	return false
+}
+
 func escapedTypeString(s string) string {
 	buf := []byte(s)
-	r:= ""
-	for _,ch := range buf {
+	r := ""
+	for _, ch := range buf {
 		r += fmt.Sprintf("\\x%x", ch)
 	}
 	return r
-} 
+}
 
 func synthTypesFor(t types.Type) {}
 
@@ -113,7 +127,7 @@ func GetTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
 
 	switch kind {
 	case reflect.UnsafePointer, reflect.Ptr,
-	reflect.Map, reflect.Chan, reflect.Func: // TODO not sure about these three
+		reflect.Map, reflect.Chan, reflect.Func: // TODO not sure about these three
 	default:
 		kind |= kindNoPointers
 	}
@@ -121,11 +135,10 @@ func GetTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
 	// TODO work out when/if to set kindDirect
 	switch kind & kindMask {
 	case reflect.UnsafePointer, reflect.Ptr,
-	reflect.Map, reflect.Chan, reflect.Func: // TODO not sure about these three
+		reflect.Map, reflect.Chan, reflect.Func: // TODO not sure about these three
 		kind |= kindDirectIface
 	default:
 	}
-	
 
 	return
 }
@@ -242,23 +255,20 @@ func typeBuild(i int, t types.Type) string {
 		numFlds := t.(*types.Struct).NumFields()
 		for fld := 0; fld < numFlds; fld++ {
 			fldInfo := t.(*types.Struct).Field(fld)
-			//if fldInfo.IsField() {
 			name := fldInfo.Name()
-			path := ""
-			rune1, _ := utf8.DecodeRune([]byte(name))
-			if unicode.IsLower(rune1) {
-				path = fldInfo.Pkg().Path()
+			path := fldInfo.Pkg().Path()
+			if fldInfo.Exported() {
+				path = ""
 			}
 
 			fret = "\tGo_haxegoruntime_addSStructFFieldSSlice.callFromRT(0," + fret + ","
-			fret += "\n\t\t/*name:*/ \"" + fldInfo.Name() + "\",\n"
+			fret += "\n\t\t/*name:*/ \"" + name + "\",\n"
 			fret += "\t\t/*pkgPath:*/ \"" + path + "\",\n"
 			fret += fmt.Sprintf("\t\t/*typ:*/ type%d(),// %s\n", pte.At(fldInfo.Type()), fldInfo.Type().String())
-			fret += "\t\t/*tag:*/ \"" + escapedTypeString(t.(*types.Struct).Tag(fld)) + "\", // "+t.(*types.Struct).Tag(fld)+"\n"
+			fret += "\t\t/*tag:*/ \"" + escapedTypeString(t.(*types.Struct).Tag(fld)) + "\", // " + t.(*types.Struct).Tag(fld) + "\n"
 			fret += fmt.Sprintf("\t\t/*offset:*/ %d\n", offs[fld])
 
 			fret += "\t)"
-			//}
 		}
 
 		ret += fret + ")"
@@ -348,8 +358,8 @@ func rtypeBuild(i int, sizes types.Sizes, t types.Type, name string) (string, re
 	ret += fmt.Sprintf("\t/*size:*/ %d,\n", sof)
 	ret += fmt.Sprintf("\t/*align:*/ %d,\n", aof)
 	ret += fmt.Sprintf("\t/*fieldAlign:*/ %d,\n", aof) // TODO check correct for fieldAlign
-	ret += fmt.Sprintf("\t/*kind:*/ %d,\n", kind)
-	ret += fmt.Sprintf("\t/*string:*/ \"%s\", // %s\n", escapedTypeString(t.String()),t.String())
+	ret += fmt.Sprintf("\t/*kind:*/ %d, // %s\n", kind, (kind & ((1 << 5) - 1)).String())
+	ret += fmt.Sprintf("\t/*string:*/ \"%s\", // %s\n", escapedTypeString(t.String()), t.String())
 	ret += fmt.Sprintf("\t/*uncommonType:*/ %s,\n", uncommonBuild(i, sizes, name, t))
 	ptt := "null"
 	for pti, pt := range typesByID {
@@ -396,27 +406,40 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 		ret += "\t\t/*pkgPath:*/ \"" + pkgPath + "\",\n"
 		ret += "\t\t/*methods:*/ "
 		meths := "Go_haxegoruntime_newMMethodSSlice.callFromRT(0)"
-		for m := 0; m < methods.Len(); m++ {
-			sel := methods.At(m)
-			fn := "null"
-			fid, haveFn := pte.At(sel.Obj().Type()).(int)
-			if haveFn {
-				fn = fmt.Sprintf("type%d()", fid)
-			}
-			meths = "Go_haxegoruntime_addMMethod.callFromRT(0," + meths + ",\n"
-			meths += fmt.Sprintf("\n\t\t\t/*name:*/ \"%s\", // %s\n", sel.Obj().Name(), sel.String())
+		_, isIF := t.Underlying().(*types.Interface)
+		if !isIF {
+			for m := 0; m < methods.Len(); m++ {
+				sel := methods.At(m)
+				fn := "null"
+				fid, haveFn := pte.At(sel.Obj().Type()).(int)
+				if haveFn {
+					fn = fmt.Sprintf("type%d()", fid)
+				}
+				meths = "Go_haxegoruntime_addMMethod.callFromRT(0," + meths + ",\n"
+				meths += fmt.Sprintf("\n\t\t\t/*name:*/ \"%s\", // %s\n", sel.Obj().Name(), sel.String())
 
-			path := ""
-			rune1, _ := utf8.DecodeRune([]byte(sel.Obj().Name()))
-			if unicode.IsLower(rune1) {
-				path = sel.Obj().Pkg().Path()
+				path := ""
+				rune1, _ := utf8.DecodeRune([]byte(sel.Obj().Name()))
+				if unicode.IsLower(rune1) {
+					path = sel.Obj().Pkg().Path()
+				}
+
+				meths += fmt.Sprintf("\t\t\t/*pkgPath:*/ \"%s\",\n", path)
+				// TODO should the two lines below be different?
+				meths += fmt.Sprintf("\t\t\t/*mtyp:*/ %s,\n", fn)
+				meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
+				// add links to the functions ...
+				fnToCall := "null"
+				if typeHasMethodSet(t) { // don't put out a function name that has been DCEd
+					funcObj, ok := sel.Obj().(*types.Func)
+					if ok && funcObj.Pkg() != nil {
+						fnToCall = `Go_` + langType{}.LangName(
+							sel.Obj().Pkg().Name()+":"+sel.Recv().String(),
+							funcObj.Name()) + `.call`
+					}
+				}
+				meths += "\t\t\t" + fnToCall + "," + fnToCall + ")"
 			}
-			meths += fmt.Sprintf("\t\t\t/*pkgPath:*/ \"%s\",\n", path)
-			// TODO should the two lines below be different?
-			meths += fmt.Sprintf("\t\t\t/*mtyp:*/ %s,\n", fn)
-			meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
-			// TODO add links to the functions ... may be haxe specific
-			meths += "\t\t\tnull, null )"
 		}
 		ret += meths
 		return ret + "\t)"

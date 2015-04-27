@@ -1876,7 +1876,7 @@ func main() {
 	}
 	TEQ("", unicode.IsSpace(' '), true) // makes the test longer but more complete
 	//fmt.Println("End test running in: " + runtime.GOARCH)
-	//fmt.Println("再见！Previous two chinese characters should say goodbye! (testing unicode output)")
+	//fmt.Println("Σ sigma, " + "再见！Previous two chinese characters should say goodbye! (testing unicode output)")
 	//fmt.Println()
 	//hx.Call("", "Tgotypes.setup", 0)
 	//hx.Call("", "Go_haxegoruntime_typetest.hx", 0)

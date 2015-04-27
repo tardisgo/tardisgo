@@ -211,7 +211,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			if(Go.haxegoruntime_IInFF32fb.load_bool()) { // in the Float32frombits() function so don't recurse
 				return v;
 			} else {
-				return Go_haxegoruntime_FFloat32frombits.hx(Go_haxegoruntime_FFloat32bits.hx(v));
+				return Go_haxegoruntime_FFloat32frombits.callFromRT(0,Go_haxegoruntime_FFloat32bits.callFromRT(0,v));
 			}
 		#end
 	}
@@ -418,6 +418,10 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		if(Std.is(v,String)){
 			v=toHaxeString(v);
 		}
+		// TODO !
+		//if(GOint64.is(v)) { 
+		//	v=cast(v,haxe.Int64);
+		//}
 		return v;
 	}
 	
@@ -1325,6 +1329,10 @@ class Slice {
 	public function len():Int {
 		if(length!=end-start)  Scheduler.panicFromHaxe("Slice internal error: length!=end-start");
 		return length;
+	}
+	public function setLen(n:Int) {
+		if(n<0||n>this.cap())  Scheduler.panicFromHaxe("Slice setLen invalid:"+n);
+		end = start+n;
 	}
 	public function cap():Int {
 		// TODO remove null and capacity test when stable
@@ -2824,7 +2832,7 @@ class GOmap {
 			// in cpp & cs, Std.string(1.9999999999999998) => "2"
 			// TODO consider how to deal with this issue in the compound types above
 			if(Std.is(a,Float)) {
-				return GOint64.toString(Go_haxegoruntime_FFloat64bits.hx(a));
+				return GOint64.toString(Go_haxegoruntime_FFloat64bits.callFromRT(0,a));
 			}
 		#end
 		return Std.string(a);
