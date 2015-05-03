@@ -14,26 +14,30 @@ import (
 	"sync/atomic"
 )
 
+var parallelism = 1 + runtime.NumCPU()/2 // control resource usage here
+const groupAll = true                    // control grouping of tests here
+
 // space required before and after package names
 
 // the allList only contains package tests that pass for all 4 targets
 var allList = []string{
 	// these tests do not read any files
-	// for speed of compilation, they are grouped together into as large sets as will work
+	// for speed of compilation, they can be grouped together (see var groupAll) into as large sets as will work
 	"bufio bytes container/heap container/list container/ring ",
-	"crypto/aes crypto/cipher crypto/des crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac " +
-		"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 ",
-	"database/sql/driver debug/gosym",
-	"encoding/asn1 encoding/ascii85 encoding/binary encoding/base32 encoding/base64 encoding/csv encoding/hex encoding/pem ",
+	"crypto/aes crypto/cipher crypto/des crypto/dsa crypto/ecdsa crypto/elliptic crypto/hmac ",
+	"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 crypto/subtle ",
+	"database/sql/driver debug/gosym ",
+	"encoding/asn1 encoding/ascii85 encoding/binary encoding/base32 ",
+	"encoding/base64 encoding/csv encoding/hex encoding/pem ",
 	"errors flag fmt ",
-	"go/ast go/scanner go/token",
+	"go/ast go/scanner go/token ",
 	"hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
 	"index/suffixarray io log math/cmplx net/http/internal net/mail net/textproto net/url path ",
 	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
 	"unicode unicode/utf16 unicode/utf8 ",
 	// below are those packages that require their own testdata zip file, and so must be run individually
 	"compress/bzip2", "compress/flate", "compress/gzip", "compress/lzw", "compress/zlib",
-	"debug/macho", "debug/pe", "debug/plan9obj",
+	"debug/dwarf", "debug/macho", "debug/pe", "debug/plan9obj",
 	"go/format", "go/parser", "go/printer",
 	"image", "image/draw", "image/gif", "image/jpeg",
 	"io/ioutil",
@@ -45,21 +49,21 @@ var allList = []string{
 
 var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar archive/zip 
- debug/elf expvar 
- math net/http/fcgi  strconv
+ debug/elf expvar go/doc 
+ math net/http/fcgi  strconv 
 `
 
 var cs = ` 
- archive/zip  debug/elf expvar   
+ archive/zip  debug/elf expvar    
 `
 
 var cpp = ` 
   archive/tar 
-  debug/elf    
+  go/doc   
   math  strconv
 `
 
-var java = ` archive/zip archive/tar 
+var java = ` archive/zip archive/tar debug/elf go/doc 
 `
 
 func pkgList(jumble string) []string {
@@ -121,8 +125,6 @@ type params struct {
 	pkg []string
 }
 
-var parallelism = 1 + runtime.NumCPU()/2 // control resource usage here
-
 var limit = make(chan params)
 
 var results = make(chan resChan, parallelism)
@@ -156,11 +158,26 @@ func main() {
 	for pll := 1; pll < parallelism/2; pll++ { // the "all" option runs 4 target tests in parallel
 		go limiter()
 	}
-	for _, ap := range allList {
-		limit <- params{"all", pkgList(ap)}
+	if groupAll {
+		for _, ap := range allList {
+			limit <- params{"all", pkgList(ap)}
+		}
 	}
 	for pll := parallelism / 2; pll < parallelism; pll++ { // other options run 1 test each
 		go limiter()
+	}
+	if !groupAll {
+		for _, ap := range allList {
+			pkgs := pkgList(ap)
+			numPkgs += (len(pkgs) * 4) - 1
+			wg.Add((len(pkgs) * 4) - 1)
+			for _, pkg := range pkgs {
+				limit <- params{"cpp", []string{pkg}}
+				limit <- params{"cs", []string{pkg}}
+				limit <- params{"java", []string{pkg}}
+				limit <- params{"js", []string{pkg}}
+			}
+		}
 	}
 	for _, pkg := range jsl1 { //very long js tests 1st
 		limit <- params{"js", []string{pkg}}

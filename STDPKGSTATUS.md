@@ -14,7 +14,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | Name            | Passes in? (*=testfs) | Comment                           |
 | --------------- | --------------------- | --------------------------------- |
 | archive         | no code               |                                   |
-| -- tar          | c++, js, java       * | c#: header mis-match              |
+| -- tar          | c++, js, java       * | c#: header mis-match, ModTime     |
 | -- zip          | [c++] c#, java, js  * | c++: tests take >30mins           |
 | bufio           | c++, c#, java, js     |                                   |
 | builtin         | no tests              | all built-in functions are implemented |
@@ -40,20 +40,20 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- md5          | c++, c#, java, js     |                                   |
 | -- rand         | c++, c#, java, js     |                                   |
 | -- rc4          | c++, c#, java, js     |                                   |
-| -- rsa          |                     * | waiting for reflect.Call          |
+| -- rsa          |                     * | try-catch exception               |
 | -- sha1         | c++, c#, java, js     |                                   |
 | -- sha256       | c++, c#, java, js     |                                   |
 | -- sha512       | c++, c#, java, js     |                                   |
-| -- subtle       |                       | waiting for reflect.Call          |
+| -- subtle       | c++, c#, java, js     |                                   |
 | -- tls          |                     * | panic: duplicate function name: crypto/tls.run$1 |
-| -- x509         | [c++, c#, js]         | mod tests (as Windows) but slow js>30m, java: TypeInfo too big |
+| -- x509         | [c++, c#, java, js]   | mod tests (as Windows) but slow js>30m |
 | -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       | panic: duplicate function name: database/sql.Query$1 |
 | -- -- driver    | c++, c#, java, js     |                                   |
 | debug           | no code               |                                   |
-| -- dwarf        |                     * | interface type assert failed      |
-| -- elf          | c++, c#, js         * | java: error TypeInfo code too large |
+| -- dwarf        | c++, c#, java, js   * |                                   |
+| -- elf          | c#, java, js        * | c++: clang seg fault              |
 | -- gosym        | c++, c#, java, js     |                                   |
 | -- macho        | c++, c#, java, js   * |                                   |
 | -- pe           | c++, c#, java, js   * |                                   |
@@ -71,13 +71,13 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- pem          | c++, c#, java, js     |                                   |
 | -- xml          |                       | multiple errors, then fatal       |
 | errors          | c++, c#, java, js     |                                   |
-| expvar          | js, cs                | c++: clang seg fault, java: Tgotypes code too big |
+| expvar          | js, cs                | c++: clang seg fault, java: haxe compiler hangs |
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
 | fmt             | c++, c#, java, js     | minor differences in type names   |
 | go              | no code               |                                   |
 | -- ast          | c++, c#, java, js     | minor changes to testdata whitespace and paths |
 | -- build        |                     * | $GOROOT/$GOPATH not set           |
-| -- doc          |                     * | waiting for reflect.MethodByName  |
+| -- doc          | c++, java, js       * | cs: matching issue                |
 | -- format       | c++, c#, java, js   * |                                   |
 | -- parser       | c++, c#, java, js   * |                                   |
 | -- printer      | c++, c#, java, js   * |                                   |
@@ -89,7 +89,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- crc64        | c++, c#, java, js     |                                   |
 | -- fnv          | c++, c#, java, js     |                                   |
 | html            | c++, c#, java, js     |                                   |
-| -- template     |                       | waiting for reflect.Call          |
+| -- template     |                       | a number of errors and missing parts of reflect |
 | image           | c++, c#, java, js   * |                                   |
 | -- color        | c++, c#, java, js     |                                   |
 | -- -- palette   | no tests              |                                   |
@@ -104,9 +104,9 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | log             | c++, c#, java, js     |                                   |
 | -- syslog       | no tests              |                                   |
 | math            | c++, js               | c#/java: float32/int overflow issues |
-| -- big          |                       | waiting for reflect.Call          |
+| -- big          |                       | fmt error then fails on gob encode |
 | -- cmplx        | c++, c#, java, js     |                                   |
-| -- rand         |                       | waiting for reflect.Method        |
+| -- rand         |                       | waiting for reflect.makeMethodValue |
 | mime            | c++, c#, java, js   * |                                   |
 | -- multipart    |                     * | hangs                             |
 | net             |                       | hangs                             |
@@ -130,7 +130,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- user         | -                     | tests run with (correct) errors   |
 | path            | c++, c#, java, js     |                                   |
 | -- filepath     | c++, c#, java, js   * |                                   |
-| reflect         |                       | partially implemented - 1st error: invalid function reference |
+| reflect         |                       | partially implemented             |
 | regexp          | c++, c#, java, js   * |                                   |
 | -- syntax       | c++, c#, java, js     |                                   |
 | runtime         | (c++, c#, java, js)   | only a sub-set of tests pass, NaN Map key handled differently |
@@ -150,9 +150,9 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | text            | no code               |                                   |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- tabwriter    | c++, c#, java, js     |                                   |
-| -- template     |                     * | waiting for reflect.Call          |
+| -- template     |                     * | no value errors and awaiting reflect.makeMethodValue |
 | -- -- parse     | c++, c#, java, js     |                                   |
-| time            |                     * | waiting for reflect.Call          |
+| time            |                     * | nil pointer dereference           |
 | unicode         | c++, c#, java, js     |                                   |
 | -- utf16        | c++, c#, java, js     |                                   |
 | -- utf8         | c++, c#, java, js     |                                   |

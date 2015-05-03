@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 
+	//"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -109,7 +110,6 @@ func catchReferencedTypes(et types.Type) {
 		for m := 0; m < et.(*types.Named).NumMethods(); m++ {
 			catchReferencedTypes(et.(*types.Named).Method(m).Type())
 		}
-		catchReferencedTypes(types.NewPointer(et))
 	case *types.Array:
 		catchReferencedTypes(et.(*types.Array).Elem())
 		//catchReferencedTypes(types.NewSlice(et.(*types.Array).Elem()))
@@ -156,7 +156,10 @@ func emitTypeInfo() {
 	/*
 		for _, pkg := range rootProgram.AllPackages() {
 			for _, mem := range pkg.Members {
-				catchReferencedTypes(mem.Type())
+				t, ok := mem.(*ssa.Type)
+				if ok {
+					LogTypeUse(t.Type())
+				}
 			}
 		}
 	*/

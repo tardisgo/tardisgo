@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 // MakeFunc implementation.
 
 package reflect
@@ -42,6 +44,7 @@ type makeFuncImpl struct {
 // of how to use MakeFunc to build a swap function for different types.
 //
 func MakeFunc(typ Type, fn func(args []Value) (results []Value)) Value {
+	panic("reflect.MakeFunc() not yet implemented in Haxe")
 	if typ.Kind() != Func {
 		panic("reflect: call of MakeFunc with non-Func type")
 	}
@@ -85,6 +88,7 @@ type methodValue struct {
 // reflect can tell, but the true func representation can be handled
 // by code like Convert and Interface and Assign.
 func makeMethodValue(op string, v Value) Value {
+	panic("reflect.makeMethodValue() not yet implemented in Haxe")
 	if v.flag&flagMethod == 0 {
 		panic("reflect: internal error: invalid use of makeMethodValue")
 	}

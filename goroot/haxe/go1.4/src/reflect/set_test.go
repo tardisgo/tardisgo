@@ -78,6 +78,7 @@ func TestImplicitMapConversion(t *testing.T) {
 		mv.SetMapIndex(ValueOf(b1), ValueOf(b2))
 		x, ok := m[b1]
 		if x != b2 {
+			println("DEBUG", x, b2, ok, m)
 			t.Errorf("#5 after SetMapIndex(b1, b2): %p (!= %p), %t (map=%v)", x, b2, ok, m)
 		}
 		if p := mv.MapIndex(ValueOf(b1)).Elem().Pointer(); p != uintptr(unsafe.Pointer(b2)) {

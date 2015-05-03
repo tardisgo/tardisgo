@@ -15,7 +15,7 @@ import (
 
 // The Language interface enables multiple target languages for TARDIS Go.
 type Language interface {
-	RegisterName(val ssa.Value) string 
+	RegisterName(val ssa.Value) string
 	DeclareTempVar(ssa.Value) string
 	LanguageName() string
 	FileTypeSuffix() string // e.g. ".go" ".js" ".hx"
@@ -76,7 +76,7 @@ type Language interface {
 	//TypeEnd(*types.Named, string) string
 	TypeAssert(Register string, X ssa.Value, AssertedType types.Type, CommaOk bool, errorInfo string) string
 	EmitTypeInfo() string
-	EmitInvoke(register string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string
+	EmitInvoke(register, path string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string
 	FunctionOverloaded(pkg, fun string) bool
 	Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string
 	PeepholeOpt(opt, register string, code []ssa.Instruction, errorInfo string) string

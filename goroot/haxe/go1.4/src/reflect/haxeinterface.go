@@ -39,13 +39,26 @@ func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 		//panic("reflect.haxeInterfaceUnpack() nil value")
 		return ret
 	}
-	ret.typ = createHaxeType(hx.CodeInt("", "_a.itemAddr(0).load().typ;", i))
+	haxeTypeID := hx.CodeInt("", "_a.itemAddr(0).load().typ;", i)
+	ret.typ = createHaxeType(haxeTypeID)
+	//if ret.typ == nil {
+	//	panic("reflect.haxeInterfaceUnpack() nil type pointer for HaxeTypeID " +
+	//		hx.CallString("", "Std.string", 1, haxeTypeID))
+	//}
 
 	haxe2go(ret, i)
 	return ret
 }
 
 func haxe2go(ret *emptyInterface, i interface{}) {
+	/*
+		if ret.typ == nil { // HELP! assume dynamic?
+			panic("DEBUG reflect.haxe2go() nil Go type")
+			//println("DEBUG reflect.haxe2go() nil Go type, using uintptr")
+			//uip := hx.CodeIface("", "uintptr", "null;")
+			//ret.typ = createHaxeType(hx.CodeInt("", "_a.itemAddr(0).load().typ;", uip))
+		}
+	*/
 	ret.word = hx.Malloc(ret.typ.size)
 
 	switch ret.typ.Kind() & kindMask {

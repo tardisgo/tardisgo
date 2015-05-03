@@ -27,7 +27,7 @@ var files = flag.String("files", "", "consider only Go test files matching this 
 
 const dataDir = "testdata"
 
-//var templateTxt = readTemplate("template.txt")
+var templateTxt *template.Template // = readTemplate("template.txt")
 
 func readTemplate(filename string) *template.Template {
 	t := template.New(filename)
@@ -99,6 +99,9 @@ func test(t *testing.T, mode Mode) {
 		t.Fatal(err)
 	}
 
+	// Haxe only, set-up template
+	templateTxt = readTemplate("template.txt")
+
 	// test packages
 	for _, pkg := range pkgs {
 		importpath := dataDir + "/" + pkg.Name
@@ -111,7 +114,7 @@ func test(t *testing.T, mode Mode) {
 
 		// print documentation
 		var buf bytes.Buffer
-		if err := /*templateTxt*/ readTemplate("template.txt").Execute(&buf, bundle{doc, fset}); err != nil {
+		if err := templateTxt.Execute(&buf, bundle{doc, fset}); err != nil {
 			t.Error(err)
 			continue
 		}
@@ -136,6 +139,11 @@ func test(t *testing.T, mode Mode) {
 
 		// compare
 		if !bytes.Equal(got, want) {
+			for i := range got {
+				if got[i] != want[i] {
+					println("DEBUG diff i,got[i],want[i]:", i, string(got[i]), string(want[i]))
+				}
+			}
 			t.Errorf("package %s\n\tgot:\n%s\n\twant:\n%s", pkg.Name, got, want)
 		}
 	}

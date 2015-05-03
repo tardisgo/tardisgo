@@ -381,7 +381,7 @@ func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool, m
 	pName, mName := GetFnNameParts(fn)
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
 	fmt.Fprintln(&LanguageList[l].buffer,
-		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode , canOptMap))
+		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap))
 }
 
 // Emit the end of a function.

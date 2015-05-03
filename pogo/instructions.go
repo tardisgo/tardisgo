@@ -103,7 +103,8 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	case *ssa.Call:
 		if instruction.(*ssa.Call).Call.IsInvoke() {
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, false, false, grMap[instruction.(*ssa.Call).Parent()],
+				LanguageList[l].EmitInvoke(register, getFnPath(instruction.(*ssa.Call).Parent()),
+					false, false, grMap[instruction.(*ssa.Call).Parent()],
 					instruction.(*ssa.Call).Call, errorInfo)+LanguageList[l].Comment(comment))
 		} else {
 			switch instruction.(*ssa.Call).Call.Value.(type) {
@@ -122,7 +123,8 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 				panic("attempt to Go a method, from a function that does not use goroutines at " + errorInfo)
 			}
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, true, false, true, instruction.(*ssa.Go).Call, errorInfo)+
+				LanguageList[l].EmitInvoke(register, getFnPath(instruction.(*ssa.Go).Parent()),
+					true, false, true, instruction.(*ssa.Go).Call, errorInfo)+
 					LanguageList[l].Comment(comment))
 		} else {
 			switch instruction.(*ssa.Go).Call.Value.(type) {
@@ -140,7 +142,9 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	case *ssa.Defer:
 		if instruction.(*ssa.Defer).Call.IsInvoke() {
 			fmt.Fprintln(&LanguageList[l].buffer,
-				LanguageList[l].EmitInvoke(register, false, true, grMap[instruction.(*ssa.Defer).Parent()],
+				LanguageList[l].EmitInvoke(register,
+					getFnPath(instruction.(*ssa.Defer).Parent()),
+					false, true, grMap[instruction.(*ssa.Defer).Parent()],
 					instruction.(*ssa.Defer).Call, errorInfo)+
 					LanguageList[l].Comment(comment))
 		} else {
@@ -440,4 +444,22 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		}
 	}
 	return // return value is named and set in the code above
+}
+
+func getFnPath(fn *ssa.Function) string {
+	if fn == nil {
+		//println("DEBUG getFnPath nil function")
+		return ""
+	}
+	ob := fn.Object()
+	if ob == nil {
+		//println("DEBUG getFnPath nil object: name,synthetic=", fn.Name(), ",", fn.Synthetic)
+		return ""
+	}
+	pk := ob.Pkg()
+	if pk == nil {
+		//println("DEBUG getFnPath nil package: name,synthetic=", fn.Name(), ",", fn.Synthetic)
+		return ""
+	}
+	return pk.Path()
 }

@@ -134,6 +134,8 @@ var currentfn *ssa.Function     // what we are currently working on
 var currentfnName string        // the Haxe name of what we are currently working on
 var fnUsesGr bool               // does the current function use Goroutines?
 
+var funcNamesUsed = make(map[string]bool)
+
 func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, position string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool) string {
 
 	//fmt.Println("DEBUG: HAXE FuncStart: ", packageName, ".", objectName, usesGr)
@@ -144,6 +146,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	pseudoBlockNext = -1
 	currentfn = fn
 	currentfnName = "Go_" + l.LangName(packageName, objectName)
+	funcNamesUsed[currentfnName] = true
 	fnUsesGr = usesGr
 
 	ret := ""
@@ -441,7 +444,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	}
 
 	if regCount > pogo.LanguageList[langIdx].InstructionLimit { // should only affect very large init() fns
-		fmt.Println("DEBUG regCount", currentfnName, regCount)
+		//fmt.Println("DEBUG regCount", currentfnName, regCount)
 		useRegisterArray = true
 		ret += "var _t=new Array<Dynamic>();\n"
 	} else {
@@ -1740,14 +1743,15 @@ func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) strin
 	//as in: return reg + "=" + l.IndirectValue(v.(*ssa.MakeClosure).Fn, errorInfo) + ";"
 }
 
-func (l langType) EmitInvoke(register string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string {
+func (l langType) EmitInvoke(register, path string, isGo, isDefer, usesGr bool, callCommon interface{}, errorInfo string) string {
 	val := callCommon.(ssa.CallCommon).Value
 	meth := callCommon.(ssa.CallCommon).Method.Name()
 	ret := ""
 	if pogo.DebugFlag {
 		ret += l.IndirectValue(val, errorInfo) + "==null?Scheduler.unt():"
 	}
-	ret += "Interface.invoke(" + l.IndirectValue(val, errorInfo) + `,"` + meth + `",[`
+	ret += "Interface.invoke(" + l.IndirectValue(val, errorInfo) + `,"` +
+		path + `"` + `,"` + meth + `",[`
 	if isGo {
 		if isDefer {
 			pogo.LogError(errorInfo, "Haxe",

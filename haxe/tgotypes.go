@@ -192,6 +192,9 @@ func typeBuild(i int, t types.Type) string {
 	if namedT, named := t.(*types.Named); named {
 		name = namedT.Obj().Name()
 	}
+	if basic, isBasic := t.(*types.Basic); isBasic {
+		name = basic.Name()
+	}
 	rtype, kind := rtypeBuild(i, sizes, t, name)
 
 	switch t.(type) {
@@ -260,6 +263,9 @@ func typeBuild(i int, t types.Type) string {
 			if fldInfo.Exported() {
 				path = ""
 			}
+			if fldInfo.Anonymous() {
+				name = ""
+			}
 
 			fret = "\tGo_haxegoruntime_addSStructFFieldSSlice.callFromRT(0," + fret + ","
 			fret += "\n\t\t/*name:*/ \"" + name + "\",\n"
@@ -290,7 +296,7 @@ func typeBuild(i int, t types.Type) string {
 			if iface != interface{}(nil) {
 				typ = fmt.Sprintf("type%d()", iface.(int))
 			}
-			mret += fmt.Sprintf("\t\t/*typ:*/ %s\n", typ)
+			mret += fmt.Sprintf("\t\t/*typ:*/ %s // %s\n", typ, meth.String())
 			mret += "\t)\n"
 		}
 		ret += mret + ")"
@@ -359,6 +365,11 @@ func rtypeBuild(i int, sizes types.Sizes, t types.Type, name string) (string, re
 	ret += fmt.Sprintf("\t/*align:*/ %d,\n", aof)
 	ret += fmt.Sprintf("\t/*fieldAlign:*/ %d,\n", aof) // TODO check correct for fieldAlign
 	ret += fmt.Sprintf("\t/*kind:*/ %d, // %s\n", kind, (kind & ((1 << 5) - 1)).String())
+	alg := "false"
+	if types.Comparable(t) {
+		alg = "true"
+	}
+	ret += fmt.Sprintf("\t/*comprable:*/ %s,\n", alg) // TODO change this to be the actual function
 	ret += fmt.Sprintf("\t/*string:*/ \"%s\", // %s\n", escapedTypeString(t.String()), t.String())
 	ret += fmt.Sprintf("\t/*uncommonType:*/ %s,\n", uncommonBuild(i, sizes, name, t))
 	ptt := "null"
@@ -430,13 +441,22 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 				meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
 				// add links to the functions ...
 				fnToCall := "null"
-				if typeHasMethodSet(t) { // don't put out a function name that has been DCEd
-					funcObj, ok := sel.Obj().(*types.Func)
-					if ok && funcObj.Pkg() != nil {
-						fnToCall = `Go_` + langType{}.LangName(
-							sel.Obj().Pkg().Name()+":"+sel.Recv().String(),
-							funcObj.Name()) + `.call`
+
+				funcObj, ok := sel.Obj().(*types.Func)
+				if ok {
+					pn := "unknown"
+					if funcObj.Pkg() != nil {
+						pn = sel.Obj().Pkg().Name()
 					}
+					fnToCall = `Go_` + langType{}.LangName(
+						pn+":"+sel.Recv().String(),
+						funcObj.Name())
+				}
+				if funcNamesUsed[fnToCall] {
+					fnToCall += ".call"
+				} else {
+					//println("DEBUG uncommonBuild function name not found: ", fnToCall)
+					fnToCall = "null"
 				}
 				meths += "\t\t\t" + fnToCall + "," + fnToCall + ")"
 			}

@@ -488,6 +488,8 @@ func (l langType) EmitTypeInfo() string {
 	var ret string = ""
 	ret += "\nclass TypeInfo{\n\n"
 
+	ret += fmt.Sprintf("public static var nextTypeID=%d;\n", pogo.NextTypeID) // must be last as will change during processing
+
 	// TODO review if this is required
 	ret += "public static function isHaxeClass(id:Int):Bool {\nswitch(id){" + "\n"
 	for k := range pteKeys {
@@ -507,45 +509,40 @@ func (l langType) EmitTypeInfo() string {
 	ret += "\t#if (js || php || node) if(id==null)return \"(haxeTypeID=null)\"; #end\n"
 	ret += "\t" + `return Go_haxegoruntime_getTTypeSString.callFromRT(0,id);` + "\n}\n"
 	ret += "public static function typeString(i:Interface):String {\nreturn getName(i.typ);\n}\n"
-
-	ret += "static var typIDs:Map<String,Int> = ["
-	deDup := make(map[string]bool)
-	for k := range pteKeys {
-		v := pte.At(pteKeys[k])
-		nam := haxeStringConst("`"+preprocessTypeName(pteKeys[k].String())+"`", "CompilerInternal:haxe.EmitTypeInfo()")
-		if len(nam) != 0 {
-			if deDup[nam] { // have one already!!
-				nam = fmt.Sprintf("%s (duplicate type name! this id=%d)\"", nam[:len(nam)-1], v)
-			} else {
-				deDup[nam] = true
+	/*
+		ret += "static var typIDs:Map<String,Int> = ["
+		deDup := make(map[string]bool)
+		for k := range pteKeys {
+			v := pte.At(pteKeys[k])
+			nam := haxeStringConst("`"+preprocessTypeName(pteKeys[k].String())+"`", "CompilerInternal:haxe.EmitTypeInfo()")
+			if len(nam) != 0 {
+				if deDup[nam] { // have one already!!
+					nam = fmt.Sprintf("%s (duplicate type name! this id=%d)\"", nam[:len(nam)-1], v)
+				} else {
+					deDup[nam] = true
+				}
+				ret += ` ` + nam + ` => ` + fmt.Sprintf("%d", v) + `,` + "\n"
 			}
-			ret += ` ` + nam + ` => ` + fmt.Sprintf("%d", v) + `,` + "\n"
 		}
-	}
-	ret += "];\n"
+		ret += "];\n"
+	*/
 	ret += "public static function getId(name:String):Int {\n"
 	ret += "\tvar t:Int;\n"
-	ret += "\ttry { t=typIDs[name];\n"
-	ret += "\t} catch(x:Dynamic) { Scheduler.panicFromHaxe(\"TraceInfo.getId() not found:\"+name+x); t=-1; } ;\n"
+	//ret += "\ttry { t=typIDs[name];\n"
+	//ret += "\t} catch(x:Dynamic) { Scheduler.panicFromHaxe(\"TraceInfo.getId() not found:\"+name+x); t=-1; } ;\n"
+	ret += "\t" + `t = Go_haxegoruntime_getTTypeIIDD.callFromRT(0,name);` + "\n"
 	ret += "\treturn t;\n}\n"
 
-	//emulation of: func IsAssignableTo(V, T Type) bool
-	ret += "public static function isAssignableTo(v:Int,t:Int):Bool {\n\tif(v==t) return true;\n"
-	ret += "\tfor(ae in isAsssignableToArray) if(ae==(v<<16|t)) return true;\n"
-	ret += "\treturn false;\n}\n"
-
-	ret += "static var isAsssignableToArray:Array<Int> = ["
-	for V := range pteKeys {
-		v := pte.At(pteKeys[V])
-		for T := range pteKeys {
-			t := pte.At(pteKeys[T])
-			if v != t && types.AssignableTo(pteKeys[V], pteKeys[T]) {
-				ret += fmt.Sprintf("%d,", v.(int)<<16|t.(int))
-			}
+	//function to answer the question is the type a concrete value?
+	ret += "public static function isConcrete(t:Int):Bool {\nswitch(t){" + "\n"
+	for T := range pteKeys {
+		t := pte.At(pteKeys[T])
+		switch pteKeys[T].Underlying().(type) {
+		case *types.Interface:
+			ret += `case ` + fmt.Sprintf("%d", t) + `: return false;` + "\n"
 		}
-		ret += "\n"
 	}
-	ret += "];\n"
+	ret += "default: return true;}}\n"
 
 	//emulation of: func IsIdentical(x, y Type) bool
 	ret += "public static function isIdentical(v:Int,t:Int):Bool {\nif(v==t) return true;\nswitch(v){" + "\n"
@@ -566,22 +563,53 @@ func (l langType) EmitTypeInfo() string {
 	}
 	ret += "default: return false;}}\n"
 
+	ret += "}\n"
+
+	pogo.WriteAsClass("TypeInfo", ret)
+
+	ret = "class TypeAssign {"
+
+	//emulation of: func IsAssignableTo(V, T Type) bool
+	ret += "public static function isAssignableTo(v:Int,t:Int):Bool {\n\tif(v==t) return true;\n"
+	ret += "\tfor(ae in isAsssignableToArray) if(ae==(v<<16|t)) return true;\n"
+	ret += "\treturn false;\n}\n"
+
+	ret += "static var isAsssignableToArray:Array<Int> = ["
+	for V := range pteKeys {
+		v := pte.At(pteKeys[V])
+		for T := range pteKeys {
+			t := pte.At(pteKeys[T])
+			if v != t && types.AssignableTo(pteKeys[V], pteKeys[T]) {
+				ret += fmt.Sprintf("%d,", v.(int)<<16|t.(int))
+			}
+		}
+		ret += "\n"
+	}
+	ret += "];\n"
+
+	ret += "}\n"
+
+	pogo.WriteAsClass("TypeAssign", ret)
+
+/*
+	ret = "class TypeAssert {"
+
 	//emulation of: func type.AsertableTo(V *Interface, T Type) bool
 	ret += "public static function assertableTo(v:Int,t:Int):Bool {\n"
 	//ret += "trace(\"DEBUG assertableTo()\",v,t);\n"
-	ret += "\treturn isAssertableToMap[(v<<16)|t];\n"
-	ret += "}\n"
-	ret += "static var isAssertableToMap:Map<Int,Bool> = [ 0 => false, "
+	ret += "\tif(v==t) return true;\n"
+	ret += "\tfor(ae in isAssertableToArray) if(ae==(v<<16|t)) return true;\n"
+	ret += "return false;\n}\n"
+	ret += "static var isAssertableToArray:Array<Int> = [ "
 	for tid, typ := range typesByID {
 		ret0 := ""
 		if typ != nil {
 			for iid, ityp := range typesByID {
-				named, isNamed := ityp.(*types.Named)
-				if isNamed {
-					iface, isIface := named.Underlying().(*types.Interface)
+				if ityp != nil {
+					iface, isIface := ityp.Underlying().(*types.Interface)
 					if isIface {
 						if tid != iid && types.AssertableTo(iface, typ) {
-							ret0 += fmt.Sprintf("0x%X => true, ", (tid<<16)|iid)
+							ret0 += fmt.Sprintf("0x%08X,", (tid<<16)|iid)
 						}
 					}
 				}
@@ -594,16 +622,12 @@ func (l langType) EmitTypeInfo() string {
 	}
 	ret += "];\n"
 
-	//function to answer the question is the type a concrete value?
-	ret += "public static function isConcrete(t:Int):Bool {\nswitch(t){" + "\n"
-	for T := range pteKeys {
-		t := pte.At(pteKeys[T])
-		switch pteKeys[T].Underlying().(type) {
-		case *types.Interface:
-			ret += `case ` + fmt.Sprintf("%d", t) + `: return false;` + "\n"
-		}
-	}
-	ret += "default: return true;}}\n"
+	ret += "}\n"
+
+	pogo.WriteAsClass("TypeAssert", ret)
+*/
+
+	ret = "class TypeZero {"
 
 	// function to give the zero value for each type
 	ret += "public static function zeroValue(t:Int):Dynamic {\nswitch(t){" + "\n"
@@ -620,89 +644,88 @@ func (l langType) EmitTypeInfo() string {
 	}
 	ret += "default: return null;}}\n"
 
-	ret += fmt.Sprintf("public static var nextTypeID=%d;\n", pogo.NextTypeID) // must be last as will change during processing
 
 	ret += "}\n"
 
-	pogo.WriteAsClass("TypeInfo", ret)
+	pogo.WriteAsClass("TypeZero", ret)
+	/*
+		ret = "class MethodTypeInfo {"
 
-	ret = "class MethodTypeInfo {"
+		ret += "public static function method(t:Int,m:String):Dynamic {\nswitch(t){" + "\n"
 
-	ret += "public static function method(t:Int,m:String):Dynamic {\nswitch(t){" + "\n"
-
-	tta := pogo.TypesWithMethodSets() //[]types.Type
-	sort.Sort(pogo.TypeSorter(tta))
-	for T := range tta {
-		t := pte.At(tta[T])
-		if t != nil { // it is used?
-			ret += `case ` + fmt.Sprintf("%d", t) + `: switch(m){` + "\n"
-			ms := types.NewMethodSet(tta[T])
-			msNames := []string{}
-			for m := 0; m < ms.Len(); m++ {
-				msNames = append(msNames, ms.At(m).String())
-			}
-			sort.Strings(msNames)
-			deDup := make(map[string][]int) // TODO check this logic, required for non-public methods
-			for pass := 1; pass <= 2; pass++ {
-				for _, msString := range msNames {
-					for m := 0; m < ms.Len(); m++ {
-						if ms.At(m).String() == msString { // ensure we do this in a repeatable order
-							funcObj, ok := ms.At(m).Obj().(*types.Func)
-							pkgName := "unknown"
-							if ok && funcObj.Pkg() != nil && ms.At(m).Recv() == tta[T] {
-								line := ""
-								ss := strings.Split(funcObj.Pkg().Name(), "/")
-								pkgName = ss[len(ss)-1]
-								if strings.HasPrefix(pkgName, "_") { // exclude functions in haxe for now
-									// TODO NoOp for now... so haxe types cant be "Involked" when held in interface types
-									// *** need to deal with getters and setters
-									// *** also with calling parameters which are different for a Haxe API
-								} else {
-									switch pass {
-									case 1:
-										idx, exists := deDup[funcObj.Name()]
-										if exists {
-											if len(idx) > len(ms.At(m).Index()) {
+		tta := pogo.TypesWithMethodSets() //[]types.Type
+		sort.Sort(pogo.TypeSorter(tta))
+		for T := range tta {
+			t := pte.At(tta[T])
+			if t != nil { // it is used?
+				ret += `case ` + fmt.Sprintf("%d", t) + `: switch(m){` + "\n"
+				ms := types.NewMethodSet(tta[T])
+				msNames := []string{}
+				for m := 0; m < ms.Len(); m++ {
+					msNames = append(msNames, ms.At(m).String())
+				}
+				sort.Strings(msNames)
+				deDup := make(map[string][]int) // TODO check this logic, required for non-public methods
+				for pass := 1; pass <= 2; pass++ {
+					for _, msString := range msNames {
+						for m := 0; m < ms.Len(); m++ {
+							if ms.At(m).String() == msString { // ensure we do this in a repeatable order
+								funcObj, ok := ms.At(m).Obj().(*types.Func)
+								pkgName := "unknown"
+								if ok && funcObj.Pkg() != nil && ms.At(m).Recv() == tta[T] {
+									line := ""
+									ss := strings.Split(funcObj.Pkg().Name(), "/")
+									pkgName = ss[len(ss)-1]
+									if strings.HasPrefix(pkgName, "_") { // exclude functions in haxe for now
+										// TODO NoOp for now... so haxe types cant be "Involked" when held in interface types
+										// *** need to deal with getters and setters
+										// *** also with calling parameters which are different for a Haxe API
+									} else {
+										switch pass {
+										case 1:
+											idx, exists := deDup[funcObj.Name()]
+											if exists {
+												if len(idx) > len(ms.At(m).Index()) {
+													deDup[funcObj.Name()] = ms.At(m).Index()
+												}
+											} else {
 												deDup[funcObj.Name()] = ms.At(m).Index()
 											}
-										} else {
-											deDup[funcObj.Name()] = ms.At(m).Index()
+										case 2:
+											idx, _ := deDup[funcObj.Name()]
+											if len(idx) != len(ms.At(m).Index()) {
+												line += "// Duplicate unused: "
+											}
+											line += `case "` + funcObj.Name() + `": return `
+											fnToCall := l.LangName(
+												ms.At(m).Obj().Pkg().Name()+":"+ms.At(m).Recv().String(),
+												funcObj.Name())
+											line += `Go_` + fnToCall + `.call` + "; "
 										}
-									case 2:
-										idx, _ := deDup[funcObj.Name()]
-										if len(idx) != len(ms.At(m).Index()) {
-											line += "// Duplicate unused: "
-										}
-										line += `case "` + funcObj.Name() + `": return `
-										fnToCall := l.LangName(
-											ms.At(m).Obj().Pkg().Name()+":"+ms.At(m).Recv().String(),
-											funcObj.Name())
-										line += `Go_` + fnToCall + `.call` + "; "
 									}
+									ret += line
 								}
-								ret += line
-							}
-							if pass == 2 {
-								ret += fmt.Sprintf("// %v %v %v %v\n",
-									ms.At(m).Obj().Name(),
-									ms.At(m).Kind(),
-									ms.At(m).Index(),
-									ms.At(m).Indirect())
+								if pass == 2 {
+									ret += fmt.Sprintf("// %v %v %v %v\n",
+										ms.At(m).Obj().Name(),
+										ms.At(m).Kind(),
+										ms.At(m).Index(),
+										ms.At(m).Indirect())
+								}
 							}
 						}
 					}
 				}
+				ret += "default:}\n"
 			}
-			ret += "default:}\n"
 		}
-	}
 
-	// TODO look for overloaded types at this point
+		// TODO look for overloaded types at this point
 
-	ret += "default:}\n Scheduler.panicFromHaxe( " + `"no method found!"` + "); return null;}\n" // TODO improve error
+		ret += "default:}\n Scheduler.panicFromHaxe( " + `"no method found!"` + "); return null;}\n" // TODO improve error
 
-	pogo.WriteAsClass("MethodTypeInfo", ret+"}\n")
-
+		pogo.WriteAsClass("MethodTypeInfo", ret+"}\n")
+	*/
 	return ""
 }
 

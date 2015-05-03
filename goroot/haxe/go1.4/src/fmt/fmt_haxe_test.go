@@ -435,7 +435,8 @@ var fmtTests = []struct {
 	//{"%#v", &iarray, `&[4]interface {}{1, "hello", 2.5, interface {}(nil)}`},
 	{"%#v", &iarray, `&[4]interface{}{1, "hello", 2.5, interface{}(nil)}`}, // tardisgo replacement line
 	//{"%#v", map[int]byte(nil), `map[int]uint8(nil)`},
-	{"%#v", map[int]byte(nil), `map[int]byte{}`}, // tardisgo replacement line
+	//{"%#v", map[int]byte(nil), `map[int]byte{}`}, // tardisgo replacement line
+	{"%#v", map[int]byte(nil), `map[int]byte(nil)`}, // 2nd tardisgo replacement line
 	//{"%#v", map[int]byte{}, `map[int]uint8{}`},
 	{"%#v", map[int]byte{}, `map[int]byte{}`}, // tardisgo replacement line
 	{"%#v", "foo", `"foo"`},

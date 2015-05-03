@@ -879,6 +879,7 @@ func (t *structType) Field(i int) (f StructField) {
 		}
 		f.Name = t.Name()
 		f.Anonymous = true
+		//println("DEBUG anonymous set", t.String(), t.Name())
 	}
 	if p.pkgPath != nil {
 		f.PkgPath = *p.pkgPath

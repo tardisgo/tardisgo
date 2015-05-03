@@ -479,8 +479,8 @@ func TestInterfaceValue(t *testing.T) {
 	}
 }
 
-func TestFunctionValue(t *testing.T) {
-	var x interface{} = func() {}
+func TestZFunctionValue(t *testing.T) {
+	var x interface{} = func() int { return 42 }
 	v := ValueOf(x)
 	if fmt.Sprint(v.Interface()) != fmt.Sprint(x) {
 		t.Fatalf("TestFunction returned wrong pointer")
@@ -706,6 +706,7 @@ var deepEqualTests = []DeepEqualTest{
 func TestDeepEqual(t *testing.T) {
 	for _, test := range deepEqualTests {
 		if r := DeepEqual(test.a, test.b); r != test.eq {
+			println("DEBUG", test.a, test.b)
 			t.Errorf("DeepEqual(%v, %v) = %v, want %v", test.a, test.b, r, test.eq)
 		}
 	}
@@ -1002,7 +1003,7 @@ func TestNilMap(t *testing.T) {
 	mv.SetMapIndex(ValueOf("hi"), Value{})
 }
 
-func TestChan(t *testing.T) {
+func TestZChan(t *testing.T) {
 	for loop := 0; loop < 2; loop++ {
 		var c chan int
 		var cv Value
@@ -2046,6 +2047,7 @@ func TestAnonymousFields(t *testing.T) {
 	var t1 T1
 	type1 := TypeOf(t1)
 	if field, ok = type1.FieldByName("int"); !ok {
+		fmt.Printf("DEBUG T1 fields %#v %#v\n", type1.Field(0), type1.Field(1))
 		t.Fatal("no field 'int'")
 	}
 	if field.Index[0] != 1 {
@@ -2358,7 +2360,7 @@ func (i *InnerInt) M() int {
 	return i.X
 }
 
-func TestEmbeddedMethods(t *testing.T) {
+func TestZEmbeddedMethods(t *testing.T) {
 	typ := TypeOf((*OuterInt)(nil))
 	if typ.NumMethod() != 1 || typ.Method(0).Func.Pointer() != ValueOf((*OuterInt).M).Pointer() {
 		t.Errorf("Wrong method table for OuterInt: (m=%p)", (*OuterInt).M)
@@ -3211,7 +3213,7 @@ var convertTests = []struct {
 	{V(new(bytes.Buffer)), ReadWriterV(new(bytes.Buffer))},
 }
 
-func TestConvert(t *testing.T) {
+func TestZConvert(t *testing.T) {
 	canConvert := map[[2]Type]bool{}
 	all := map[Type]bool{}
 
@@ -3237,14 +3239,14 @@ func TestConvert(t *testing.T) {
 		vout1 := v1.Convert(t1)
 		out1 := vout1.Interface()
 		if vout1.Type() != tt.in.Type() || !DeepEqual(out1, tt.in.Interface()) {
-			t.Errorf("ValueOf(%T(%[1]v)).Convert(%s) = %T(%[3]v), want %T(%[4]v)", tt.in.Interface(), t1, out1, tt.in.Interface())
+			t.Errorf("A:ValueOf(%T(%[1]v)).Convert(%s) = %T(%[3]v), want %T(%[4]v)", tt.in.Interface(), t1, out1, tt.in.Interface())
 		}
 
 		// vout2 represents the in value converted to the out type.
 		vout2 := v1.Convert(t2)
 		out2 := vout2.Interface()
 		if vout2.Type() != tt.out.Type() || !DeepEqual(out2, tt.out.Interface()) {
-			t.Errorf("ValueOf(%T(%[1]v)).Convert(%s) = %T(%[3]v), want %T(%[4]v)", tt.in.Interface(), t2, out2, tt.out.Interface())
+			t.Errorf("B:ValueOf(%T(%[1]v)).Convert(%s) = %T(%[3]v), want %T(%[4]v)", tt.in.Interface(), t2, out2, tt.out.Interface())
 		}
 
 		// vout3 represents a new value of the out type, set to vout2.  This makes
@@ -3253,7 +3255,7 @@ func TestConvert(t *testing.T) {
 		vout3.Set(vout2)
 		out3 := vout3.Interface()
 		if vout3.Type() != tt.out.Type() || !DeepEqual(out3, tt.out.Interface()) {
-			t.Errorf("Set(ValueOf(%T(%[1]v)).Convert(%s)) = %T(%[3]v), want %T(%[4]v)", tt.in.Interface(), t2, out3, tt.out.Interface())
+			t.Errorf("C:Set(ValueOf(%T(%[1]v)).Convert(%s)) = %T(%[3]v), want %T(%[4]v)", tt.in.Interface(), t2, out3, tt.out.Interface())
 		}
 
 		if IsRO(v1) {
@@ -3463,7 +3465,7 @@ func TestSliceOfGC(t *testing.T) {
 	}
 }
 
-func TestChanOf(t *testing.T) {
+func TestZChanOf(t *testing.T) {
 	// check construction and use of type not in binary
 	type T string
 	ct := ChanOf(BothDir, TypeOf(T("")))
@@ -3487,7 +3489,7 @@ func TestChanOf(t *testing.T) {
 	checkSameType(t, Zero(ChanOf(BothDir, TypeOf(T1(1)))).Interface(), (chan T1)(nil))
 }
 
-func TestChanOfGC(t *testing.T) {
+func TestZChanOfGC(t *testing.T) {
 	done := make(chan bool, 1)
 	go func() {
 		select {
@@ -3986,7 +3988,7 @@ func (pi *Inner) M() {
 	pi.P2 = uintptr(unsafe.Pointer(pi))
 }
 
-func TestCallMethodJump(t *testing.T) {
+func TestZCallMethodJump(t *testing.T) {
 	// In reflect.Value.Call, trigger a garbage collection after reflect.call
 	// returns but before the args frame has been discarded.
 	// This is a little clumsy but makes the failure repeatable.
@@ -4062,7 +4064,7 @@ func TestLargeGCProg(t *testing.T) {
 }
 
 // Issue 9179.
-func TestCallGC(t *testing.T) {
+func TestZCallGC(t *testing.T) {
 	f := func(a, b, c, d, e string) {
 	}
 	g := func(in []Value) []Value {
@@ -4074,6 +4076,7 @@ func TestCallGC(t *testing.T) {
 	f2("four", "five5", "six666", "seven77", "eight888")
 }
 
+/* not the same in Haxe
 type funcLayoutTest struct {
 	rcvr, t            Type
 	argsize, retOffset uintptr
@@ -4161,3 +4164,4 @@ func TestFuncLayout(t *testing.T) {
 		}
 	}
 }
+*/

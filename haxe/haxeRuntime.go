@@ -629,7 +629,7 @@ class Object { // this implementation will improve with typed array access
 		return true;
 	}
 	public static inline function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
-		if(size<=0) return;
+		if(size<=0||src==null) return;
 `
 	if pogo.DebugFlag {
 		objClass += `
@@ -1490,7 +1490,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 	public static function change(t:Int,i:Interface):Interface {
 		if(i==null)	
 			if(TypeInfo.isConcrete(t))  
-				return new Interface(t,TypeInfo.zeroValue(t)); 
+				return new Interface(t,TypeZero.zeroValue(t)); 
 			else {
 				return null; // e.g. error(nil) 
 			}
@@ -1502,7 +1502,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 					return new Interface(i.typ,i.val); // do not allow non-concrete types for Interfaces
 			else {
 				Scheduler.panicFromHaxe( "Can't change the Interface of a non-Interface type:"+i+" to: "+TypeInfo.getName(t));  
-				return new Interface(t,TypeInfo.zeroValue(t));	 //dummy value as we have hit the panic button
+				return new Interface(t,TypeZero.zeroValue(t));	 //dummy value as we have hit the panic button
 			}
 	}
 	public static function isEqual(a:Interface,b:Interface):Bool {		
@@ -1513,7 +1513,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 			else 		return false;
 		if(b==null)		
 			return false;
-		if(! (TypeInfo.isIdentical(a.typ,b.typ)||TypeInfo.isAssignableTo(a.typ,b.typ)||	TypeInfo.isAssignableTo(b.typ,a.typ)) ) 
+		if(! (TypeInfo.isIdentical(a.typ,b.typ)||TypeAssign.isAssignableTo(a.typ,b.typ)||TypeAssign.isAssignableTo(b.typ,a.typ)) ) 
 			return false;	
 		return Force.isEqualDynamic(a.val,b.val);
 	}			
@@ -1535,7 +1535,8 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 				else
 					Scheduler.panicFromHaxe( "concrete type assert failed: expected "+TypeInfo.getName(assTyp)+", got "+TypeInfo.getName(ifce.typ) );	
 			} else {
-				if(ifce.typ==assTyp||TypeInfo.assertableTo(ifce.typ,assTyp)){
+				if(ifce.typ==assTyp||Go_haxegoruntime_assertableTTo.callFromRT(0,ifce.typ,assTyp)){
+					//was:TypeAssert.assertableTo(ifce.typ,assTyp)){
 					return new Interface(ifce.typ,ifce.val);
 				} else {
 					Scheduler.panicFromHaxe( "interface type assert failed: cannot assert to "+TypeInfo.getName(assTyp)+" from "+TypeInfo.getName(ifce.typ) );
@@ -1546,21 +1547,21 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 	}
 	public static function assertOk(assTyp:Int,ifce:Interface):{r0:Dynamic,r1:Bool} {
 		if(ifce==null) 
-			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
-		if(!(ifce.typ==assTyp||TypeInfo.assertableTo(ifce.typ,assTyp)))
-			return {r0:TypeInfo.zeroValue(assTyp),r1:false};
+			return {r0:TypeZero.zeroValue(assTyp),r1:false};
+		if(!(ifce.typ==assTyp||Go_haxegoruntime_assertableTTo.callFromRT(0,ifce.typ,assTyp))) //was:TypeAssert.assertableTo(ifce.typ,assTyp)))
+			return {r0:TypeZero.zeroValue(assTyp),r1:false};
 		if(TypeInfo.isConcrete(assTyp))	
 			return {r0:ifce.val,r1:true};
 		else	
 			return {r0:new Interface(ifce.typ,ifce.val),r1:true};
 	}
-	public static function invoke(ifce:Interface,meth:String,args:Array<Dynamic>):Dynamic {
+	public static function invoke(ifce:Interface,path:String,meth:String,args:Array<Dynamic>):Dynamic {
 		if(ifce==null) 
 			Scheduler.panicFromHaxe( "Interface.invoke null Interface"); 
 		if(!Std.is(ifce,Interface)) 
 			Scheduler.panicFromHaxe( "Interface.invoke on non-Interface value"); 
 		var fn:Dynamic;
-		fn=MethodTypeInfo.method(ifce.typ,meth);
+		fn=Go_haxegoruntime_getMMethod.callFromRT(0,ifce.typ,path,meth); //MethodTypeInfo.method(ifce.typ,meth);
 		return Reflect.callMethod(null, fn, args);
 	}
 }

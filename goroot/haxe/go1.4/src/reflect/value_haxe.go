@@ -89,7 +89,7 @@ func (v Value) pointer() unsafe.Pointer {
 	}
 	switch v.Kind() { // Haxe addition
 	case Map: //  TODO add ,Chan???
-		return v.ptr
+		return v.ptr // it is a map, rather than pointer to one
 	}
 	if v.flag&flagIndir != 0 {
 		return *(*unsafe.Pointer)(v.ptr)
@@ -330,9 +330,6 @@ func (v Value) CallSlice(in []Value) []Value {
 var callGC bool // for testing; see TestCallMethodJump
 
 func (v Value) call(op string, in []Value) []Value {
-	println("DEBUG call target", v)
-	println("DEBUG call arguments", in)
-	panic("DEBUG call method " + op)
 
 	// Get function pointer, type.
 	t := v.typ
@@ -411,6 +408,7 @@ func (v Value) call(op string, in []Value) []Value {
 	}
 	nout := t.NumOut()
 
+	/* Replaced by Haxe
 	// Compute frame type, allocate a chunk of memory for frame
 	frametype, _, retOffset, _ := funcLayout(t, rcvrtype)
 	args := unsafe_New(frametype)
@@ -456,7 +454,89 @@ func (v Value) call(op string, in []Value) []Value {
 		ret[i] = Value{tv.common(), unsafe.Pointer(uintptr(args) + off), fl}
 		off += tv.Size()
 	}
+	*/
+	//println("DEBUG fn", fn)
+	//println("DEBUG *fn", *(*uintptr)(fn))
+	haxeArgs := hx.GetDynamic("", "var P=new Array<Dynamic>();P[0]=this._goroutine;P[1]=[];P")
+	for i, v := range in {
+		v.mustBeExported()
+		if t.In(i).Kind() == Interface { // don't take just the value
+			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load();",
+				haxeArgs, 2+i, v.Interface())
+		} else {
+			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load().val;",
+				haxeArgs, 2+i, v.Interface())
+		}
+	}
+	//println("DEBUG fn type", t.String())
+	//println("DEBUG haxeArgs", haxeArgs)
+	var haxeStackFrame uintptr // haxe Dynamic type
+	if rcvrtype != nil {       // method
+		haxeStackFrame = hx.CodeDynamic("",
+			"_a.itemAddr(0).load().val.load().methVal(_a.itemAddr(1).load().val,_a.itemAddr(2).load().val);",
+			fn, rcvr.Interface(), haxeArgs)
+	} else {
+		haxeStackFrame = hx.CodeDynamic("",
+			"Closure.callFn(_a.itemAddr(0).load().val.load(), _a.itemAddr(1).load().val);",
+			fn, haxeArgs)
+	}
+	for hx.CodeBool("", "_a.itemAddr(0).load().val._incomplete;", haxeStackFrame) {
+		runtime.Gosched() // wait for the function to complete
+	}
 
+	ret := make([]Value, nout)
+	switch nout {
+	case 0: // nothing to do
+	case 1:
+		_res := hx.CodeDynamic("",
+			"_a.itemAddr(0).load().val.res();", haxeStackFrame)
+		//println("DEBUG _res[0]=", _res)
+		//println("DEBUG type[0]=", t.Out(0).String())
+		tv := t.Out(0)
+		if tv.Kind() == Interface {
+			iface := haxeInterfaceUnpack(_res)
+			if iface.typ.Kind() == Uintptr {
+				iface.typ = tv.common() // if uintptr, use the type from the fn type
+			}
+			fl := flagIndir | flag(iface.typ.Kind())
+			ret[0] = Value{iface.typ, iface.word, fl}
+		} else {
+			fl := flagIndir | flag(tv.Kind())
+			ei := &emptyInterface{typ: tv.common()}
+			haxe2go(ei, _res)
+			ret[0] = Value{tv.common(), ei.word, fl}
+		}
+	default:
+		_res := hx.CodeDynamic("",
+			"_a.itemAddr(0).load().val.res();", haxeStackFrame)
+		//println("DEBUG _res[", nout, "]=", _res)
+		if hx.IsNull(_res) {
+			panic("reflect.Value.call() returned tuple is null")
+		}
+		for i := 0; i < nout; i++ {
+			//println("DEBUG type[", i, "]=", t.Out(i).String())
+			tv := t.Out(i)
+			fieldName := "r" + hx.CallString("", "Std.string", 1, i)
+			//println("DEBUG fieldName:", fieldName)
+			fieldValue := hx.CodeDynamic("",
+				"Reflect.field(_a.itemAddr(0).load().val,_a.itemAddr(1).load().val);",
+				_res, fieldName)
+			//println("DEBUG fieldValue:", fieldValue)
+			if tv.Kind() == Interface {
+				iface := haxeInterfaceUnpack(fieldValue)
+				if iface.typ.Kind() == Uintptr {
+					iface.typ = tv.common() // if uintptr, use the type from the fn type
+				}
+				fl := flagIndir | flag(iface.typ.Kind())
+				ret[i] = Value{iface.typ, iface.word, fl}
+			} else {
+				fl := flagIndir | flag(tv.Kind())
+				ei := &emptyInterface{typ: tv.common()}
+				haxe2go(ei, fieldValue)
+				ret[i] = Value{tv.common(), ei.word, fl}
+			}
+		}
+	}
 	return ret
 }
 
@@ -473,6 +553,7 @@ func (v Value) call(op string, in []Value) []Value {
 // so that the linker can make it work correctly for panic and recover.
 // The gc compilers know to do that for the name "reflect.callReflect".
 func callReflect(ctxt *makeFuncImpl, frame unsafe.Pointer) {
+	panic("reflect.callReflect not yet implemented")
 	ftyp := ctxt.typ
 	f := ctxt.fn
 
@@ -613,6 +694,7 @@ func align(x, n uintptr) uintptr {
 // so that the linker can make it work correctly for panic and recover.
 // The gc compilers know to do that for the name "reflect.callMethod".
 func callMethod(ctxt *methodValue, frame unsafe.Pointer) {
+	panic("reflect.callMethod not yet implemented")
 	rcvr := ctxt.rcvr
 	rcvrtype, t, fn := methodReceiver("call", rcvr, ctxt.method)
 	frametype, argSize, retOffset, _ := funcLayout(t, rcvrtype)
@@ -806,7 +888,7 @@ func (v Value) FieldByIndex(index []int) Value {
 // It returns the zero Value if no field was found.
 // It panics if v's Kind is not struct.
 func (v Value) FieldByName(name string) Value {
-	panic("reflect.value.FieldByName not yet implemented")
+	//panic("reflect.value.FieldByName not yet implemented")
 	v.mustBe(Struct)
 	if f, ok := v.typ.FieldByName(name); ok {
 		return v.FieldByIndex(f.Index)
@@ -819,7 +901,7 @@ func (v Value) FieldByName(name string) Value {
 // It panics if v's Kind is not struct.
 // It returns the zero Value if no field was found.
 func (v Value) FieldByNameFunc(match func(string) bool) Value {
-	panic("reflect.value.FieldByNameFunc not yet implemented")
+	//panic("reflect.value.FieldByNameFunc not yet implemented")
 	if f, ok := v.typ.FieldByNameFunc(match); ok {
 		return v.FieldByIndex(f.Index)
 	}
@@ -882,7 +964,7 @@ func (v Value) Index(i int) Value {
 		return Value{typ, val, fl}
 
 	case String:
-		panic("reflect.value.Index not yet implemented")
+		//panic("reflect.value.Index not yet implemented")
 		s := *(*string)(v.ptr)       // (*stringHeader)(v.ptr)
 		if uint(i) >= uint(len(s)) { //uint(s.Len) {
 			panic("reflect: string index out of range")
@@ -994,7 +1076,16 @@ func (v Value) IsNil() bool {
 		}
 		ptr := v.ptr
 		if v.flag&flagIndir != 0 {
-			ptr = v.pointer() //*(*unsafe.Pointer)(ptr)
+			ptr = v.pointer() // *(*unsafe.Pointer)(ptr) //v.pointer() // ???
+		}
+		switch k {
+		case Chan, Map, Func:
+			p := uintptr(ptr)
+			for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", p) {
+				//println("DEBUG IsNil still a pointer for ", k.String())
+				p = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", p)
+			}
+			return hx.IsNull(p)
 		}
 		return ptr == nil
 	case Interface, Slice:
@@ -1290,9 +1381,9 @@ func (v Value) Pointer() uintptr {
 			"_a.itemAddr(0).load().val.load().len()==0?null:_a.itemAddr(0).load().val.load().itemAddr(0);",
 			v.ptr)
 	default:
-		panic("reflect.value.Pointer not yet implemented for " + v.Kind().String())
+		//panic("reflect.value.Pointer not yet implemented for " + v.Kind().String())
 	}
-	// TODO: deprecate
+	// TODO: deprecate duplicates
 	k := v.kind()
 	switch k {
 	case Chan, Map, Ptr, UnsafePointer:
@@ -1793,7 +1884,7 @@ func (v Value) Type() Type {
 		// Easy case
 		return v.typ
 	}
-	panic("reflect.value.Type for methods etc not yet implemented")
+	//panic("reflect.value.Type for methods etc not yet implemented")
 
 	// Method value.
 	// v.typ describes the receiver, not the method type.
@@ -2232,7 +2323,7 @@ func MakeChan(typ Type, buffer int) Value {
 
 // MakeMap creates a new map of the specified type.
 func MakeMap(typ Type) Value {
-	panic("reflect.MakeMap not yet implemented")
+	//panic("reflect.MakeMap not yet implemented")
 	if typ.Kind() != Map {
 		panic("reflect.MakeMap of non-map type")
 	}
@@ -2255,8 +2346,10 @@ func Indirect(v Value) Value {
 // stored in the interface i.  ValueOf(nil) returns the zero Value.
 func ValueOf(i interface{}) Value {
 	if i == nil {
+		//println("DEBUG ValueOf null") // hx.IsNull(uintptr(i))
 		return Value{}
 	}
+	//println("DEBUG ValueOf ", i)
 
 	// TODO(rsc): Eliminate this terrible hack.
 	// In the call to unpackEface, i.typ doesn't escape,
@@ -2345,7 +2438,7 @@ func (v Value) assignTo(context string, dst *rtype, target unsafe.Pointer) Value
 // If the usual Go conversion rules do not allow conversion
 // of the value v to type t, Convert panics.
 func (v Value) Convert(t Type) Value {
-	panic("reflect.Convert not yet implemented")
+	//panic("reflect.Convert not yet implemented")
 	if v.flag&flagMethod != 0 {
 		v = makeMethodValue("Convert", v)
 	}
@@ -2683,7 +2776,10 @@ func mapaccess(t *rtype, mp unsafe.Pointer, key unsafe.Pointer) (val unsafe.Poin
 	ei := new(emptyInterface)
 	var el uintptr = hx.Null()
 	if mp != nil {
-		m := *(*uintptr)(mp)
+		m := (uintptr)(mp)
+		for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
+			m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
+		}
 		if !hx.IsNull(m) {
 			if key != nil {
 				ei.typ = kt
@@ -2714,12 +2810,14 @@ func mapassign(t *rtype, mp unsafe.Pointer, key, val unsafe.Pointer) {
 	if mp == nil {
 		panic("reflect.mapassign() nil pointer to map")
 	}
-	if !hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", mp) {
-		panic("reflect.mapassign() not a pointer to map")
+	m := (uintptr)(mp)
+	for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
+		m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
 	}
-	m := *(*uintptr)(mp)
 	if hx.IsNull(uintptr(m)) {
 		panic("reflect.mapassign() null Haxe map") // as it does in the real runtime version
+		//println("DEBUG ignore write to empty map")
+		//return // NoOp
 		/*
 			println("DEBUG auto-create empty map")
 			*(*uintptr)(mp) = *(*uintptr)(makemap(t)) // make a suitable map TODO review if correct, required for encoding/gob
@@ -2756,7 +2854,10 @@ func mapiterinit(t *rtype, mp unsafe.Pointer) unsafe.Pointer {
 		//println("DEBUG reflect.mapiterinit() nil pointer to map")
 		return nil
 	}
-	m := *(*uintptr)(mp)
+	m := (uintptr)(mp)
+	for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
+		m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
+	}
 	if hx.IsNull(m) {
 		return nil
 	}
@@ -2800,18 +2901,27 @@ func maplen(mp unsafe.Pointer) int {
 	if mp == nil {
 		return 0
 	}
-	m := *(*uintptr)(mp)
+	m := (uintptr)(mp)
+	for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
+		m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
+	}
 	if hx.IsNull(m) {
 		return 0
 	}
 	return hx.CodeInt("", "cast(_a.itemAddr(0).load().val,GOmap).len();", m)
 }
 func call(fn, arg unsafe.Pointer, n uint32, retoffset uint32) {
+	println("DEBUG fn ", fn)
+	println("DEBUG arg ", arg)
+	println("DEBUG n ", n)
+	println("DEBUG retoffset ", retoffset)
 	panic("reflect.call() not yet implemented in haxe")
 }
 
 func ifaceE2I(t *rtype, src interface{}, dst unsafe.Pointer) {
-	panic("reflect.ifaceE2I() not yet implemented in haxe")
+	//panic("reflect.ifaceE2I() not yet implemented in haxe")
+	x := haxeInterfaceUnpack(src)
+	memmove(dst, x.word, t.Size())
 }
 
 //go:noescape
