@@ -27,9 +27,10 @@ func haxeWait(target int64, whileTrue *bool) {
 	now := runtimeNano()
 	//println("DEBUG haxeWait:start now, target, *whileTrue diff = ", now, target, *whileTrue, target-now)
 	for now < target && *whileTrue {
-		for wait := int((target - now) / 10000000); wait > 0; wait-- { // one wait per 10 miliseconds
+		for wait := int((target - now) / 1000000); wait > 0; wait-- { // one wait per 100 miliseconds
 			runtime.Gosched() // let other code run
 		}
+		runtime.Gosched() // let other code run
 		now = runtimeNano()
 		//println("DEBUG haxeWait:loop now, target, *whileTrue diff = ", now, target, *whileTrue, target-now)
 	}
@@ -93,6 +94,7 @@ again:
 			goto again
 		}
 	}
+	rt.seq = 0
 }
 
 func startTimer(rt *runtimeTimer) { // function body is an Haxe addition
@@ -102,6 +104,9 @@ func startTimer(rt *runtimeTimer) { // function body is an Haxe addition
 func stopTimer(rt *runtimeTimer) bool { // function body is an Haxe addition
 	if rt.haxeRuning {
 		rt.haxeRuning = false
+		for rt.seq != 0 {
+			runtime.Gosched()
+		}
 		return true
 	}
 	return false
@@ -122,6 +127,9 @@ type Timer struct {
 // Stop does not close the channel, to prevent a read from the channel succeeding
 // incorrectly.
 func (t *Timer) Stop() bool {
+	if t == nil {
+		panic("time: Stop called on uninitialized Timer")
+	}
 	if t.r.f == nil {
 		panic("time: Stop called on uninitialized Timer")
 	}
@@ -148,6 +156,9 @@ func NewTimer(d Duration) *Timer {
 // It returns true if the timer had been active, false if the timer had
 // expired or been stopped.
 func (t *Timer) Reset(d Duration) bool {
+	if t == nil {
+		panic("time: Reset called on uninitialized Timer")
+	}
 	if t.r.f == nil {
 		panic("time: Reset called on uninitialized Timer")
 	}

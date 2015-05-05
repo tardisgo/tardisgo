@@ -20,7 +20,7 @@ func UnzipTestFS() {} // this will be overwritten by the compiler
 
 // Constant values
 
-const Compiler = "TARDISgo"
+const Compiler = "TARDISgo" // this is checked by the proper runtime, so might need to be "gc"
 
 var GOARCH string = hx.CallString("", "Go.Platform", 0) // this is a const in the main Go installation
 

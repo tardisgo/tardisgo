@@ -14,7 +14,7 @@ All of the core [Go language specification](http://golang.org/ref/spec) is imple
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to allow other goroutines to run.  
 
-[Well over half of the standard packages pass their tests for at least one target](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md). 
+[Well over half of the standard packages pass their tests for all targets](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md). 
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 

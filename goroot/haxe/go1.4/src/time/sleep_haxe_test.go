@@ -327,7 +327,7 @@ func testReset(d Duration) error {
 	Sleep(2 * d)
 	select {
 	case <-t0.C:
-		return errors.New("timer fired early")
+		return errors.New("timer fired early, duration:" + d.String())
 	default:
 	}
 	Sleep(2 * d)
@@ -353,9 +353,14 @@ func TestReset(t *testing.T) {
 		3 * unit,
 		7 * unit,
 		15 * unit,
+		30 * unit,  // Haxe
+		45 * unit,  // haxe
+		225 * unit, // haxe
+		450 * unit, // haxe
 	}
 	var err error
 	for _, d := range tries {
+		println("DEBUG try duration:", d.String())
 		err = testReset(d)
 		if err == nil {
 			t.Logf("passed using duration %v", d)

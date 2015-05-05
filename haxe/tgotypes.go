@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"golang.org/x/tools/go/types"
+	//"golang.org/x/tools/go/ssa"
 
 	"github.com/tardisgo/tardisgo/pogo"
 )
@@ -18,6 +19,7 @@ const ( // from reflect package
 	kindMask        = (1 << 5) - 1
 )
 
+/*
 var tta []types.Type
 
 func typeHasMethodSet(typ types.Type) bool {
@@ -31,6 +33,7 @@ func typeHasMethodSet(typ types.Type) bool {
 	}
 	return false
 }
+*/
 
 func escapedTypeString(s string) string {
 	buf := []byte(s)
@@ -410,57 +413,64 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 		}
 	}
 
-	methods := types.NewMethodSet(t)
-	if name != "" || methods.Len() > 0 {
+	var methods *types.MethodSet
+	numMethods := 0
+	methods = pogo.MethodSetFor(t)
+	numMethods = methods.Len()
+	if name != "" || numMethods > 0 {
 		ret := "Go_haxegoruntime_newPPtrTToUUncommonTType.callFromRT(0,\n"
 		ret += "\t\t/*name:*/ \"" + name + "\",\n"
 		ret += "\t\t/*pkgPath:*/ \"" + pkgPath + "\",\n"
 		ret += "\t\t/*methods:*/ "
 		meths := "Go_haxegoruntime_newMMethodSSlice.callFromRT(0)"
-		_, isIF := t.Underlying().(*types.Interface)
-		if !isIF {
-			for m := 0; m < methods.Len(); m++ {
-				sel := methods.At(m)
-				fn := "null"
-				fid, haveFn := pte.At(sel.Obj().Type()).(int)
-				if haveFn {
-					fn = fmt.Sprintf("type%d()", fid)
-				}
-				meths = "Go_haxegoruntime_addMMethod.callFromRT(0," + meths + ",\n"
-				meths += fmt.Sprintf("\n\t\t\t/*name:*/ \"%s\", // %s\n", sel.Obj().Name(), sel.String())
-
-				path := ""
-				rune1, _ := utf8.DecodeRune([]byte(sel.Obj().Name()))
-				if unicode.IsLower(rune1) {
+		//_, isIF := t.Underlying().(*types.Interface)
+		//if !isIF {
+		for m := 0; m < numMethods; m++ {
+			fn := "null"
+			fnToCall := "null"
+			var name, str, path string
+			sel := methods.At(m)
+			fid, haveFn := pte.At(sel.Obj().Type()).(int)
+			if haveFn {
+				fn = fmt.Sprintf("type%d()", fid)
+			}
+			name = sel.Obj().Name()
+			str = sel.String()
+			funcObj, ok := sel.Obj().(*types.Func)
+			if ok {
+				pn := "unknown"
+				if funcObj.Pkg() != nil {
+					pn = sel.Obj().Pkg().Name()
 					path = sel.Obj().Pkg().Path()
 				}
-
-				meths += fmt.Sprintf("\t\t\t/*pkgPath:*/ \"%s\",\n", path)
-				// TODO should the two lines below be different?
-				meths += fmt.Sprintf("\t\t\t/*mtyp:*/ %s,\n", fn)
-				meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
-				// add links to the functions ...
-				fnToCall := "null"
-
-				funcObj, ok := sel.Obj().(*types.Func)
-				if ok {
-					pn := "unknown"
-					if funcObj.Pkg() != nil {
-						pn = sel.Obj().Pkg().Name()
-					}
-					fnToCall = `Go_` + langType{}.LangName(
-						pn+":"+sel.Recv().String(),
-						funcObj.Name())
-				}
-				if funcNamesUsed[fnToCall] {
-					fnToCall += ".call"
-				} else {
-					//println("DEBUG uncommonBuild function name not found: ", fnToCall)
-					fnToCall = "null"
-				}
-				meths += "\t\t\t" + fnToCall + "," + fnToCall + ")"
+				fnToCall = `Go_` + langType{}.LangName(
+					pn+":"+sel.Recv().String(),
+					funcObj.Name())
 			}
+
+			// now write out the method information
+			meths = "Go_haxegoruntime_addMMethod.callFromRT(0," + meths + ",\n"
+			meths += fmt.Sprintf("\n\t\t\t/*name:*/ \"%s\", // %s\n", name, str)
+			rune1, _ := utf8.DecodeRune([]byte(name))
+			if unicode.IsUpper(rune1) {
+				path = ""
+			}
+
+			meths += fmt.Sprintf("\t\t\t/*pkgPath:*/ \"%s\",\n", path)
+			// TODO should the two lines below be different?
+			meths += fmt.Sprintf("\t\t\t/*mtyp:*/ %s,\n", fn)
+			meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
+			// add links to the functions ...
+
+			if funcNamesUsed[fnToCall] {
+				fnToCall += ".call"
+			} else {
+				//println("DEBUG uncommonBuild function name not found: ", fnToCall)
+				fnToCall = "null /* " + fnToCall + " */ "
+			}
+			meths += "\t\t\t" + fnToCall + "," + fnToCall + ")"
 		}
+		//}
 		ret += meths
 		return ret + "\t)"
 	}

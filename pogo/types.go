@@ -7,8 +7,9 @@ package pogo
 import (
 	"fmt"
 	"reflect"
+	"sort"
 
-	//"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
 	"golang.org/x/tools/go/types/typeutil"
 )
@@ -77,6 +78,14 @@ func TypesWithMethodSets() (sets []types.Type) {
 	return sets
 }
 
+func MethodSetFor(T types.Type) *types.MethodSet {
+	return rootProgram.MethodSets.MethodSet(T)
+}
+
+func RootProgram() *ssa.Program {
+	return rootProgram
+}
+
 var catchReferencedTypesSeen = make(map[string]bool)
 
 func catchReferencedTypes(et types.Type) {
@@ -139,6 +148,12 @@ func catchReferencedTypes(et types.Type) {
 }
 
 func visitAllTypes() {
+	// add the supplied method, required to make sure no synthetic types or types referenced via interfaces have been missed
+	rt := rootProgram.RuntimeTypes()
+	sort.Sort(TypeSorter(rt))
+	for _, T := range rt {
+		LogTypeUse(T)
+	}
 	// ...so just get the full info on the types we've seen
 	for t := 1; t < NextTypeID; t++ { // make sure we do this in a consistent order
 		for _, k := range TypesEncountered.Keys() {
@@ -151,18 +166,6 @@ func visitAllTypes() {
 
 // Wrapper for target language emitTypeInfo()
 func emitTypeInfo() {
-	// belt-and-braces could be used here to make sure we capture every type, needed for reflect
-	// but this makes the generated code too large for Java & C++
-	/*
-		for _, pkg := range rootProgram.AllPackages() {
-			for _, mem := range pkg.Members {
-				t, ok := mem.(*ssa.Type)
-				if ok {
-					LogTypeUse(t.Type())
-				}
-			}
-		}
-	*/
 	visitAllTypes()
 	l := TargetLang
 

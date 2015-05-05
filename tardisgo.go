@@ -260,7 +260,7 @@ func doTestable(args []string) error {
 	}
 
 	// Create and build SSA-form program representation.
-	*modeFlag |= mode
+	*modeFlag |= mode | ssa.SanityCheckFunctions
 	prog := ssautil.CreateProgram(iprog, *modeFlag)
 
 	prog.BuildAll()

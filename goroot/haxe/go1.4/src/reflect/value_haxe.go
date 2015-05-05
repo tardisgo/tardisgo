@@ -457,7 +457,14 @@ func (v Value) call(op string, in []Value) []Value {
 	*/
 	//println("DEBUG fn", fn)
 	//println("DEBUG *fn", *(*uintptr)(fn))
-	haxeArgs := hx.GetDynamic("", "var P=new Array<Dynamic>();P[0]=this._goroutine;P[1]=[];P")
+	boundVars := hx.GetDynamic("", "[]") // nothing bound by default
+	if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Closure);", *(*uintptr)(fn)) {
+		boundVars = hx.CodeDynamic("", "_a.itemAddr(0).load().val.bds;", *(*uintptr)(fn))
+		//println("DEBUG found boundVars=", boundVars)
+	}
+	haxeArgs := hx.CodeDynamic("",
+		"var P=new Array<Dynamic>();P[0]=this._goroutine;P[1]=_a.itemAddr(0).load().val;P;",
+		boundVars)
 	for i, v := range in {
 		v.mustBeExported()
 		if t.In(i).Kind() == Interface { // don't take just the value

@@ -28,7 +28,7 @@ var allList = []string{
 	"crypto/md5 crypto/rand crypto/rc4 crypto/sha1 crypto/sha256 crypto/sha512 crypto/subtle ",
 	"database/sql/driver debug/gosym ",
 	"encoding/asn1 encoding/ascii85 encoding/binary encoding/base32 ",
-	"encoding/base64 encoding/csv encoding/hex encoding/pem ",
+	"encoding/base64 encoding/csv encoding/hex encoding/pem encoding/xml ",
 	"errors flag fmt ",
 	"go/ast go/scanner go/token ",
 	"hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
@@ -37,6 +37,7 @@ var allList = []string{
 	"unicode unicode/utf16 unicode/utf8 ",
 	// below are those packages that require their own testdata zip file, and so must be run individually
 	"compress/bzip2", "compress/flate", "compress/gzip", "compress/lzw", "compress/zlib",
+	"crypto/rsa",
 	"debug/dwarf", "debug/macho", "debug/pe", "debug/plan9obj",
 	"go/format", "go/parser", "go/printer",
 	"image", "image/draw", "image/gif", "image/jpeg",
@@ -50,11 +51,11 @@ var allList = []string{
 var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar archive/zip 
  debug/elf expvar go/doc 
- math net/http/fcgi  strconv 
+ math net/http/cookiejar net/http/fcgi  strconv 
 `
 
 var cs = ` 
- archive/zip  debug/elf expvar    
+ archive/zip  debug/elf     
 `
 
 var cpp = ` 
@@ -63,7 +64,7 @@ var cpp = `
   math  strconv
 `
 
-var java = ` archive/zip archive/tar debug/elf go/doc 
+var java = ` archive/zip archive/tar debug/elf  
 `
 
 func pkgList(jumble string) []string {

@@ -591,41 +591,41 @@ func (l langType) EmitTypeInfo() string {
 
 	pogo.WriteAsClass("TypeAssign", ret)
 
-/*
-	ret = "class TypeAssert {"
+	/*
+		ret = "class TypeAssert {"
 
-	//emulation of: func type.AsertableTo(V *Interface, T Type) bool
-	ret += "public static function assertableTo(v:Int,t:Int):Bool {\n"
-	//ret += "trace(\"DEBUG assertableTo()\",v,t);\n"
-	ret += "\tif(v==t) return true;\n"
-	ret += "\tfor(ae in isAssertableToArray) if(ae==(v<<16|t)) return true;\n"
-	ret += "return false;\n}\n"
-	ret += "static var isAssertableToArray:Array<Int> = [ "
-	for tid, typ := range typesByID {
-		ret0 := ""
-		if typ != nil {
-			for iid, ityp := range typesByID {
-				if ityp != nil {
-					iface, isIface := ityp.Underlying().(*types.Interface)
-					if isIface {
-						if tid != iid && types.AssertableTo(iface, typ) {
-							ret0 += fmt.Sprintf("0x%08X,", (tid<<16)|iid)
+		//emulation of: func type.AsertableTo(V *Interface, T Type) bool
+		ret += "public static function assertableTo(v:Int,t:Int):Bool {\n"
+		//ret += "trace(\"DEBUG assertableTo()\",v,t);\n"
+		ret += "\tif(v==t) return true;\n"
+		ret += "\tfor(ae in isAssertableToArray) if(ae==(v<<16|t)) return true;\n"
+		ret += "return false;\n}\n"
+		ret += "static var isAssertableToArray:Array<Int> = [ "
+		for tid, typ := range typesByID {
+			ret0 := ""
+			if typ != nil {
+				for iid, ityp := range typesByID {
+					if ityp != nil {
+						iface, isIface := ityp.Underlying().(*types.Interface)
+						if isIface {
+							if tid != iid && types.AssertableTo(iface, typ) {
+								ret0 += fmt.Sprintf("0x%08X,", (tid<<16)|iid)
+							}
 						}
 					}
 				}
 			}
+			if ret0 != "" {
+				ret += ret0
+				ret += "\n"
+			}
 		}
-		if ret0 != "" {
-			ret += ret0
-			ret += "\n"
-		}
-	}
-	ret += "];\n"
+		ret += "];\n"
 
-	ret += "}\n"
+		ret += "}\n"
 
-	pogo.WriteAsClass("TypeAssert", ret)
-*/
+		pogo.WriteAsClass("TypeAssert", ret)
+	*/
 
 	ret = "class TypeZero {"
 
@@ -643,7 +643,6 @@ func (l langType) EmitTypeInfo() string {
 		}
 	}
 	ret += "default: return null;}}\n"
-
 
 	ret += "}\n"
 

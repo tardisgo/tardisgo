@@ -27,6 +27,7 @@ func initTestingZone() {
 	}
 	z.name = "Local"
 	localLoc = *z
+	println("DEBUG zoneinfo loaded")
 	}() // hopefully this will finish before we need it... TODO (haxe) fix this problem in general
 }
 

@@ -40,7 +40,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- md5          | c++, c#, java, js     |                                   |
 | -- rand         | c++, c#, java, js     |                                   |
 | -- rc4          | c++, c#, java, js     |                                   |
-| -- rsa          |                     * | try-catch exception               |
+| -- rsa          | c++, c#, java, js   * |                                   |
 | -- sha1         | c++, c#, java, js     |                                   |
 | -- sha256       | c++, c#, java, js     |                                   |
 | -- sha512       | c++, c#, java, js     |                                   |
@@ -65,19 +65,19 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- base64       | c++, c#, java, js     |                                   |
 | -- binary       | c++, c#, java, js     |                                   |
 | -- csv          | c++, c#, java, js     |                                   |
-| -- gob          |                       | reflect.mapassign() null Haxe map |
+| -- gob          |                       | multiple errors, then fatal       |
 | -- hex          | c++, c#, java, js     |                                   |
 | -- json         |                     * | field name not found, then fatal  |
 | -- pem          | c++, c#, java, js     |                                   |
-| -- xml          |                       | multiple errors, then fatal       |
+| -- xml          | c++, c#, java, js     | float32 field test removed so that c#/java pass |
 | errors          | c++, c#, java, js     |                                   |
-| expvar          | js, cs                | c++: clang seg fault, java: haxe compiler hangs |
+| expvar          | js                    | c++: clang seg fault, cs/java: haxe compiler hangs |
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
 | fmt             | c++, c#, java, js     | minor differences in type names   |
 | go              | no code               |                                   |
 | -- ast          | c++, c#, java, js     | minor changes to testdata whitespace and paths |
 | -- build        |                     * | $GOROOT/$GOPATH not set           |
-| -- doc          | c++, java, js       * | cs: matching issue                |
+| -- doc          | c++, js             * | cs: matching issue, java: compile fail |
 | -- format       | c++, c#, java, js   * |                                   |
 | -- parser       | c++, c#, java, js   * |                                   |
 | -- printer      | c++, c#, java, js   * |                                   |
@@ -104,7 +104,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | log             | c++, c#, java, js     |                                   |
 | -- syslog       | no tests              |                                   |
 | math            | c++, js               | c#/java: float32/int overflow issues |
-| -- big          |                       | fmt error then fails on gob encode |
+| -- big          |                       | js/c++: one formatting error c#/java: float32 issue |
 | -- cmplx        | c++, c#, java, js     |                                   |
 | -- rand         |                       | waiting for reflect.makeMethodValue |
 | mime            | c++, c#, java, js   * |                                   |
@@ -112,7 +112,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | net             |                       | hangs                             |
 | -- http         |                       | M not declared by dummy package testing |
 | -- -- cgi       | -                     | fork/exec not implemented         |
-| -- -- cookiejar |                       | errors in TestUpdateAndDelete     |
+| -- -- cookiejar | js                    | other targets to be investigated  |
 | -- -- fcgi      | js                    | other targets fail or take too long to compile |
 | -- -- httptest  |                       | hangs                             |
 | -- -- httputil  |                       | hangs                             |
@@ -152,7 +152,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- tabwriter    | c++, c#, java, js     |                                   |
 | -- template     |                     * | no value errors and awaiting reflect.makeMethodValue |
 | -- -- parse     | c++, c#, java, js     |                                   |
-| time            |                     * | nil pointer dereference           |
+| time            |                     * | js tests all run, but error       |
 | unicode         | c++, c#, java, js     |                                   |
 | -- utf16        | c++, c#, java, js     |                                   |
 | -- utf8         | c++, c#, java, js     |                                   |
