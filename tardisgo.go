@@ -146,11 +146,11 @@ func doTestable(args []string) error {
 		wordSize = 4
 	}
 
-	if !(*runFlag) {
-		wordSize = 4               // TARDIS Go addition to force default int size to 32 bits
-		conf.Build.GOARCH = "haxe" // TARDIS Go addition - 32-bit int
-		conf.Build.GOOS = "nacl"   // or haxe? TARDIS Go addition - simplest OS-specific code to emulate?
-	}
+	//if !(*runFlag) {
+	wordSize = 4               // TARDIS Go addition to force default int size to 32 bits
+	conf.Build.GOARCH = "haxe" // TARDIS Go addition - 32-bit int
+	conf.Build.GOOS = "nacl"   // or haxe? TARDIS Go addition - simplest OS-specific code to emulate?
+	//}
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
 
@@ -221,16 +221,16 @@ func doTestable(args []string) error {
 	}
 
 	// TODO Eventually this might be better as an environment variable
-	if !(*runFlag) {
-		if *tgoroot == "" {
-			if conf.Build.GOPATH == "" {
-				return fmt.Errorf("GOPATH must be set")
-			}
-			conf.Build.GOROOT = strings.Split(conf.Build.GOPATH, ":")[0] + "/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4"
-		} else {
-			conf.Build.GOROOT = *tgoroot
+	//if !(*runFlag) {
+	if *tgoroot == "" {
+		if conf.Build.GOPATH == "" {
+			return fmt.Errorf("GOPATH must be set")
 		}
+		conf.Build.GOROOT = strings.Split(conf.Build.GOPATH, ":")[0] + "/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4"
+	} else {
+		conf.Build.GOROOT = *tgoroot
 	}
+	//}
 	//fmt.Println("DEBUG GOPATH", conf.Build.GOPATH)
 	//fmt.Println("DEBUG GOROOT", conf.Build.GOROOT)
 
@@ -246,12 +246,12 @@ func doTestable(args []string) error {
 	}
 
 	// The interpreter needs the runtime package.
-	if *runFlag {
-		conf.Import("runtime")
-	}
-
+	//if *runFlag {
+	conf.Import("runtime")
+	//} else {
 	// TARDIS GO additional line to add the language specific go runtime code
 	conf.Import(pogo.LanguageList[pogo.TargetLang].Goruntime) // TODO add code to set pogo.TargetLang when more than one of them
+	//}
 
 	// Load, parse and type-check the whole program, including the type definitions.
 	iprog, err := conf.Load()
@@ -294,10 +294,10 @@ func doTestable(args []string) error {
 		}
 
 		// NOTE TARDIS Go removal of this test required if we alter the GOARCH to stop architecture-specific code
-		if runtime.GOARCH != build.Default.GOARCH {
-			return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
-				build.Default.GOARCH, runtime.GOARCH)
-		}
+		//if runtime.GOARCH != build.Default.GOARCH {
+		//	return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
+		//		build.Default.GOARCH, runtime.GOARCH)
+		//}
 
 		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
 	} else {

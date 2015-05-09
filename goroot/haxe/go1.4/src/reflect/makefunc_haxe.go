@@ -8,9 +8,8 @@
 
 package reflect
 
-import (
-	"unsafe"
-)
+import "unsafe"
+import "github.com/tardisgo/tardisgo/haxe/hx"
 
 // makeFuncImpl is the closure value implementing the function
 // returned by MakeFunc.
@@ -88,7 +87,6 @@ type methodValue struct {
 // reflect can tell, but the true func representation can be handled
 // by code like Convert and Interface and Assign.
 func makeMethodValue(op string, v Value) Value {
-	panic("reflect.makeMethodValue() not yet implemented in Haxe")
 	if v.flag&flagMethod == 0 {
 		panic("reflect: internal error: invalid use of makeMethodValue")
 	}
@@ -104,8 +102,9 @@ func makeMethodValue(op string, v Value) Value {
 	// Indirect Go func value (dummy) to obtain
 	// actual code address. (A Go func value is a pointer
 	// to a C function pointer. http://golang.org/s/go11func.)
-	dummy := methodValueCall
-	code := **(**uintptr)(unsafe.Pointer(&dummy))
+	//dummy := methodValueCall
+	//code := **(**uintptr)(unsafe.Pointer(&dummy))
+	code := hx.GetDynamic("", "new Closure(Go_reflect_methodVValueCCall.call,[])")
 
 	// methodValue contains a stack map for use by the runtime
 	_, _, _, stack := funcLayout(funcType, nil)
@@ -130,4 +129,6 @@ func makeMethodValue(op string, v Value) Value {
 // as its context register, and its job is to invoke callMethod(ctxt, frame)
 // where ctxt is the context register and frame is a pointer to the first
 // word in the passed-in argument frame.
-func methodValueCall()
+func methodValueCall() {
+	panic("reflect.methodValueCall() not yet implemented in Haxe")
+}

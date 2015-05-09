@@ -5,7 +5,7 @@ The standard packages that [pass their tests (see end of file for automated summ
 
 The "testing" package is emulated in an ugly and part-working way, all tests are run in Short mode. Packages "reflect", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime.
 
-The [standard library tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/tgotests.go) take more than 2 hours to run on an 8 core Mac.
+The [standard library tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/tgotests.go) take more than 4 hours to run on an 8 core Mac.
 
 Some tests marked "*" below use testdata in the pseudo file system, passed in via a local "tgotestfs.zip".
 
@@ -69,14 +69,14 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- hex          | c++, c#, java, js     |                                   |
 | -- json         |                     * | field name not found, then fatal  |
 | -- pem          | c++, c#, java, js     |                                   |
-| -- xml          | c++, c#, java, js     | float32 field test removed so that c#/java pass |
+| -- xml          | c++, c#, java, js     |                                   |
 | errors          | c++, c#, java, js     |                                   |
 | expvar          | js                    | c++: clang seg fault, cs/java: haxe compiler hangs |
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
 | fmt             | c++, c#, java, js     | minor differences in type names   |
 | go              | no code               |                                   |
 | -- ast          | c++, c#, java, js     | minor changes to testdata whitespace and paths |
-| -- build        |                     * | $GOROOT/$GOPATH not set           |
+| -- build        |                     * | runtime.GOROOT() not set, test data requires addition of code |
 | -- doc          | c++, js             * | cs: matching issue, java: compile fail |
 | -- format       | c++, c#, java, js   * |                                   |
 | -- parser       | c++, c#, java, js   * |                                   |
@@ -89,7 +89,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- crc64        | c++, c#, java, js     |                                   |
 | -- fnv          | c++, c#, java, js     |                                   |
 | html            | c++, c#, java, js     |                                   |
-| -- template     |                       | a number of errors and missing parts of reflect |
+| -- template     | c++, c#, java, js     | minor change to test data type path |
 | image           | c++, c#, java, js   * |                                   |
 | -- color        | c++, c#, java, js     |                                   |
 | -- -- palette   | no tests              |                                   |
@@ -103,12 +103,12 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- ioutil       | c++, c#, java, js   * |                                   |
 | log             | c++, c#, java, js     |                                   |
 | -- syslog       | no tests              |                                   |
-| math            | c++, js               | c#/java: float32/int overflow issues |
-| -- big          |                       | js/c++: one formatting error c#/java: float32 issue |
+| math            | c++, c#, java, js     |                                   |
+| -- big          | [c++], c#, java, js   |                                   |
 | -- cmplx        | c++, c#, java, js     |                                   |
-| -- rand         |                       | waiting for reflect.makeMethodValue |
+| -- rand         |                       | js/c++: 1 numerical error c#/java: 2 |
 | mime            | c++, c#, java, js   * |                                   |
-| -- multipart    |                     * | hangs                             |
+| -- multipart    |                     * | hangs in TestMultipartSlowInput   |
 | net             |                       | hangs                             |
 | -- http         |                       | M not declared by dummy package testing |
 | -- -- cgi       | -                     | fork/exec not implemented         |
@@ -139,7 +139,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- pprof        | -                     | unsupported                       |
 | -- race         | -                     | unsupported                       |
 | sort            | c++, c#, java, js     |                                   |
-| strconv         | c++, js               | c#/java: float32 issues           |
+| strconv         | c++, c#, java, js     |                                   |
 | strings         | c++, c#, java, js     |                                   |
 | sync            |                       | hangs                             |
 | -- atomic       | c++, c#, java, js     |                                   |
@@ -150,7 +150,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | text            | no code               |                                   |
 | -- scanner      | c++, c#, java, js     |                                   |
 | -- tabwriter    | c++, c#, java, js     |                                   |
-| -- template     |                     * | no value errors and awaiting reflect.makeMethodValue |
+| -- template     |                     * | no value errors and part-working reflect.makeMethodValue |
 | -- -- parse     | c++, c#, java, js     |                                   |
 | time            |                     * | js tests all run, but error       |
 | unicode         | c++, c#, java, js     |                                   |

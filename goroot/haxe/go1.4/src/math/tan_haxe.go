@@ -6,7 +6,11 @@
 
 package math
 
-import "github.com/tardisgo/tardisgo/haxe/hx"
+import (
+	"runtime"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
+)
 
 /*
 	Floating-point tangent.
@@ -83,7 +87,12 @@ var _tanQ = [...]float64{
 //	Tan(±0) = ±0
 //	Tan(±Inf) = NaN
 //	Tan(NaN) = NaN
-func Tan(x float64) float64 { return hx.CallFloat("", "Math.tan", 1, x) }
+func Tan(x float64) float64 {
+	if runtime.GOARCH == "cs" {
+		return tan(x)
+	}
+	return hx.CallFloat("", "Math.tan", 1, x)
+}
 
 func tan(x float64) float64 {
 	const (

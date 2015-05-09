@@ -6,7 +6,11 @@
 
 package math
 
-import "github.com/tardisgo/tardisgo/haxe/hx"
+import (
+	"runtime"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
+)
 
 // Atan2 returns the arc tangent of y/x, using
 // the signs of the two to determine the quadrant
@@ -31,6 +35,9 @@ import "github.com/tardisgo/tardisgo/haxe/hx"
 //	Atan2(+Inf, x) = +Pi/2
 //	Atan2(-Inf, x) = -Pi/2
 func Atan2(y, x float64) float64 {
+	if runtime.GOARCH == "cs" {
+		return atan2(y, x)
+	}
 	return hx.CallFloat("", "Math.atan2", 2, y, x)
 }
 

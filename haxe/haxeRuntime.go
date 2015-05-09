@@ -207,6 +207,10 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		#elseif js 
 			f32dView.setFloat32(0,v); 
 			return f32dView.getFloat32(0); 
+		#elseif cs
+			return untyped __cs__("(double)((float)v)");
+		#elseif java
+			return untyped __java__("(double)((float)v)");
 		#else
 			if(Go.haxegoruntime_IInFF32fb.load_bool()) { // in the Float32frombits() function so don't recurse
 				return v;
@@ -215,8 +219,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			}
 		#end
 	}
-	/* TODO implement speed improvements when code below is correct
+	// TODO implement speed improvements when code below is correct
 	//START POTENTIAL SPEED-UP CODE
+	/*
 	public static function Float32bits(v:Float):Int {
 		#if (cpp || neko)
 			f64byts.setFloat(0,v);
@@ -244,44 +249,51 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return 0;
 		#end
 	}
+	*/
 	public static function Float64bits(v:Float):GOint64 {
-		#if (cpp || neko)
-			f64byts.setDouble(0,v);
-			return GOint64.make(
-				f64byts.get(4) | (f64byts.get(5)<<8)  | (f64byts.get(6)<<16)  | (f64byts.get(7)<<24) ,
-				f64byts.get(0) | (f64byts.get(1)<<8)  | (f64byts.get(2)<<16)  | (f64byts.get(3)<<24) ); //little-endian
-		#elseif js 
-			f32dView.setFloat64(0,v); 
-			return GOint64.make(f32dView.getUint32(4),f32dView.getUint32(0)); 
+		#if cs
+			var rv:haxe.Int64 = untyped __cs__("System.BitConverter.DoubleToInt64Bits(v)");
+			return rv;
+		//#elseif (cpp || neko)
+		//	f64byts.setDouble(0,v);
+		//	return GOint64.make(
+		//		f64byts.get(4) | (f64byts.get(5)<<8)  | (f64byts.get(6)<<16)  | (f64byts.get(7)<<24) ,
+		//		f64byts.get(0) | (f64byts.get(1)<<8)  | (f64byts.get(2)<<16)  | (f64byts.get(3)<<24) ); //little-endian
+		//#elseif js 
+		//	f32dView.setFloat64(0,v); 
+		//	return GOint64.make(f32dView.getUint32(4),f32dView.getUint32(0)); 
 		#else
 			Scheduler.panicFromHaxe("Force.Float64bits unreachable code");
 			return GOint64.ofInt(0); 
 		#end
 	}
 	public static function Float64frombits(v:GOint64):Float {
-		#if (cpp || neko)
-			var v0 = GOint64.getLow(v);
-			var v1 = GOint64.getHigh(v);
-			f64byts.set(0,v0&0xff);
-			f64byts.set(1,(v0>>8)&0xff);
-			f64byts.set(2,(v0>>16)&0xff);
-			f64byts.set(3,(v0>>24)&0xff); //little-endian
-			f64byts.set(4,v1&0xff);
-			f64byts.set(5,(v1>>8)&0xff);
-			f64byts.set(6,(v1>>16)&0xff);
-			f64byts.set(7,(v1>>24)&0xff); //little-endian
-			return f64byts.getDouble(0);
-		#elseif js 
-			f32dView.setUint32(0,GOint64.getLow(v));
-			f32dView.setUint32(4,GOint64.getHigh(v));
-			return f32dView.getFloat64(0); 
+		#if cs
+			var hv:haxe.Int64=v;
+			return untyped __cs__("System.BitConverter.Int64BitsToDouble(hv)");
+		//#elseif (cpp || neko)
+		//	var v0 = GOint64.getLow(v);
+		//	var v1 = GOint64.getHigh(v);
+		//	f64byts.set(0,v0&0xff);
+		//	f64byts.set(1,(v0>>8)&0xff);
+		//	f64byts.set(2,(v0>>16)&0xff);
+		//	f64byts.set(3,(v0>>24)&0xff); //little-endian
+		//	f64byts.set(4,v1&0xff);
+		//	f64byts.set(5,(v1>>8)&0xff);
+		//	f64byts.set(6,(v1>>16)&0xff);
+		//	f64byts.set(7,(v1>>24)&0xff); //little-endian
+		//	return f64byts.getDouble(0);
+		//#elseif js 
+		//	f32dView.setUint32(0,GOint64.getLow(v));
+		//	f32dView.setUint32(4,GOint64.getHigh(v));
+		//	return f32dView.getFloat64(0); 
 		#else
 			Scheduler.panicFromHaxe("Force.Float64frombits unreachable code"); 
 			return 0;
 		#end
 	}
 	//END POTENTIAL SPEED-UP CODE
-	*/
+	//
 	public static function uintCompare(x:Int,y:Int):Int { // +ve if uint(x)>unint(y), 0 equal, else -ve 
 		#if js x=x>>>untyped __js__("0");y=y>>>untyped __js__("0"); #end
 		if(x==y) return 0; // simple case first for speed TODO is it faster with this in or out?
@@ -349,25 +361,28 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return x * y;
 		#end
 	}
+	public static var minusZero:Float= 1.0 / Math.NEGATIVE_INFINITY ; 
 	private static var zero:Float=0.0;
-	public static inline function floatDiv(x:Float,y:Float):Float {
-		#if php 
+	private static var MinFloat64:Float = -1.797693134862315708145274237317043567981e+308; // 2**1023 * (2**53 - 1) / 2**52
+	public static #if !( php || cs ) inline #end function floatDiv(x:Float,y:Float):Float {
+		#if ( php ) 
 			// NOTE for php 0 != 0.0 !!!
 			if(y==0) // divide by zero gives +/- infinity - so valid ... TODO check back to Go spec
-				if(x==0) return  Math.NaN; // NaN +/-
+				if(x==0) 
+					return Math.NaN; // NaN +/-
 				else
 					if(x>0) return Math.POSITIVE_INFINITY;
 					else return Math.NEGATIVE_INFINITY;
 			if(x==0)
-				if(y>0) return x; // return x incase -0, x==y==0.0 already handled above
-				else return return zero * -1; // should be -0
+				if(y>0) return 0; // x==y==0.0 already handled above
+				else return minusZero; // should be -0
 		#end
 		return x/y;
 	}
 	public static function floatMod(x:Float,y:Float):Float {
 		if(y==0.0)
 			Scheduler.panicFromHaxe("attempt to modulo float value by 0"); 
-		#if php 
+		#if ( php  ) 
 			if(x==0)
 				if(y>=0) return x; // to allow for -0
 				else return return zero * -1; // should be -0
@@ -1104,6 +1119,7 @@ class Pointer {
 		return false;
 	}
 	public function addr(byteOffset:Int):Pointer {
+		if(byteOffset==0) return this;
 		var ret:Pointer = new Pointer(this.obj);
 		ret.off = this.off+byteOffset;
 		return ret;

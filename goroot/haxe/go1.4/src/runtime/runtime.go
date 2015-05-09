@@ -16,13 +16,15 @@ func init() {
 }
 
 // Haxe specific
-func UnzipTestFS() {} // this will be overwritten by the compiler
+func UnzipTestFS() { // this will be overwritten by the compiler
+	println("DEBUG runtime:UnzipTestFS()")
+}
 
 // Constant values
 
-const Compiler = "TARDISgo" // this is checked by the proper runtime, so might need to be "gc"
+const Compiler = "gc" //"TARDISgo" // this is checked by the proper runtime, so might need to be "gc"
 
-var GOARCH string = hx.CallString("", "Go.Platform", 0) // this is a const in the main Go installation
+var GOARCH string = hx.CallString("", "Go.Platform", 0)
 
 const GOOS string = "nacl" // of course it is only an emulation of nacl...
 
@@ -135,13 +137,14 @@ type StackRecord struct {
 
 func (r *StackRecord) Stack() []uintptr { return nil }
 
+/*
 type TypeAssertionError struct {
 	// contains filtered or unexported fields
 }
 
 func (e *TypeAssertionError) Error() string { return "TODO:runtime.TypeAssertionError.Error" }
 func (*TypeAssertionError) RuntimeError()   {}
-
+*/
 // NO-OP functions
 
 func SetBlockProfileRate(rate int) {}
@@ -165,6 +168,7 @@ func GC() {}
 func LockOSThread()   {}
 func UnlockOSThread() {}
 
+/*
 type Error interface {
 	error
 
@@ -174,6 +178,7 @@ type Error interface {
 	// runtime error if it has a RuntimeError method.
 	RuntimeError()
 }
+*/
 
 // Part-Implemented
 
@@ -273,3 +278,6 @@ func Stack(buf []byte, all bool) int {
 	}
 	return len(s)
 }
+
+// FOR SSAINTERP
+var sizeof_C_MStats int

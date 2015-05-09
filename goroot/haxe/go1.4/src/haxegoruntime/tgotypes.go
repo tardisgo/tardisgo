@@ -300,6 +300,11 @@ func init() {
 	//println("DEBUG sizeof(funcType{}) = ", unsafe.Sizeof(funcType{}))
 }
 
+func AddHaxeType(ptr unsafe.Pointer) {
+	TypeTable = append(TypeTable, (*rtype)(ptr))
+	hx.SetInt("", "TypeInfo.nextTypeID", len(TypeTable))
+}
+
 func typetest() {
 	for i, tp := range TypeTable {
 		if tp != nil {

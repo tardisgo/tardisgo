@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package haxegoruntime
 
 import (
+	"runtime"
 	"unsafe"
 
 	"github.com/tardisgo/tardisgo/haxe/hx"
@@ -61,12 +62,15 @@ const ( // from http://www.cprogramming.com/tutorial/floating_point/understandin
 	uvnan32    = 0x7fc00000
 )
 
-//from GopherJS
 var zero float64
 var posInf = 1 / zero  //hx.GetFloat("", "Math.POSITIVE_INFINITY") // 1 / zero
 var negInf = -1 / zero //hx.GetFloat("", "Math.NEGATIVE_INFINITY") //-1 / zero
 var nan = 0 / zero     //hx.GetFloat("", "Math.NaN")                  //0 / zero
 var minusZero = zero * -1
+
+const uvminusnan = 0xFFF8000000000001
+
+var MinusNan = Float64frombits(uvminusnan)
 
 func init() { // to avoid DCE
 	if false {
@@ -234,13 +238,14 @@ func Float64bits(f float64) uint64 {
 		var t float64 = f
 		return *(*uint64)(unsafe.Pointer(&t))
 	}
-	// TODO js/cpp/neko short-cut - using Force.f64byts
-	/*
-		switch runtime.GOARCH {
-		case "js", "cpp", "neko":
-			return uint64(hx.Int64(hx.CallDynamic("", "Force.Float64bits", 1, f)))
-		}
-	*/
+
+	switch runtime.GOARCH {
+	case "cs":
+		return uint64(hx.Int64(hx.CallDynamic("", "Force.Float64bits", 1, f)))
+		// TODO js/cpp/neko short-cut - using Force.f64byts
+		//case "js", "cpp", "neko":
+		//	return uint64(hx.Int64(hx.CallDynamic("", "Force.Float64bits", 1, f)))
+	}
 
 	// below from math.IsInf
 	if f > MaxFloat64 {
@@ -296,13 +301,14 @@ func Float64frombits(b uint64) float64 {
 		var t uint64 = b
 		return *(*float64)(unsafe.Pointer(&t))
 	}
-	// TODO js/cpp/neko short-cut
-	/*
-		switch runtime.GOARCH {
-		case "js", "cpp", "neko":
-			return hx.CallFloat("", "Force.Float64frombits", 1, b)
-		}
-	*/
+
+	switch runtime.GOARCH {
+	case "cs":
+		return hx.CallFloat("", "Force.Float64frombits", 1, b)
+		// TODO js/cpp/neko short-cut
+		//case "js", "cpp", "neko":
+		//	return hx.CallFloat("", "Force.Float64frombits", 1, b)
+	}
 
 	// first handle the special cases
 	switch b {

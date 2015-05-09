@@ -4,7 +4,11 @@
 
 package math
 
-import "github.com/tardisgo/tardisgo/haxe/hx"
+import (
+	"runtime"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
+)
 
 func isOddInt(x float64) bool {
 	xi, xf := Modf(x)
@@ -38,6 +42,9 @@ func isOddInt(x float64) bool {
 //	Pow(-Inf, y) = Pow(-0, -y)
 //	Pow(x, y) = NaN for finite x < 0 and finite non-integer y
 func Pow(x, y float64) float64 {
+	if runtime.GOARCH == "cs" {
+		return pow(x, y)
+	}
 	// follow GopherJS approach for copyright etc see that project
 	/*
 		if x == 1 || (x == -1 && (y == posInf || y == negInf)) {

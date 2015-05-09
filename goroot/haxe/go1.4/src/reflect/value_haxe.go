@@ -456,7 +456,7 @@ func (v Value) call(op string, in []Value) []Value {
 	}
 	*/
 	//println("DEBUG fn", fn)
-	//println("DEBUG *fn", *(*uintptr)(fn))
+	//println("DEBUG *fn", *(*uintptr)(fn), in, v)
 	boundVars := hx.GetDynamic("", "[]") // nothing bound by default
 	if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Closure);", *(*uintptr)(fn)) {
 		boundVars = hx.CodeDynamic("", "_a.itemAddr(0).load().val.bds;", *(*uintptr)(fn))
@@ -465,23 +465,59 @@ func (v Value) call(op string, in []Value) []Value {
 	haxeArgs := hx.CodeDynamic("",
 		"var P=new Array<Dynamic>();P[0]=this._goroutine;P[1]=_a.itemAddr(0).load().val;P;",
 		boundVars)
+	paramOff := 2
+	if rcvrtype != nil { // method
+
+		// 4 lines copied from original code
+		// Compute frame type, allocate a chunk of memory for frame
+		frametype, _, _, _ := funcLayout(t, rcvrtype)
+		args := unsafe_New(frametype)
+		storeRcvr(rcvr, args)
+
+		rcvrVal := NewAt(rcvrtype, args).Elem()
+
+		//println("DEBUG rcvrVal", rcvrVal)
+
+		if rcvrVal.Kind() == Interface { // don't take just the value
+			//println("DEBUG interface reciver ", rcvrVal.Interface())
+			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load();",
+				haxeArgs, paramOff, rcvrVal.Interface())
+		} else {
+			//println("DEBUG non-interface parameter ", rcvrVal.Interface())
+			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load().val;",
+				haxeArgs, paramOff, rcvrVal.Interface())
+		}
+		paramOff++
+	}
 	for i, v := range in {
 		v.mustBeExported()
 		if t.In(i).Kind() == Interface { // don't take just the value
+			//println("DEBUG interface parameter ", i, v.Interface())
 			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load();",
-				haxeArgs, 2+i, v.Interface())
+				haxeArgs, paramOff+i, v.Interface())
 		} else {
+			//println("DEBUG non-interface parameter ", i, v.Interface())
 			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load().val;",
-				haxeArgs, 2+i, v.Interface())
+				haxeArgs, paramOff+i, v.Interface())
 		}
 	}
 	//println("DEBUG fn type", t.String())
 	//println("DEBUG haxeArgs", haxeArgs)
 	var haxeStackFrame uintptr // haxe Dynamic type
 	if rcvrtype != nil {       // method
-		haxeStackFrame = hx.CodeDynamic("",
-			"_a.itemAddr(0).load().val.load().methVal(_a.itemAddr(1).load().val,_a.itemAddr(2).load().val);",
-			fn, rcvr.Interface(), haxeArgs)
+		if hx.CodeBool("", "Reflect.isFunction(_a.itemAddr(0).load().val);", *(*uintptr)(fn)) {
+			//println("DEBUG method call to a function (rather than Closure) ",
+			//	*(*uintptr)(fn), haxeArgs)
+			haxeStackFrame = hx.CodeDynamic("",
+				"Closure.callFn(new Closure(_a.itemAddr(0).load().val,[]),_a.itemAddr(1).load().val);",
+				*(*uintptr)(fn), haxeArgs)
+		} else {
+			println("DEBUG 2 method call", *(*uintptr)(fn), haxeArgs)
+			panic("method call to unknown type")
+			//haxeStackFrame = hx.CodeDynamic("",
+			//	"_a.itemAddr(0).load().val.methVal(_a.itemAddr(1).load().val,_a.itemAddr(2).load().val);",
+			//	*(*uintptr)(fn), rcvr.Interface(), haxeArgs)
+		}
 	} else {
 		haxeStackFrame = hx.CodeDynamic("",
 			"Closure.callFn(_a.itemAddr(0).load().val.load(), _a.itemAddr(1).load().val);",
@@ -494,6 +530,7 @@ func (v Value) call(op string, in []Value) []Value {
 	ret := make([]Value, nout)
 	switch nout {
 	case 0: // nothing to do
+		//println("DEBUG _res is void")
 	case 1:
 		_res := hx.CodeDynamic("",
 			"_a.itemAddr(0).load().val.res();", haxeStackFrame)
@@ -2401,7 +2438,7 @@ func New(typ Type) Value {
 // NewAt returns a Value representing a pointer to a value of the
 // specified type, using p as that pointer.
 func NewAt(typ Type, p unsafe.Pointer) Value {
-	panic("reflect.NewAt not yet implemented")
+	//panic("reflect.NewAt not yet implemented")
 	fl := flag(Ptr)
 	return Value{typ.common().ptrTo(), p, fl}
 }

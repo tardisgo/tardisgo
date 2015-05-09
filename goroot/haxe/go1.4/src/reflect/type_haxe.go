@@ -18,6 +18,7 @@
 package reflect
 
 import (
+	"haxegoruntime"
 	"runtime"
 	"strconv"
 	"sync"
@@ -1138,6 +1139,7 @@ func (t *rtype) ptrTo() *rtype {
 
 	ptrMap.m[t] = p
 	ptrMap.Unlock()
+	haxegoruntime.AddHaxeType(unsafe.Pointer(&p.rtype))
 	return &p.rtype
 }
 
@@ -1964,7 +1966,7 @@ func (bv *bitVector) append2(bits uint8) {
 }
 
 func addTypeBits(bv *bitVector, offset *uintptr, t *rtype) {
-	panic("reflect.addTypeBits() not yet implemented ... suspect code")
+	//panic("reflect.addTypeBits() not yet implemented ... suspect code")
 	*offset = align(*offset, uintptr(t.align))
 	if t.kind&kindNoPointers != 0 {
 		*offset += t.size

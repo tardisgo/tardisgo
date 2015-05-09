@@ -6,7 +6,11 @@
 
 package math
 
-import "github.com/tardisgo/tardisgo/haxe/hx"
+import (
+	"runtime"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
+)
 
 /*
 	Floating-point sine and cosine.
@@ -175,7 +179,12 @@ func cos(x float64) float64 {
 //	Sin(±0) = ±0
 //	Sin(±Inf) = NaN
 //	Sin(NaN) = NaN
-func Sin(x float64) float64 { return hx.CallFloat("", "Math.sin", 1, x) }
+func Sin(x float64) float64 {
+	if runtime.GOARCH == "cs" {
+		return sin(x)
+	}
+	return hx.CallFloat("", "Math.sin", 1, x)
+}
 
 func sin(x float64) float64 {
 	const (

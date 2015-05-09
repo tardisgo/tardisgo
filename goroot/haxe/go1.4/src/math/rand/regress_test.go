@@ -156,7 +156,7 @@ var regressGolden = []interface{}{
 	float64(0.24496508529377975),  // Float64()
 	float64(0.6559562651954052),   // Float64()
 	float64(0.05434383959970039),  // Float64()
-	float64(0.36758720663245853),  // Float64()
+	float64(0.36758720663245853),  // Float64() - haxe/js error?
 	float64(0.2894804331565928),   // Float64()
 	float64(0.19243860967493215),  // Float64()
 	float64(0.6553321508148324),   // Float64()

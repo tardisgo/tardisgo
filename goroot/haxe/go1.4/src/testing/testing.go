@@ -3,6 +3,7 @@ package testing
 import (
 	//fmt "fmt_dummy" // use the dummy version to improve C++ compile times
 	"fmt"
+	"os"
 	"runtime"
 	"sort"
 	"time"
@@ -148,7 +149,9 @@ func (r BenchmarkResult) String() string { return "" }
 func Main(matchString func(pat, str string) (bool, error), tests []InternalTest, benchmarks []InternalBenchmark, examples []InternalExample) {
 	//os.Exit(MainStart(matchString, tests, benchmarks, examples).Run())
 	fmt.Println("testing.Main")
-	runtime.UnzipTestFS()
+	if runtime.GOARCH != "" { // not running in the interpreter
+		runtime.UnzipTestFS()
+	}
 	var t T
 	names := []string{}
 	for _, f := range tests {
@@ -166,6 +169,9 @@ func Main(matchString func(pat, str string) (bool, error), tests []InternalTest,
 	if hadError {
 		badExit()
 	}
+	if runtime.GOARCH == "" { // running the interpreter
+		os.Exit(0)
+	}
 	hx.Call("(cpp || cs || java || macro || neko || php || python)", "Sys.exit", 1, 0)
 	hx.Code("js", "untyped __js__('process.exit(0)');") // only works on Node
 }
@@ -173,6 +179,9 @@ func Main(matchString func(pat, str string) (bool, error), tests []InternalTest,
 var hadError = false
 
 func badExit() {
+	if runtime.GOARCH == "" { // running the interpreter
+		os.Exit(1)
+	}
 	hx.Call("(cpp || cs || java || macro || neko || php || python)", "Sys.exit", 1, 1)
 	hx.Code("js", "untyped __js__('process.exit(1)');") // only works on Node
 }

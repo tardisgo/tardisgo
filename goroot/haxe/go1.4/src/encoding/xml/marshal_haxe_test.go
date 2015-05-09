@@ -464,7 +464,7 @@ var marshalTests = []struct {
 	{Value: &Book{Title: "Pride & Prejudice"}, ExpectXML: `<book>Pride &amp; Prejudice</book>`},
 	{Value: &Event{Year: -3114}, ExpectXML: `<event>-3114</event>`},
 	{Value: &Movie{Length: 13440}, ExpectXML: `<movie>13440</movie>`},
-	//{Value: &Pi{Approximation: 3.14159265}, ExpectXML: `<pi>3.1415927</pi>`}, // tardisgo/haxe removed
+	{Value: &Pi{Approximation: 3.14159265}, ExpectXML: `<pi>3.1415927</pi>`},
 	{Value: &Universe{Visible: 9.3e13}, ExpectXML: `<universe>9.3e+13</universe>`},
 	{Value: &Particle{HasMass: true}, ExpectXML: `<particle>true</particle>`},
 	{Value: &Departure{When: ParseTime("2013-01-09T00:15:00-09:00")}, ExpectXML: `<departure>2013-01-09T00:15:00-09:00</departure>`},

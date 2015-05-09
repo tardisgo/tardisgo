@@ -6,8 +6,6 @@
 
 package math
 
-import "github.com/tardisgo/tardisgo/haxe/hx"
-
 // Copysign returns a value with the magnitude
 // of x and the sign of y.
 func Copysign(x, y float64) float64 {
@@ -15,16 +13,29 @@ func Copysign(x, y float64) float64 {
 	//const sign = 1 << 63
 	//return Float64frombits(Float64bits(x)&^sign | Float64bits(y)&sign)
 
-	// below adapted from GopherJS see that project for copyright etc
-	// original:
-	// if (x < 0 || 1/x == negInf) != (y < 0 || 1/y == negInf) {
-	//	return -x
-	// }
-	// return x
+	const sign = 1 << 63
+	xBits := Float64bits(x)
+	yBits := Float64bits(y)
+	dataBits := xBits &^ sign
+	signBits := yBits & sign
+	ret := Float64frombits(dataBits | signBits)
+	/*
+		if x == 0 && y < 0 {
+			retBits := Float64bits(ret)
+			println("DEBUG math.Copysign -0 x y xBits yBits dataBits signBits ret retBits=",
+				x, y, xBits, yBits, dataBits, signBits, ret, retBits)
+		}
+	*/
+	return ret
 
-	if (x < 0 || (1/x < 0 && !hx.CallBool("", "Math.isFinite", 1, 1/x))) !=
-		(y < 0 || (1/y < 0 && !hx.CallBool("", "Math.isFinite", 1, 1/y))) {
-		return -x
-	}
-	return x
+	/*
+		rx := 1 / x
+		ry := 1 / y
+
+		if (x < 0 || (rx < 0 && !hx.CallBool("", "Math.isFinite", 1, rx))) !=
+			(y < 0 || (ry < 0 && !hx.CallBool("", "Math.isFinite", 1, ry))) {
+			return -x
+		}
+		return x
+	*/
 }

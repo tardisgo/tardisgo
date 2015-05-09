@@ -1735,6 +1735,10 @@ func TestNaN(t *testing.T) {
 	if f64 == f64 {
 		t.Fatalf("NaN() returns %g, expected NaN", f64)
 	}
+	//switch runtime.GOARCH {
+	//case "cs", "java":
+	//	return
+	//}
 	f32 := float32(f64)
 	if f32 == f32 {
 		t.Fatalf("float32(NaN()) is %g, expected NaN", f32)
@@ -2341,6 +2345,10 @@ func TestModf(t *testing.T) {
 }
 
 func TestNextafter32(t *testing.T) {
+	//switch runtime.GOARCH {
+	//case "cs", "java":
+	//	return
+	//}
 	for i := 0; i < len(vf); i++ {
 		vfi := float32(vf[i])
 		if f := Nextafter32(vfi, 10); nextafter32[i] != f {
@@ -2404,12 +2412,12 @@ func TestRemainder(t *testing.T) {
 func TestSignbit(t *testing.T) {
 	for i := 0; i < len(vf); i++ {
 		if f := Signbit(vf[i]); signbit[i] != f {
-			t.Errorf("Signbit(%g) = %t, want %t", vf[i], f, signbit[i])
+			t.Errorf("A:%d Signbit(%g) = %t, want %t", i, vf[i], f, signbit[i])
 		}
 	}
 	for i := 0; i < len(vfsignbitSC); i++ {
 		if f := Signbit(vfsignbitSC[i]); signbitSC[i] != f {
-			t.Errorf("Signbit(%g) = %t, want %t", vfsignbitSC[i], f, signbitSC[i])
+			t.Errorf("B:%d Signbit(%g) = %t, want %t", i, vfsignbitSC[i], f, signbitSC[i])
 		}
 	}
 }
@@ -2622,7 +2630,13 @@ var floatTests = []floatTest{
 }
 
 func TestFloatMinMax(t *testing.T) {
-	for _, tt := range floatTests {
+	for _ /*i*/, tt := range floatTests {
+		//if i > 1 {
+		//	switch runtime.GOARCH {
+		//	case "cs", "java":
+		//		return
+		//	}
+		//}
 		s := fmt.Sprint(tt.val)
 		if s != tt.str {
 			t.Errorf("Sprint(%v) = %s, want %s", tt.name, s, tt.str)

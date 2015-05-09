@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build haxe
+
 package big
 
 import (
@@ -797,6 +799,10 @@ func isFinite(f float64) bool {
 }
 
 func TestFloat32SpecialCases(t *testing.T) {
+	//switch runtime.GOARCH {
+	//case "cs", "java":
+	//	return
+	//}
 	for _, input := range float64inputs {
 		if strings.HasPrefix(input, "long:") {
 			if testing.Short() {
@@ -908,6 +914,10 @@ func TestFloat64SpecialCases(t *testing.T) {
 }
 
 func TestFloat32Distribution(t *testing.T) {
+	//switch runtime.GOARCH {
+	//case "cs", "java":
+	//	return
+	//}
 	// Generate a distribution of (sign, mantissa, exp) values
 	// broader than the float32 range, and check Rat.Float32()
 	// always picks the closest float32 approximation.
@@ -1017,6 +1027,10 @@ func TestSetFloat64NonFinite(t *testing.T) {
 // checkNonLossyRoundtrip32 checks that a float->Rat->float roundtrip is
 // non-lossy for finite f.
 func checkNonLossyRoundtrip32(t *testing.T, f float32) {
+	//switch runtime.GOARCH {
+	//case "cs", "java":
+	//	return
+	//}
 	if !isFinite(float64(f)) {
 		return
 	}

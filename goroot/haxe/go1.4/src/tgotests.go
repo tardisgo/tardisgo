@@ -31,8 +31,8 @@ var allList = []string{
 	"encoding/base64 encoding/csv encoding/hex encoding/pem encoding/xml ",
 	"errors flag fmt ",
 	"go/ast go/scanner go/token ",
-	"hash/adler32 hash/crc32 hash/crc64 hash/fnv html image/color ",
-	"index/suffixarray io log math/cmplx net/http/internal net/mail net/textproto net/url path ",
+	"hash/adler32 hash/crc32 hash/crc64 hash/fnv html html/template image/color ",
+	"index/suffixarray io log math math/cmplx net/http/internal net/mail net/textproto net/url path ",
 	"regexp/syntax runtime sort strings sync/atomic text/scanner text/tabwriter text/template/parse ",
 	"unicode unicode/utf16 unicode/utf8 ",
 	// below are those packages that require their own testdata zip file, and so must be run individually
@@ -46,25 +46,25 @@ var allList = []string{
 	"os",
 	"path/filepath",
 	"regexp",
+	"strconv",
 }
 
 var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar archive/zip 
- debug/elf expvar go/doc 
- math net/http/cookiejar net/http/fcgi  strconv 
+ debug/elf expvar go/doc  
+ math/big net/http/cookiejar net/http/fcgi  
 `
 
 var cs = ` 
- archive/zip  debug/elf     
+ archive/zip debug/elf math/big     
 `
 
 var cpp = ` 
   archive/tar 
-  go/doc   
-  math  strconv
+  go/doc       
 `
 
-var java = ` archive/zip archive/tar debug/elf  
+var java = ` archive/zip archive/tar debug/elf math/big
 `
 
 func pkgList(jumble string) []string {
