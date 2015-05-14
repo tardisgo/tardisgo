@@ -123,6 +123,24 @@ func (langType) RegisterName(val ssa.Value) string {
 	}
 }
 
+type regToFree struct {
+	reg, typ string
+}
+
+func recycle(list []regToFree) string {
+	ret := ""
+	//for _, x := range list {
+	/* TODO can any objects be recycled at this point? ...or usefully set to null?
+	switch x.typ {
+	//case "Pointer":  // simple recycling of pointers does not work as they are multi-used
+	//	ret += "Pointer.recycle(" + x.reg + ");\n"
+	}
+	*/
+	//ret += "#if cpp " + x.reg + "=null; #end\n" // testing on archive/zip shows this makes it run slower
+	//}
+	return ret
+}
+
 var useRegisterArray bool // should we use an array rather than individual register vars
 
 var nextReturnAddress int       // what number is the next pseudo block return address?
@@ -355,6 +373,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	regCount := 0
 	regDefs := ""
 	useRegisterArray = false
+	nullOnExitList := []regToFree{} // names to set to null before we exit the function
 
 	pseudoNextReturnAddress = -1
 	for b := range fn.Blocks {
@@ -376,8 +395,10 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 						//	ret += "private "
 						//}
 						ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
+						nullOnExitList = append(nullOnExitList, regToFree{fmt.Sprintf("_SF%d", -pseudoNextReturnAddress), "StackFrame"})
 						if usesGr {
-							ret += " #if js =null #end ;\n"
+							//ret += " #if js =null #end " // TODO is this needed?
+							ret += ";\n"
 						} else {
 							ret += "=null;\n" // need to initalize when using the native stack for these vars
 						}
@@ -404,9 +425,9 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 				typ := l.LangType(in.(ssa.Value).Type(), false, reg+"@"+position)
 				init := l.LangType(in.(ssa.Value).Type(), true, reg+"@"+position) // this may be overkill...
 
-				if strings.HasPrefix(init, "{") || strings.HasPrefix(init, "new Pointer") ||
+				if strings.HasPrefix(init, "{") || strings.HasPrefix(init, "Pointer.make") ||
 					//strings.HasPrefix(init, "new UnsafePointer") ||
-					strings.HasPrefix(init, "new Object") || strings.HasPrefix(init, "new Slice") ||
+					strings.HasPrefix(init, "Object.make") || strings.HasPrefix(init, "new Slice") ||
 					strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new GOmap") ||
 					strings.HasPrefix(init, "new Complex") { // stop unnecessary initialisation
 					// all SSA registers are actually assigned to before use, so minimal initialisation is required, except for maps
@@ -420,11 +441,15 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 						if usesGr {
 							if init == "null" {
 								init = "" // in JS null is the default anyway
+								nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 							} else {
 								init = " #if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
 							}
 						} else {
 							init = "=" + init // when not using goroutines, they all need initializing
+							if init == "null" {
+								nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
+							}
 						}
 						//if usesGr {
 						//	ret += "private "
@@ -447,9 +472,13 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		//fmt.Println("DEBUG regCount", currentfnName, regCount)
 		useRegisterArray = true
 		ret += "var _t=new Array<Dynamic>();\n"
+		ret += "inline function nullOnExit(){_t=null;};\n"
 	} else {
 		useRegisterArray = false
 		ret += regDefs
+		ret += "inline function nullOnExit(){\n"
+		ret += recycle(nullOnExitList)
+		ret += "};\n"
 	}
 	//TODO optimise (again) for if only one block (as below) AND no calls (which create synthetic values for _Next)
 	//if len(fn.Blocks) > 1 { // if there is only one block then we don't need to track which one is next
@@ -650,6 +679,10 @@ func (l langType) FieldAddr(register string, v interface{}, errorInfo string) st
 		ptr = "Pointer.check(" + ptr + ")"
 		fld := v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field)
 		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
+		if off == 0 {
+			return fmt.Sprintf(`%s=%s; // .fieldAddr( /*%d : %s */ %d )`, register,
+				ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
+		}
 		return fmt.Sprintf(`%s=%s.fieldAddr( /*%d : %s */ %d );`, register,
 			ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
 	}
@@ -679,18 +712,15 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 		ptr := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
 		ptr = "Pointer.check(" + ptr + ")"
 		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
+		if idxString == "0" {
+			return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
+		}
 		return fmt.Sprintf(`%s=%s.addr(%s%s);`, register,
 			ptr, idxString, arrayOffsetCalc(ele))
 	case *types.Slice:
 		return fmt.Sprintf(`%s=%s.itemAddr(%s);`, register,
 			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
 			idxString)
-	//case *types.Array: // need to create a pointer before using it
-	//	ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying()
-	//	return fmt.Sprintf(`%s={var _v=new Pointer<%s>(%s); _v.addr(%s%s);};`, register, // TODO is Pointer<type> correct?
-	//		l.LangType(v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Array).Elem().Underlying(), false, errorInfo),
-	//		l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
-	//		idxString, arrayOffsetCalc(ele))
 	default:
 		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
 		return ""
@@ -903,7 +933,7 @@ func (l langType) Ret(values []*ssa.Value, errorInfo string) string {
 	hadReturn = true
 	_BlockEnd := "this._incomplete=false;\nScheduler.pop(this._goroutine);\n"
 	hadBlockReturn = true
-	_BlockEnd += "return this;\n"
+	_BlockEnd += "nullOnExit();\nreturn this;\n"
 	switch len(values) {
 	case 0:
 		return emitTrace("Ret0") + _BlockEnd
@@ -1423,11 +1453,11 @@ func allocNewObject(t types.Type) string {
 		for so%ao != 0 {
 			so++
 		}
-		return fmt.Sprintf("new Object(%d) /* Array: %s */",
+		return fmt.Sprintf("Object.make(%d) /* Array: %s */",
 			typ.(*types.Array).Len()*so, typ.String())
 
 	default:
-		return fmt.Sprintf("new Object(%d) /* %s */",
+		return fmt.Sprintf("Object.make(%d) /* %s */",
 			haxeStdSizes.Sizeof(typ),
 			typ.String())
 	}
@@ -1468,11 +1498,11 @@ func (l langType) Alloc(reg string, heap bool, v interface{}, errorInfo string) 
 		}
 	*/
 	if heap {
-		return fmt.Sprintf("%s=new Pointer(%s);", reg, allocNewObject(v.(types.Type)))
+		return fmt.Sprintf("%s=Pointer.make(%s);", reg, allocNewObject(v.(types.Type)))
 	}
 	//fmt.Println("DEBUG Alloc on Stack", reg, errorInfo)
 	reg2 := strings.Replace(strings.Replace(reg, "[", "", 1), "]", "", 1) // just in case we're in a big init() and are using a register array
-	return fmt.Sprintf("%s=new Pointer(%s_stackalloc.clear());", reg, reg2)
+	return fmt.Sprintf("%s=Pointer.make(%s_stackalloc.clear());", reg, reg2)
 }
 
 func (l langType) MakeChan(reg string, v interface{}, errorInfo string) string {
@@ -1485,7 +1515,7 @@ func newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize stri
 	//return "new Slice(new Pointer(new Make<" + typeElem + ">((" + capacity + ")*(" + itemSize + "))" +
 	//	".array(" + initElem + "," + capacity + ")" +
 	//	"),0," + length + "," + capacity + "," + itemSize + `)`
-	return "new Slice(new Pointer(new Object((" + capacity + ")*(" + itemSize + "))" +
+	return "new Slice(Pointer.make(Object.make((" + capacity + ")*(" + itemSize + "))" +
 		"),0," + length + "," + capacity + "," + itemSize + `)`
 }
 
@@ -1787,6 +1817,7 @@ func (l langType) EmitInvoke(register, path string, isGo, isDefer, usesGr bool, 
 }
 
 func (l langType) SubFnStart(id int, mustSplitCode bool) string {
+	tempVarList = []regToFree{}
 	if !mustSplitCode {
 		return "try {"
 	}
@@ -1794,7 +1825,9 @@ func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 }
 
 func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
-	ret := fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
+	ret := ""
+	ret += recycle(tempVarList)
+	ret += fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
 	if mustSplitCode {
 		ret += ";}"
 	}
@@ -1804,6 +1837,8 @@ func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
 func (l langType) SubFnCall(id int) string {
 	return fmt.Sprintf("SubFn%d();", id)
 }
+
+var tempVarList []regToFree
 
 func (l langType) DeclareTempVar(v ssa.Value) string {
 	if useRegisterArray {
@@ -1815,8 +1850,11 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 	}
 	// NOTE testing has demonstrated that JS temp var init improves V8 optimization & so speeds-up subFns
 	init := l.LangType(v.Type(), true, "temp var declaration")
-	if strings.HasPrefix(init, "new") || strings.HasPrefix(init, "{") || strings.HasPrefix(init, "GOint64") {
+	if init == "null" || strings.HasPrefix(init, "new") || strings.HasPrefix(init, "{") || strings.HasPrefix(init, "Object.make") || strings.HasPrefix(init, "GOint64") {
 		init = "null"
+		if typ != "GOint64" {
+			tempVarList = append(tempVarList, regToFree{"_" + v.Name(), typ})
+		}
 	}
 	if init == "null" {
 		init = "" // in JS null is the default

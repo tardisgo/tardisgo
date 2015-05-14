@@ -18,7 +18,13 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
+
+func init() {
+	hx.Code("cpp", "cpp.vm.Gc.enable(true);") // to allow it to be set to false for testing
+}
 
 func TestOver65kFiles(t *testing.T) {
 	buf := new(bytes.Buffer)

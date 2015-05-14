@@ -296,6 +296,6 @@ func (l langType) NamedConst(packageName, objectName string, lit ssa.Const, posi
 func (l langType) Global(packageName, objectName string, glob ssa.Global, position string, isPublic bool) string {
 	pub := "public " // all globals have to be public in Haxe terms
 	obj := allocNewObject(glob.Type().Underlying().(*types.Pointer))
-	return fmt.Sprintf("%sstatic var %s:Pointer=new Pointer(%s); %s",
+	return fmt.Sprintf("%sstatic var %s:Pointer=Pointer.make(%s); %s",
 		pub, l.LangName(packageName, objectName), obj, l.Comment(position))
 }

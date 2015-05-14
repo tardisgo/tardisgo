@@ -28,8 +28,10 @@ import (
 // windowsInaccuracy is to ignore such errors.
 const windowsInaccuracy = 17 * Millisecond
 
+const javaInaccuracy = 1000 * Millisecond
+
 func TestSleep(t *testing.T) {
-	const delay = 100 * Millisecond
+	const delay = 100 * Millisecond * 20 /* *20 haxe addition for cpp*/
 	go func() {
 		Sleep(delay / 2)
 		Interrupt()
@@ -40,6 +42,10 @@ func TestSleep(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		delayadj -= windowsInaccuracy
 	}
+	if runtime.GOARCH == "java" {
+		delayadj -= javaInaccuracy
+	}
+
 	duration := Now().Sub(start)
 	if duration < delayadj {
 		t.Fatalf("Sleep(%s) slept for only %s", delay, duration)
@@ -164,12 +170,16 @@ func BenchmarkStartStop(b *testing.B) {
 }
 
 func TestAfter(t *testing.T) {
-	const delay = 100 * Millisecond
+	ForceUSPacificForTesting()
+	const delay = 100 * Millisecond * 20 // *20 haxe addition for cpp
 	start := Now()
 	end := <-After(delay)
 	delayadj := delay
 	if runtime.GOOS == "windows" {
 		delayadj -= windowsInaccuracy
+	}
+	if runtime.GOARCH == "java" {
+		delayadj -= javaInaccuracy
 	}
 	if duration := Now().Sub(start); duration < delayadj {
 		t.Fatalf("After(%s) slept for only %d ns", delay, duration)
@@ -181,9 +191,9 @@ func TestAfter(t *testing.T) {
 
 func TestAfterTick(t *testing.T) {
 	const Count = 10
-	Delta := 100 * Millisecond
+	Delta := 100 * Millisecond * 20 /* *20 haxe addition for cpp*/
 	if testing.Short() {
-		Delta = 10 * Millisecond
+		Delta = 10 * Millisecond * 20 /* *20 haxe addition for cpp*/
 	}
 	t0 := Now()
 	for i := 0; i < Count; i++ {
@@ -252,9 +262,9 @@ func await(slot int, result chan<- afterResult, ac <-chan Time) {
 }
 
 func testAfterQueuing(t *testing.T) error {
-	Delta := 100 * Millisecond
+	Delta := 100 * Millisecond * 200 /* *200 haxe addition for cpp*/
 	if testing.Short() {
-		Delta = 20 * Millisecond
+		Delta = 20 * Millisecond * 200 /* *200 haxe addition for cpp*/
 	}
 	// make the result channel buffered because we don't want
 	// to depend on channel queueing semantics that might
@@ -320,11 +330,16 @@ func TestSleepZeroDeadlock(t *testing.T) {
 
 func testReset(d Duration) error {
 	t0 := NewTimer(2 * d)
+	//println("DEBUG Duration:", d)
+	//println("DEBUG A:", *t0)
 	Sleep(d)
+	//println("DEBUG B:", *t0)
 	if t0.Reset(3*d) != true {
 		return errors.New("resetting unfired timer returned false")
 	}
+	//println("DEBUG C:", *t0)
 	Sleep(2 * d)
+	//println("DEBUG D:", *t0)
 	select {
 	case <-t0.C:
 		return errors.New("timer fired early, duration:" + d.String())
@@ -356,11 +371,11 @@ func TestReset(t *testing.T) {
 		30 * unit,  // Haxe
 		45 * unit,  // haxe
 		225 * unit, // haxe
-		450 * unit, // haxe
+		//450 * unit, // haxe
 	}
 	var err error
 	for _, d := range tries {
-		println("DEBUG try duration:", d.String())
+		//println("DEBUG try duration:", d.String())
 		err = testReset(d)
 		if err == nil {
 			t.Logf("passed using duration %v", d)

@@ -21,7 +21,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	case "RResource":
 		return "Slice.fromResource(" + l.IndirectValue(args[0], errorInfo) + ");"
 	case "MMalloc":
-		return "new Pointer(new Object(Force.toInt(" + l.IndirectValue(args[0], errorInfo) + ")));"
+		return "Pointer.make(Object.make(Force.toInt(" + l.IndirectValue(args[0], errorInfo) + ")));"
 	case "IIsNNull":
 		return l.IndirectValue(args[0], errorInfo) + "==null;"
 	case "NNull":

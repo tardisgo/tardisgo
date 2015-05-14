@@ -5,7 +5,7 @@ The standard packages that [pass their tests (see end of file for automated summ
 
 The "testing" package is emulated in an ugly and part-working way, all tests are run in Short mode. Packages "reflect", "os" & "syscall" are part-implemented, using an implementation of the nacl runtime.
 
-The [standard library tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/tgotests.go) take more than 4 hours to run on an 8 core Mac.
+The [standard library tests](https://github.com/tardisgo/tardisgo/blob/master/goroot/haxe/go1.4/src/tgotests.go) take more than 5 hours to run on a 4-core i7 Mac.
 
 Some tests marked "*" below use testdata in the pseudo file system, passed in via a local "tgotestfs.zip".
 
@@ -15,7 +15,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | --------------- | --------------------- | --------------------------------- |
 | archive         | no code               |                                   |
 | -- tar          | c++, js, java       * | c#: header mis-match, ModTime     |
-| -- zip          | [c++] c#, java, js  * | c++: tests take >30mins           |
+| -- zip          | [c++] c#, java, js  * | c++ tests take 30mins ... java 30 secs |
 | bufio           | c++, c#, java, js     |                                   |
 | builtin         | no tests              | all built-in functions are implemented |
 | bytes           | c++, c#, java, js     |                                   |
@@ -46,7 +46,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- sha512       | c++, c#, java, js     |                                   |
 | -- subtle       | c++, c#, java, js     |                                   |
 | -- tls          |                     * | panic: duplicate function name: crypto/tls.run$1 |
-| -- x509         | [c++, c#, java, js]   | mod tests (as Windows) but slow js>30m |
+| -- x509         | [c++, c#, java, js]   | mod tests (as Windows) but slow js>30mins |
 | -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       | panic: duplicate function name: database/sql.Query$1 |
@@ -109,19 +109,19 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- rand         |                       | js/c++: 1 numerical error c#/java: 2 |
 | mime            | c++, c#, java, js   * |                                   |
 | -- multipart    |                     * | hangs in TestMultipartSlowInput   |
-| net             |                       | hangs                             |
+| net             |                       | fatal at 1st test                 |
 | -- http         |                       | M not declared by dummy package testing |
 | -- -- cgi       | -                     | fork/exec not implemented         |
 | -- -- cookiejar | js                    | other targets to be investigated  |
 | -- -- fcgi      | js                    | other targets fail or take too long to compile |
-| -- -- httptest  |                       | hangs                             |
-| -- -- httputil  |                       | hangs                             |
+| -- -- httptest  | js                    | other targets to be investigated  |
+| -- -- httputil  | js                    | other targets to be investigated  |
 | -- -- internal  | c++, c#, java, js     |                                   |
 | -- -- pprof     | no tests              |                                   |
 | -- mail         | c++, c#, java, js     |                                   |
 | -- rpc          |                       | hangs                             |
 | -- -- jsonrpc   |                       | hangs                             |
-| -- smtp         |                       | panic: syscall.stopTimer()        |
+| -- smtp         | js                    | c++/cs: net.Listen() err, java: tgotypes code too large |
 | -- textproto    | c++, c#, java, js     |                                   |
 | -- url          | c++, c#, java, js     |                                   |
 | os              | c++, c#, java, js   * | passes modified tests (no system files to read) |
@@ -152,7 +152,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- tabwriter    | c++, c#, java, js     |                                   |
 | -- template     |                     * | no value errors and part-working reflect.makeMethodValue |
 | -- -- parse     | c++, c#, java, js     |                                   |
-| time            |                     * | js tests all run, but error       |
+| time            | c++, c#, java, js   * |                                   |
 | unicode         | c++, c#, java, js     |                                   |
 | -- utf16        | c++, c#, java, js     |                                   |
 | -- utf8         | c++, c#, java, js     |                                   |

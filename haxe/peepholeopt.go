@@ -19,6 +19,7 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 	ret := ""
 	switch opt {
 	case "loadObject":
+		idx := ""
 		ret += fmt.Sprintf("// %s=%s\n", code[0].(*ssa.UnOp).Name(), code[0].String())
 		for _, cod := range code[1:] {
 			switch cod.(type) {
@@ -28,28 +29,39 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 				ret += fmt.Sprintf("// %s=%s\n", cod.(*ssa.Field).Name(), cod.String())
 			}
 		}
-		ret += fmt.Sprintf("%s=%s", register, l.IndirectValue(code[0].(*ssa.UnOp).X, errorInfo))
+		ptrString := l.IndirectValue(code[0].(*ssa.UnOp).X, errorInfo)
+		ret += fmt.Sprintf("%s=%s", register, ptrString)
 		for _, cod := range code[1:] {
 			switch cod.(type) {
 			case *ssa.Index:
-				idx := wrapForce_toUInt(l.IndirectValue(cod.(*ssa.Index).Index, errorInfo),
+				idx = wrapForce_toUInt(l.IndirectValue(cod.(*ssa.Index).Index, errorInfo),
 					cod.(*ssa.Index).Index.Type().Underlying().(*types.Basic).Kind())
-				ret += fmt.Sprintf(".addr(%s%s)",
-					idx,
-					arrayOffsetCalc(cod.(*ssa.Index).Type().Underlying()))
+				//if idx != "0" {
+				//	ret += fmt.Sprintf(".addr(%s%s)",
+				//		idx,
+				//		arrayOffsetCalc(cod.(*ssa.Index).Type().Underlying()))
+				//}
 			case *ssa.Field:
-				ret += fmt.Sprintf(".fieldAddr(%d)",
-					fieldOffset(cod.(*ssa.Field).X.Type().Underlying().(*types.Struct), cod.(*ssa.Field).Field))
+				fo := fieldOffset(cod.(*ssa.Field).X.Type().Underlying().(*types.Struct), cod.(*ssa.Field).Field)
+				idx = fmt.Sprintf("%d", fo)
+				//if idx != "0" {
+				//	ret += fmt.Sprintf(".fieldAddr(%d)", fo)
+				//}
 			}
 		}
+		suffix := ""
 		switch code[len(code)-1].(type) {
 		case *ssa.Index:
-			ret += fmt.Sprintf(".load%s); // PEEPHOLE OPTIMIZATION loadObject (Index)\n",
-				loadStoreSuffix(code[len(code)-1].(*ssa.Index).Type().Underlying(), false))
+			suffix = loadStoreSuffix(code[len(code)-1].(*ssa.Index).Type().Underlying(), true)
+			//ret += fmt.Sprintf(".load%s); // PEEPHOLE OPTIMIZATION loadObject (Index)\n",
+			//	loadStoreSuffix(code[len(code)-1].(*ssa.Index).Type().Underlying(), false))
 		case *ssa.Field:
-			ret += fmt.Sprintf(".load%s); // PEEPHOLE OPTIMIZATION loadObject (Field)\n",
-				loadStoreSuffix(code[len(code)-1].(*ssa.Field).Type().Underlying(), false))
+			suffix = loadStoreSuffix(code[len(code)-1].(*ssa.Field).Type().Underlying(), true)
+			//ret += fmt.Sprintf(".load%s); // PEEPHOLE OPTIMIZATION loadObject (Field)\n",
+			//	loadStoreSuffix(code[len(code)-1].(*ssa.Field).Type().Underlying(), false))
 		}
+		ret += fmt.Sprintf(".obj.get%s%s+%s.off); // PEEPHOLE OPTIMIZATION loadObject\n",
+			suffix, idx, ptrString)
 	case "phiList":
 		ret += "// PEEPHOLE OPTIMIZATION phiList\n"
 		opts := make(map[int][]phiEntry)

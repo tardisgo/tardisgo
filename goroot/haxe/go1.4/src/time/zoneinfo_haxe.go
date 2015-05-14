@@ -15,30 +15,39 @@ package time
 
 import (
 	"errors"
-	//"runtime"
-	//"syscall"
+	"runtime"
+	"syscall"
+	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
-func initTestingZone() {
-	go func(){
-	z, err := loadZoneFile("testdata/zoneinfo.zip", "America/Los_Angeles")
+func itz(){
+	z, err := loadZoneFile("/testdata/zoneinfo.zip", "America/Los_Angeles")
 	if err != nil {
 		panic("cannot load America/Los_Angeles for testing: " + err.Error())
 	}
 	z.name = "Local"
 	localLoc = *z
-	println("DEBUG zoneinfo loaded")
-	}() // hopefully this will finish before we need it... TODO (haxe) fix this problem in general
+	//println("DEBUG initTestingZone() completed")
+}
+
+func initTestingZone() {
+	if hx.GetBool("","Scheduler.doneInit") {
+		itz()
+	} else {
+		go itz() // to stop it running before the data is loaded
+	// hopefully this will finish before we need it... TODO (haxe) fix this problem in general
+	}
 }
 
 // Many systems use /usr/share/zoneinfo, Solaris 2 has
 // /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ.
 var zoneDirs = []string{
-	//"/usr/share/zoneinfo/",
-	//"/usr/share/lib/zoneinfo/",
-	//"/usr/lib/locale/TZ/",
-	//runtime.GOROOT() + "/lib/time/zoneinfo.zip",
-	"testdata/zoneinfo.zip",
+	"/usr/share/zoneinfo/",
+	"/usr/share/lib/zoneinfo/",
+	"/usr/lib/locale/TZ/",
+	runtime.GOROOT() + "/lib/time/zoneinfo.zip",
+	// for testing only
+	"/testdata/zoneinfo.zip",
 }
 
 var origZoneDirs = zoneDirs
@@ -59,9 +68,9 @@ func initLocal() {
 	// $TZ="" means use UTC.
 	// $TZ="foo" means use /usr/share/zoneinfo/foo.
 
-	/*
-		tz, ok := syscall.Getenv("TZ")
-		switch {
+	
+		tz, ok := syscall.Getenv("TZ") 
+				switch {
 		case !ok:
 			z, err := loadZoneFile("", "/etc/localtime")
 			if err == nil {
@@ -75,7 +84,7 @@ func initLocal() {
 				return
 			}
 		}
-	*/
+	
 
 	// Fall back to UTC.
 		localLoc.name = "UTC"

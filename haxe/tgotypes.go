@@ -187,7 +187,7 @@ func BuildTypeHaxe() string {
 func typeBuild(i int, t types.Type) string {
 	sizes := &haxeStdSizes
 	ret := fmt.Sprintf( // sizeof largest struct (funcType) is 76
-		"private static var type%dptr:Pointer=null; // %s\npublic static function type%d():Pointer { if(type%dptr==null) { type%dptr=new Pointer(new Object(80));",
+		"private static var type%dptr:Pointer=null; // %s\npublic static function type%d():Pointer { if(type%dptr==null) { type%dptr=Pointer.make(Object.make(80));",
 		i, t.String(), i, i, i)
 	ret += ""
 

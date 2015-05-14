@@ -57,16 +57,19 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 				}
 				// we are in some sequence of Index/Field ops, one after another
 				// so first check that the earlier parts of the sequene are OK
-				on, rn := peepholeFindOpt(instrs[0 : len(instrs)-1])
-				if on == "loadObject" {
-					if rn == "_"+indexOrFieldXName(instrs[len(instrs)-1]) && // end one links to one before
-						indexOrFieldRefCount(instrs[len(instrs)-2]) == 1 && // one before only used by this one
-						indexOrFieldRefCount(instrs[len(instrs)-1]) > 0 { // end result is used
-						optName = on
-						regName = RegisterName(instrs[len(instrs)-1].(ssa.Value))
-						return // success
+				/*
+					on, rn := peepholeFindOpt(instrs[0 : len(instrs)-1])
+					if on == "loadObject" {
+						if rn == "_"+indexOrFieldXName(instrs[len(instrs)-1]) && // end one links to one before
+							indexOrFieldRefCount(instrs[len(instrs)-2]) == 1 && // one before only used by this one
+							indexOrFieldRefCount(instrs[len(instrs)-1]) > 0 { // end result is used
+							optName = on
+							regName = RegisterName(instrs[len(instrs)-1].(ssa.Value))
+							println("DEBUG peephole loadObject chain found")
+							return // success
+						}
 					}
-				}
+				*/
 			}
 		}
 	case *ssa.Phi:

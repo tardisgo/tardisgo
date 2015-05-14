@@ -395,7 +395,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}
 	// return the UTF8 version of a string in a Slice
 	public static function toUTF8slice(gr:Int,s:String):Slice { // TODO remove gr param
-		var obj = new Object(s.length);
+		var obj = Object.make(s.length);
 		for(i in 0...s.length) {
 			#if (js || php || neko ) // nullable targets
 				var t:Null<Int>=s.charCodeAt(i);
@@ -405,7 +405,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				obj.set_uint8(i,s.charCodeAt(i));
 			#end
 		}
-		return new Slice(new Pointer(obj),0,-1,s.length,1);
+		return new Slice(Pointer.make(obj),0,-1,s.length,1);
 	}
 	public static function toRawString(gr:Int,sl:Slice):String { // TODO remove gr param
 		if(sl==null) return "";
@@ -442,7 +442,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	
 	public static #if (cpp || neko || php) inline #end function toHaxeString(v:String):String {
 		#if !( cpp || neko || php ) // need to translate back to UTF16 when passing back to Haxe
-			var sli:Slice=new Slice(new Pointer(new Object(v.length)),0,-1,v.length,1);
+			var sli:Slice=new Slice(Pointer.make(Object.make(v.length)),0,-1,v.length,1);
 			for(i in 0...v.length){
 				//if(v.charCodeAt(i)>0xff) return v; // probably already encoded as UTF-16
 				sli.itemAddr(i).store_uint8(v.charCodeAt(i));
@@ -460,7 +460,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static #if (cpp || neko || php) inline #end function fromHaxeString(v:String):String {
 		#if !( cpp || neko || php ) // need to translate from UTF16 to UTF8 when passing back to Go
 			#if (js || php) if(v==null) return ""; #end
-			var sli:Slice=new Slice(new Pointer(new Object(v.length<<1)),0,-1,v.length,2);
+			var sli:Slice=new Slice(Pointer.make(Object.make(v.length<<1)),0,-1,v.length,2);
 			var allSmall = true;
 			for(i in 0...v.length){
 				sli.itemAddr(i).store_uint16(v.charCodeAt(i));
@@ -530,7 +530,11 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 // Object code
 // a single type of Go object
 @:keep
-class Object { // this implementation will improve with typed array access
+class Object { // this implementation may improve with typed array access
+	public static inline function make(size:Int,?byts:haxe.io.Bytes):Object {
+			return new Object(size,byts);
+	}
+
 	#if ((js || cpp || neko) && fullunsafe) 
 		public static var nativeFloats:Bool=true; 
 	#else
@@ -712,7 +716,7 @@ class Object { // this implementation will improve with typed array access
 		#end
 	}
 	public inline function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
-		var so:Object = new Object(size);
+		var so:Object = make(size);
 		objBlit(this,from, so, 0, size); 
 		return so;
 	}
@@ -1118,9 +1122,12 @@ class Pointer {
 		if(p1.obj.uniqueRef==p2.obj.uniqueRef && p1.off==p2.off) return true; // point to same object & offset
 		return false;
 	}
+	public static inline function make(from:Object):Pointer {
+		return new Pointer(from);
+	} 
 	public function addr(byteOffset:Int):Pointer {
 		if(byteOffset==0) return this;
-		var ret:Pointer = new Pointer(this.obj);
+		var ret:Pointer=make(this.obj);
 		ret.off = this.off+byteOffset;
 		return ret;
 	}
@@ -1251,8 +1258,8 @@ class Slice {
 		return fromBytes(haxe.Resource.getBytes(name));
 	}
 	public static function fromBytes(res:haxe.io.Bytes):Slice {
-		var obj = res==null?new Object(0):new Object(res.length,res);
-		var ptr = new Pointer(obj);
+		var obj = res==null?Object.make(0):new Object(res.length,res); // recycling not possible with 2nd one
+		var ptr = Pointer.make(obj);
 		return new Slice(ptr,0,-1,res==null?0:res.length,1); // []byte
 	}
 	public function subSlice(low:Int, high:Int):Slice {
@@ -1266,7 +1273,7 @@ class Slice {
 			//return new Slice(oldEnt.baseArray.addr(oldEnt.start*oldEnt.itemSize),0,oldEnt.len(),oldEnt.cap(),oldEnt.itemSize);
 		}
 		if(oldEnt==null) { // must create a copy rather than just return the new one
-			oldEnt=new Slice(new Pointer(new Object(0)),0,0,0,newEnt.itemSize); // trigger newObj code below
+			oldEnt=new Slice(Pointer.make(Object.make(0)),0,0,0,newEnt.itemSize); // trigger newObj code below
 		}
 		if(oldEnt.itemSize!=newEnt.itemSize)
 			Scheduler.panicFromHaxe("new Slice() internal error: itemSizes do not match");
@@ -1283,7 +1290,7 @@ class Slice {
 		}else{
 			var newLen = oldEnt.length+newEnt.len();
 			var newCap = newLen+(newLen>>2); // NOTE auto-create 50pc new capacity 
-			var newObj:Object = new Object(newCap*oldEnt.itemSize);
+			var newObj:Object = Object.make(newCap*oldEnt.itemSize);
 			for(i in 0...oldEnt.length) {
 				//newObj.set_object(oldEnt.itemSize,i*oldEnt.itemSize,oldEnt.itemAddr(i).load_object(oldEnt.itemSize));
 				Object.objBlit(oldEnt.baseArray.obj,oldEnt.itemOff(i)+oldEnt.baseArray.off,
@@ -1295,7 +1302,7 @@ class Slice {
 				Object.objBlit(newEnt.baseArray.obj,newEnt.itemOff(i)+newEnt.baseArray.off,
 					newObj,(oldEnt.length*oldEnt.itemSize)+(i*oldEnt.itemSize),oldEnt.itemSize);
 			}
-			return new Slice(new Pointer(newObj),0,newLen,newCap,oldEnt.itemSize);
+			return new Slice(Pointer.make(newObj),0,newLen,newCap,oldEnt.itemSize);
 		}
 	}
 	public static function copy(target:Slice,source:Slice):Int{ 

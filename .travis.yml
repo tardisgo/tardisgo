@@ -1,6 +1,4 @@
 language: haxe
-haxe:
-  - development
 
 install: 
   - ./goinstall.sh

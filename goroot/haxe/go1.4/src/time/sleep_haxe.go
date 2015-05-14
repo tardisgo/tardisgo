@@ -7,9 +7,9 @@
 package time
 
 import ( // import is an Haxe addition
-	"runtime"
 
-	"github.com/tardisgo/tardisgo/haxe/hx"
+	"haxegoruntime"
+	"unsafe"
 )
 
 // Sleep pauses the current goroutine for at least the duration d.
@@ -19,37 +19,13 @@ func Sleep(d Duration) { // function body is an Haxe addition
 	target := runtimeNano()
 	target += d.Nanoseconds()
 	sleeping = true
-	haxeWait(target, &sleeping)
-}
-
-func haxeWait(target int64, whileTrue *bool) {
-	// TODO(haxe): optimize to use the Timer call-back methods for the targets - flash, flash8, java, js, python
-	now := runtimeNano()
-	//println("DEBUG haxeWait:start now, target, *whileTrue diff = ", now, target, *whileTrue, target-now)
-	for now < target && *whileTrue {
-		for wait := int((target - now) / 1000000); wait > 0; wait-- { // one wait per 100 miliseconds
-			runtime.Gosched() // let other code run
-		}
-		runtime.Gosched() // let other code run
-		now = runtimeNano()
-		//println("DEBUG haxeWait:loop now, target, *whileTrue diff = ", now, target, *whileTrue, target-now)
-	}
+	haxegoruntime.HaxeWait(&target, &sleeping)
 }
 
 // runtimeNano returns the current value of the runtime clock in nanoseconds.
 func runtimeNano() int64 { // function body is an Haxe addition
-	fv := hx.CallFloat("", "haxe.Timer.stamp", 0)
-	// cs and maybe Java have stamp values too large for int64, so set a baseline
-	if !runtimeNanoHaveBase {
-		runtimeNanoBase = float64(uint64(fv))
-		runtimeNanoHaveBase = true
-	}
-	fv -= runtimeNanoBase
-	return int64(fv * 1000000000)
+	return haxegoruntime.RuntimeNano()
 }
-
-var runtimeNanoHaveBase bool
-var runtimeNanoBase float64
 
 // Interface to timers implemented in package runtime.
 // Must be in sync with ../runtime/runtime.h:/^struct.Timer$
@@ -83,33 +59,12 @@ func when(d Duration) int64 {
 	return t
 }
 
-func haxeTimer(rt *runtimeTimer) {
-again:
-	haxeWait(rt.when, &rt.haxeRuning) // rt.when is in nanoseconds
-	if rt.haxeRuning {
-		rt.f(rt.arg, rt.seq)
-		rt.seq++
-		if rt.period > 0 {
-			rt.when += rt.period
-			goto again
-		}
-	}
-	rt.seq = 0
+func startTimer(rt *runtimeTimer) { // function body is an Haxe addition
+	haxegoruntime.StartTimer(unsafe.Pointer(rt))
 }
 
-func startTimer(rt *runtimeTimer) { // function body is an Haxe addition
-	rt.haxeRuning = true
-	go haxeTimer(rt)
-}
 func stopTimer(rt *runtimeTimer) bool { // function body is an Haxe addition
-	if rt.haxeRuning {
-		rt.haxeRuning = false
-		for rt.seq != 0 {
-			runtime.Gosched()
-		}
-		return true
-	}
-	return false
+	return haxegoruntime.StopTimer(unsafe.Pointer(rt))
 }
 
 // The Timer type represents a single event.

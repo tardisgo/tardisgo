@@ -110,19 +110,19 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 			return "GOmap"
 		case *types.Slice:
 			if retInitVal {
-				return "new Slice(new Pointer(" +
-					"new Object(0)" +
+				return "new Slice(Pointer.make(" +
+					"Object.make(0)" +
 					"),0,0,0," + "1" + arrayOffsetCalc(t.(*types.Slice).Elem().Underlying()) + ")"
 			}
 			return "Slice"
 		case *types.Array:
 			if retInitVal {
-				return fmt.Sprintf("new Object(%d)", haxeStdSizes.Sizeof(t))
+				return fmt.Sprintf("Object.make(%d)", haxeStdSizes.Sizeof(t))
 			}
 			return "Object"
 		case *types.Struct:
 			if retInitVal {
-				return fmt.Sprintf("new Object(%d)", haxeStdSizes.Sizeof(t.(*types.Struct).Underlying()))
+				return fmt.Sprintf("Object.make(%d)", haxeStdSizes.Sizeof(t.(*types.Struct).Underlying()))
 			}
 			return "Object"
 		case *types.Tuple: // what is returned by a call and some other instructions, not in the Go language spec!

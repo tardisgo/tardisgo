@@ -6,17 +6,16 @@ import (
 	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
-var stringList = make([]*string, 0, 128) // this may be too small a start size
+var stringMap = make(map[string]*string)
 
 // addrString is an utility function, strings with the same content must have the same address
 // very simple implementation TODO optimize
 func addrString(s string) *string {
-	for i := range stringList {
-		if s == *stringList[i] {
-			return stringList[i]
-		}
+	ptr, ok := stringMap[s]
+	if ok {
+		return ptr
 	}
-	stringList = append(stringList, &s)
+	stringMap[s] = &s
 	return &s
 }
 

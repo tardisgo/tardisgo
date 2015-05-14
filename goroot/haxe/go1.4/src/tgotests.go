@@ -47,12 +47,13 @@ var allList = []string{
 	"path/filepath",
 	"regexp",
 	"strconv",
+	"time",
 }
 
 var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar archive/zip 
  debug/elf expvar go/doc  
- math/big net/http/cookiejar net/http/fcgi  
+ math/big net/http/cookiejar net/http/fcgi net/http/httptest net/http/httputil net/smtp 
 `
 
 var cs = ` 

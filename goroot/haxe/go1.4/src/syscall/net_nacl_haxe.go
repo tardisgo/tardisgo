@@ -11,8 +11,10 @@
 package syscall
 
 import (
+	"haxegoruntime"
 	"sync"
 	"sync/atomic"
+	"unsafe"
 )
 
 // Interface to timers implemented in package runtime.
@@ -20,19 +22,22 @@ import (
 // Really for use by package time, but we cannot import time here.
 
 type runtimeTimer struct {
-	i      int
-	when   int64
-	period int64
-	f      func(interface{}, uintptr) // NOTE: must not be closure
-	arg    interface{}
-	seq    uintptr
+	i          int
+	when       int64
+	period     int64
+	f          func(interface{}, uintptr) // NOTE: must not be closure
+	arg        interface{}
+	seq        uintptr
+	haxeRuning bool
 }
 
-func startTimer(*runtimeTimer) {
-	panic("syscall.startTimer()")
+func startTimer(rt *runtimeTimer) {
+	//panic("syscall.startTimer()")
+	haxegoruntime.StartTimer(unsafe.Pointer(rt))
 }
-func stopTimer(*runtimeTimer) bool {
-	panic("syscall.stopTimer()")
+func stopTimer(rt *runtimeTimer) bool {
+	//panic("syscall.stopTimer()")
+	return haxegoruntime.StopTimer(unsafe.Pointer(rt))
 }
 
 type timer struct {

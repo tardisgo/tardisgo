@@ -23,7 +23,7 @@ func run(t *testing.T, once *Once, o *one, c chan bool) {
 	c <- true
 }
 
-func TestOnce(t *testing.T) {
+func TestAAAOnce(t *testing.T) {
 	o := new(one)
 	once := new(Once)
 	c := make(chan bool)
@@ -39,7 +39,7 @@ func TestOnce(t *testing.T) {
 	}
 }
 
-func TestOncePanic(t *testing.T) {
+func TestAAAOncePanic(t *testing.T) {
 	var once Once
 	func() {
 		defer func() {
