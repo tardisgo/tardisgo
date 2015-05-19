@@ -6,10 +6,14 @@ package haxe
 
 import (
 	"fmt"
+	"go/token"
 	"sort"
+	"strings"
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
+
+	"github.com/tardisgo/tardisgo/pogo"
 )
 
 type phiEntry struct{ reg, val string }
@@ -18,6 +22,48 @@ type phiEntry struct{ reg, val string }
 func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, errorInfo string) string {
 	ret := ""
 	switch opt {
+	case "pointerChain":
+		for _, cod := range code {
+			switch cod.(type) {
+			case *ssa.IndexAddr:
+				ret += fmt.Sprintf("// %s=%s\n", cod.(*ssa.IndexAddr).Name(), cod.String())
+			case *ssa.FieldAddr:
+				ret += fmt.Sprintf("// %s=%s\n", cod.(*ssa.FieldAddr).Name(), cod.String())
+			}
+		}
+		ret += register + "="
+		if pogo.DebugFlag {
+			ret += "Pointer.check("
+		}
+		switch code[0].(type) {
+		case *ssa.IndexAddr:
+			ret += l.IndirectValue(code[0].(*ssa.IndexAddr).X, errorInfo)
+		case *ssa.FieldAddr:
+			ret += l.IndirectValue(code[0].(*ssa.FieldAddr).X, errorInfo)
+		default:
+			panic(fmt.Errorf("unexpected type %T", code[0]))
+		}
+		if pogo.DebugFlag {
+			ret += ")"
+		}
+		ret += ".addr("
+		for c, cod := range code {
+			if c > 0 {
+				ret += "+"
+			}
+			switch cod.(type) {
+			case *ssa.IndexAddr:
+				idxString := wrapForce_toUInt(l.IndirectValue(cod.(*ssa.IndexAddr).Index, errorInfo),
+					cod.(*ssa.IndexAddr).Index.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				ele := cod.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
+				ret += "(" + idxString + arrayOffsetCalc(ele) + ")"
+			case *ssa.FieldAddr:
+				off := fieldOffset(cod.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), cod.(*ssa.FieldAddr).Field)
+				ret += fmt.Sprintf(`%d`, off)
+			}
+		}
+		ret += "); // PEEPHOLE OPTIMIZATION pointerChain\n"
+
 	case "loadObject":
 		idx := ""
 		ret += fmt.Sprintf("// %s=%s\n", code[0].(*ssa.UnOp).Name(), code[0].String())
@@ -62,6 +108,7 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 		}
 		ret += fmt.Sprintf(".obj.get%s%s+%s.off); // PEEPHOLE OPTIMIZATION loadObject\n",
 			suffix, idx, ptrString)
+
 	case "phiList":
 		ret += "// PEEPHOLE OPTIMIZATION phiList\n"
 		opts := make(map[int][]phiEntry)
@@ -80,7 +127,6 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 				opts[phiEntries[o]] = append(opts[phiEntries[o]], phiEntry{thisReg, valEntries[o]})
 			}
 		}
-
 		ret += "switch(_Phi) { \n"
 		idxs := make([]int, 0, len(opts))
 		for phi := range opts {
@@ -90,18 +136,131 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 		for _, phi := range idxs {
 			opt := opts[phi]
 			ret += fmt.Sprintf("\tcase %d:\n", phi)
-			for _, ent := range opt {
-				ret += fmt.Sprintf("\t\tvar tmp_%s=%s;\n", ent.reg, ent.val) // need temp vars for a,b = b,a
+			crossover := false
+			for x1, ent1 := range opt {
+				for x2, ent2 := range opt {
+					if x1 != x2 {
+						if "_"+ent1.reg == ent2.val {
+							crossover = true
+							goto foundCrossover
+						}
+					}
+				}
+			}
+		foundCrossover:
+			if crossover {
+				for _, ent := range opt {
+					ret += fmt.Sprintf("\t\tvar tmp_%s=%s;\n", ent.reg, ent.val) // need temp vars for a,b = b,a
+				}
 			}
 			for _, ent := range opt {
 				rn := "_" + ent.reg
 				if useRegisterArray {
 					rn = rn[:2] + "[" + rn[2:] + "]"
 				}
-				ret += fmt.Sprintf("\t\t%s=tmp_%s;\n", rn, ent.reg)
+				if crossover {
+					ret += fmt.Sprintf("\t\t%s=tmp_%s;\n", rn, ent.reg)
+				} else {
+					if rn != ent.val {
+						ret += fmt.Sprintf("\t\t%s=%s;\n", rn, ent.val)
+					}
+				}
 			}
 		}
 		ret += "}\n"
 	}
 	return ret
+}
+
+func (l langType) CanInline(vi interface{}) bool {
+	//if pogo.DebugFlag {
+	//	return false
+	//}
+	var refs *[]ssa.Instruction
+	var thisBlock *ssa.BasicBlock
+	switch vi.(type) {
+	default:
+		return false
+	case *ssa.Convert:
+		refs = vi.(*ssa.Convert).Referrers()
+		thisBlock = vi.(*ssa.Convert).Block()
+	case *ssa.BinOp:
+		refs = vi.(*ssa.BinOp).Referrers()
+		thisBlock = vi.(*ssa.BinOp).Block()
+	case *ssa.UnOp:
+		switch vi.(*ssa.UnOp).Op {
+		case token.ARROW, token.MUL: // NOTE token.MUL does not work because of a[4],a[5]=a[5],a[4] crossover
+			return false
+		}
+		refs = vi.(*ssa.UnOp).Referrers()
+		thisBlock = vi.(*ssa.UnOp).Block()
+	case *ssa.IndexAddr:
+		_, isSlice := vi.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice)
+		if !isSlice {
+			return false // only slices handled in the general in-line code, rather than pointerChain above
+		}
+		refs = vi.(*ssa.IndexAddr).Referrers()
+		thisBlock = vi.(*ssa.IndexAddr).Block()
+	}
+
+	if thisBlock == nil {
+		return false
+	}
+	//if len(thisBlock.Instrs) >= pogo.LanguageList[langIdx].InstructionLimit {
+	//	return false
+	//}
+	if len(*refs) != 1 {
+		return false
+	}
+	if (*refs)[0].Block() != thisBlock {
+		return false // consumer is not in the same block
+	}
+	if blockContainsBreaks((*refs)[0].Block()) {
+		return false
+	}
+	/*
+		ia, is := vi.(*ssa.IndexAddr)
+		if is {
+			println("DEBUG CanInline found candidate IndexAddr:", ia.String())
+		}
+	*/
+	return true
+}
+
+func (l langType) inlineRegisterName(vi interface{}) string {
+	vp, okPtr := vi.(*ssa.Value)
+	if !okPtr {
+		v, ok := vi.(ssa.Value)
+		if !ok {
+			panic(fmt.Sprintf("inlineRegisterName not a pointer to a value, or a value; it is a %T", vi))
+		}
+		vp = &v
+	}
+	nm := strings.TrimSpace(pogo.RegisterName(*vp))
+	if l.CanInline(vi) {
+		code, found := pogo.InlineMap(nm)
+		if !found {
+			//for k, v := range pogo.InlineMap {
+			//	println("DEBUG dump pogo.InlineMap[", k, "] is ", v)
+			//}
+			//pogo.LogError(vi.(ssa.Instruction).Parent().String(), "haxe", errors.New("internal error - cannot find "+nm+" in pogo.InlineMap"))
+			return nm
+		}
+		return code
+	}
+	return nm
+}
+
+func blockContainsBreaks(b *ssa.BasicBlock) bool {
+	for _, i := range b.Instrs {
+		switch i.(type) {
+		case *ssa.Call, *ssa.Select, *ssa.Send, *ssa.Defer, *ssa.RunDefers, *ssa.Return:
+			return true
+		case *ssa.UnOp:
+			if i.(*ssa.UnOp).Op == token.ARROW {
+				return true
+			}
+		}
+	}
+	return false
 }

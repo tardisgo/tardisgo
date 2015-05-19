@@ -7,22 +7,20 @@ import (
 	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
+// TODO(haxe): optimize to use the Timer call-back methods for the targets - flash, flash8, java, js, python
 func HaxeWait(target *int64, whileTrue *bool) {
-	// TODO(haxe): optimize to use the Timer call-back methods for the targets - flash, flash8, java, js, python
-	now := RuntimeNano()
-	//println("DEBUG haxeWait:start now, target, *whileTrue diff = ", now, *target, *whileTrue, target-now)
-	waitLimit := int((*target - now) / 1000000) // one wait per 100 miliseconds
-	for now < *target && *whileTrue {
-		for wait := waitLimit; wait > 0 && now < *target && *whileTrue; wait-- {
-			runtime.Gosched() // let other code run
-		}
+	fNow := hx.CallFloat("", "haxe.Timer.stamp", 0)
+	firstTarget := *target
+	fTarget := reverseNano(*target)
+	//println("DEBUG haxeWait:start now, target, *whileTrue diff = ", fNow, *target, *whileTrue, fTarget-fNow)
+	for fNow < fTarget && *target == firstTarget && *whileTrue {
 		runtime.Gosched() // let other code run
-		now = RuntimeNano()
-		//println("DEBUG haxeWait:loop now, target, *whileTrue diff = ", now, *target, *whileTrue, target-now)
+		fNow = hx.CallFloat("", "haxe.Timer.stamp", 0)
+		//println("DEBUG haxeWait:loop now, target, *whileTrue diff = ", fNow, *target, *whileTrue, fTarget-fNow)
 	}
 }
 
-// runtimeNano returns the current value of the runtime clock in nanoseconds.
+// RuntimeNano returns the current value of the runtime clock in nanoseconds.
 func RuntimeNano() int64 { // function body is an Haxe addition
 	fv := hx.CallFloat("", "haxe.Timer.stamp", 0)
 	// cs and maybe Java have stamp values too large for int64, so set a baseline
@@ -35,6 +33,10 @@ func RuntimeNano() int64 { // function body is an Haxe addition
 }
 
 var runtimeNanoBase float64
+
+func reverseNano(i int64) float64 { // reverse of the above
+	return runtimeNanoBase + float64(i)/1000000000
+}
 
 // Interface to timers implemented in package runtime.
 // Must be in sync with ../runtime/runtime.h:/^struct.Timer$

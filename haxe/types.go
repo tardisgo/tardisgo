@@ -196,7 +196,12 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		return register + "=" + vInt + ";"
 	case "Pointer":
 		if srcTyp == "Dynamic" {
-			return register + "=" + l.IndirectValue(v, errorInfo) + "==null?null:Pointer.check(" + l.IndirectValue(v, errorInfo) + ");"
+			_ptr := "_ptr"
+			if pogo.DebugFlag {
+				_ptr = "Pointer.check(_ptr)"
+			}
+			return register + "=({var _ptr=" + l.IndirectValue(v, errorInfo) + ";_ptr==null?null:"+
+				 _ptr+ ";});"
 		}
 		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - can only convert uintptr to unsafe.Pointer"))
 		return ""
@@ -215,13 +220,13 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 				return ""
 			}
 		case "Int": // make a string from a single rune
-			return "{var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
-				register + "=\"\";for(_i in 0..._r.len())" +
-				register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
+			return register + "=({var _ret:String;var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(this._goroutine," + l.IndirectValue(v, errorInfo) + ");" +
+				"_ret=\"\";for(_i in 0..._r.len())" +
+				"_ret+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));_ret;});"
 		case "GOint64": // make a string from a single rune (held in 64 bits)
-			return "{var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(this._goroutine,GOint64.toInt(" + l.IndirectValue(v, errorInfo) + "));" +
-				register + "=\"\";for(_i in 0..._r.len())" +
-				register + "+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));};"
+			return register + "=({var _ret:String;var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(this._goroutine,GOint64.toInt(" + l.IndirectValue(v, errorInfo) + "));" +
+				"_ret=\"\";for(_i in 0..._r.len())" +
+				 "_ret+=String.fromCharCode(_r.itemAddr(_i).load_int32(" + "));_ret;});"
 		case "Dynamic":
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + ",String);"
 		default:

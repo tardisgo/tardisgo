@@ -425,13 +425,13 @@ func doTestable(args []string) error {
 				}, results)
 			case "js":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*,  `-D`, `analyzer`*/, "-js", "tardis/go.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", `-D`, `analyzer`, "-js", "tardis/go.js"},
 					[]string{"echo", `"Node/JS:"`},
 					[]string{"time", "node", "tardis/go.js"},
 				}, results)
 			case "jsfu":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, `-D`, `analyzer`*/, "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", `-D`, `analyzer`, "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
 					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 					[]string{"time", "node", "tardis/go-fu.js"},
 				}, results)
@@ -475,7 +475,7 @@ var targets = [][][]string{
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-js", "tardis/go.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", `-D`, `analyzer`, "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},

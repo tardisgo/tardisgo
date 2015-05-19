@@ -15,6 +15,7 @@ import (
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
+	//"golang.org/x/tools/go/ssa/ssautil"
 )
 
 var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the functions use goroutines/channels
@@ -145,9 +146,11 @@ type subFnInstrs struct {
 func emitFunc(fn *ssa.Function) {
 
 	/* TODO research if the ssautil.Switches() function can be incorporated to provide any run-time improvement to the code
+	// it would give a big adavantage, but only to a very small number of functions - so definately TODO
 	sw := ssautil.Switches(fn)
-	if len(sw) > 0 {
-		fmt.Printf("DEBUG Switches: %s = %+v\n", fn, sw)
+		fmt.Printf("DEBUG Switches for : %s \n", fn)
+	for num,swi := range sw {
+		fmt.Printf("DEBUG Switches[%d]= %+v\n", num, swi)
 	}
 	*/
 
@@ -260,7 +263,8 @@ func emitFunc(fn *ssa.Function) {
 								break
 							}
 						}
-						if canOpt {
+						if canOpt && 
+						!LanguageList[TargetLang].CanInline(fn.Blocks[subFnList[sf].block].Instrs[i])  {
 							canOptMap[instrVal.Name()] = true
 						}
 					}

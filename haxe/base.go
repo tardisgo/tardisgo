@@ -112,6 +112,7 @@ func (langType) FileEnd() string {
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
 func (langType) RegisterName(val ssa.Value) string {
 	//NOTE the SSA code says that name() should not be relied on, so this code may need to alter
+
 	if useRegisterArray { // we must use a register array when there are too many registers declared at class level for C++/Java to handle
 		reg := val.Name()
 		if reg[0] != 't' {
@@ -129,15 +130,15 @@ type regToFree struct {
 
 func recycle(list []regToFree) string {
 	ret := ""
-	//for _, x := range list {
-	/* TODO can any objects be recycled at this point? ...or usefully set to null?
-	switch x.typ {
-	//case "Pointer":  // simple recycling of pointers does not work as they are multi-used
-	//	ret += "Pointer.recycle(" + x.reg + ");\n"
+	for _, x := range list {
+		/* TODO can any objects be recycled at this point?
+		switch x.typ {
+		//case "Pointer":  // simple recycling of pointers does not work as they are multi-used
+		//	ret += "Pointer.recycle(" + x.reg + ");\n"
+		}
+		*/
+		ret += "" + x.reg + "=null; \n" // this improves GC performance on all targets
 	}
-	*/
-	//ret += "#if cpp " + x.reg + "=null; #end\n" // testing on archive/zip shows this makes it run slower
-	//}
 	return ret
 }
 
@@ -379,89 +380,93 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	for b := range fn.Blocks {
 		for i := range fn.Blocks[b].Instrs {
 			in := fn.Blocks[b].Instrs[i]
-			reg := l.Value(in, pogo.CodePosition(in.Pos()))
+			if !l.CanInline(in) {
 
-			switch in.(type) {
-			case *ssa.Call:
-				switch in.(*ssa.Call).Call.Value.(type) {
-				case *ssa.Builtin:
-					//NoOp
-				default:
-					// Optimise here not to declare Stack Frames for pseudo-functions used when calling Haxe code direct
-					pp := getPackagePath(in.(*ssa.Call).Common())
-					ppBits := strings.Split(pp, "/")
-					if ppBits[len(ppBits)-1] != "hx" && !strings.HasPrefix(ppBits[len(ppBits)-1], "_") {
-						//if usesGr {
-						//	ret += "private "
-						//}
-						ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
-						nullOnExitList = append(nullOnExitList, regToFree{fmt.Sprintf("_SF%d", -pseudoNextReturnAddress), "StackFrame"})
-						if usesGr {
-							//ret += " #if js =null #end " // TODO is this needed?
-							ret += ";\n"
-						} else {
-							ret += "=null;\n" // need to initalize when using the native stack for these vars
-						}
-					}
-					pseudoNextReturnAddress--
-				}
-			case *ssa.Send, *ssa.Select, *ssa.RunDefers, *ssa.Panic:
-				pseudoNextReturnAddress--
-			case *ssa.UnOp:
-				if in.(*ssa.UnOp).Op == token.ARROW {
-					pseudoNextReturnAddress--
-				}
-			case *ssa.Alloc:
-				if !in.(*ssa.Alloc).Heap { // allocate space on the stack if possible
-					//fmt.Println("DEBUG allocate stack space for", reg, "at", position)
-					if reg != "" {
-						ret += haxeVar(reg+"_stackalloc", "Object", "="+allocNewObject(in.(*ssa.Alloc).Type()), position, "FuncStart()") + "\n"
-					}
-				}
-			}
+				reg := l.Value(in, pogo.CodePosition(in.Pos()))
 
-			if reg != "" && !canOptMap[reg[1:]] { // only add the reg to the SF if not defined in sub-functions
-				// Underlying() not used in 2 lines below because of *ssa.(opaque type)
-				typ := l.LangType(in.(ssa.Value).Type(), false, reg+"@"+position)
-				init := l.LangType(in.(ssa.Value).Type(), true, reg+"@"+position) // this may be overkill...
-
-				if strings.HasPrefix(init, "{") || strings.HasPrefix(init, "Pointer.make") ||
-					//strings.HasPrefix(init, "new UnsafePointer") ||
-					strings.HasPrefix(init, "Object.make") || strings.HasPrefix(init, "new Slice") ||
-					strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new GOmap") ||
-					strings.HasPrefix(init, "new Complex") { // stop unnecessary initialisation
-					// all SSA registers are actually assigned to before use, so minimal initialisation is required, except for maps
-					init = "null"
-				}
-				if typ != "" {
-					switch len(*in.(ssa.Value).Referrers()) {
-					case 0: // don't allocate unused temporary variables
-					//case 1: // TODO optimization possible using register replacement but does not currenty work for: a,b=b,a+b, so code removed
+				switch in.(type) {
+				case *ssa.Call:
+					switch in.(*ssa.Call).Call.Value.(type) {
+					case *ssa.Builtin:
+						//NoOp
 					default:
-						if usesGr {
-							if init == "null" {
-								init = "" // in JS null is the default anyway
-								nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
+						// Optimise here not to declare Stack Frames for pseudo-functions used when calling Haxe code direct
+						pp := getPackagePath(in.(*ssa.Call).Common())
+						ppBits := strings.Split(pp, "/")
+						if ppBits[len(ppBits)-1] != "hx" && !strings.HasPrefix(ppBits[len(ppBits)-1], "_") {
+							//if usesGr {
+							//	ret += "private "
+							//}
+							ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
+							nullOnExitList = append(nullOnExitList, regToFree{fmt.Sprintf("_SF%d", -pseudoNextReturnAddress), "StackFrame"})
+							if usesGr {
+								//ret += " #if js =null #end " // TODO is this needed?
+								ret += ";\n"
 							} else {
-								init = " #if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
-							}
-						} else {
-							init = "=" + init // when not using goroutines, they all need initializing
-							if init == "null" {
-								nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
+								ret += "=null;\n" // need to initalize when using the native stack for these vars
 							}
 						}
-						//if usesGr {
-						//	ret += "private "
-						//}
-						hv := haxeVar(reg, typ, init, position, "FuncStart()") + "\n"
-						//if usesGr {
-						//	if strings.Contains(hv, ":") {
-						//		hv = strings.Replace(hv, ":", "(null,null):", 1)
-						//	}
-						//}
-						regDefs += hv
-						regCount++
+						pseudoNextReturnAddress--
+					}
+				case *ssa.Send, *ssa.Select, *ssa.RunDefers, *ssa.Panic:
+					pseudoNextReturnAddress--
+				case *ssa.UnOp:
+					if in.(*ssa.UnOp).Op == token.ARROW {
+						pseudoNextReturnAddress--
+					}
+				case *ssa.Alloc:
+					if !in.(*ssa.Alloc).Heap { // allocate space on the stack if possible
+						//fmt.Println("DEBUG allocate stack space for", reg, "at", position)
+						if reg != "" {
+							reg = strings.TrimSuffix(reg, "inline()") // if there is one
+							ret += haxeVar(reg+"_stackalloc", "Object", "="+allocNewObject(in.(*ssa.Alloc).Type()), position, "FuncStart()") + "\n"
+						}
+					}
+				}
+
+				if reg != "" && !canOptMap[reg[1:]] { // only add the reg to the SF if not defined in sub-functions
+					// Underlying() not used in 2 lines below because of *ssa.(opaque type)
+					typ := l.LangType(in.(ssa.Value).Type(), false, reg+"@"+position)
+					init := l.LangType(in.(ssa.Value).Type(), true, reg+"@"+position) // this may be overkill...
+
+					if strings.HasPrefix(init, "{") || strings.HasPrefix(init, "Pointer.make") ||
+						//strings.HasPrefix(init, "new UnsafePointer") ||
+						strings.HasPrefix(init, "Object.make") || strings.HasPrefix(init, "new Slice") ||
+						strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new GOmap") ||
+						strings.HasPrefix(init, "new Complex") { // stop unnecessary initialisation
+						// all SSA registers are actually assigned to before use, so minimal initialisation is required, except for maps
+						init = "null"
+					}
+					if typ != "" /*&& !strings.HasSuffix(reg, "inline()")*/ {
+						switch len(*in.(ssa.Value).Referrers()) {
+						case 0: // don't allocate unused temporary variables
+						//case 1: // TODO optimization possible using register replacement but does not currenty work for: a,b=b,a+b, so code removed
+						default:
+							if usesGr {
+								if init == "null" {
+									init = "" // in JS null is the default anyway
+									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
+								} else {
+									init = " #if IGNOREjs =" + init + " #end " // only init in JS, to tell the var type for v8 opt
+								}
+							} else {
+								init = " = " + init + " " // when not using goroutines, sadly they all need initializing because of using switch(Phi){}
+								if init == "null" {
+									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
+								}
+							}
+							//if usesGr {
+							//	ret += "private "
+							//}
+							hv := haxeVar(reg, typ, init, position, "FuncStart()") + "\n"
+							//if usesGr {
+							//	if strings.Contains(hv, ":") {
+							//		hv = strings.Replace(hv, ":", "(null,null):", 1)
+							//	}
+							//}
+							regDefs += hv
+							regCount++
+						}
 					}
 				}
 			}
@@ -480,13 +485,10 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += recycle(nullOnExitList)
 		ret += "};\n"
 	}
-	//TODO optimise (again) for if only one block (as below) AND no calls (which create synthetic values for _Next)
-	//if len(fn.Blocks) > 1 { // if there is only one block then we don't need to track which one is next
 	if trackPhi {
 		ret += "var _Phi:Int=0;\n"
 	}
-	//ret += "_Next=0;\n" // now defined in the interface StackFrame and StackFrameBasis
-	//}
+	ret += "#if js var _NextFunc:Dynamic=null; #end\n"
 
 	if usesGr {
 		ret += l.runFunctionCode(packageName, objectName, "")
@@ -511,15 +513,33 @@ func (l langType) whileCaseCode() string {
 	// NOTE this rather odd arrangement improves JS V8 optimization
 	ret := "#if js\n"
 	ret += "\tvar retVal:" + currentfnName + "=null;\n"
-	ret += "\twhile(retVal==null) \n\t\tswitch(_Next){\n"
+
+	ret += "\tvar jumpTable:Array<Void->Dynamic>=[\n"
+	//for p := -1; p > pseudoNextReturnAddress; p-- {
+	for p := pseudoNextReturnAddress + 1; p < 0; p++ {
+		ret += fmt.Sprintf("\t\t_Block_%d,\n", -p)
+	}
 	for b := range currentfn.Blocks {
-		ret += fmt.Sprintf("\t\tcase %d: retVal=_Block%d();\n", b, b)
+		ret += fmt.Sprintf("\t\t_Block%d,\n", b)
 	}
-	for p := -1; p > pseudoNextReturnAddress; p-- {
-		ret += fmt.Sprintf("\t\tcase %d: retVal=_Block_%d();\n", p, -p)
-	}
-	ret += "\t\tdefault: Scheduler.bbi();\n"
-	ret += "\t\t}\n\treturn retVal;\n"
+	ret += "\tnull];\n"
+
+	ret += "\twhile(retVal==null) \n"
+
+	ret += fmt.Sprintf("\t\tretVal=jumpTable[_Next+%d]();\n", (-pseudoNextReturnAddress)-1)
+	/*
+		ret += "\t\tswitch(_Next){\n"
+		for b := range currentfn.Blocks {
+			ret += fmt.Sprintf("\t\tcase %d: retVal=_Block%d();\n", b, b)
+		}
+		for p := -1; p > pseudoNextReturnAddress; p-- {
+			ret += fmt.Sprintf("\t\tcase %d: retVal=_Block_%d();\n", p, -p)
+		}
+		ret += "\t\tdefault: Scheduler.bbi();\n"
+		ret += "\t\t}\n"
+	*/
+	//ret += "\tjumpTable=null;\n" // tidy up
+	ret += "\treturn retVal;\n"
 	ret += "#else\n"
 	ret += "\tdefault: Scheduler.bbi();\n}\n"
 	ret += "#end\n"
@@ -623,24 +643,12 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	switch v.(type) {
 	case *ssa.Global:
 		return "Go." + l.LangName(v.(*ssa.Global).Pkg.Object.Path() /* was .Name()*/, v.(*ssa.Global).Name())
-	case *ssa.Alloc, *ssa.MakeSlice:
-		return pogo.RegisterName(v.(ssa.Value))
-	case *ssa.FieldAddr, *ssa.IndexAddr:
-		return pogo.RegisterName(v.(ssa.Value))
 	case *ssa.Const:
 		ci := v.(*ssa.Const)
 		_, c := l.Const(*ci, errorInfo)
 		return c
 	case *ssa.Parameter:
 		return "p_" + pogo.MakeID(v.(*ssa.Parameter).Name())
-	//case *ssa.Capture:
-	//	for b := range v.(*ssa.Capture).Parent().FreeVars {
-	//		if v.(*ssa.Capture) == v.(*ssa.Capture).Parent().FreeVars[b] { // comparing the name gives the wrong result
-	//			return `_bds[` + fmt.Sprintf("%d", b) + `]`
-	//		}
-	//	}
-	//	pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Capture name not found: %s", v.(*ssa.Capture).Name()))
-	//	return `_bds["_b` + "ERROR: Captured bound variable name not found" + `"]` // TODO proper error
 	case *ssa.FreeVar:
 		return `_bds.` + v.(*ssa.FreeVar).Name()
 	case *ssa.Function:
@@ -664,11 +672,21 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
 		return "new Closure(null,null)" // Should fail at runtime if it is used...
 	case *ssa.UnOp:
-		return pogo.RegisterName(val)
+		switch v.(*ssa.UnOp).Op {
+		case token.ARROW, token.MUL:
+			return pogo.RegisterName(val)
+		}
+		return l.inlineRegisterName(v.(*ssa.UnOp))
 	case *ssa.BinOp:
-		return pogo.RegisterName(val)
-	case *ssa.MakeInterface:
-		return pogo.RegisterName(val)
+		return l.inlineRegisterName(v.(*ssa.BinOp))
+	case *ssa.Convert:
+		return l.inlineRegisterName(v.(*ssa.Convert))
+	case *ssa.IndexAddr:
+		_, isSlice := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice)
+		if !isSlice {
+			return pogo.RegisterName(val) // only slices handled by peephole
+		}
+		return l.inlineRegisterName(v.(*ssa.IndexAddr))
 	default:
 		return pogo.RegisterName(val)
 	}
@@ -676,7 +694,9 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 func (l langType) FieldAddr(register string, v interface{}, errorInfo string) string {
 	if register != "" {
 		ptr := l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo)
-		ptr = "Pointer.check(" + ptr + ")"
+		if pogo.DebugFlag {
+			ptr = "Pointer.check(" + ptr + ")"
+		}
 		fld := v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field)
 		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
 		if off == 0 {
@@ -710,7 +730,9 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 	switch v.(*ssa.IndexAddr).X.Type().Underlying().(type) {
 	case *types.Pointer:
 		ptr := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
-		ptr = "Pointer.check(" + ptr + ")"
+		if pogo.DebugFlag {
+			ptr = "Pointer.check(" + ptr + ")"
+		}
 		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
 		if idxString == "0" {
 			return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
@@ -771,7 +793,9 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 
 func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
 	ptr := l.IndirectValue(v1, errorInfo)
-	ptr = "Pointer.check(" + ptr + ")"
+	if pogo.DebugFlag {
+		ptr = "Pointer.check(" + ptr + ")"
+	}
 	return ptr + ".store" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) +
 		l.IndirectValue(v2, errorInfo) + ");" +
 		" /* " + v2.(ssa.Value).Type().Underlying().String() + " */ "
@@ -1017,8 +1041,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			case *types.Array: // assume len (same as cap anyway)
 				return register + l.IndirectValue(args[0], errorInfo /*, false*/) + ".length;"
 			case *types.Map: // assume len(map)
-				return register + l.IndirectValue(args[0], errorInfo) + "==null?0:(" +
-					l.IndirectValue(args[0], errorInfo) + ".len());"
+				return register + "({var _v=" + l.IndirectValue(args[0], errorInfo) + ";_v==null?0:_v.len();});"
 			case *types.Basic: // assume string as anything else would have produced an error previously
 				return register + "Force.toUTF8length(this._goroutine," + l.IndirectValue(args[0], errorInfo /*, false*/) + ");"
 			default: // TODO handle other types?
@@ -1296,7 +1319,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			ret += "[]" // goroutine + bindings
 		}
 	case *ssa.MakeClosure: // it is a closure, but with a static callee
-		ret += l.IndirectValue(cc.Value, errorInfo) + "==null?null:" + l.IndirectValue(cc.Value, errorInfo) + ".bds"
+		ret += "({var _v=" + l.IndirectValue(cc.Value, errorInfo) + ";_v==null?null:_v.bds;})"
 	default: // closure with a dynamic callee
 		if !isBuiltin { // don't pass bindings to built-in functions
 			ret += fnToCall + "==null?null:" + fnToCall + ".bds"
@@ -1549,7 +1572,7 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 	}
 	switch x.(ssa.Value).Type().Underlying().(type) {
 	case *types.Slice:
-		return register + "=" + xString + "==null?null:(" + xString + `.subSlice(` + lvString + `,` + hvString + `));`
+		return register + "=({var _v=" + xString + `;_v==null?null:(_v.subSlice(` + lvString + `,` + hvString + `));});`
 	case *types.Pointer:
 		eleSz := "1" + arrayOffsetCalc(x.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying())
 		return register + "=new Slice(" + xString + `,` + lvString + `,` + hvString + "," +
@@ -1559,7 +1582,7 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 		if hvString == "-1" {
 			hvString = "(" + xString + ").length"
 		}
-		return register + "= (" + xString + ").substr(" + lvString + "," + hvString + "-" + lvString + ") ;"
+		return register + "= ({var _lvs=" + lvString + ";(" + xString + ").substr(_lvs," + hvString + "-_lvs) ;});"
 	default:
 		pogo.LogError(errorInfo, "Haxe",
 			fmt.Errorf("haxe.Slice() - unhandled type: %v", reflect.TypeOf(x.(ssa.Value).Type().Underlying())))
@@ -1615,7 +1638,7 @@ func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) str
 		}
 		switch l.LangType(tPtr, false, errorInfo) {
 		case "Slice":
-			lStr += xStr + "==null?0:" + xStr + ".len()"
+			lStr += "Slice.nullLen(" + xStr + ")"
 		case "Object":
 			lStr += fmt.Sprintf("%d", tPtr.(*types.Array).Len())
 		}
@@ -1675,23 +1698,23 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	// assume it is a Map
 	keyString = serializeKey(keyString, l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 
-	isNull := l.IndirectValue(Map, errorInfo) + "==null?"
+	isNull := l.IndirectValue(Map, errorInfo) + ";var _ks=" + keyString + ";_map==null?"
 
 	li := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), true, errorInfo)
 	if strings.HasPrefix(li, "new ") {
 		li = "null" // no need for a full object declaration in this context
 	}
-	returnValue := l.IndirectValue(Map, errorInfo) + ".get(" + keyString + ")" //.val
+	returnValue := /*l.IndirectValue(Map, errorInfo) +*/ "_map.get(_ks)" //.val
 	//ltEle := l.LangType(Map.(ssa.Value).Type().Underlying().(*types.Map).Elem().Underlying(), false, errorInfo)
 	//switch ltEle {
 	//case "GOint64", "Int", "Float", "Bool", "String", "Pointer", "Slice":
 	//	returnValue = "cast(" + returnValue + "," + ltEle + ")"
 	//}
-	eleExists := l.IndirectValue(Map, errorInfo) + ".exists(" + keyString + ")"
+	eleExists := /*l.IndirectValue(Map, errorInfo) +*/ "_map.exists(_ks)"
 	if commaOk {
-		return reg + "=" + isNull + "{r0:" + li + ",r1:false}:{r0:" + returnValue + ",r1:" + eleExists + "};"
+		return reg + "=({var _map:GOmap=" + isNull + "{r0:" + li + ",r1:false}:{r0:" + returnValue + ",r1:" + eleExists + "};});"
 	}
-	return reg + "=" + isNull + li + ":" + returnValue + ";" // the .get will check for existance and return the zero value if not
+	return reg + "=({var _map:GOmap=" + isNull + li + ":" + returnValue + ";});" // the .get will check for existance and return the zero value if not
 }
 
 func (l langType) Extract(reg string, tuple interface{}, index int, errorInfo string) string {
@@ -1709,7 +1732,7 @@ func (l langType) Range(reg string, v interface{}, errorInfo string) string {
 		return reg + "=new GOstringRange(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 		//return reg + "={k:0,v:Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ")" + "};"
 	default: // assume it is a Map {k: key itterator,m: the map,z: zero value of an entry}
-		return reg + "=" + l.IndirectValue(v, errorInfo) + "==null?null:cast(" + l.IndirectValue(v, errorInfo) + ",GOmap).range();"
+		return reg + "=({var _map=" + l.IndirectValue(v, errorInfo) + ";_map==null?null:cast(_map,GOmap).range();});"
 		/*
 			keyTyp := l.LangType(v.(ssa.Value).Type().Underlying().(*types.Map).Key().Underlying(), false, errorInfo)
 			if keyTyp != "Int" {
@@ -1746,7 +1769,7 @@ func (l langType) Next(register string, v interface{}, isString bool, errorInfo 
 		*/
 	}
 	// otherwise it is a map itterator
-	return register + "=" + l.IndirectValue(v, errorInfo) + "==null?{r0:false,r1:null,r2:null}:cast(" + l.IndirectValue(v, errorInfo) + ",GOmapRange).next();"
+	return register + "=({var _map=" + l.IndirectValue(v, errorInfo) + ";_map==null?{r0:false,r1:null,r2:null}:cast(_map,GOmapRange).next();});"
 	/*
 		return register + "={var _hn:Bool=" + l.IndirectValue(v, errorInfo) + ".k.hasNext();\n" +
 			"if(_hn){var _nxt=" + l.IndirectValue(v, errorInfo) + ".k.next();\n" +
@@ -1816,20 +1839,30 @@ func (l langType) EmitInvoke(register, path string, isGo, isDefer, usesGr bool, 
 	return l.doCall(register, cc.Signature().Results(), ret+"]);", usesGr)
 }
 
+const alwaysStackdump = false
+
 func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 	tempVarList = []regToFree{}
 	if !mustSplitCode {
-		return "try {"
+		if alwaysStackdump || pogo.DebugFlag {
+			return "try {"
+		}
+		return ""
 	}
-	return fmt.Sprintf("private "+"function SubFn%d():Void { try {", id)
+	if alwaysStackdump || pogo.DebugFlag {
+		return fmt.Sprintf("private "+"function SubFn%d():Void { try {", id)
+	}
+	return fmt.Sprintf("private "+"function SubFn%d():Void { ", id)
 }
 
 func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
 	ret := ""
-	ret += recycle(tempVarList)
-	ret += fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
+	//ret += recycle(tempVarList) // not clear that this helps GC
+	if alwaysStackdump || pogo.DebugFlag {
+		ret += fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
+	}
 	if mustSplitCode {
-		ret += ";}"
+		ret += "}"
 	}
 	return ret
 }
@@ -1848,7 +1881,6 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 	if typ == "" {
 		return ""
 	}
-	// NOTE testing has demonstrated that JS temp var init improves V8 optimization & so speeds-up subFns
 	init := l.LangType(v.Type(), true, "temp var declaration")
 	if init == "null" || strings.HasPrefix(init, "new") || strings.HasPrefix(init, "{") || strings.HasPrefix(init, "Object.make") || strings.HasPrefix(init, "GOint64") {
 		init = "null"
@@ -1859,7 +1891,7 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 	if init == "null" {
 		init = "" // in JS null is the default
 	} else {
-		init = "#if js =" + init + " #end " // to allow V8 optimisation
+		init = "#if IGNOREjs =" + init + " #end " // to allow V8 optimisation?
 	}
 	return "var _" + v.Name() + ":" + typ + " " + init + ";"
 }

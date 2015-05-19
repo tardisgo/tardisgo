@@ -81,6 +81,7 @@ type Language interface {
 	Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string
 	PeepholeOpt(opt, register string, code []ssa.Instruction, errorInfo string) string
 	DebugRef(userName string, v interface{}, errorInfo string) string
+	CanInline(v interface{}) bool
 }
 
 // LanguageEntry holds the static infomation about each of the languages, expect this list to extend as more languages are added.

@@ -7,14 +7,38 @@ package pogo
 import (
 	"fmt"
 	"go/token"
+	"strings"
 
 	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
+
+var inlineMap map[string]string
+var keysSeen map[string]int
+
+func InlineMap(key string) (val string, ok bool) {
+	val, ok = inlineMap[key]
+	count, seen := keysSeen[key]
+	if seen {
+		keysSeen[key] = count + 1
+	} else {
+		keysSeen[key] = 1
+	}
+	return
+}
+
+func newInlineMap() {
+	inlineMap = make(map[string]string)
+	keysSeen = make(map[string]int)
+}
 
 // peephole optimizes and emits short sequences of instructions that do not contain control flow
 func peephole(instrs []ssa.Instruction) {
-
+	newInlineMap()
+	rangeChecks := make(map[string]struct{})
 	for i := 0; i < len(instrs); i++ {
+		//var v ssa.Value
+		var isV, inline bool
 		if len(instrs[i:]) >= 2 {
 			for j := len(instrs); j > (i + 1); j-- {
 				opt, reg := peepholeFindOpt(instrs[i:j])
@@ -28,9 +52,69 @@ func peephole(instrs []ssa.Instruction) {
 				}
 			}
 		}
-		emitInstruction(instrs[i], instrs[i].Operands(make([]*ssa.Value, 0)))
+		inline = false
+		_, isV = instrs[i].(ssa.Value)
+		if isV {
+			if LanguageList[TargetLang].CanInline(instrs[i]) {
+				inline = true
+			}
+		}
+		if inline {
+			postWrite := ""
+			preBuffLen := LanguageList[TargetLang].buffer.Len()
+			emitInstruction(instrs[i], instrs[i].Operands(make([]*ssa.Value, 0)))
+			raw := strings.TrimSpace(string(LanguageList[TargetLang].buffer.Bytes()[preBuffLen:]))
+			if strings.HasPrefix(raw, "this.setPH(") { // TODO haxe-specific
+				sph := strings.SplitAfterN(raw, ";", 2)
+				if len(sph) != 2 {
+					panic("setPH code not as expected")
+				}
+				postWrite = sph[0]
+				raw = strings.TrimSpace(sph[1])
+			}
+			if strings.HasPrefix(raw, "Scheduler.wraprangechk(") { // TODO haxe-specific
+				lines := strings.SplitAfter(raw, "\n")
+				if len(lines) != 2 {
+					panic("rangechk code not as expected")
+				}
+				_, hadIt := rangeChecks[lines[0]]
+				if !hadIt { // de-dupe
+					postWrite += lines[0]
+					rangeChecks[lines[0]] = struct{}{}
+				}
+				raw = strings.TrimSpace(lines[1])
+			}
+			bits := strings.SplitAfter(raw, "//") //comment marker must not be in strings - TODO haxe-specific
+			code := strings.TrimSuffix(strings.TrimSpace(strings.TrimSuffix(bits[0], "//")), ";")
+			parts := strings.SplitAfterN(code, "=", 2)
+			if len(parts) != 2 {
+				panic("no = after register name in: " + code)
+			}
+			parts[0] = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(parts[0]), "="))
+			//println("DEBUG inlineMap[" + parts[0] + "]=" + parts[1])
+			found := 0
+			for k, v := range inlineMap {
+				if v == parts[1] && keysSeen[k] == 0 {
+					found++
+				}
+			}
+			inlineMap[parts[0]] = parts[1]
+			LanguageList[TargetLang].buffer.Truncate(preBuffLen)
+			fmt.Fprintln(&LanguageList[TargetLang].buffer, "//[ PEEPHOLE INLINE "+parts[0]+" ] "+instrs[i].String())
+			if postWrite != "" {
+				fmt.Fprintln(&LanguageList[TargetLang].buffer, postWrite)
+			}
+			if found > 0 {
+				fmt.Fprintf(&LanguageList[TargetLang].buffer,
+					"// DEBUG %d duplicate(s) found for %s\n", found, parts[1]) // this optimisation TODO
+			}
+		} else {
+			emitInstruction(instrs[i], instrs[i].Operands(make([]*ssa.Value, 0)))
+		}
 	instrsEmitted:
 	}
+	//println("DEBUG new inlineMap")
+	newInlineMap() // needed here too to stop these temp values bleeding to elsewhere
 }
 
 // TODO WIP...
@@ -39,6 +123,50 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 		return // fail
 	}
 	switch instrs[0].(type) {
+
+	case *ssa.IndexAddr, *ssa.FieldAddr:
+		//fmt.Println("DEBUG looking for ptrChain num refs=", len(*(instrs[0].(ssa.Value).Referrers())))
+		if len(*(instrs[0].(ssa.Value).Referrers())) == 0 || !addrInstrUsesPointer(instrs[0]) {
+			return // fail
+		}
+		//fmt.Println("DEBUG instr 0: ", instrs[0].String())
+		ptrChainSize := 1
+		for ; ptrChainSize < len(instrs); ptrChainSize++ {
+			//fmt.Println("DEBUG instr ", ptrChainSize, instrs[ptrChainSize].String())
+			switch instrs[ptrChainSize].(type) {
+			case *ssa.IndexAddr, *ssa.FieldAddr:
+				if !addrInstrUsesPointer(instrs[ptrChainSize]) {
+					return // fail
+				}
+				/*
+					fmt.Println("DEBUG i, refs,  prev, this, instr(prev), instr(this)=",
+						ptrChainSize,
+						len(*instrs[ptrChainSize].(ssa.Value).Referrers()),
+						RegisterName(instrs[ptrChainSize-1].(ssa.Value)),
+						"_"+(*instrs[ptrChainSize].Operands(nil)[0]).Name(),
+						RegisterName(instrs[ptrChainSize-1].(ssa.Value))+"="+instrs[ptrChainSize-1].String(),
+						RegisterName(instrs[ptrChainSize].(ssa.Value))+"="+instrs[ptrChainSize].String())
+				*/
+				if len(*instrs[ptrChainSize-1].(ssa.Value).Referrers()) != 1 ||
+					"_"+(*instrs[ptrChainSize].Operands(nil)[0]).Name() != RegisterName(instrs[ptrChainSize-1].(ssa.Value)) {
+					return // fail
+				}
+			default:
+				return // fail
+			}
+		}
+		if ptrChainSize > 1 {
+			/*
+				fmt.Println("DEBUG pointer chain found")
+				for i := 0; i < ptrChainSize; i++ {
+					fmt.Println("DEBUG pointer chain ", i, len(*instrs[i].(ssa.Value).Referrers()),
+						RegisterName(instrs[i].(ssa.Value))+"="+instrs[i].String())
+				}
+			*/
+			return "pointerChain", RegisterName(instrs[ptrChainSize-1].(ssa.Value))
+		}
+		return // fail
+
 	case *ssa.UnOp:
 		if instrs[0].(*ssa.UnOp).Op == token.MUL &&
 			len(*instrs[0].(*ssa.UnOp).Referrers()) == 1 {
@@ -55,23 +183,9 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 					}
 					return // fail
 				}
-				// we are in some sequence of Index/Field ops, one after another
-				// so first check that the earlier parts of the sequene are OK
-				/*
-					on, rn := peepholeFindOpt(instrs[0 : len(instrs)-1])
-					if on == "loadObject" {
-						if rn == "_"+indexOrFieldXName(instrs[len(instrs)-1]) && // end one links to one before
-							indexOrFieldRefCount(instrs[len(instrs)-2]) == 1 && // one before only used by this one
-							indexOrFieldRefCount(instrs[len(instrs)-1]) > 0 { // end result is used
-							optName = on
-							regName = RegisterName(instrs[len(instrs)-1].(ssa.Value))
-							println("DEBUG peephole loadObject chain found")
-							return // success
-						}
-					}
-				*/
 			}
 		}
+
 	case *ssa.Phi:
 		for _, instr := range instrs {
 			phi, ok := instr.(*ssa.Phi)
@@ -88,6 +202,19 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 
 	}
 	return // fail
+}
+
+func addrInstrUsesPointer(i ssa.Instruction) bool {
+	switch i.(type) {
+	case *ssa.IndexAddr:
+		_, ok := i.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer)
+		return ok
+	case *ssa.FieldAddr:
+		_, ok := i.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer)
+		return ok
+	default:
+		return false
+	}
 }
 
 func indexOrFieldXName(i ssa.Instruction) string {

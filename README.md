@@ -6,11 +6,9 @@
 [![GoDoc](https://godoc.org/github.com/tardisgo/tardisgo?status.png)](https://godoc.org/github.com/tardisgo/tardisgo)
 [![status](https://sourcegraph.com/api/repos/github.com/tardisgo/tardisgo/badges/status.png)](https://sourcegraph.com/github.com/tardisgo/tardisgo)
 
-## Project status: a working proof of concept
-#### EXPERIMENTAL, INCOMPLETE, UN-OPTIMIZED
+## Project status: alpha software, mostly working but not yet suitable for production work.
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
-
 
 Goroutines are implemented as co-operatively scheduled co-routines. Other goroutines are automatically scheduled every time there is a channel operation or goroutine creation (or call to a function which uses channels or goroutines through any called function). So loops without channel operations may never give up control. The function runtime.Gosched() provides a convenient way to allow other goroutines to run.  
 
@@ -106,11 +104,23 @@ If you can't work-out what is going on prior to a panic, you can add the "-trace
 
 Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 even when strings for that host are encoded as UTF-16. The system should automatically do the translation to/from the correct format at the Go/Haxe boundary, but there are certain to be some occasions when a translation has to be done explicitly (see Force.toHaxeString/Force.fromHaxeString in haxe/haxeruntime.go).
 
+## Benchmarks
+
+Tabulating the [benchmarking](https://github.com/tardisgo/tardisgo-samples/blob/master/benchmarks) results, looking only at elapsed (rather than cpu) time in seconds, as a multiple of the Go time: 
+
+| Test - of what functionality      | Go      | C++   | C#    | Java  | JS    | GopherJS |
+| --------------------------------- | ------- | ----- | ----- | ----- | ----- | -------- |
+| mandel.go - floating point        | (10.6s) | 2.5x  | 3.6x  | 4.1x  | 17.4x | 1.0x     |
+| fannkuch.go - array indexing      | (2.6s)  | 43.0x | 37.7x | 22.3x | 71.8x | 5.0x     |
+| binarytree.go - garbage collector | (8.3s)  | 39.3x | 38.1x | 4.4x  | 54.9x | 0.4x (!) |
+
+Figures above as at 18 May 2015. Thankfully, there remains scope for further optimization.
+
 ## Unsupported Haxe targets: ActionScript, PHP, Python and Neko
 
 The nature of ActionScript/Flash means that it is not possible to run automated tests, although it seems to be a reliable target. 
 
-The PHP, Python and Neko targets may work to varying degress, but are not currently reliable enough to permit automated testing. 
+The PHP, Python and Neko targets are not currently reliable enough to permit automated testing. 
 
 PHP specific issues:
 * to compile for PHP you currently need to add the haxe compilation option "--php-prefix tgo" to avoid name conflicts
@@ -152,7 +162,7 @@ For more background and on-line examples see the links from: http://tardisgo.git
 
 - For all Go standard libraries, [report testing and implementation status](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md)
 - Improve integration with Haxe code and libraries, automating as far as possible - [in progress](https://github.com/tardisgo/gohaxelib)
-- Improve currently poor execution speeds and update benchmarking results
+- Improve currently poor execution speeds and update benchmarking results (see section above)
 - Research and publish the best methods to use TARDIS Go to create multi-platform client-side applications - [in progress](https://github.com/tardisgo/tardisgo-samples/tree/master/openfl)
 - Improve debug and profiling capabilities
 - Add command line flags to control options

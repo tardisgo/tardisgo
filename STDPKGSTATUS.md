@@ -15,7 +15,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | --------------- | --------------------- | --------------------------------- |
 | archive         | no code               |                                   |
 | -- tar          | c++, js, java       * | c#: header mis-match, ModTime     |
-| -- zip          | [c++] c#, java, js  * | c++ tests take 30mins ... java 30 secs |
+| -- zip          | [c++] c#, java, js  * |                                   |
 | bufio           | c++, c#, java, js     |                                   |
 | builtin         | no tests              | all built-in functions are implemented |
 | bytes           | c++, c#, java, js     |                                   |

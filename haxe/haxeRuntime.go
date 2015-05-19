@@ -1107,13 +1107,9 @@ class Pointer {
 	}
 `
 	} else { // TODO null test could be removed in some future NoChecking mode maybe?
-		ptrClass += `	public inline static function check(p:Pointer):Pointer { 
-		//if(p==null) {
-		//	Scheduler.panicFromHaxe("nil pointer de-reference");
-		//	return null;
-		//}
-		return p; 
-	}`
+		/*	ptrClass += `	public inline static function check(p:Pointer):Pointer {
+			return p;
+		}`*/
 	}
 	pogo.WriteAsClass("Pointer", ptrClass+
 		`	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
@@ -1229,6 +1225,10 @@ class Slice {
 	public var length(get, null):Int;
 	inline function get_length():Int {
 		return end-start;
+	}
+	public static function nullLen(s:Slice):Int{
+		if(s==null) return 0;
+		return s.length;
 	}
 
 	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) { 

@@ -118,7 +118,7 @@ func haxeStringConst(sconst string, position string) string {
 	hadEsc := false
 	for i := 0; i < len(s); i++ {
 		c := rune(s[i])
-		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '`' && c != '\\' && !hadEsc {
+		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '`' && c != '\\' && c != '/' && !hadEsc {
 			ret0 += string(c)
 		} else {
 			ret0 += fmt.Sprintf("\\x%02X", c)
@@ -132,7 +132,7 @@ func haxeStringConst(sconst string, position string) string {
 	hadStr := false
 	for i := 0; i < len(s); i++ {
 		c := rune(s[i])
-		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '`' && c != '\\' {
+		if unicode.IsPrint(c) && c < unicode.MaxASCII && c != '"' && c != '`' && c != '\\' && c != '/' {
 			compound += string(c)
 		} else {
 			if hadStr {
@@ -176,6 +176,8 @@ func constFloat64(lit ssa.Const, bits int, position string) string {
 		haxeVal = "Math.NEGATIVE_INFINITY"
 	case math.IsNaN(f): // must come after infinity checks
 		haxeVal = "Math.NaN"
+	case haxeVal == "0":
+		haxeVal = "0.0"
 	}
 	return haxeVal
 }
