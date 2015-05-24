@@ -58,7 +58,7 @@ haxe -main tardis.Go -cp tardis -D fullunsafe -js tardis/go-fu.js
 node < tardis/go-fu.js
 ```
 
-While on the subject of JS, the closure compiler seems to work, but only using the default "SIMPLE_OPTIMIZATIONS" option. It currently generates large numers of warnings.
+While on the subject of JS, the closure compiler seems to work, but only using the default "SIMPLE_OPTIMIZATIONS" option. It currently generates a large number of warnings.
 
 The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/a.txt" thus (for example in JS):
 ```

@@ -746,7 +746,7 @@ class Object {
 		}
 		return true;
 	}
-	public static inline function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
+	public static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
 		if(size>0&&src!=null) {
 `
 	if pogo.DebugFlag {
