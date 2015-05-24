@@ -263,8 +263,8 @@ func emitFunc(fn *ssa.Function) {
 								break
 							}
 						}
-						if canOpt && 
-						!LanguageList[TargetLang].CanInline(fn.Blocks[subFnList[sf].block].Instrs[i])  {
+						if canOpt &&
+							!LanguageList[TargetLang].CanInline(fn.Blocks[subFnList[sf].block].Instrs[i]) {
 							canOptMap[instrVal.Name()] = true
 						}
 					}
@@ -304,7 +304,7 @@ func emitFunc(fn *ssa.Function) {
 					}
 				}
 				if !inSubFn {
-					//TODO optimize phi case statements
+					// optimize phi case statements
 					phiList := 0
 				phiLoop:
 					switch fn.Blocks[b].Instrs[i+phiList].(type) {
@@ -316,7 +316,7 @@ func emitFunc(fn *ssa.Function) {
 							}
 						}
 					}
-					if phiList > 1 {
+					if phiList > 0 {
 						peephole(fn.Blocks[b].Instrs[i : i+phiList])
 						i += phiList - 1
 					} else {

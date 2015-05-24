@@ -41,8 +41,8 @@ type Language interface {
 	FuncEnd(fn *ssa.Function) string
 	BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) string
 	BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) string
-	Jump(int) string
-	If(v interface{}, trueNext, falseNext int, errorInfo string) string
+	Jump(to int, from int, code string) string
+	If(v interface{}, trueNext, falseNext, phi int, trueCode, falseCode, errorInfo string) string
 	Phi(register string, phiEntries []int, valEntries []interface{}, defaultValue, errorInfo string) string
 	LangType(types.Type, bool, string) string
 	Value(v interface{}, errorInfo string) string
@@ -82,6 +82,7 @@ type Language interface {
 	PeepholeOpt(opt, register string, code []ssa.Instruction, errorInfo string) string
 	DebugRef(userName string, v interface{}, errorInfo string) string
 	CanInline(v interface{}) bool
+	PhiCode(allTargets bool, targetPhi int, code []ssa.Instruction, errorInfo string) string
 }
 
 // LanguageEntry holds the static infomation about each of the languages, expect this list to extend as more languages are added.

@@ -35,12 +35,11 @@ func newInlineMap() {
 // peephole optimizes and emits short sequences of instructions that do not contain control flow
 func peephole(instrs []ssa.Instruction) {
 	newInlineMap()
-	rangeChecks := make(map[string]struct{})
 	for i := 0; i < len(instrs); i++ {
 		//var v ssa.Value
 		var isV, inline bool
-		if len(instrs[i:]) >= 2 {
-			for j := len(instrs); j > (i + 1); j-- {
+		if len(instrs[i:]) >= 1 {
+			for j := len(instrs); j > (i /* +1 */); j-- {
 				opt, reg := peepholeFindOpt(instrs[i:j])
 				if opt != "" {
 					//fmt.Println("DEBUG PEEPHOLE", opt, reg)
@@ -72,18 +71,16 @@ func peephole(instrs []ssa.Instruction) {
 				postWrite = sph[0]
 				raw = strings.TrimSpace(sph[1])
 			}
-			if strings.HasPrefix(raw, "Scheduler.wraprangechk(") { // TODO haxe-specific
-				lines := strings.SplitAfter(raw, "\n")
-				if len(lines) != 2 {
-					panic("rangechk code not as expected")
+			/*
+				if strings.HasPrefix(raw, "Scheduler.wraprangechk(") { // TODO haxe-specific
+					lines := strings.SplitAfter(raw, "\n")
+					if len(lines) != 2 {
+						panic("rangechk code not as expected")
+					}
+					postWrite += lines[0] // de-duping is now done where the instruction is generated
+					raw = strings.TrimSpace(lines[1])
 				}
-				_, hadIt := rangeChecks[lines[0]]
-				if !hadIt { // de-dupe
-					postWrite += lines[0]
-					rangeChecks[lines[0]] = struct{}{}
-				}
-				raw = strings.TrimSpace(lines[1])
-			}
+			*/
 			bits := strings.SplitAfter(raw, "//") //comment marker must not be in strings - TODO haxe-specific
 			code := strings.TrimSuffix(strings.TrimSpace(strings.TrimSuffix(bits[0], "//")), ";")
 			parts := strings.SplitAfterN(code, "=", 2)
@@ -119,12 +116,11 @@ func peephole(instrs []ssa.Instruction) {
 
 // TODO WIP...
 func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
-	if len(instrs) < 2 {
-		return // fail
-	}
 	switch instrs[0].(type) {
-
 	case *ssa.IndexAddr, *ssa.FieldAddr:
+		if len(instrs) < 2 {
+			return // fail
+		}
 		//fmt.Println("DEBUG looking for ptrChain num refs=", len(*(instrs[0].(ssa.Value).Referrers())))
 		if len(*(instrs[0].(ssa.Value).Referrers())) == 0 || !addrInstrUsesPointer(instrs[0]) {
 			return // fail
@@ -168,6 +164,9 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 		return // fail
 
 	case *ssa.UnOp:
+		if len(instrs) < 2 {
+			return // fail
+		}
 		if instrs[0].(*ssa.UnOp).Op == token.MUL &&
 			len(*instrs[0].(*ssa.UnOp).Referrers()) == 1 {
 			switch instrs[len(instrs)-1].(type) {
@@ -187,14 +186,17 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 		}
 
 	case *ssa.Phi:
+		if len(instrs) == 0 {
+			return // fail
+		}
 		for _, instr := range instrs {
-			phi, ok := instr.(*ssa.Phi)
+			_ /*phi*/, ok := instr.(*ssa.Phi)
 			if !ok {
 				return // fail
 			}
-			if len(*phi.Referrers()) == 0 {
-				return // fail
-			}
+			//if len(*phi.Referrers()) == 0 {
+			//	return // fail
+			//}
 		}
 		optName = "phiList"
 		//regName is unused

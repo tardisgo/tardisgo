@@ -77,13 +77,23 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	switch instruction.(type) {
 	case *ssa.Jump:
 		fmt.Fprintln(&LanguageList[l].buffer,
-			LanguageList[l].Jump(instruction.(*ssa.Jump).Block().Succs[0].Index)+LanguageList[l].Comment(comment))
+			LanguageList[l].Jump(instruction.(*ssa.Jump).Block().Succs[0].Index,
+				instruction.(*ssa.Jump).Block().Index,
+				LanguageList[l].PhiCode(false, instruction.(*ssa.Jump).Block().Index,
+					instruction.(*ssa.Jump).Block().Succs[0].Instrs,
+					errorInfo))+
+				LanguageList[l].Comment(comment))
 
 	case *ssa.If:
 		fmt.Fprintln(&LanguageList[l].buffer,
 			LanguageList[l].If(*operands[0],
 				instruction.(*ssa.If).Block().Succs[0].Index,
 				instruction.(*ssa.If).Block().Succs[1].Index,
+				instruction.(*ssa.If).Block().Index,
+				LanguageList[l].PhiCode(false, instruction.(*ssa.If).Block().Index,
+					instruction.(*ssa.If).Block().Succs[0].Instrs, errorInfo),
+				LanguageList[l].PhiCode(false, instruction.(*ssa.If).Block().Index,
+					instruction.(*ssa.If).Block().Succs[1].Instrs, errorInfo),
 				errorInfo)+LanguageList[l].Comment(comment))
 
 	case *ssa.Phi:

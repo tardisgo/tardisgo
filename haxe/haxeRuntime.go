@@ -350,10 +350,10 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			return toUint32(GOint64.toInt(GOint64.mod(GOint64.make(0x0,x),GOint64.make(0x0,y),false)));
 		}
 	}
-	public static function intMul(x:Int,y:Int,sv:Int):Int {
+	public static inline function intMul(x:Int,y:Int,sv:Int):Int { // TODO optimize away sv
 		#if (js || php)
 			if(sv>0){ // signed mul
-				return toInt32(GOint64.toInt(GOint64.mul(GOint64.ofInt(x),GOint64.ofInt(y)))); // TODO review if this required
+				return  x*y; //toInt32(GOint64.toInt(GOint64.mul(GOint64.ofInt(x),GOint64.ofInt(y)))); // TODO review if this required
 			} else { // unsigned mul 
 				return toUint32(GOint64.toInt(GOint64.mul(GOint64.ofUInt(x),GOint64.ofUInt(y)))); // required for overflowing mul
 			}
@@ -364,7 +364,7 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static var minusZero:Float= 1.0 / Math.NEGATIVE_INFINITY ; 
 	private static var zero:Float=0.0;
 	private static var MinFloat64:Float = -1.797693134862315708145274237317043567981e+308; // 2**1023 * (2**53 - 1) / 2**52
-	public static #if !( php || cs ) inline #end function floatDiv(x:Float,y:Float):Float {
+	public static #if !php  inline #end function floatDiv(x:Float,y:Float):Float {
 		#if ( php ) 
 			// NOTE for php 0 != 0.0 !!!
 			if(y==0) // divide by zero gives +/- infinity - so valid ... TODO check back to Go spec
@@ -417,6 +417,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		for( i in off...(sl.len()+off) ) {
 			ret.addChar( obj.get_uint8(i) );
 		}
+		ptr=null;
+		obj=null;
 		return ret.toString();
 	}
 
@@ -443,16 +445,22 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	public static #if (cpp || neko || php) inline #end function toHaxeString(v:String):String {
 		#if !( cpp || neko || php ) // need to translate back to UTF16 when passing back to Haxe
 			var sli:Slice=new Slice(Pointer.make(Object.make(v.length)),0,-1,v.length,1);
+			var ptr:Pointer;
 			for(i in 0...v.length){
 				//if(v.charCodeAt(i)>0xff) return v; // probably already encoded as UTF-16
-				sli.itemAddr(i).store_uint8(v.charCodeAt(i));
+				ptr=sli.itemAddr(i);
+				ptr.store_uint8(v.charCodeAt(i));
 			}
 			var slr = Go_haxegoruntime_UUTTFF8toRRunes.callFromRT(0,sli);
 			var slo = Go_haxegoruntime_RRunesTToUUTTFF16.callFromRT(0,slr);
 			v="";
 			for(i in 0...slo.len()) {
-				v += String.fromCharCode( slo.itemAddr(i).load_uint16() );
+				ptr = slo.itemAddr(i);
+				v += String.fromCharCode( ptr.load_uint16() );
 			}
+			ptr=null;
+			slr=null;
+			slo=null;
 		#end
 		return v;
 	}
@@ -461,16 +469,21 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		#if !( cpp || neko || php ) // need to translate from UTF16 to UTF8 when passing back to Go
 			#if (js || php) if(v==null) return ""; #end
 			var sli:Slice=new Slice(Pointer.make(Object.make(v.length<<1)),0,-1,v.length,2);
-			var allSmall = true;
+			var ptr:Pointer;
 			for(i in 0...v.length){
-				sli.itemAddr(i).store_uint16(v.charCodeAt(i));
+				ptr=sli.itemAddr(i);
+				ptr.store_uint16(v.charCodeAt(i));
 			}
 			var slr = Go_haxegoruntime_UUTTFF16toRRunes.callFromRT(0,sli);
 			var slo = Go_haxegoruntime_RRunesTToUUTTFF8.callFromRT(0,slr);
 			v="";
 			for(i in 0...slo.len()) {
-				v += String.fromCharCode( slo.itemAddr(i).load_uint8() );
+				ptr=slo.itemAddr(i);
+				v += String.fromCharCode( ptr.load_uint8() );
 			}
+			ptr=null;
+			slr=null;
+			slo=null;
 		#end
 		return v;
 	}
@@ -505,8 +518,10 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				return Complex.eq(a,b);
 			if(Std.is(a,Interface) && Std.is(b,Interface))
 				return Interface.isEqual(a,b); // interfaces   
+			#if !abstractobjects
 			if(Std.is(a,Object) && Std.is(b,Object))
 				return a.isEqual(0,b,0);
+			#end
 
 			if(Std.is(a,GOmap)||Std.is(a,Closure)||Std.is(a,Slice)||Std.is(a,Channel)) {
 				Scheduler.panicFromHaxe("Unsupported isEqualDynamic haxe type:"+a);
@@ -523,6 +538,18 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		}
 		return false;	
 	}
+	public static function stringFromRune(rune:Int):String{
+		var _ret:String="";
+		var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(0,rune);
+		var _ptr:Pointer;
+		for(_i in 0..._r.len()){
+			_ptr=_r.itemAddr(_i);
+			_ret+=String.fromCharCode(_ptr.load_int32());
+		}
+		_ptr=null;
+		_r=null;
+		return	_ret;
+	}
 }
 `)
 	objClass := `
@@ -530,9 +557,21 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 // Object code
 // a single type of Go object
 @:keep
-class Object { // this implementation may improve with typed array access
+#if abstractobjects
+abstract Object (haxe.ds.Vector<Dynamic>) to haxe.ds.Vector<Dynamic> from haxe.ds.Vector<Dynamic> {
+#else
+class Object { 
+#end
 	public static inline function make(size:Int,?byts:haxe.io.Bytes):Object {
+		#if abstractobjects
+			var ret = new haxe.ds.Vector<Dynamic>(size);
+			if(byts!=null) 
+				for(i in 0 ... byts.length) 
+					ret[i] = byts.get(i);
+			return ret;
+		#else
 			return new Object(size,byts);
+		#end
 	}
 
 	#if ((js || cpp || neko) && fullunsafe) 
@@ -541,6 +580,15 @@ class Object { // this implementation may improve with typed array access
 		public static var nativeFloats:Bool=false; 	
 	#end
 
+#if abstractobjects
+	public inline function len():Int {
+		return this.length;
+	}
+	public inline function uniqueRef():Int {
+		Console.naclWrite("uniqueRef!");
+		return 0; // TODO
+	}
+#else
 	private var dVec4:haxe.ds.Vector<Dynamic>; // on 4-byte boundaries 
 	#if (js && fullunsafe) // native memory access (nearly)
 		private var arrayBuffer:js.html.ArrayBuffer;
@@ -550,14 +598,25 @@ class Object { // this implementation may improve with typed array access
 	#else // fullunsafe position is to allow unsafe pointers, and therefore run slowly...
 		private var byts:haxe.io.Bytes;
 	#end
-	public var length:Int;
-	public var uniqueRef:Int; // to give pointers a unique numerical value
-
+	public inline function len():Int {
+		return length;
+	}
+	private var length:Int;
+	public inline function uniqueRef():Int {
+		return uRef;
+	}
+	private var uRef:Int; // to give pointers a unique numerical value
+#end
 	private static var uniqueCount:Int=0;
 	#if godebug
 		public static var memory = new Map<Int,Object>();
 	#end
 
+#if abstractobjects
+  	inline public function new(v:haxe.ds.Vector<Dynamic>) {
+    	this = v;
+  	}
+#else
 	public function new(byteSize:Int,?bytes:haxe.io.Bytes){ // size is in bytes
 		dVec4 = new haxe.ds.Vector<Dynamic>(1+(byteSize>>2)); // +1 to make sure non-zero
 		if(bytes!=null) byteSize = bytes.length;
@@ -581,16 +640,27 @@ class Object { // this implementation may improve with typed array access
 		#end
 		length = byteSize;
 		uniqueCount += 1;
-		uniqueRef = uniqueCount;
+		uRef = uniqueCount;
 		#if godebug
-			memory.set(uniqueRef,this);
+			memory.set(uniqueRef(),this);
+		#end
+		#if nonulltests
+			#if (js || php || neko ) 
+				for(i in 0...length)
+					set_uint8(i,0); 
+			#end
 		#end
 	}
+#end
 	public function getBytes():haxe.io.Bytes {
 		#if (js && fullunsafe)
 			var byts = haxe.io.Bytes.alloc(length);
 			for(i in 0 ... length) 
 				byts.set(i,get_uint8(i));
+		#elseif abstractobjects
+			var byts = haxe.io.Bytes.alloc(this.length);
+			for(i in 0 ... this.length) 
+				byts.set(i,this[i]);
 		#elseif !fullunsafe
 			var byts = haxe.io.Bytes.alloc(length);
 			for(i in 0 ... length) 
@@ -608,7 +678,7 @@ class Object { // this implementation may improve with typed array access
 		return this; // to allow use without a temp var
 	}
 	public function isEqual(off:Int,target:Object,tgtOff:Int):Bool { // TODO check if correct, used by interface{} value comparison
-		if((this.length-off)!=(target.length-tgtOff)) return false;
+		if((this.length-off)!=(target.len()-tgtOff)) return false;
 		for(i in 0...(this.length-off)) {
 			if((i+off)&3==0){
 				var a:Dynamic=this.get(i+off);
@@ -640,6 +710,35 @@ class Object { // this implementation may improve with typed array access
  			#if fullunsafe
 				if(this.get_uint8(i+off)!=target.get_uint8(i+tgtOff))
 					return false;
+ 			#elseif abstractobjects
+ 				var ths=this.get(i+off);
+ 				var tgt=target.get(i+tgtOff);
+				if(ths!=tgt) 
+					if(ths==null)
+						if(Std.is(tgt,Int))
+							return cast(tgt,Int)!=0;
+						else
+							if(Std.is(tgt,Float))
+								return cast(tgt,Float)!=0;
+							else
+								if(Std.is(tgt,Bool))
+									return cast(tgt,Bool)!=false;
+								else
+									return false;
+					else
+						if(tgt==null)
+							if(Std.is(ths,Int))
+								return cast(ths,Int)!=0;
+							else
+								if(Std.is(ths,Float))
+									return cast(ths,Float)!=0;
+								else
+									if(Std.is(ths,Bool))
+										return cast(ths,Bool)!=false;
+									else
+										return false;
+						else
+							return false;
 			#else
 				if(this.get_uint32(i+off)!=target.get_uint32(i+tgtOff))
 					return false;
@@ -648,7 +747,7 @@ class Object { // this implementation may improve with typed array access
 		return true;
 	}
 	public static inline function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
-		if(size<=0||src==null) return;
+		if(size>0&&src!=null) {
 `
 	if pogo.DebugFlag {
 		objClass += `
@@ -709,11 +808,14 @@ class Object { // this implementation may improve with typed array access
 					d+=1;
 				}
 			}
+		#elseif abstractobjects
+			haxe.ds.Vector.blit(src,srcPos, dest, destPos, size); 
 		#else //if !fullunsafe
 			if((size>>2)>0)
 				haxe.ds.Vector.blit(src.dVec4,srcPos>>2, dest.dVec4, destPos>>2, size>>2); 
 			haxe.ds.Vector.blit(src.iVec,srcPos, dest.iVec, destPos, size); 
 		#end
+		} // end of: if(size>0&&src!=null) {
 	}
 	public inline function get_object(size:Int,from:Int):Object { // TODO SubObj class that is effectively a pointer?
 		var so:Object = make(size);
@@ -730,14 +832,21 @@ class Object { // this implementation may improve with typed array access
 		objBlit(from,0,this,to,size);
 	}
 	public inline function copy():Object{
-		return this.get_object(length,0);
+		return get_object(len(),0);
 	}
 	public inline function get(i:Int):Dynamic {
+		#if abstractobjects
+			return this[i];
+		#else
 			return dVec4[i>>2];
+		#end
 	}
 	public inline function get_bool(i:Int):Bool { 
 		#if (js && fullunsafe)
 			return dView.getUint8(i)==0?false:true;
+		#elseif abstractobjects
+			if(this[i]==null) return false; 
+			return this[i];
 		#elseif !fullunsafe
 			var r:Int=iVec[i]; 
 			#if (js || php || neko ) 
@@ -752,9 +861,10 @@ class Object { // this implementation may improve with typed array access
 	public inline function get_int8(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getInt8(i);
+		#elseif abstractobjects
+			#if (js || php || neko ) return this[i]==null?0:0|this[i]; #else return this[i]; #end
 		#elseif !fullunsafe
-			var r:Int=iVec[i]; 
-			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+			#if ((js || php || neko )&&!nonulltests) return iVec[i]==null?0:0|iVec[i]; #else return iVec[i]; #end
 		#else
 			return Force.toInt8(byts.get(i));
 		#end
@@ -762,9 +872,10 @@ class Object { // this implementation may improve with typed array access
 	public inline function get_int16(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getInt16(i,true); // little-endian
+		#elseif abstractobjects
+			#if (js || php || neko ) return this[i]==null?0:0|this[i]; #else return this[i]; #end
 		#elseif !fullunsafe
-			var r:Int=iVec[i]; 
-			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+			#if ((js || php || neko )&&!nonulltests) return iVec[i]==null?0:0|iVec[i]; #else return iVec[i]; #end
 		#else
 			return Force.toInt16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
@@ -772,9 +883,10 @@ class Object { // this implementation may improve with typed array access
 	public inline function get_int32(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getInt32(i,true); // little-endian
+		#elseif abstractobjects
+			#if (js || php || neko ) return this[i]==null?0:0|this[i]; #else return this[i]; #end
 		#elseif !fullunsafe
-			var r:Int=iVec[i]; 
-			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+			#if ((js || php || neko )&&!nonulltests) return iVec[i]==null?0:0|iVec[i]; #else return iVec[i]; #end
 		#else
 			return Force.toInt32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st			
 		#end
@@ -790,9 +902,10 @@ class Object { // this implementation may improve with typed array access
 	public inline function get_uint8(i:Int):Int { 
 		#if (js && fullunsafe)
 			return dView.getUint8(i);
+		#elseif abstractobjects
+			#if (js || php || neko ) return this[i]==null?0:0|this[i]; #else return this[i]; #end
 		#elseif !fullunsafe
-			var r:Int=iVec[i]; 
-			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+			#if ((js || php || neko )&&!nonulltests) return iVec[i]==null?0:0|iVec[i]; #else return iVec[i]; #end
 		#else 
 			return Force.toUint8(byts.get(i));
 		#end
@@ -800,9 +913,10 @@ class Object { // this implementation may improve with typed array access
 	public inline function get_uint16(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getUint16(i,true); // little-endian
+		#elseif abstractobjects
+			#if (js || php || neko ) return this[i]==null?0:0|this[i]; #else return this[i]; #end
 		#elseif !fullunsafe
-			var r:Int=iVec[i]; 
-			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+			#if ((js || php || neko )&&!nonulltests) return iVec[i]==null?0:0|iVec[i]; #else return iVec[i]; #end
 		#else
 			return Force.toUint16((get_uint8(i+1)<<8)|get_uint8(i)); // little end 1st
 		#end
@@ -810,9 +924,10 @@ class Object { // this implementation may improve with typed array access
 	public inline function get_uint32(i:Int):Int {
 		#if (js && fullunsafe)
 			return dView.getUint32(i,true); // little-endian
+		#elseif abstractobjects
+			#if (js || php || neko ) return this[i]==null?0:0|this[i]; #else return this[i]; #end
 		#elseif !fullunsafe
-			var r:Int=iVec[i]; 
-			#if (js || php || neko ) return r==null?0:0|r; #else return r; #end
+			#if ((js || php || neko )&&!nonulltests) return iVec[i]==null?0:0|iVec[i]; #else return iVec[i]; #end
 		#else
 			return Force.toUint32((get_uint16(i+2)<<16)|get_uint16(i)); // little end 1st
 		#end
@@ -862,14 +977,20 @@ class Object { // this implementation may improve with typed array access
 		return r==null?"":Std.string(r);
 	}
 	public inline function set(i:Int,v:Dynamic):Void { 
-		dVec4[i>>2]=v;
+		#if abstractobjects
+			this[i]=v;
+		#else
+			dVec4[i>>2]=v;
+		#end
 	}
 	public inline function set_bool(i:Int,v:Bool):Void { 
 		#if (js && fullunsafe)
 			dView.setUint8(i,v?1:0);
+		#elseif abstractobjects
+			set(i,v);//this[i]=v?1:null;
 		#elseif !fullunsafe
 			iVec[i]=v?1:0;
-			#if (js || php || neko ) 
+			#if ((js || php || neko ) &&!nonulltests)
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
 		#else
@@ -879,9 +1000,11 @@ class Object { // this implementation may improve with typed array access
 	public inline function set_int8(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt8(i,v);
+		#elseif abstractobjects
+			set(i,v);//this[i]=v==0?null:v;
 		#elseif !fullunsafe
 			iVec[i]=v;
-			#if (js || php || neko ) 
+			#if ((js || php || neko ) &&!nonulltests)
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
 		#else
@@ -891,9 +1014,11 @@ class Object { // this implementation may improve with typed array access
 	public inline function set_int16(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt16(i,v,true); // little-endian
+		#elseif abstractobjects
+			set(i,v);//this[i]=v==0?null:v;
 		#elseif !fullunsafe
 			iVec[i]=v;
-			#if (js || php || neko ) 
+			#if ((js || php || neko ) &&!nonulltests)
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
 		#else
@@ -904,10 +1029,13 @@ class Object { // this implementation may improve with typed array access
 	public inline function set_int32(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setInt32(i,v,true); // little-endian
+		#elseif abstractobjects
+			set(i,v);//this[i]=v==0?null:v;
 		#elseif !fullunsafe
-			iVec[i]=v;
-			#if (js || php || neko ) 
-				if(iVec[i]==0) iVec[i]=null; 
+			#if ((js || php || neko ) &&!nonulltests)
+				iVec[i]=v==0?null:v; 
+			#else
+				iVec[i]=v;
 			#end
 		#else
 			set_int16(i,v);
@@ -916,12 +1044,8 @@ class Object { // this implementation may improve with typed array access
 	}
 	public inline function set_int64(i:Int,v:GOint64):Void { 
 		#if !fullunsafe
-			#if (js || php || neko ) 
-				if(GOint64.isZero(v)) 	set(i,null);
-				else					set(i,v);  
-			#else
-				set(i,v);
-			#end
+			if(GOint64.isZero(v)) 	set(i,null);
+			else					set(i,v);  
 		#else
 			set_uint32(i,GOint64.getLow(v));
 			set_uint32(i+4,GOint64.getHigh(v));
@@ -930,9 +1054,11 @@ class Object { // this implementation may improve with typed array access
 	public inline function set_uint8(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint8(i,v);
+		#elseif abstractobjects
+			set(i,v);//this[i]=v==0?null:v;
 		#elseif !fullunsafe
 			iVec[i]=v;
-			#if (js || php || neko ) 
+			#if ((js || php || neko ) &&!nonulltests)
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
 		#else
@@ -942,9 +1068,11 @@ class Object { // this implementation may improve with typed array access
 	public inline function set_uint16(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint16(i,v,true); // little-endian
+		#elseif abstractobjects
+			set(i,v);//this[i]=v==0?null:v;
 		#elseif !fullunsafe
 			iVec[i]=v;
-			#if (js || php || neko ) 
+			#if ((js || php || neko ) &&!nonulltests)
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
 		#else
@@ -955,9 +1083,11 @@ class Object { // this implementation may improve with typed array access
 	public inline function set_uint32(i:Int,v:Int):Void { 
 		#if (js && fullunsafe)
 			dView.setUint32(i,v,true); // little-endian
+		#elseif abstractobjects
+			set(i,v);//this[i]=v==0?null:v;
 		#elseif !fullunsafe
 			iVec[i]=v;
-			#if (js || php || neko ) 
+			#if ((js || php || neko ) &&!nonulltests)
 				if(iVec[i]==0) iVec[i]=null; 
 			#end
 		#else
@@ -977,11 +1107,15 @@ class Object { // this implementation may improve with typed array access
 	public inline function set_uintptr(i:Int,v:Dynamic):Void { 
 		if(Std.is(v,Int)) {
 			set(i,Force.toUint32(v)); // make sure we only store 32 bits if int
-			set_uint32(i,v); // also write through to ordinary memory if the type is Int
+			#if !abstractobjects
+				set_uint32(i,v); // also write through to ordinary memory if the type is Int
+			#end
 			return;
 		}
 		set(i,v);
-		set_uint32(i,0); // value overwritten
+		#if !abstractobjects
+			set_uint32(i,0); // value overwritten
+		#end
 	}
 	public static var MinFloat64:Float = -1.797693134862315708145274237317043567981e+308; // 2**1023 * (2**53 - 1) / 2**52
 	public inline function set_float32(i:Int,v:Float):Void {
@@ -1052,8 +1186,12 @@ class Object { // this implementation may improve with typed array access
 		var ret:String =  "{";
 		for(i in 0...count){
 			if(i>0) ret = ret + ",";
-			if((addr)&3==0) ret += str(get(addr));
-			ret = ret+"<"+Std.string(get_uint8(addr))+">";
+			#if abstractobjects
+				ret += str(get(addr));
+			#else
+				if((addr)&3==0) ret += str(get(addr));
+				ret = ret+"<"+Std.string(get_uint8(addr))+">";
+			#end
 			addr = addr+1;
 		}
 		return ret+"}";
@@ -1070,25 +1208,24 @@ class Pointer {
 `
 	if pogo.DebugFlag {
 		ptrClass += `
-	public function new(from:Object){
+	public function new(from:Object,offset:Int){
 		if(from==null) Scheduler.panicFromHaxe("attempt to make a new Pointer from a nil object");
 `
 	} else {
 		ptrClass += `
-	public function new(from:Object){
+	public #if inlinepointers inline #end function new(from:Object,offset:Int){
 `
 	}
 	ptrClass += `		obj = from; 
-		#if (js || neko || php)
-			off = 0; // to stop it being null
-		#end
+	off = offset;
 	}
 	public function len(){
 		if(obj==null) return 0;
-		return obj.length-off;
+		return obj.len()-off;
 	}
 	public function hashInt():Int {
-		var r = ((obj.uniqueRef&0xffff)<<16) | (off&0xffff); // hash value for a pointer
+		var ur:Int=obj.uniqueRef();
+		var r = ((ur&0xffff)<<16) | (off&0xffff); // hash value for a pointer
 		//trace("DEBUG Pointer.hashInt="+Std.string(r)+" this="+this.toUniqueVal());
 		return r;
 	}
@@ -1115,101 +1252,98 @@ class Pointer {
 		`	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
 		if(p1==p2) return true; // simple case of being the same haxe object
 		if(p1==null || p2==null) return false; // one of them is null (if above handles both null)
-		if(p1.obj.uniqueRef==p2.obj.uniqueRef && p1.off==p2.off) return true; // point to same object & offset
+		if(p1.obj.uniqueRef()==p2.obj.uniqueRef() && p1.off==p2.off) return true; // point to same object & offset
 		return false;
 	}
 	public static inline function make(from:Object):Pointer {
-		return new Pointer(from);
+		return new Pointer(from,0);
 	} 
-	public function addr(byteOffset:Int):Pointer {
-		if(byteOffset==0) return this;
-		var ret:Pointer=make(this.obj);
-		ret.off = this.off+byteOffset;
-		return ret;
+	public #if inlinepointers inline #end function addr(byteOffset:Int):Pointer {
+		return byteOffset==0?this:new Pointer(obj,off+byteOffset);
 	}
 	public inline function fieldAddr(byteOffset:Int):Pointer {
-		return this.addr(byteOffset);
+		return addr(byteOffset);
 	}
 	public inline function copy():Pointer {
 		return this;
 	}
-	public function load_object(sz:Int):Object { 
+	public #if inlinepointers inline #end function load_object(sz:Int):Object { 
 		return obj.get_object(sz,off);
 	}
-	public function load():Dynamic {
+	public #if inlinepointers inline #end function load():Dynamic {
 		return obj.get(off);
 	}
-	public function load_bool():Bool { 
+	public #if inlinepointers inline #end function load_bool():Bool { 
 		return obj.get_bool(off);
 	}
-	public function load_int8():Int { 
+	public #if inlinepointers inline #end function load_int8():Int { 
 		return obj.get_int8(off);
 	}
-	public function load_int16():Int { 
+	public #if inlinepointers inline #end function load_int16():Int { 
 		return obj.get_int16(off);
 	}
-	public function load_int32():Int {
+	public #if inlinepointers inline #end function load_int32():Int {
 		return obj.get_int32(off);
 	}
-	public function load_int64():GOint64 { 
+	public #if inlinepointers inline #end function load_int64():GOint64 { 
 		return obj.get_int64(off);
 	} 
-	public function load_uint8():Int { 
+	public #if inlinepointers inline #end function load_uint8():Int { 
 		return obj.get_uint8(off);
 	}
-	public function load_uint16():Int {
+	public #if inlinepointers inline #end function load_uint16():Int {
 		return obj.get_uint16(off);
 	}
-	public function load_uint32():Int {
+	public #if inlinepointers inline #end function load_uint32():Int {
 		return obj.get_uint32(off);
 	}
-	public function load_uint64():GOint64 { 
+	public #if inlinepointers inline #end function load_uint64():GOint64 { 
 		return obj.get_uint64(off);
 	} 
-	public function load_uintptr():Dynamic { 
+	public #if inlinepointers inline #end function load_uintptr():Dynamic { 
 		return obj.get_uintptr(off);
 	} 
-	public function load_float32():Float { 
+	public #if inlinepointers inline #end function load_float32():Float { 
 		return obj.get_float32(off);
 	}
-	public function load_float64():Float { 
+	public #if inlinepointers inline #end function load_float64():Float { 
 		return obj.get_float64(off);
 	}
-	public function load_complex64():Complex {
+	public #if inlinepointers inline #end function load_complex64():Complex {
 		return obj.get_complex64(off);
 	}
-	public function load_complex128():Complex { 
+	public #if inlinepointers inline #end function load_complex128():Complex { 
 		return obj.get_complex128(off);
 	}
-	public function load_string():String { 
+	public #if inlinepointers inline #end function load_string():String { 
 		return obj.get_string(off);
 	}
-	public function store_object(sz:Int,v:Object):Void {
+	public #if inlinepointers inline #end function store_object(sz:Int,v:Object):Void {
 		obj.set_object(sz,off,v);
 	}
-	public function store(v:Dynamic):Void {
+	public #if inlinepointers inline #end function store(v:Dynamic):Void {
 		obj.set(off,v);
 	}
-	public function store_bool(v:Bool):Void { obj.set_bool(off,v); }
-	public function store_int8(v:Int):Void { obj.set_int8(off,v); }
-	public function store_int16(v:Int):Void { obj.set_int16(off,v); }
-	public function store_int32(v:Int):Void { obj.set_int32(off,v); }
-	public function store_int64(v:GOint64):Void { obj.set_int64(off,v); }  
-	public function store_uint8(v:Int):Void { obj.set_uint8(off,v); }
-	public function store_uint16(v:Int):Void { obj.set_uint16(off,v); }
-	public function store_uint32(v:Int):Void { obj.set_uint32(off,v); }
-	public function store_uint64(v:GOint64):Void { obj.set_uint64(off,v); } 
-	public function store_uintptr(v:Dynamic):Void { obj.set_uintptr(off,v); }
-	public function store_float32(v:Float):Void { obj.set_float32(off,v); }
-	public function store_float64(v:Float):Void { obj.set_float64(off,v); }
-	public function store_complex64(v:Complex):Void { obj.set_complex64(off,v); }
-	public function store_complex128(v:Complex):Void { obj.set_complex128(off,v); }
-	public function store_string(v:String):Void { obj.set_string(off,v); }
-	public function toString(sz:Int=-1):String {
+	public #if inlinepointers inline #end function store_bool(v:Bool):Void { obj.set_bool(off,v); }
+	public #if inlinepointers inline #end function store_int8(v:Int):Void { obj.set_int8(off,v); }
+	public #if inlinepointers inline #end function store_int16(v:Int):Void { obj.set_int16(off,v); }
+	public #if inlinepointers inline #end function store_int32(v:Int):Void { obj.set_int32(off,v); }
+	public #if inlinepointers inline #end function store_int64(v:GOint64):Void { obj.set_int64(off,v); }  
+	public #if inlinepointers inline #end function store_uint8(v:Int):Void { obj.set_uint8(off,v); }
+	public #if inlinepointers inline #end function store_uint16(v:Int):Void { obj.set_uint16(off,v); }
+	public #if inlinepointers inline #end function store_uint32(v:Int):Void { obj.set_uint32(off,v); }
+	public #if inlinepointers inline #end function store_uint64(v:GOint64):Void { obj.set_uint64(off,v); } 
+	public #if inlinepointers inline #end function store_uintptr(v:Dynamic):Void { obj.set_uintptr(off,v); }
+	public #if inlinepointers inline #end function store_float32(v:Float):Void { obj.set_float32(off,v); }
+	public #if inlinepointers inline #end function store_float64(v:Float):Void { obj.set_float64(off,v); }
+	public #if inlinepointers inline #end function store_complex64(v:Complex):Void { obj.set_complex64(off,v); }
+	public #if inlinepointers inline #end function store_complex128(v:Complex):Void { obj.set_complex128(off,v); }
+	public #if inlinepointers inline #end function store_string(v:String):Void { obj.set_string(off,v); }
+	public #if inlinepointers inline #end function toString(sz:Int=-1):String {
 		return " &{ "+obj.toString(off,sz)+" } ";
 	}
 	public function toUniqueVal():String {
-		return "&<"+Std.string(obj.uniqueRef)+":"+Std.string(off)+">";
+		return "&<"+Std.string(obj.uniqueRef())+":"+Std.string(off)+">";
 	}
 }
 `)
@@ -1226,11 +1360,10 @@ class Slice {
 	inline function get_length():Int {
 		return end-start;
 	}
-	public static function nullLen(s:Slice):Int{
+	public static #if inlinepointers inline #end function nullLen(s:Slice):Int{
 		if(s==null) return 0;
-		return s.length;
+		else return s.length;
 	}
-
 	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) { 
 		baseArray = fromArray;
 		itemSize = isz;
@@ -1258,9 +1391,11 @@ class Slice {
 		return fromBytes(haxe.Resource.getBytes(name));
 	}
 	public static function fromBytes(res:haxe.io.Bytes):Slice {
-		var obj = res==null?Object.make(0):new Object(res.length,res); // recycling not possible with 2nd one
+		var obj = res==null?Object.make(0):Object.make(res.length,res); 
 		var ptr = Pointer.make(obj);
-		return new Slice(ptr,0,-1,res==null?0:res.length,1); // []byte
+		var ret = new Slice(ptr,0,-1,res==null?0:res.length,1); // []byte
+		obj=null;ptr=null;
+		return ret;
 	}
 	public function subSlice(low:Int, high:Int):Slice {
 		if(high==-1) high = length; //default upper bound is the length of the current slice
@@ -1286,6 +1421,7 @@ class Slice {
 				Object.objBlit(newEnt.baseArray.obj,newEnt.itemOff(i)+newEnt.baseArray.off,
 					retEnt.baseArray.obj,retEnt.itemOff(offset+i)+retEnt.baseArray.off,oldEnt.itemSize);
 			}
+			oldEnt=null;newEnt=null;
 			return retEnt;
 		}else{
 			var newLen = oldEnt.length+newEnt.len();
@@ -1302,7 +1438,10 @@ class Slice {
 				Object.objBlit(newEnt.baseArray.obj,newEnt.itemOff(i)+newEnt.baseArray.off,
 					newObj,(oldEnt.length*oldEnt.itemSize)+(i*oldEnt.itemSize),oldEnt.itemSize);
 			}
-			return new Slice(Pointer.make(newObj),0,newLen,newCap,oldEnt.itemSize);
+			var ptr = Pointer.make(newObj);
+			var ret = new Slice(ptr,0,newLen,newCap,oldEnt.itemSize);
+			oldEnt=null;newEnt=null;newObj=null;ptr=null;
+			return ret;
 		}
 	}
 	public static function copy(target:Slice,source:Slice):Int{ 
@@ -1340,6 +1479,12 @@ class Slice {
 			}
 		}
 		return copySize;
+	}
+	public function param(idx:Int):Dynamic { // special case for .hx pseudo functions
+		var ptr=itemAddr(idx);
+		var ret=ptr.load();
+		ptr=null;
+		return ret;
 	}
 	//public inline function getAt(idx:Int):Dynamic {
 	//	//if (idx<0 || idx>=(end-start)) Scheduler.panicFromHaxe("Slice index out of range for getAt()");
@@ -1381,22 +1526,25 @@ class Slice {
 `
 	} else { // TODO should this function be inline?
 		sliceClass += `
-		public function itemAddr(idx:Int):Pointer {
+		public #if inlinepointers inline #end function itemAddr(idx:Int):Pointer {
 	`
 	}
 	sliceClass += `
-		return baseArray.addr(itemOff(idx));
+		return new Pointer(baseArray.obj,baseArray.off+itemOff(idx));
 	}
 	private inline function itemOff(idx:Int):Int {
 		return (idx+start)*itemSize;
 	}
 	public function toString():String {
 		var ret:String = "Slice{[";
+		var ptr:Pointer;
 		if(baseArray!=null) 
 			for(i in start...end) {
 				if(i!=start) ret += ",";
-				ret+=baseArray.addr(i*itemSize).toString(itemSize); // only works for basic types
+				ptr=baseArray.addr(i*itemSize);
+				ret+=ptr.toString(itemSize); // only works for basic types
 			}
+		ptr=null;
 		return ret+"]}";
 	}
 }
@@ -1837,7 +1985,8 @@ public static function ofUFloat(v:Float):HaxeInt64abs { // float to un-signed in
 		var lowBits:Int = Math.floor(lowTop16)<<16 | Math.floor(lowBot16);
 		return HaxeInt64Typedef.make(highBits,lowBits);
 }
-public static inline function make(h:Int,l:Int):HaxeInt64abs {
+public static #if !(cs||java) inline #end function make(h:Int,l:Int):HaxeInt64abs { 
+// NOTE cs & java have problems inlining the '0xffffffffL' constant
 		return new HaxeInt64abs(HaxeInt64Typedef.make(h,l));
 }
 public static inline function toString(v:HaxeInt64abs):String {
@@ -2311,6 +2460,15 @@ public function new(gr:Int,ph:Int,name:String){
 	// TODO optionally profile function entry here
 }
 
+public inline function nullOnExitSF(){
+	_functionName=null;
+	_deferStack=null;
+	_debugVars=null;
+	#if godebug
+		_debugVarsLast=null;
+	#end
+}
+
 public function setLatest(ph:Int,blk:Int){ // this can be done inline, but generates too much code
 	_latestBlock=blk;
 	this.setPH(ph);
@@ -2501,6 +2659,7 @@ public var _deferStack:List<StackFrame>;
 public var _debugVars:Map<String,Dynamic>;
 function run():StackFrame; // function state machine (set up by each Go function Haxe class)
 function res():Dynamic; // function result (set up by each Go function Haxe class)
+function nullOnExitSF():Void; // call this when exiting the function
 }
 `)
 	pogo.WriteAsClass("Scheduler", `
@@ -2509,7 +2668,7 @@ class Scheduler { // NOTE this code requires a single-thread, as there is no loc
 // public
 public static var doneInit:Bool=false; // flag to limit go-routines to 1 during the init() processing phase
 // private
-static var grStacks:Array<List<StackFrame>>=new Array<List<StackFrame>>(); 
+static var grStacks:Array<Array<StackFrame>>=new Array<Array<StackFrame>>(); // was Array<List
 static var grInPanic:Array<Bool>=new Array<Bool>();
 static var grPanicMsg:Array<Interface>=new Array<Interface>();
 static var panicStackDump:String="";
@@ -2552,11 +2711,16 @@ static function hashesEqual(a:Array<Null<Int>>,b:Array<Null<Int>>):Bool{
 static function makeStateHash():Array<Null<Int>> { // TODO this is very ugly, and probably slow, so improve by checking for change on the fly?
 	var hash=new Array<Null<Int>>();
 	for( gr in 0 ... grStacks.length){
+		/* was:
 		var first = grStacks[gr].first();
 		if(first==null)
 			hash[gr] = null;
 		else
 			hash[gr] = first._functionPH + first._Next;
+		*/
+		for(ent in 0 ... grStacks[gr].length){
+			hash[gr] += grStacks[gr][ent]._functionPH ;
+		}
 	}
 	//trace("makeStateHash()="+hash);
 	return hash;
@@ -2570,7 +2734,7 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 	}
 
 	// special handling for goroutine 0, which is used in the initialisation phase and re-entrantly, where only one goroutine may operate		
-	if(grStacks[0].isEmpty()) { // check if there is ever likley to be anything to do
+	if(grStacks[0].length==0/*grStacks[0].isEmpty()*/) { // check if there is ever likley to be anything to do
 		if(grStacks.length<=1) { 
 			throw "Scheduler: there is only one goroutine and its stack is empty\n"+stackDump();		
 		}
@@ -2578,16 +2742,16 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 		runOne(0,entryCount);
 	}
 
-	if(doneInit  && entryCount==1 ) {	 // don't run extra goroutines when we are re-entrant or have not finished initialistion
+	if(doneInit && entryCount==1 ) {	 // don't run extra goroutines when we are re-entrant or have not finished initialistion
 									     // NOTE this means that Haxe->Go->Haxe->Go code cannot run goroutines 
 		for(cg in 1...grStacks.length) { // length may grow during a run through, NOTE goroutine 0 not run again
-			if(!grStacks[cg].isEmpty()) {
+			if(grStacks[cg].length>0 /*!grStacks[cg].isEmpty()*/) {
 				runOne(cg,entryCount);
 			}
 		}
 		// prune the list of goroutines only at the end (goroutine numbers are in the stack frames, so can't be altered) 
 		while(grStacks.length>1){
-			if(grStacks[grStacks.length-1].isEmpty())
+			if(grStacks[grStacks.length-1].length==0/*grStacks[grStacks.length-1].isEmpty()*/)
 				grStacks.pop();
 			else
 				break;
@@ -2602,7 +2766,7 @@ static inline function runOne(gr:Int,entryCount:Int){ // called from above to ca
 				run1(gr);
 		} else {
 			while(grInPanic[gr]){
-				if(grStacks[gr].isEmpty()){
+				if(grStacks[gr].length==0/*grStacks[gr].isEmpty()*/){
 					 Console.naclWrite("Panic in goroutine "+gr+"\n"+panicStackDump); // use stored stack dump
 					 throw "Go panic";
 				} else {
@@ -2633,35 +2797,36 @@ static inline function runOne(gr:Int,entryCount:Int){ // called from above to ca
 	}
 }
 public static inline function run1(gr:Int){ // used by callFromRT() for every go function
-		if(grStacks[gr].first()==null) { 
-			throw "Panic:"+grPanicMsg+"\nScheduler: null stack entry for goroutine "+gr+"\n"+stackDump();
-		} else {
+		//if(grStacks[gr][grStacks[gr].length-1]==null/*grStacks[gr].first()==null*/) { 
+		//	throw "Panic:"+grPanicMsg+"\nScheduler: null stack entry for goroutine "+gr+"\n"+stackDump();
+		//} else {
 			currentGR=gr;
-			grStacks[gr].first().run(); // run() may call haxe which calls these routines recursively 
-		}	
+			//grStacks[gr].first().run(); // run() may call haxe which calls these routines recursively 
+			grStacks[gr][grStacks[gr].length-1].run(); // run() may call haxe which calls these routines recursively 
+		//}	
 }
 public static function makeGoroutine():Int {
 	for (r in 1 ... grStacks.length) // goroutine zero is reserved for init activities, main.main() and Haxe call-backs
-		if(grStacks[r].isEmpty())
+		if(grStacks[r].length==0/*grStacks[r].isEmpty()*/)
 		{
 			grInPanic[r]=false;
 			grPanicMsg[r]=null;
 			return r;	// reuse a previous goroutine number if possible
 		}
 	var l:Int=grStacks.length;
-	grStacks[l]=new List<StackFrame>();
+	grStacks[l]=new Array<StackFrame>(); //new List<StackFrame>();
 	grInPanic[l]=false;
 	grPanicMsg[l]=null;
 	return l;
 }
 public static function pop(gr:Int):StackFrame {
-	if(gr>=grStacks.length||gr<0)
-		throw "Scheduler.pop() invalid goroutine";
+	//if(gr>=grStacks.length||gr<0)
+	//	throw "Scheduler.pop() invalid goroutine";
 	return grStacks[gr].pop();
 }
 public static function push(gr:Int,sf:StackFrame){
-	if(gr>=grStacks.length||gr<0)
-		throw "Scheduler.push() invalid goroutine";
+	//if(gr>=grStacks.length||gr<0)
+	//	throw "Scheduler.push() invalid goroutine";
 	grStacks[gr].push(sf);
 }
 public static inline function NumGoroutine():Int {
@@ -2677,13 +2842,16 @@ public static function stackDump():String {
 	ret += "runAll() entryCount="+entryCount+"\n";
 	for(gr in 0...grStacks.length) {
 		ret += "---\nGoroutine " + gr + " "+grPanicMsg[gr]+"\n"; //may need to unpack the interface
-		if(grStacks[gr].isEmpty()) {
+		if(grStacks[gr].length==0 /*grStacks[gr].isEmpty()*/) {
 			ret += "Stack is empty\n";
 		} else {
 			ret += "Stack has " +grStacks[gr].length+ " entries:\n";
-			var it=grStacks[gr].iterator();
-			while(it.hasNext()) {
-				var ent=it.next();
+			var e = grStacks[gr].length -1;
+			while( e >= 0){
+			//var it=grStacks[gr].iterator();
+			//while(it.hasNext()) {
+				//var ent=it.next();
+				var ent = grStacks[gr][e];
 				if(ent==null) {
 					ret += "\tStack entry is null\n";
 				} else {
@@ -2701,6 +2869,7 @@ public static function stackDump():String {
 						}
 					}
 				}
+				e -= 1;
 			}
 		}
 	}
@@ -2708,7 +2877,7 @@ public static function stackDump():String {
 }
 
 public static function getNumCallers(gr:Int):Int {
-	if(grStacks[gr].isEmpty()) {
+	if(grStacks[gr].length==0 /*grStacks[gr].isEmpty()*/) {
 		return 0;
 	} else {
 		return grStacks[gr].length;
@@ -2716,12 +2885,15 @@ public static function getNumCallers(gr:Int):Int {
 }
 
 public static function getCallerX(gr:Int,x:Int):Int {
-	if(grStacks[gr].isEmpty()) {
+	if(grStacks[gr].length==0 /*grStacks[gr].isEmpty()*/) {
 		return 0; // error
 	} else {
-		var it=grStacks[gr].iterator();
-		while(it.hasNext()) {
-			var ent=it.next();
+		var e = grStacks[gr].length -1;
+		while(e >= 0){
+		//var it=grStacks[gr].iterator();
+		//while(it.hasNext()) {
+		//	var ent=it.next();
+			var ent=grStacks[gr][e];
 			if(x==0) {
 				if(ent==null) {
 					return 0; // this is an error 
@@ -2730,6 +2902,7 @@ public static function getCallerX(gr:Int,x:Int):Int {
 				}
 			}
 			x -= 1;
+			e -= 1;
 		}
 	}
 	return 0; // error
@@ -2748,7 +2921,7 @@ public static function panic(gr:Int,err:Interface){
 		panicStackDump=stackDump();
 		#if godebug
 			trace("GODEBUG: panic in goroutine "+Std.string(gr)+" message: "+err.toString());
-			var top = grStacks[gr].first();
+			var top = grStacks[gr][grStacks[gr].length-1] //grStacks[gr].first();
 			if(top!=null)
 				cast(top,StackFrameBasis).breakpoint();
 		#end
@@ -2761,7 +2934,7 @@ public static function recover(gr:Int):Interface{
 		return null;
 	#if godebug
 		trace("GODEBUG: recover in goroutine "+Std.string(gr)+" message: "+grPanicMsg[gr]);
-		var top = grStacks[gr].first();
+		var top = grStacks[gr][grStacks[gr].length-1] //grStacks[gr].first();
 		if(top!=null)
 			cast(top,StackFrameBasis).breakpoint();
 	#end
@@ -2789,7 +2962,7 @@ public static function htc(c:Dynamic,pos:Int) {
 	panicFromHaxe("Haxe try-catch exception <"+Std.string(c)+"> position "+Std.string(pos)+
 		" at or before: "+Go.CPos(pos));
 }
-public static function wraprangechk(val:Int,sz:Int) {
+public static #if inlinepointers inline #end function wraprangechk(val:Int,sz:Int) {
 	if((val<0)||(val>=sz)) ioor();
 }
 public static function unt():Dynamic {
@@ -2830,13 +3003,16 @@ class GOmap {
 			if(Std.is(a,String))
 				return a;
 			if(Std.is(a,Pointer))
-				return cast(a,Pointer).toUniqueVal();    
+				return cast(a,Pointer).toUniqueVal();  
+			// NOTE Object could be an abstract
+			#if !abstractobjects
 			if(Std.is(a,Object)){
 				//trace("DEBUG makeKey Object found");
 				var r=cast(a,Object).toString(); 
 				//trace("DEBUG makeKey Object="+r);
 				return r;
 			}
+			#end
 			if(Std.is(a,Complex)){
 				return Complex.toString(a);
 			}
@@ -2850,7 +3026,11 @@ class GOmap {
 				Scheduler.panicFromHaxe("haxeruntime.GOmap.makeKey() unsupported haxe type: "+a);
 				return "";
 			}
-			return GOint64.toString(a); // must be an Int64
+			#if abstractobjects
+				return a.toString(); // must be an Object or Int64
+			#else
+				return GOint64.toString(a);
+			#end
 		}
 		#if (cpp || cs)	
 			// in cpp & cs, Std.string(1.9999999999999998) => "2"

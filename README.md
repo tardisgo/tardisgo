@@ -6,7 +6,7 @@
 [![GoDoc](https://godoc.org/github.com/tardisgo/tardisgo?status.png)](https://godoc.org/github.com/tardisgo/tardisgo)
 [![status](https://sourcegraph.com/api/repos/github.com/tardisgo/tardisgo/badges/status.png)](https://sourcegraph.com/github.com/tardisgo/tardisgo)
 
-## Project status: alpha software, mostly working but not yet suitable for production work.
+## Project status: experimental alpha software, mostly working but not yet suitable for production work
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
@@ -58,7 +58,7 @@ haxe -main tardis.Go -cp tardis -D fullunsafe -js tardis/go-fu.js
 node < tardis/go-fu.js
 ```
 
-While on the subject of JS, the closure compiler seems to work, but only using the "SIMPLE_OPTIMIZATIONS" option.
+While on the subject of JS, the closure compiler seems to work, but only using the default "SIMPLE_OPTIMIZATIONS" option. It currently generates large numers of warnings.
 
 The in-memory filesystem used by the nacl target is implemented, it can be pre-loaded with files by using the haxe command line flag "-resource" with the name "local/file/path/a.txt@/nacl/file/path/a.txt" thus (for example in JS):
 ```
@@ -106,15 +106,24 @@ Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 ev
 
 ## Benchmarks
 
-Tabulating the [benchmarking](https://github.com/tardisgo/tardisgo-samples/blob/master/benchmarks) results, looking only at elapsed (rather than cpu) time in seconds, as a multiple of the Go time: 
+Tabulating the very simple indicative [benchmarking](https://github.com/tardisgo/tardisgo-samples/blob/master/benchmarks) results, looking only at elapsed (rather than cpu) time in seconds, as a multiple of the Go time: 
 
-| Test - of what functionality      | Go      | C++   | C#    | Java  | JS    | GopherJS |
-| --------------------------------- | ------- | ----- | ----- | ----- | ----- | -------- |
-| mandel.go - floating point        | (10.6s) | 2.5x  | 3.6x  | 4.1x  | 17.4x | 1.0x     |
-| fannkuch.go - array indexing      | (2.6s)  | 43.0x | 37.7x | 22.3x | 71.8x | 5.0x     |
-| binarytree.go - garbage collector | (8.3s)  | 39.3x | 38.1x | 4.4x  | 54.9x | 0.4x (!) |
+| Test - of what functionality               | Go      | C++   | C#    | Java  | JS    | GopherJS |
+| ------------------------------------------ | ------- | ----- | ----- | ----- | ----- | -------- |
+| mandel.go - floating point                 | (10.0s) | 1.8x  | 3.0x  | 5.4x  | 15.3x | 1.0x     |
+| fannkuch.go - array indexing               | (2.5s)  | 38.7x | 33.7x | 21.0x | 55.0x | 5.0x     |
+| fannkuch.go (using haxe -D inlinepointers) | (2.5s)  | 31.4x | 21.8x | 17.2x | 41.8x | 5.0x     |
+| binarytree.go - garbage collector          | (7.9s)  | 25.2x | 23.6x | 3.6x  | 22.9x | 0.4x (!) |
 
-Figures above as at 18 May 2015. Thankfully, there remains scope for further optimization.
+Figures above are the latest results as at 24th May 2015. 
+
+For comparison, the figures below are the previous results from 18th May 2015.
+
+| Test - of what functionality               | Go      | C++   | C#    | Java  | JS    | GopherJS |
+| ------------------------------------------ | ------- | ----- | ----- | ----- | ----- | -------- |
+| mandel.go - floating point                 | (10.6s) | 2.5x  | 3.6x  | 4.1x  | 17.4x | 1.0x     |
+| fannkuch.go - array indexing               | (2.6s)  | 43.0x | 37.7x | 22.3x | 71.8x | 5.0x     |
+| binarytree.go - garbage collector          | (8.3s)  | 39.3x | 38.1x | 4.4x  | 54.9x | 0.4x (!) |
 
 ## Unsupported Haxe targets: ActionScript, PHP, Python and Neko
 

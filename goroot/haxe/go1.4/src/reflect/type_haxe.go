@@ -468,7 +468,7 @@ func (t *rtype) String() string {
 		panic("reflect.*rtype.String() internal error: t is nil")
 		return ""
 	}
-	l := hx.CodeInt("", "cast(_a.itemAddr(0).load().val,Pointer).len();", t)
+	l := hx.CodeInt("", "cast(_a.param(0).val,Pointer).len();", t)
 	if l < 6 {
 		//println("DEBUG BAD *rtype len: ", t)
 		panic("reflect.*rtype.String() internal error: *t only has length " +

@@ -458,12 +458,12 @@ func (v Value) call(op string, in []Value) []Value {
 	//println("DEBUG fn", fn)
 	//println("DEBUG *fn", *(*uintptr)(fn), in, v)
 	boundVars := hx.GetDynamic("", "[]") // nothing bound by default
-	if hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Closure);", *(*uintptr)(fn)) {
-		boundVars = hx.CodeDynamic("", "_a.itemAddr(0).load().val.bds;", *(*uintptr)(fn))
+	if hx.CodeBool("", "Std.is(_a.param(0).val,Closure);", *(*uintptr)(fn)) {
+		boundVars = hx.CodeDynamic("", "_a.param(0).val.bds;", *(*uintptr)(fn))
 		//println("DEBUG found boundVars=", boundVars)
 	}
 	haxeArgs := hx.CodeDynamic("",
-		"var P=new Array<Dynamic>();P[0]=this._goroutine;P[1]=_a.itemAddr(0).load().val;P;",
+		"var P=new Array<Dynamic>();P[0]=this._goroutine;P[1]=_a.param(0).val;P;",
 		boundVars)
 	paramOff := 2
 	if rcvrtype != nil { // method
@@ -480,11 +480,11 @@ func (v Value) call(op string, in []Value) []Value {
 
 		if rcvrVal.Kind() == Interface { // don't take just the value
 			//println("DEBUG interface reciver ", rcvrVal.Interface())
-			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load();",
+			hx.Code("", "_a.param(0).val[_a.param(1).val]=_a.param(2);",
 				haxeArgs, paramOff, rcvrVal.Interface())
 		} else {
 			//println("DEBUG non-interface parameter ", rcvrVal.Interface())
-			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load().val;",
+			hx.Code("", "_a.param(0).val[_a.param(1).val]=_a.param(2).val;",
 				haxeArgs, paramOff, rcvrVal.Interface())
 		}
 		paramOff++
@@ -493,11 +493,11 @@ func (v Value) call(op string, in []Value) []Value {
 		v.mustBeExported()
 		if t.In(i).Kind() == Interface { // don't take just the value
 			//println("DEBUG interface parameter ", i, v.Interface())
-			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load();",
+			hx.Code("", "_a.param(0).val[_a.param(1).val]=_a.param(2);",
 				haxeArgs, paramOff+i, v.Interface())
 		} else {
 			//println("DEBUG non-interface parameter ", i, v.Interface())
-			hx.Code("", "_a.itemAddr(0).load().val[_a.itemAddr(1).load().val]=_a.itemAddr(2).load().val;",
+			hx.Code("", "_a.param(0).val[_a.param(1).val]=_a.param(2).val;",
 				haxeArgs, paramOff+i, v.Interface())
 		}
 	}
@@ -505,25 +505,25 @@ func (v Value) call(op string, in []Value) []Value {
 	//println("DEBUG haxeArgs", haxeArgs)
 	var haxeStackFrame uintptr // haxe Dynamic type
 	if rcvrtype != nil {       // method
-		if hx.CodeBool("", "Reflect.isFunction(_a.itemAddr(0).load().val);", *(*uintptr)(fn)) {
+		if hx.CodeBool("", "Reflect.isFunction(_a.param(0).val);", *(*uintptr)(fn)) {
 			//println("DEBUG method call to a function (rather than Closure) ",
 			//	*(*uintptr)(fn), haxeArgs)
 			haxeStackFrame = hx.CodeDynamic("",
-				"Closure.callFn(new Closure(_a.itemAddr(0).load().val,[]),_a.itemAddr(1).load().val);",
+				"Closure.callFn(new Closure(_a.param(0).val,[]),_a.param(1).val);",
 				*(*uintptr)(fn), haxeArgs)
 		} else {
 			println("DEBUG 2 method call", *(*uintptr)(fn), haxeArgs)
 			panic("method call to unknown type")
 			//haxeStackFrame = hx.CodeDynamic("",
-			//	"_a.itemAddr(0).load().val.methVal(_a.itemAddr(1).load().val,_a.itemAddr(2).load().val);",
+			//	"_a.param(0).val.methVal(_a.param(1).val,_a.param(2).val);",
 			//	*(*uintptr)(fn), rcvr.Interface(), haxeArgs)
 		}
 	} else {
 		haxeStackFrame = hx.CodeDynamic("",
-			"Closure.callFn(_a.itemAddr(0).load().val.load(), _a.itemAddr(1).load().val);",
+			"Closure.callFn(_a.param(0).val.load(), _a.param(1).val);",
 			fn, haxeArgs)
 	}
-	for hx.CodeBool("", "_a.itemAddr(0).load().val._incomplete;", haxeStackFrame) {
+	for hx.CodeBool("", "_a.param(0).val._incomplete;", haxeStackFrame) {
 		runtime.Gosched() // wait for the function to complete
 	}
 
@@ -533,7 +533,7 @@ func (v Value) call(op string, in []Value) []Value {
 		//println("DEBUG _res is void")
 	case 1:
 		_res := hx.CodeDynamic("",
-			"_a.itemAddr(0).load().val.res();", haxeStackFrame)
+			"_a.param(0).val.res();", haxeStackFrame)
 		//println("DEBUG _res[0]=", _res)
 		//println("DEBUG type[0]=", t.Out(0).String())
 		tv := t.Out(0)
@@ -552,7 +552,7 @@ func (v Value) call(op string, in []Value) []Value {
 		}
 	default:
 		_res := hx.CodeDynamic("",
-			"_a.itemAddr(0).load().val.res();", haxeStackFrame)
+			"_a.param(0).val.res();", haxeStackFrame)
 		//println("DEBUG _res[", nout, "]=", _res)
 		if hx.IsNull(_res) {
 			panic("reflect.Value.call() returned tuple is null")
@@ -563,7 +563,7 @@ func (v Value) call(op string, in []Value) []Value {
 			fieldName := "r" + hx.CallString("", "Std.string", 1, i)
 			//println("DEBUG fieldName:", fieldName)
 			fieldValue := hx.CodeDynamic("",
-				"Reflect.field(_a.itemAddr(0).load().val,_a.itemAddr(1).load().val);",
+				"Reflect.field(_a.param(0).val,_a.param(1).val);",
 				_res, fieldName)
 			//println("DEBUG fieldValue:", fieldValue)
 			if tv.Kind() == Interface {
@@ -791,7 +791,7 @@ func (v Value) Cap() int {
 		if v.ptr == nil {
 			return 0
 		}
-		return hx.CodeInt("", "var s=_a.itemAddr(0).load().val.load();s==null?0:s.cap();", v.ptr) //(*sliceHeader)(v.ptr).Cap
+		return hx.CodeInt("", "var s=_a.param(0).val.load();s==null?0:s.cap();", v.ptr) //(*sliceHeader)(v.ptr).Cap
 	}
 	panic(&ValueError{"reflect.Value.Cap", v.kind()})
 }
@@ -857,7 +857,7 @@ func (v Value) Elem() Value {
 		fl := v.flag&flagRO | flagIndir | flagAddr
 		fl |= flag(typ.Kind())
 
-		if !hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", uintptr(ptr)) {
+		if !hx.CodeBool("", "Std.is(_a.param(0).val,Pointer);", uintptr(ptr)) {
 			//println("DEBUG re-created pointer for non-pointer to ",
 			//	typ.Kind().String(), typ.String(), ptr)
 			var ei emptyInterface
@@ -898,7 +898,7 @@ func (v Value) Field(i int) Value {
 	// so v.ptr + field.offset is still okay.
 	//ptr:=unsafe.Pointer(uintptr(v.ptr) + field.offset)
 	ptr := unsafe.Pointer(hx.CodeDynamic("",
-		"_a.itemAddr(0).load().val.addr(_a.itemAddr(1).load().val);",
+		"_a.param(0).val.addr(_a.param(1).val);",
 		v.ptr, field.offset))
 	//println("DEBUG Field()", i, typ.Name(), typ.NumMethod(), ptr, fl)
 	return Value{typ, ptr, fl}
@@ -986,7 +986,7 @@ func (v Value) Index(i int) Value {
 		// so v.ptr + offset is still okay.
 		//val := unsafe.Pointer(uintptr(v.ptr) + offset)
 		val := unsafe.Pointer(hx.CodeDynamic("",
-			"_a.itemAddr(0).load().val.addr(_a.itemAddr(1).load().val);",
+			"_a.param(0).val.addr(_a.param(1).val);",
 			v.ptr, offset))
 		fl := v.flag&(flagRO|flagIndir|flagAddr) | flag(typ.Kind()) // bits same as overall array
 		return Value{typ, val, fl}
@@ -995,14 +995,14 @@ func (v Value) Index(i int) Value {
 		// Element flag same as Elem of Ptr.
 		// Addressable, indirect, possibly read-only.
 		//s := (*sliceHeader)(v.ptr)
-		if uint(i) >= uint(hx.CodeInt("", "_a.itemAddr(0).load().val.load().len();", v.ptr)) { //s.Len) {
+		if uint(i) >= uint(hx.CodeInt("", "_a.param(0).val.load().len();", v.ptr)) { //s.Len) {
 			panic("reflect: slice index out of range")
 		}
 		tt := (*sliceType)(unsafe.Pointer(v.typ))
 		typ := tt.elem
 		//val := unsafe.Pointer(uintptr(s.Data) + uintptr(i)*typ.size)
 		val := unsafe.Pointer(hx.CodeDynamic("",
-			"_a.itemAddr(0).load().val.load().itemAddr(_a.itemAddr(1).load().val);",
+			"_a.param(0).val.load().itemAddr(_a.param(1).val);",
 			v.ptr, i))
 		fl := flagAddr | flagIndir | v.flag&flagRO | flag(typ.Kind())
 		return Value{typ, val, fl}
@@ -1125,9 +1125,9 @@ func (v Value) IsNil() bool {
 		switch k {
 		case Chan, Map, Func:
 			p := uintptr(ptr)
-			for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", p) {
+			for hx.CodeBool("", "Std.is(_a.param(0).val,Pointer);", p) {
 				//println("DEBUG IsNil still a pointer for ", k.String())
-				p = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", p)
+				p = hx.CodeDynamic("", "_a.param(0).val.load();", p)
 			}
 			return hx.IsNull(p)
 		}
@@ -1137,7 +1137,7 @@ func (v Value) IsNil() bool {
 		if v.ptr == nil {
 			return true
 		}
-		return hx.CodeBool("", "cast(_a.itemAddr(0).load().val,Pointer).load()==null;", v.ptr)
+		return hx.CodeBool("", "cast(_a.param(0).val,Pointer).load()==null;", v.ptr)
 
 		// Both interface and slice are nil if first word is 0.
 		// Both are always bigger than a word; assume flagIndir.
@@ -1181,7 +1181,7 @@ func (v Value) Len() int {
 		if hx.IsNull(*(*uintptr)(unsafe.Pointer(v.ptr))) { // nil slice
 			return 0
 		}
-		return hx.CodeInt("", "_a.itemAddr(0).load().val.load().len();", v.ptr) //(*sliceHeader)(v.ptr).Len
+		return hx.CodeInt("", "_a.param(0).val.load().len();", v.ptr) //(*sliceHeader)(v.ptr).Len
 	case String:
 		// String is bigger than a word; assume flagIndir.
 		if v.ptr == nil {
@@ -1418,11 +1418,11 @@ func (v Value) Pointer() uintptr {
 		return uintptr(v.pointer())
 	case Slice:
 		//return (*SliceHeader)(v.ptr).Data
-		if hx.IsNull(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", v.ptr)) {
+		if hx.IsNull(hx.CodeDynamic("", "_a.param(0).val.load();", v.ptr)) {
 			return uintptr(unsafe.Pointer(nil))
 		}
 		return hx.CodeDynamic("",
-			"_a.itemAddr(0).load().val.load().len()==0?null:_a.itemAddr(0).load().val.load().itemAddr(0);",
+			"_a.param(0).val.load().len()==0?null:_a.param(0).val.load().itemAddr(0);",
 			v.ptr)
 	default:
 		//panic("reflect.value.Pointer not yet implemented for " + v.Kind().String())
@@ -1453,7 +1453,7 @@ func (v Value) Pointer() uintptr {
 
 	case Slice:
 		//return (*SliceHeader)(v.ptr).Data
-		return hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", v.ptr)
+		return hx.CodeDynamic("", "_a.param(0).val.load().itemAddr(0);", v.ptr)
 	}
 	panic(&ValueError{"reflect.Value.Pointer", v.kind()})
 }
@@ -1632,12 +1632,12 @@ func (v Value) SetLen(n int) {
 	v.mustBeAssignable()
 	v.mustBe(Slice)
 	//s := (*sliceHeader)(v.ptr)
-	if uint(n) > uint(hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr)) { //s.Cap) {
+	if uint(n) > uint(hx.CodeInt("", "_a.param(0).val.load().cap();", v.ptr)) { //s.Cap) {
 		panic("reflect: slice length out of range in SetLen")
 	}
 	//panic("reflect.value.SetLEN - not sure how to do: s.Len = " +
 	//	hx.CallString("", "Std.string", 1, n))
-	hx.Code("", "_a.itemAddr(0).load().val.load().setLen(_a.itemAddr(1).load().val);", v.ptr, n)
+	hx.Code("", "_a.param(0).val.load().setLen(_a.param(1).val);", v.ptr, n)
 }
 
 // SetCap sets v's capacity to n.
@@ -1649,8 +1649,8 @@ func (v Value) SetCap(n int) {
 	v.mustBe(Slice)
 	//s := (*sliceHeader)(v.ptr)
 	//if n < int(s.Len) || n > int(s.Cap) {
-	if n < hx.CodeInt("", "_a.itemAddr(0).load().val.load().len();", v.ptr) ||
-		n > hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr) {
+	if n < hx.CodeInt("", "_a.param(0).val.load().len();", v.ptr) ||
+		n > hx.CodeInt("", "_a.param(0).val.load().cap();", v.ptr) {
 		panic("reflect: slice capacity out of range in SetCap")
 	}
 	panic("reflect.value.SetLEN - not sure how to do: s.Cap = n") // TODO
@@ -1757,11 +1757,11 @@ func (v Value) Slice(i, j int) Value {
 	case Slice:
 		typ = (*sliceType)(unsafe.Pointer(v.typ))
 		//s := (*sliceHeader)(v.ptr)
-		base = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", v.ptr)) //unsafe.Pointer(s.Data)
+		base = unsafe.Pointer(hx.CodeDynamic("", "_a.param(0).val.load().itemAddr(0);", v.ptr)) //unsafe.Pointer(s.Data)
 		if base == nil {
 			cap = 0
 		} else {
-			cap = hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr) // s.Cap
+			cap = hx.CodeInt("", "_a.param(0).val.load().cap();", v.ptr) // s.Cap
 		}
 
 	case String:
@@ -1800,9 +1800,9 @@ func (v Value) Slice(i, j int) Value {
 		elemSize++ // make sure we have the correct size for the elements
 	}
 	hx.Code("",
-		"_a.itemAddr(0).load().val.store(new Slice("+
-			"_a.itemAddr(1).load().val,_a.itemAddr(2).load().val,_a.itemAddr(3).load().val,"+
-			"_a.itemAddr(4).load().val,_a.itemAddr(5).load().val));",
+		"_a.param(0).val.store(new Slice("+
+			"_a.param(1).val,_a.param(2).val,_a.param(3).val,"+
+			"_a.param(4).val,_a.param(5).val));",
 		&x, base, i, j, cap, elemSize)
 
 	fl := v.flag&flagRO | flagIndir | flag(Slice)
@@ -1837,11 +1837,11 @@ func (v Value) Slice3(i, j, k int) Value {
 		//s := (*sliceHeader)(v.ptr)
 		//base = s.Data
 		//cap = s.Cap
-		base = unsafe.Pointer(hx.CodeDynamic("", "_a.itemAddr(0).load().val.load().itemAddr(0);", v.ptr)) //unsafe.Pointer(s.Data)
+		base = unsafe.Pointer(hx.CodeDynamic("", "_a.param(0).val.load().itemAddr(0);", v.ptr)) //unsafe.Pointer(s.Data)
 		if base == nil {
 			cap = 0
 		} else {
-			cap = hx.CodeInt("", "_a.itemAddr(0).load().val.load().cap();", v.ptr) // s.Cap
+			cap = hx.CodeInt("", "_a.param(0).val.load().cap();", v.ptr) // s.Cap
 		}
 	}
 
@@ -1867,9 +1867,9 @@ func (v Value) Slice3(i, j, k int) Value {
 	*/
 	//Haxe:	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) {
 	hx.Code("",
-		"_a.itemAddr(0).load().val.store(new Slice("+
-			"_a.itemAddr(1).load().val,_a.itemAddr(2).load().val,_a.itemAddr(3).load().val,"+
-			"_a.itemAddr(4).load().val,_a.itemAddr(5).load().val));",
+		"_a.param(0).val.store(new Slice("+
+			"_a.param(1).val,_a.param(2).val,_a.param(3).val,"+
+			"_a.param(4).val,_a.param(5).val));",
 		&x, base, i, j, k-i, typ.Elem().Size())
 
 	fl := v.flag&flagRO | flagIndir | flag(Slice)
@@ -2127,12 +2127,12 @@ func Copy(dst, src Value) int {
 		da = dst.ptr
 	} else {
 		//da = (*sliceHeader)(dst.ptr).Data
-		sl := hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", dst.ptr)
+		sl := hx.CodeDynamic("", "_a.param(0).val.load();", dst.ptr)
 		if hx.IsNull(sl) {
 			panic("reflect.Copy destination slice is nil")
 		}
 		da = unsafe.Pointer(hx.CodeDynamic("",
-			"cast(_a.itemAddr(0).load().val.load(),Slice).itemAddr(0);", dst.ptr))
+			"cast(_a.param(0).val.load(),Slice).itemAddr(0);", dst.ptr))
 	}
 	if src.flag&flagIndir == 0 {
 		//println("DEBUG flagIndir")
@@ -2141,13 +2141,13 @@ func Copy(dst, src Value) int {
 		sa = src.ptr
 	} else {
 		//sa = (*sliceHeader)(src.ptr).Data
-		sl := hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", src.ptr)
+		sl := hx.CodeDynamic("", "_a.param(0).val.load();", src.ptr)
 		if hx.IsNull(sl) {
 			//panic("reflect.Copy source slice is nil")
 			return 0
 		}
 		sa = unsafe.Pointer(hx.CodeDynamic("",
-			"cast(_a.itemAddr(0).load().val.load(),Slice).itemAddr(0);", src.ptr))
+			"cast(_a.param(0).val.load(),Slice).itemAddr(0);", src.ptr))
 	}
 	memmove(da, sa, uintptr(n)*de.Size())
 	return n
@@ -2341,9 +2341,9 @@ func MakeSlice(typ Type, len, cap int) Value {
 
 	//Haxe:	public function new(fromArray:Pointer, low:Int, high:Int, ularraysz:Int, isz:Int) {
 	hx.Code("",
-		"_a.itemAddr(0).load().val.store(new Slice("+
-			"_a.itemAddr(1).load().val,_a.itemAddr(2).load().val,_a.itemAddr(3).load().val,"+
-			"_a.itemAddr(4).load().val,_a.itemAddr(5).load().val));",
+		"_a.param(0).val.store(new Slice("+
+			"_a.param(1).val,_a.param(2).val,_a.param(3).val,"+
+			"_a.param(4).val,_a.param(5).val));",
 		&s, base, 0, len, cap, typ.Elem().Size())
 
 	return Value{typ.common(), unsafe.Pointer(&s), flagIndir | flag(Slice)}
@@ -2782,7 +2782,7 @@ func chansend(t *rtype, ch unsafe.Pointer, val unsafe.Pointer, nb bool) bool {
 
 	// TODO
 	//v := hx.CodeDynamic("",
-	//	"_a.itemAddr(0).load().val.load_object(_a.itemAddr(1).load().val);",
+	//	"_a.param(0).val.load_object(_a.param(1).val);",
 	//	val, t.Elem().Size())
 }
 
@@ -2791,7 +2791,7 @@ func makechan(typ *rtype, size uint64) (ch unsafe.Pointer) {
 	//return nil
 
 	chPtr := hx.Malloc(typ.Size())
-	*((*uintptr)(chPtr)) = hx.CodeDynamic("", "new Channel(_a.itemAddr(0).load().val);", uint(size))
+	*((*uintptr)(chPtr)) = hx.CodeDynamic("", "new Channel(_a.param(0).val);", uint(size))
 	return chPtr
 }
 func makemap(t *rtype) (m unsafe.Pointer) {
@@ -2805,7 +2805,7 @@ func makemap(t *rtype) (m unsafe.Pointer) {
 	kv := haxeInterfacePack(&emptyInterface{typ: kt, word: hx.Malloc(kt.Size())})
 	ev := haxeInterfacePack(&emptyInterface{typ: et, word: hx.Malloc(et.Size())})
 	*(*uintptr)(mapPtr) = hx.CodeDynamic("",
-		"new GOmap(_a.itemAddr(0).load().val,_a.itemAddr(1).load().val);", kv, ev)
+		"new GOmap(_a.param(0).val,_a.param(1).val);", kv, ev)
 	return mapPtr
 }
 
@@ -2821,8 +2821,8 @@ func mapaccess(t *rtype, mp unsafe.Pointer, key unsafe.Pointer) (val unsafe.Poin
 	var el uintptr = hx.Null()
 	if mp != nil {
 		m := (uintptr)(mp)
-		for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
-			m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
+		for hx.CodeBool("", "Std.is(_a.param(0).val,Pointer);", m) {
+			m = hx.CodeDynamic("", "_a.param(0).val.load();", m) // go down the pointer chain
 		}
 		if !hx.IsNull(m) {
 			if key != nil {
@@ -2830,12 +2830,12 @@ func mapaccess(t *rtype, mp unsafe.Pointer, key unsafe.Pointer) (val unsafe.Poin
 				ei.word = key
 				hk := haxeInterfacePack(ei)
 				el = hx.CodeDynamic("",
-					"cast(_a.itemAddr(0).load().val,GOmap).get(_a.itemAddr(1).load().val);",
+					"cast(_a.param(0).val,GOmap).get(_a.param(1).val);",
 					m, hk)
 				//println("DEBUG mapaccess key,val=", hk, el)
 			} else {
 				el = hx.CodeDynamic("",
-					"cast(_a.itemAddr(0).load().val,GOmap).vz;",
+					"cast(_a.param(0).val,GOmap).vz;",
 					m)
 				//println("DEBUG mapaccess default val=", el)
 			}
@@ -2855,8 +2855,8 @@ func mapassign(t *rtype, mp unsafe.Pointer, key, val unsafe.Pointer) {
 		panic("reflect.mapassign() nil pointer to map")
 	}
 	m := (uintptr)(mp)
-	for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
-		m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
+	for hx.CodeBool("", "Std.is(_a.param(0).val,Pointer);", m) {
+		m = hx.CodeDynamic("", "_a.param(0).val.load();", m) // go down the pointer chain
 	}
 	if hx.IsNull(uintptr(m)) {
 		panic("reflect.mapassign() null Haxe map") // as it does in the real runtime version
@@ -2868,13 +2868,13 @@ func mapassign(t *rtype, mp unsafe.Pointer, key, val unsafe.Pointer) {
 			m = *(*uintptr)(mp)
 		*/
 	}
-	if !hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,GOmap);", m) {
+	if !hx.CodeBool("", "Std.is(_a.param(0).val,GOmap);", m) {
 		panic("reflect.mapassign() not a Haxe map: " + hx.CallString("", "Std.string", 1, m))
 	}
 	kv := haxeInterfacePack(&emptyInterface{typ: (*mapType)(unsafe.Pointer(t)).key, word: key})
 	ev := haxeInterfacePack(&emptyInterface{typ: (*mapType)(unsafe.Pointer(t)).elem, word: val})
 	hx.Code("",
-		"cast(_a.itemAddr(0).load().val,GOmap).set(_a.itemAddr(1).load().val,_a.itemAddr(2).load().val);",
+		"cast(_a.param(0).val,GOmap).set(_a.param(1).val,_a.param(2).val);",
 		m, kv, ev)
 }
 func mapdelete(t *rtype, m unsafe.Pointer, key unsafe.Pointer) {
@@ -2899,15 +2899,15 @@ func mapiterinit(t *rtype, mp unsafe.Pointer) unsafe.Pointer {
 		return nil
 	}
 	m := (uintptr)(mp)
-	for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
-		m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
+	for hx.CodeBool("", "Std.is(_a.param(0).val,Pointer);", m) {
+		m = hx.CodeDynamic("", "_a.param(0).val.load();", m) // go down the pointer chain
 	}
 	if hx.IsNull(m) {
 		return nil
 	}
 	mi := new(mapIter)
 	mi.t = t
-	mi.r = hx.CodeDynamic("", "cast(_a.itemAddr(0).load().val,GOmap).range();", m)
+	mi.r = hx.CodeDynamic("", "cast(_a.param(0).val,GOmap).range();", m)
 	mapiternext(unsafe.Pointer(mi))
 	return unsafe.Pointer(mi)
 }
@@ -2933,10 +2933,10 @@ func mapiternext(it unsafe.Pointer) {
 	if hx.IsNull(mi.r) {
 		panic("reflect.mapiternext() null map range")
 	}
-	tuple := hx.CodeDynamic("", "cast(_a.itemAddr(0).load().val,GOmapRange).next();", mi.r)
-	mi.ok = hx.CodeBool("", "_a.itemAddr(0).load().val.r0;", tuple)
-	mi.key = hx.CodeDynamic("", "_a.itemAddr(0).load().val.r1;", tuple)
-	mi.elem = hx.CodeDynamic("", "_a.itemAddr(0).load().val.r2;", tuple)
+	tuple := hx.CodeDynamic("", "cast(_a.param(0).val,GOmapRange).next();", mi.r)
+	mi.ok = hx.CodeBool("", "_a.param(0).val.r0;", tuple)
+	mi.key = hx.CodeDynamic("", "_a.param(0).val.r1;", tuple)
+	mi.elem = hx.CodeDynamic("", "_a.param(0).val.r2;", tuple)
 	//println("DEBUG reflect.mapiternext() tuple=", mi.ok, mi.key, mi.elem)
 }
 func maplen(mp unsafe.Pointer) int {
@@ -2946,13 +2946,13 @@ func maplen(mp unsafe.Pointer) int {
 		return 0
 	}
 	m := (uintptr)(mp)
-	for hx.CodeBool("", "Std.is(_a.itemAddr(0).load().val,Pointer);", m) {
-		m = hx.CodeDynamic("", "_a.itemAddr(0).load().val.load();", m) // go down the pointer chain
+	for hx.CodeBool("", "Std.is(_a.param(0).val,Pointer);", m) {
+		m = hx.CodeDynamic("", "_a.param(0).val.load();", m) // go down the pointer chain
 	}
 	if hx.IsNull(m) {
 		return 0
 	}
-	return hx.CodeInt("", "cast(_a.itemAddr(0).load().val,GOmap).len();", m)
+	return hx.CodeInt("", "cast(_a.param(0).val,GOmap).len();", m)
 }
 func call(fn, arg unsafe.Pointer, n uint32, retoffset uint32) {
 	println("DEBUG fn ", fn)
@@ -2973,8 +2973,8 @@ func memmove(adst, asrc unsafe.Pointer, n uintptr) {
 	//panic("reflect.memmove() not yet implemented in haxe")
 	//println("DEBUG Memmove asrc", asrc)
 	hx.Code("",
-		"_a.itemAddr(0).load().val.store_object(_a.itemAddr(2).load().val,"+
-			"_a.itemAddr(1).load().val.load_object(_a.itemAddr(2).load().val));",
+		"_a.param(0).val.store_object(_a.param(2).val,"+
+			"_a.param(1).val.load_object(_a.param(2).val));",
 		adst, asrc, uint(n))
 	//println("DEBUG Memmove adst", adst)
 }

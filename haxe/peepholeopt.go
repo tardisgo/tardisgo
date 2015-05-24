@@ -111,8 +111,17 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 
 	case "phiList":
 		ret += "// PEEPHOLE OPTIMIZATION phiList\n"
-		opts := make(map[int][]phiEntry)
-		for _, cod := range code {
+		//ret += l.PhiCode(true, 0, code, errorInfo)
+	}
+	return ret
+}
+
+func (l langType) PhiCode(allTargets bool, targetPhi int, code []ssa.Instruction, errorInfo string) string {
+	ret := ""
+	opts := make(map[int][]phiEntry)
+	for _, cod := range code {
+		_, isPhi := cod.(*ssa.Phi)
+		if isPhi {
 			operands := cod.(*ssa.Phi).Operands([]*ssa.Value{})
 			phiEntries := make([]int, len(operands))
 			valEntries := make([]string, len(operands))
@@ -124,18 +133,27 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 					opts[phiEntries[o]] = make([]phiEntry, 0)
 				}
 				valEntries[o] = l.IndirectValue(*operands[o], errorInfo)
+				if fnCanOptMap[thisReg] || len(*(cod.(*ssa.Phi).Referrers())) == 0 {
+					thisReg = ""
+				}
 				opts[phiEntries[o]] = append(opts[phiEntries[o]], phiEntry{thisReg, valEntries[o]})
 			}
 		}
+	}
+	if allTargets {
 		ret += "switch(_Phi) { \n"
-		idxs := make([]int, 0, len(opts))
-		for phi := range opts {
-			idxs = append(idxs, phi)
-		}
-		sort.Ints(idxs)
-		for _, phi := range idxs {
+	}
+	idxs := make([]int, 0, len(opts))
+	for phi := range opts {
+		idxs = append(idxs, phi)
+	}
+	sort.Ints(idxs)
+	for _, phi := range idxs {
+		if allTargets || phi == targetPhi {
 			opt := opts[phi]
-			ret += fmt.Sprintf("\tcase %d:\n", phi)
+			if allTargets {
+				ret += fmt.Sprintf("\tcase %d:\n", phi)
+			}
 			crossover := false
 			for x1, ent1 := range opt {
 				for x2, ent2 := range opt {
@@ -150,23 +168,29 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 		foundCrossover:
 			if crossover {
 				for _, ent := range opt {
-					ret += fmt.Sprintf("\t\tvar tmp_%s=%s;\n", ent.reg, ent.val) // need temp vars for a,b = b,a
+					if ent.reg != "" {
+						ret += fmt.Sprintf("\t\tvar tmp_%s=%s;\n", ent.reg, ent.val) // need temp vars for a,b = b,a
+					}
 				}
 			}
 			for _, ent := range opt {
-				rn := "_" + ent.reg
-				if useRegisterArray {
-					rn = rn[:2] + "[" + rn[2:] + "]"
-				}
-				if crossover {
-					ret += fmt.Sprintf("\t\t%s=tmp_%s;\n", rn, ent.reg)
-				} else {
-					if rn != ent.val {
-						ret += fmt.Sprintf("\t\t%s=%s;\n", rn, ent.val)
+				if ent.reg != "" {
+					rn := "_" + ent.reg
+					if useRegisterArray {
+						rn = rn[:2] + "[" + rn[2:] + "]"
+					}
+					if crossover {
+						ret += fmt.Sprintf("\t\t%s=tmp_%s;\n", rn, ent.reg)
+					} else {
+						if rn != ent.val {
+							ret += fmt.Sprintf("\t\t%s=%s;\n", rn, ent.val)
+						}
 					}
 				}
 			}
 		}
+	}
+	if allTargets {
 		ret += "}\n"
 	}
 	return ret
@@ -174,14 +198,28 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 
 func (l langType) CanInline(vi interface{}) bool {
 	//if pogo.DebugFlag {
-	//	return false
+	//   return false
 	//}
+	val, isVal := vi.(ssa.Value)
+	if !isVal {
+		return false
+	}
+	switch l.LangType(val.Type(), false, "CanInline()") {
+	case "Dynamic": // so a uintptr
+		return false // this can yeild un-expected results & mess up the type checking
+	}
 	var refs *[]ssa.Instruction
 	var thisBlock *ssa.BasicBlock
 	switch vi.(type) {
 	default:
 		return false
 	case *ssa.Convert:
+		/* this slows things down for cpp and does not speed things up for js
+		if l.LangType(val.Type(), false, "CanInline()") !=
+			l.LangType(vi.(*ssa.Convert).X.Type(), false, "CanInline()") {
+			return false // can't have different Haxe types
+		}
+		*/
 		refs = vi.(*ssa.Convert).Referrers()
 		thisBlock = vi.(*ssa.Convert).Block()
 	case *ssa.BinOp:
@@ -194,13 +232,15 @@ func (l langType) CanInline(vi interface{}) bool {
 		}
 		refs = vi.(*ssa.UnOp).Referrers()
 		thisBlock = vi.(*ssa.UnOp).Block()
-	case *ssa.IndexAddr:
-		_, isSlice := vi.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice)
-		if !isSlice {
-			return false // only slices handled in the general in-line code, rather than pointerChain above
-		}
-		refs = vi.(*ssa.IndexAddr).Referrers()
-		thisBlock = vi.(*ssa.IndexAddr).Block()
+		/*
+			case *ssa.IndexAddr: // NOTE optimising this instruction means it's pointer leaks, but it does give a speed-up
+				_, isSlice := vi.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice)
+				if !isSlice {
+					return false // only slices handled in the general in-line code, rather than pointerChain above
+				}
+				refs = vi.(*ssa.IndexAddr).Referrers()
+				thisBlock = vi.(*ssa.IndexAddr).Block()
+		*/
 	}
 
 	if thisBlock == nil {
@@ -215,7 +255,7 @@ func (l langType) CanInline(vi interface{}) bool {
 	if (*refs)[0].Block() != thisBlock {
 		return false // consumer is not in the same block
 	}
-	if blockContainsBreaks((*refs)[0].Block()) {
+	if blockContainsBreaks((*refs)[0].Block(), vi.(ssa.Instruction), (*refs)[0]) {
 		return false
 	}
 	/*
@@ -251,14 +291,27 @@ func (l langType) inlineRegisterName(vi interface{}) string {
 	return nm
 }
 
-func blockContainsBreaks(b *ssa.BasicBlock) bool {
-	for _, i := range b.Instrs {
-		switch i.(type) {
-		case *ssa.Call, *ssa.Select, *ssa.Send, *ssa.Defer, *ssa.RunDefers, *ssa.Return:
-			return true
-		case *ssa.UnOp:
-			if i.(*ssa.UnOp).Op == token.ARROW {
+func blockContainsBreaks(b *ssa.BasicBlock, producer, consumer ssa.Instruction) bool {
+	hadProducer := false
+	for ii, i := range b.Instrs {
+		_ = ii
+		if hadProducer {
+			switch i.(type) {
+			case *ssa.Call, *ssa.Select, *ssa.Send, *ssa.Defer, *ssa.RunDefers, *ssa.Return:
 				return true
+			case *ssa.UnOp:
+				if i.(*ssa.UnOp).Op == token.ARROW {
+					return true
+				}
+			}
+			if i == consumer {
+				//println("DEBUG consumer is ", ii)
+				return false // if there is no break before the var is consumed, then no problem
+			}
+		} else {
+			if i == producer {
+				//println("DEBUG producer is ", ii)
+				hadProducer = true
 			}
 		}
 	}

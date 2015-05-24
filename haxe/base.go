@@ -131,13 +131,12 @@ type regToFree struct {
 func recycle(list []regToFree) string {
 	ret := ""
 	for _, x := range list {
-		/* TODO can any objects be recycled at this point?
 		switch x.typ {
-		//case "Pointer":  // simple recycling of pointers does not work as they are multi-used
-		//	ret += "Pointer.recycle(" + x.reg + ");\n"
+		case "GOint64":
+			//ret += "#if !(cpp|cs|java) " + x.reg + "=null; #end\n" // TODO
+		default:
+			ret += "" + x.reg + "=null; // " + x.typ + " \n" // this improves GC performance on all targets
 		}
-		*/
-		ret += "" + x.reg + "=null; \n" // this improves GC performance on all targets
 	}
 	return ret
 }
@@ -152,8 +151,10 @@ var pseudoBlockNext int         // what is the next pseudo block we should have 
 var currentfn *ssa.Function     // what we are currently working on
 var currentfnName string        // the Haxe name of what we are currently working on
 var fnUsesGr bool               // does the current function use Goroutines?
+var fnTracksPhi bool            // does the current function track Phi?
 
 var funcNamesUsed = make(map[string]bool)
+var fnCanOptMap map[string]bool
 
 func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, position string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool) string {
 
@@ -167,6 +168,8 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	currentfnName = "Go_" + l.LangName(packageName, objectName)
 	funcNamesUsed[currentfnName] = true
 	fnUsesGr = usesGr
+	fnTracksPhi = trackPhi
+	fnCanOptMap = canOptMap
 
 	ret := ""
 
@@ -400,7 +403,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 							ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
 							nullOnExitList = append(nullOnExitList, regToFree{fmt.Sprintf("_SF%d", -pseudoNextReturnAddress), "StackFrame"})
 							if usesGr {
-								//ret += " #if js =null #end " // TODO is this needed?
+								ret += " #if js =null #end " // v8 opt
 								ret += ";\n"
 							} else {
 								ret += "=null;\n" // need to initalize when using the native stack for these vars
@@ -430,30 +433,31 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 					init := l.LangType(in.(ssa.Value).Type(), true, reg+"@"+position) // this may be overkill...
 
 					if strings.HasPrefix(init, "{") || strings.HasPrefix(init, "Pointer.make") ||
-						//strings.HasPrefix(init, "new UnsafePointer") ||
 						strings.HasPrefix(init, "Object.make") || strings.HasPrefix(init, "new Slice") ||
 						strings.HasPrefix(init, "new Chan") || strings.HasPrefix(init, "new GOmap") ||
 						strings.HasPrefix(init, "new Complex") { // stop unnecessary initialisation
 						// all SSA registers are actually assigned to before use, so minimal initialisation is required, except for maps
 						init = "null"
 					}
-					if typ != "" /*&& !strings.HasSuffix(reg, "inline()")*/ {
+					if typ != "" {
 						switch len(*in.(ssa.Value).Referrers()) {
 						case 0: // don't allocate unused temporary variables
 						//case 1: // TODO optimization possible using register replacement but does not currenty work for: a,b=b,a+b, so code removed
 						default:
 							if usesGr {
 								if init == "null" {
-									init = "" // in JS null is the default anyway
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
-								} else {
-									init = " #if IGNOREjs =" + init + " #end " // only init in JS, to tell the var type for v8 opt
 								}
+								init = "#if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
 							} else {
-								init = " = " + init + " " // when not using goroutines, sadly they all need initializing because of using switch(Phi){}
+								init = " = " + init + " " // when not using goroutines, sadly they all need initializing because of using switch(){}
 								if init == "null" {
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 								}
+							}
+							switch typ {
+							case "String", "GOint64":
+								nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 							}
 							//if usesGr {
 							//	ret += "private "
@@ -483,22 +487,16 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += regDefs
 		ret += "inline function nullOnExit(){\n"
 		ret += recycle(nullOnExitList)
+		ret += "nullOnExitSF();\n"
 		ret += "};\n"
 	}
-	if trackPhi {
-		ret += "var _Phi:Int=0;\n"
-	}
-	ret += "#if js var _NextFunc:Dynamic=null; #end\n"
+	//if trackPhi {
+	//	ret += "var _Phi:Int=0;\n"
+	//}
 
 	if usesGr {
 		ret += l.runFunctionCode(packageName, objectName, "")
 	}
-
-	//}
-	//TODO optimise (again) for if only one block (as below) AND no calls (which create synthetic values for _Next)
-	//if len(fn.Blocks) > 1 { // if there is only one block then we don't need to track which one is next
-	//ret += "while(true){\nswitch(_Next) {"
-	//}
 
 	return ret
 }
@@ -511,22 +509,34 @@ func (l langType) runFunctionCode(packageName, objectName, msg string) string {
 
 func (l langType) whileCaseCode() string {
 	// NOTE this rather odd arrangement improves JS V8 optimization
-	ret := "#if js\n"
+	ret := "#if uselocalfunctions\n"
+	ret += "function " + currentfnName + "_loop():" + currentfnName + "{\n"
 	ret += "\tvar retVal:" + currentfnName + "=null;\n"
 
-	ret += "\tvar jumpTable:Array<Void->Dynamic>=[\n"
-	//for p := -1; p > pseudoNextReturnAddress; p-- {
-	for p := pseudoNextReturnAddress + 1; p < 0; p++ {
-		ret += fmt.Sprintf("\t\t_Block_%d,\n", -p)
-	}
-	for b := range currentfn.Blocks {
-		ret += fmt.Sprintf("\t\t_Block%d,\n", b)
-	}
-	ret += "\tnull];\n"
-
+	/*
+		ret += "\tvar jumpTable:Array<Void->Dynamic>=[\n"
+		//for p := -1; p > pseudoNextReturnAddress; p-- {
+		for p := pseudoNextReturnAddress + 1; p < 0; p++ {
+			ret += fmt.Sprintf("\t\t_Block_%d,\n", -p)
+		}
+		for b := range currentfn.Blocks {
+			ret += fmt.Sprintf("\t\t_Block%d,\n", b)
+		}
+		ret += "\tnull];\n"
+	*/
 	ret += "\twhile(retVal==null) \n"
 
-	ret += fmt.Sprintf("\t\tretVal=jumpTable[_Next+%d]();\n", (-pseudoNextReturnAddress)-1)
+	//ret += fmt.Sprintf("\t\tretVal=jumpTable[_Next+%d]();\n", (-pseudoNextReturnAddress)-1)
+	if fnUsesGr {
+		ret += "\t\tswitch(_Next){\n"
+		for k, v := range localFunctionMap {
+			ret += fmt.Sprintf("\t\t\tcase %d: retVal=%s();\n", k, v)
+		}
+		ret += "\t\t}\n"
+	} else {
+		ret += "\t\tretVal=fnMap.get(_Next)();\n"
+		ret += "\tfnMap=null;\n" // tidy up
+	}
 	/*
 		ret += "\t\tswitch(_Next){\n"
 		for b := range currentfn.Blocks {
@@ -540,8 +550,18 @@ func (l langType) whileCaseCode() string {
 	*/
 	//ret += "\tjumpTable=null;\n" // tidy up
 	ret += "\treturn retVal;\n"
+	ret += "}\n"
+	if !fnUsesGr {
+		ret += "return " + currentfnName + "_loop();\n"
+	}
 	ret += "#else\n"
 	ret += "\tdefault: Scheduler.bbi();\n}\n"
+	ret += `
+	#if js
+		return null; }; // the end of a separate function to encourage JS V8 optimisation
+		while(sw()==null) {}  // repeatedly call the local JS function
+	#end
+`
 	ret += "#end\n"
 	return ret
 }
@@ -557,7 +577,12 @@ func (l langType) RunEnd(fn *ssa.Function) string {
 	*/
 	ret := emitUnseenPseudoBlocks()
 	ret += l.whileCaseCode()
-	return ret + "\n}\n"
+	if fnUsesGr {
+		ret += "\n#if !uselocalfunctions return this; } #end\n"
+	} else {
+		ret += "\n#if !uselocalfunctions return this; #end\n}\n"
+	}
+	return ret
 }
 func (l langType) FuncEnd(fn *ssa.Function) string {
 	// actually, the end of the class for that Go function
@@ -582,16 +607,42 @@ func (l langType) SetPosHash() string {
 	return "this.setPH(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ");"
 }
 
+var localFunctionMap map[int]string
+
 func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) string {
+	rangeChecks = make(map[string]struct{})
+
 	hadBlockReturn = false
 	// TODO optimise is only 1 block AND no calls
 	// TODO if len(block) > 1 { // no need for a case statement if only one block
 	ret := ""
 	if num == 0 {
-		ret += "#if !js while(true)switch(_Next){ #end\n"
+		localFunctionMap = make(map[int]string)
+		ret += `
+#if !uselocalfunctions
+	#if js
+		var sw = function(){ switch(_Next){  // put in a separate function to encourage JS V8 optimisation
+	#else
+		while(true) switch(_Next){  // while(true) and similar formulas disable JS V8 optimisation
+	#end
+#end
+`
+		ret += "#if uselocalfunctions "
+		if fnUsesGr {
+			ret += "return " + currentfnName + "_loop(); } "
+		} else {
+			ret += "var fnMap=new Map<Int,Void->" + currentfnName + ">(); "
+		}
+		ret += "#end\n"
 	}
-	ret += fmt.Sprintf("#if !js case %d: #end", num) + l.Comment(block[num].Comment) + "\n"
-	ret += fmt.Sprintf("#if js function _Block%d(){ #end\n", num)
+	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end", num) + l.Comment(block[num].Comment) + "\n"
+	if fnUsesGr {
+		fn := fmt.Sprintf(currentfnName+"_%d", num)
+		localFunctionMap[num] = fn
+		ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+	} else {
+		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"_%d():"+currentfnName+" { #end\n", num, num)
+	}
 	ret += emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), num))
 	if pogo.DebugFlag {
 		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", num) + ");\n"
@@ -601,26 +652,45 @@ func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) str
 
 func (l langType) BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) string {
 	ret := ""
-	if emitPhi {
-		ret += fmt.Sprintf(" _Phi=%d;\n", num)
-	}
+	//if emitPhi {
+	//	ret += fmt.Sprintf(" _Phi=%d;\n", num)
+	//}
 	if !hadBlockReturn {
-		ret += "#if js return null; #end\n"
+		ret += "#if uselocalfunctions return null; #end\n"
 	}
 	hadBlockReturn = true
-	ret += "#if js } #end\n"
+	if fnUsesGr {
+		ret += "#if uselocalfunctions } #end\n"
+	} else {
+		ret += "#if uselocalfunctions }); #end\n"
+		//if num == 0 {
+		//	ret += "#if uselocalfunctions var fnNext:Void->" + currentfnName + "=" + currentfnName + "_0; #end\n"
+		//}
+	}
 	return ret
 }
 
-func (l langType) Jump(block int) string {
-	return fmt.Sprintf("_Next=%d;", block)
+func (l langType) Jump(block int, phi int, code string) string {
+	// use tail-calls for backward jumps where we definately know the function name
+	ret := "#if uselocalfunctions\n"
+	ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
+	ret += " #end\n"
+	if (block < phi) && !inMustSplitSubFn { // already seen it so we can optimise when using local functions
+		return ret + code + fmt.Sprintf(" #if uselocalfunctions return "+currentfnName+"_%d(); #else _Next=%d; #end", block, block)
+	}
+	return ret + code + fmt.Sprintf("_Next=%d;", block) + "\n#if uselocalfunctions return null; #end "
 }
 
-func (l langType) If(v interface{}, trueNext, falseNext int, errorInfo string) string {
-	return fmt.Sprintf("_Next=%s ? %d : %d;", l.IndirectValue(v, errorInfo), trueNext, falseNext)
+func (l langType) If(v interface{}, trueNext, falseNext, phi int, trueCode, falseCode, errorInfo string) string {
+	ret := "if(" + l.IndirectValue(v, errorInfo) + "){\n"
+	ret += l.Jump(trueNext, phi, trueCode)
+	ret += "\n}else{\n"
+	ret += l.Jump(falseNext, phi, falseCode)
+	return ret + "\n}\n"
 }
 
 func (l langType) Phi(register string, phiEntries []int, valEntries []interface{}, defaultValue, errorInfo string) string {
+	panic("haxe.Phi() should never be called")
 	ret := register + "=("
 	for e := range phiEntries {
 		val := l.IndirectValue(valEntries[e], errorInfo)
@@ -681,12 +751,14 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		return l.inlineRegisterName(v.(*ssa.BinOp))
 	case *ssa.Convert:
 		return l.inlineRegisterName(v.(*ssa.Convert))
-	case *ssa.IndexAddr:
-		_, isSlice := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice)
-		if !isSlice {
-			return pogo.RegisterName(val) // only slices handled by peephole
-		}
-		return l.inlineRegisterName(v.(*ssa.IndexAddr))
+	/*
+		case *ssa.IndexAddr:
+			_, isSlice := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice)
+			if !isSlice {
+				return pogo.RegisterName(val) // only slices handled by peephole general loop
+			}
+			return l.inlineRegisterName(v.(*ssa.IndexAddr)) // NOTE doing this means that it's pointer leaks, but it does give a speed-up
+	*/
 	default:
 		return pogo.RegisterName(val)
 	}
@@ -804,10 +876,22 @@ func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
 func (l langType) Send(v1, v2 interface{}, errorInfo string) string {
 	ret := fmt.Sprintf("_Next=%d;\n", nextReturnAddress)
 	ret += "return this;\n"
-	ret += "#if js } #end\n"
+	if fnUsesGr {
+		ret += "#if uselocalfunctions } #end\n"
+	} else {
+		ret += "#if uselocalfunctions }); #end\n"
+	}
 	ret += emitUnseenPseudoBlocks()
-	ret += fmt.Sprintf("#if !js case %d: #end\n", nextReturnAddress)
-	ret += fmt.Sprintf("#if js function _Block_%d(){ #end\n", -nextReturnAddress)
+	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", nextReturnAddress)
+	if fnUsesGr {
+		fn := fmt.Sprintf(currentfnName+"__%d", -nextReturnAddress)
+		localFunctionMap[nextReturnAddress] = fn
+		ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+	} else {
+		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"__%d():"+currentfnName+" { #end\n",
+			nextReturnAddress, -nextReturnAddress)
+	}
+	//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d(){ #end\n", -nextReturnAddress)
 	if pogo.DebugFlag {
 		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
 	}
@@ -824,10 +908,22 @@ func emitReturnHere() string {
 	ret := ""
 	ret += fmt.Sprintf("_Next=%d;\n", nextReturnAddress)
 	ret += "return this;\n"
-	ret += "#if js } #end\n"
+	if fnUsesGr {
+		ret += "#if uselocalfunctions } #end\n"
+	} else {
+		ret += "#if uselocalfunctions }); #end\n"
+	}
 	ret += emitUnseenPseudoBlocks()
-	ret += fmt.Sprintf("#if !js case %d: #end\n", nextReturnAddress)
-	ret += fmt.Sprintf("#if js function _Block_%d(){ #end\n", -nextReturnAddress)
+	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", nextReturnAddress)
+	if fnUsesGr {
+		fn := fmt.Sprintf(currentfnName+"__%d", -nextReturnAddress)
+		localFunctionMap[nextReturnAddress] = fn
+		ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+	} else {
+		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"__%d():"+currentfnName+" { #end\n",
+			nextReturnAddress, -nextReturnAddress)
+	}
+	//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d(){ #end\n", -nextReturnAddress)
 	if pogo.DebugFlag {
 		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
 	}
@@ -844,7 +940,15 @@ func emitUnseenPseudoBlocks() string {
 	}
 	// we've missed some
 	for pseudoBlockNext > nextReturnAddress {
-		ret += fmt.Sprintf("#if js function _Block_%d():Dynamic{return null;} #end\n", -pseudoBlockNext)
+		if fnUsesGr {
+			fn := fmt.Sprintf(currentfnName+"__%d", -pseudoBlockNext)
+			localFunctionMap[pseudoBlockNext] = fn
+			ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " {return null;}  #end\n"
+		} else {
+			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"_dummy_%d():"+currentfnName+" {return null;}); #end\n",
+				pseudoBlockNext, -pseudoBlockNext)
+		}
+		//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d():Dynamic{return null;} #end\n", -pseudoBlockNext)
 		pseudoBlockNext--
 	}
 	pseudoBlockNext = nextReturnAddress - 1
@@ -1419,11 +1523,23 @@ func (l langType) doCall(register string, tuple *types.Tuple, callCode string, u
 		ret += fmt.Sprintf("_Next = %d;\n", nextReturnAddress) // where to come back to
 		hadBlockReturn = false
 		ret += "return this;\n"
-		ret += "#if js } #end\n"
+		if fnUsesGr {
+			ret += "#if uselocalfunctions } #end"
+		} else {
+			ret += "#if uselocalfunctions }); #end\n"
+		}
 		ret += emitUnseenPseudoBlocks()
-		ret += fmt.Sprintf("#if !js case %d: #end\n", nextReturnAddress) // emit code to come back to
-		ret += fmt.Sprintf("#if js function _Block_%d(){ #end\n",
-			-nextReturnAddress) // optimize JS with closure to allow V8 to optimize big funcs
+		ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", nextReturnAddress) // emit code to come back to
+		if fnUsesGr {
+			fn := fmt.Sprintf(currentfnName+"__%d", -nextReturnAddress)
+			localFunctionMap[nextReturnAddress] = fn
+			ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+		} else {
+			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"__%d():"+currentfnName+" { #end\n",
+				nextReturnAddress, -nextReturnAddress)
+		}
+		//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d(){ #end\n",
+		//	-nextReturnAddress) // optimize JS with closure to allow V8 to optimize big funcs
 		if pogo.DebugFlag {
 			ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
 		}
@@ -1625,8 +1741,11 @@ func (l langType) Field(register string, v interface{}, fNum int, fName, errorIn
 	return ""
 }
 
+var rangeChecks map[string]struct{}
+
 // TODO error on 64-bit indexes
 func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) string {
+	chk := ""
 	iStr := l.IndirectValue(i, errorInfo)
 	if length <= 0 { // length unknown at compile time
 		xStr := l.IndirectValue(x, errorInfo)
@@ -1638,16 +1757,22 @@ func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) str
 		}
 		switch l.LangType(tPtr, false, errorInfo) {
 		case "Slice":
-			lStr += "Slice.nullLen(" + xStr + ")"
+			lStr += "" + xStr + ".length"
 		case "Object":
 			lStr += fmt.Sprintf("%d", tPtr.(*types.Array).Len())
 		}
-		ret := fmt.Sprintf("Scheduler.wraprangechk(%s,%s);", iStr, lStr)
-		//fmt.Println("DEBUG:",ret)
-		return ret
+		chk = fmt.Sprintf("Scheduler.wraprangechk(%s,%s);", iStr, lStr)
+	} else {
+		// length is known at compile time => an array
+		chk = fmt.Sprintf("Scheduler.wraprangechk(%s,%d);", iStr, length)
 	}
-	// length is known at compile time => an array
-	return fmt.Sprintf("Scheduler.wraprangechk(%s,%d);", iStr, length)
+	ret := ""
+	_, hadIt := rangeChecks[chk]
+	if !hadIt { // de-dupe
+		ret = chk
+		rangeChecks[chk] = struct{}{}
+	}
+	return ret
 }
 
 func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
@@ -1841,9 +1966,13 @@ func (l langType) EmitInvoke(register, path string, isGo, isDefer, usesGr bool, 
 
 const alwaysStackdump = false
 
+var inMustSplitSubFn = false
+
 func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 	tempVarList = []regToFree{}
-	if !mustSplitCode {
+	if mustSplitCode {
+		inMustSplitSubFn = true
+	} else {
 		if alwaysStackdump || pogo.DebugFlag {
 			return "try {"
 		}
@@ -1856,8 +1985,10 @@ func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 }
 
 func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
-	ret := ""
-	//ret += recycle(tempVarList) // not clear that this helps GC
+	inMustSplitSubFn = false
+	ret := "#if !uselocalfunctions\n"
+	ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
+	ret += " #end\n"
 	if alwaysStackdump || pogo.DebugFlag {
 		ret += fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
 	}
@@ -1881,17 +2012,19 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 	if typ == "" {
 		return ""
 	}
+	if typ == "String" {
+		tempVarList = append(tempVarList, regToFree{"_" + v.Name(), typ})
+	}
 	init := l.LangType(v.Type(), true, "temp var declaration")
-	if init == "null" || strings.HasPrefix(init, "new") || strings.HasPrefix(init, "{") || strings.HasPrefix(init, "Object.make") || strings.HasPrefix(init, "GOint64") {
+	if init == "null" ||
+		strings.HasPrefix(init, "new") ||
+		strings.HasPrefix(init, "{") ||
+		strings.HasPrefix(init, "Object.make") ||
+		strings.HasPrefix(init, "Pointer.make") ||
+		strings.HasPrefix(init, "GOint64") {
 		init = "null"
-		if typ != "GOint64" {
-			tempVarList = append(tempVarList, regToFree{"_" + v.Name(), typ})
-		}
+		tempVarList = append(tempVarList, regToFree{"_" + v.Name(), typ})
 	}
-	if init == "null" {
-		init = "" // in JS null is the default
-	} else {
-		init = "#if IGNOREjs =" + init + " #end " // to allow V8 optimisation?
-	}
+	init = "#if js =" + init + " #end " // to allow V8 optimisation?
 	return "var _" + v.Name() + ":" + typ + " " + init + ";"
 }

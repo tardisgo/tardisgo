@@ -355,13 +355,20 @@ func doTestable(args []string) error {
 		results := make(chan resChan)
 		switch *allFlag {
 		case "": // NoOp
-		case "all":
+		case "all", "bench":
 			//for _, dir := range dirs {
 			//	err := os.RemoveAll(dir)
 			//	if err != nil {
 			//		fmt.Println("Error deleting existing '" + dir + "' directory: " + err.Error())
 			//	}
 			//}
+
+			var targets [][][]string
+			if *allFlag == "bench" {
+				targets = allBenchmark // fast execution time
+			} else {
+				targets = allCompile // fast compile time
+			}
 			for _, cmd := range targets {
 				go doTarget(cmd, results)
 			}
@@ -425,13 +432,13 @@ func doTestable(args []string) error {
 				}, results)
 			case "js":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", `-D`, `analyzer`, "-js", "tardis/go.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
 					[]string{"echo", `"Node/JS:"`},
 					[]string{"time", "node", "tardis/go.js"},
 				}, results)
 			case "jsfu":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", `-D`, `analyzer`, "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
 					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 					[]string{"time", "node", "tardis/go-fu.js"},
 				}, results)
@@ -458,7 +465,7 @@ func doTestable(args []string) error {
 
 //var dirs = []string{"tardis/cpp", "tardis/java", "tardis/cs" /*, "tardis/php"*/}
 
-var targets = [][][]string{
+var allCompile = [][][]string{
 	[][]string{
 		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
 		[]string{"echo", `"CPP:"`},
@@ -475,7 +482,29 @@ var targets = [][][]string{
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", `-D`, `analyzer`, "-js", "tardis/go.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
+		[]string{"echo", `"Node/JS:"`},
+		[]string{"time", "node", "tardis/go.js"},
+	},
+}
+var allBenchmark = [][][]string{
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
+		[]string{"echo", `"CPP:"`},
+		[]string{"time", "./tardis/cpp/Go"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-java", "tardis/java"},
+		[]string{"echo", `"Java:"`},
+		[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cs", "tardis/cs"},
+		[]string{"echo", `"CS:"`},
+		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
+	},
+	[][]string{
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},
