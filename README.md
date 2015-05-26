@@ -6,7 +6,7 @@
 [![GoDoc](https://godoc.org/github.com/tardisgo/tardisgo?status.png)](https://godoc.org/github.com/tardisgo/tardisgo)
 [![status](https://sourcegraph.com/api/repos/github.com/tardisgo/tardisgo/badges/status.png)](https://sourcegraph.com/github.com/tardisgo/tardisgo)
 
-## Project status: experimental alpha software, mostly working but not yet suitable for production work
+## Project status: demonstrable, moving towards becoming usable  
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
@@ -45,13 +45,13 @@ To run your transpiled code you will first need to install [Haxe](http://haxe.or
 
 Then to run the tardis/Go.hx file generated above, for example in JavaScript, type the command lines: 
 ```
-haxe -main tardis.Go -cp tardis -js tardis/go.js
+haxe -main tardis.Go -cp tardis -dce full -D uselocalfunctions -js tardis/go.js
 node < tardis/go.js
 ```
 ... or whatever [Haxe compilation options](http://haxe.org/documentation/introduction/compiler-usage.html) you want to use. 
-See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples.
+See the [tgoall.sh](https://github.com/tardisgo/tardisgo-samples/blob/master/scripts/tgoall.sh) script for simple examples. Note that in this example "-dce full" causes Haxe to do dead code elimination and that "-D uselocalfunctions" is a tardisgo haxe flag to generate JS code that is more likely to be optimized by V8.
 
-The default memory model is fast, but requires more memory than you might expect (an int per byte) and only allows some unsafe pointer usages. If your code uses unsafe pointers to re-use memory as different types (say writing a float64 but reading back a uint64), there is a Haxe compilation flag for "fullunsafe" mode (this is slower, but has a smaller memory footprint and allows most unsafe pointers to be modelled accurately). In JS fullunsafe uses the dataview method of object access, for other targets it simulates memory access. Fullunsafe is little-endian only at present and pointer aritmetic (via uintptr) will panic. A command line example: 
+The default memory model is fast, but requires more memory than you might expect (an int per byte) and only allows some unsafe pointer usages. If your code uses unsafe pointers to re-use memory as different types (say writing a float64 but reading back a uint64), there is a Haxe compilation flag for "fullunsafe" mode (this is slower, but has a smaller memory footprint and allows most unsafe pointers to be modeled accurately). In JS fullunsafe uses the dataview method of object access, for other targets it simulates memory access. Fullunsafe is little-endian only at present and pointer arithmetic (via uintptr) will panic. A command line example: 
 ```
 tardisgo mycode.go
 haxe -main tardis.Go -cp tardis -D fullunsafe -js tardis/go-fu.js
@@ -66,7 +66,7 @@ tardisgo your_code_using_package_os.go
 haxe -main tardis.Go -cp tardis -js tardis/go.js -resource testdata/config.xml@/myapp/static/config.xml
 node < tardis/go.js
 ```
-To add more than one file, use multiple -resource flags (the haxe ".hxml" compiler paramater file format can be helpful here). The files are stored as part of the executable code, in a target-specific way. The only resources that will be loaded are those named with a leading "/". A log file of the load process can be found at "/fsinit.log" in the in-memory file-system.
+To add more than one file, use multiple -resource flags (the haxe ".hxml" compiler parameter file format can be helpful here). The files are stored as part of the executable code, in a target-specific way. The only resources that will be loaded are those named with a leading "/". A log file of the load process can be found at "/fsinit.log" in the in-memory file-system.
 
 To load a zipped file system (very slow to un-zip, but useful for testing) use go code
 `syscall.UnzipFS("myfs.zip")` 
@@ -81,10 +81,11 @@ tardisgo -debug myprogram.go
 haxe -main tardis.Go -cp tardis -dce full -D godebug -cpp tardis/cpp
 ./tardis/cpp/Go
 ``` 
-To get a list of commands type "?" followed by carrage return, after the 1st break location is printed (there is no prompt character). 
+To get a list of commands type "?" followed by carriage return, after the 1st break location is printed (there is no prompt character). 
 
 To run cross-target command-line tests as quickly as possible, the "-haxe X" flag concurrently runs the Haxe compiler and executes the resulting code as follows:
 - "-haxe all" - all supported targets (C++, C#, Java, JavaScript)
+- "-haxe bench" - all supported targets (C++, C#, Java, JavaScript) but using benchmark settings
 - "-haxe js" - only compiles and runs nodeJS (for automated testing, exits with an error if one occurs)
 - "-haxe jsfu" - only compiles (-D fullunsafe) and runs nodeJS (for automated testing, exits with an error if one occurs)
 - "-haxe cpp" - only compiles and runs C++ (for automated testing, exits with an error if one occurs)
@@ -108,22 +109,14 @@ Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 ev
 
 Tabulating the very simple indicative [benchmarking](https://github.com/tardisgo/tardisgo-samples/blob/master/benchmarks) results, looking only at elapsed (rather than cpu) time in seconds, as a multiple of the Go time: 
 
-| Test - of what functionality               | Go      | C++   | C#    | Java  | JS    | GopherJS |
-| ------------------------------------------ | ------- | ----- | ----- | ----- | ----- | -------- |
-| mandel.go - floating point                 | (10.0s) | 1.8x  | 3.0x  | 5.4x  | 15.3x | 1.0x     |
-| fannkuch.go - array indexing               | (2.5s)  | 38.7x | 33.7x | 21.0x | 55.0x | 5.0x     |
-| fannkuch.go (using haxe -D inlinepointers) | (2.5s)  | 31.4x | 21.8x | 17.2x | 41.8x | 5.0x     |
-| binarytree.go - garbage collector          | (7.9s)  | 25.2x | 23.6x | 3.6x  | 22.9x | 0.4x (!) |
+| Test - of what functionality               | Go     | C++   | C#    | Java  | JS    | [GopherJS](http://www.gopherjs.org/) |
+| ------------------------------------------ | ------ | ----- | ----- | ----- | ----- | -------- |
+| mandel.go - floating point                 | (9.9s) | 1.7x  | 2.9x  | 5.4x  | 15.3x | 1.0x     |
+| fannkuch.go - array indexing               | (2.5s) | 38.9x | 33.5x | 21.0x | 56.7x | 5.0x     |
+| fannkuch.go (using haxe -D inlinepointers) | (2.5s) | 31.5x | 21.6x | 17.7x | 43.8x | 5.0x     |
+| binarytree.go - garbage collection         | (8.0s) | 22.9x | 20.4x | 3.3x  | 21.3x | 0.4x (!) |
 
-Figures above are the latest results as at 24th May 2015. 
-
-For comparison, the figures below are the previous results from 18th May 2015.
-
-| Test - of what functionality               | Go      | C++   | C#    | Java  | JS    | GopherJS |
-| ------------------------------------------ | ------- | ----- | ----- | ----- | ----- | -------- |
-| mandel.go - floating point                 | (10.6s) | 2.5x  | 3.6x  | 4.1x  | 17.4x | 1.0x     |
-| fannkuch.go - array indexing               | (2.6s)  | 43.0x | 37.7x | 22.3x | 71.8x | 5.0x     |
-| binarytree.go - garbage collector          | (8.3s)  | 39.3x | 38.1x | 4.4x  | 54.9x | 0.4x (!) |
+Figures above are the latest results as at 25th May 2015, after some simple code generation optimizations. Clearly further improvements are required, with better pointer handling high on the list.
 
 ## Unsupported Haxe targets: ActionScript, PHP, Python and Neko
 

@@ -405,7 +405,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				obj.set_uint8(i,s.charCodeAt(i));
 			#end
 		}
-		return new Slice(Pointer.make(obj),0,-1,s.length,1);
+		var ret = new Slice(Pointer.make(obj),0,-1,s.length,1);
+		obj=null; // for GC
+		return ret;
 	}
 	public static function toRawString(gr:Int,sl:Slice):String { // TODO remove gr param
 		if(sl==null) return "";
@@ -1617,7 +1619,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 	public var typ:Int; // the possibly interface type that has been cast to
 	public var val:Dynamic;
 
-	public function new(t:Int,v:Dynamic){
+	public inline function new(t:Int,v:Dynamic){
 		typ=t;
 		val=v; 
 	}
@@ -1706,7 +1708,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 				else
 					Scheduler.panicFromHaxe( "concrete type assert failed: expected "+TypeInfo.getName(assTyp)+", got "+TypeInfo.getName(ifce.typ) );	
 			} else {
-				if(ifce.typ==assTyp||Go_haxegoruntime_assertableTTo.callFromRT(0,ifce.typ,assTyp)){
+				if(assertCache(ifce.typ,assTyp) /*ifce.typ==assTyp||Go_haxegoruntime_assertableTTo.callFromRT(0,ifce.typ,assTyp)*/ ){
 					//was:TypeAssert.assertableTo(ifce.typ,assTyp)){
 					return new Interface(ifce.typ,ifce.val);
 				} else {
@@ -1719,21 +1721,43 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 	public static function assertOk(assTyp:Int,ifce:Interface):{r0:Dynamic,r1:Bool} {
 		if(ifce==null) 
 			return {r0:TypeZero.zeroValue(assTyp),r1:false};
-		if(!(ifce.typ==assTyp||Go_haxegoruntime_assertableTTo.callFromRT(0,ifce.typ,assTyp))) //was:TypeAssert.assertableTo(ifce.typ,assTyp)))
+		if(!assertCache(ifce.typ,assTyp) /*(ifce.typ==assTyp||Go_haxegoruntime_assertableTTo.callFromRT(0,ifce.typ,assTyp))*/ ) //was:TypeAssert.assertableTo(ifce.typ,assTyp)))
 			return {r0:TypeZero.zeroValue(assTyp),r1:false};
 		if(TypeInfo.isConcrete(assTyp))	
 			return {r0:ifce.val,r1:true};
 		else	
 			return {r0:new Interface(ifce.typ,ifce.val),r1:true};
 	}
+	static var assertCacheMap = new Map<Int,Bool>();
+	public static function assertCache(ifceTyp:Int,assTyp:Int):Bool {
+		var key:Int= Force.toUint16(ifceTyp)<<16 | Force.toUint16(assTyp) ; // more than 65k types and we hava a problem...
+		var ret:Bool;
+		if(assertCacheMap.exists(key)){
+			ret=assertCacheMap.get(key);
+		}else{
+			ret=(ifceTyp==assTyp||Go_haxegoruntime_assertableTTo.callFromRT(0,ifceTyp,assTyp));
+			assertCacheMap.set(key,ret);
+		}
+		return ret;
+	}
+	static var methodCache = new Map<String,Dynamic>();
 	public static function invoke(ifce:Interface,path:String,meth:String,args:Array<Dynamic>):Dynamic {
 		if(ifce==null) 
 			Scheduler.panicFromHaxe( "Interface.invoke null Interface"); 
 		if(!Std.is(ifce,Interface)) 
 			Scheduler.panicFromHaxe( "Interface.invoke on non-Interface value"); 
-		var fn:Dynamic;
-		fn=Go_haxegoruntime_getMMethod.callFromRT(0,ifce.typ,path,meth); //MethodTypeInfo.method(ifce.typ,meth);
-		return Reflect.callMethod(null, fn, args);
+		var key=Std.string(ifce.typ)+":"+path+":"+meth;
+		var fn:Dynamic=methodCache.get(key);
+		if(fn==null) {
+			fn=Go_haxegoruntime_getMMethod.callFromRT(0,ifce.typ,path,meth); //MethodTypeInfo.method(ifce.typ,meth);
+			methodCache.set(key,fn);
+		}
+		var ret=Reflect.callMethod(null, fn, args);
+		// set created objects to null for GC
+		key=null;
+		fn=null;
+		// return what was asked for
+		return ret;
 	}
 }
 `)
@@ -2451,9 +2475,8 @@ public function new(gr:Int,ph:Int,name:String){
 	_goroutine=gr;
 	_functionPH=ph;
 	_functionName=name;
-	_deferStack=new List<StackFrame>();
-	_debugVars=new Map<String,Dynamic>();
 	#if godebug
+		_debugVars=new Map<String,Dynamic>();
 		_debugVarsLast= new Map<String,Dynamic>();
 	#end
 	this.setPH(ph); // so that we call the debugger, if it is enabled
@@ -2467,6 +2490,12 @@ public inline function nullOnExitSF(){
 	#if godebug
 		_debugVarsLast=null;
 	#end
+}
+
+public function setDebugVar(name:String,value:Dynamic){
+	if(_debugVars==null) 
+		_debugVars=new Map<String,Dynamic>();
+	_debugVars.set(name,value);	
 }
 
 public function setLatest(ph:Int,blk:Int){ // this can be done inline, but generates too much code
@@ -2630,14 +2659,17 @@ public function printDebugState():Void{
 }
 #end
 
-public inline function defer(fn:StackFrame){
+public function defer(fn:StackFrame){
+	if(_deferStack==null)
+		_deferStack=new List<StackFrame>();
 	_deferStack.add(fn); // add to the end of the list, so that runDefers() get them in the right order
 }
 
 public function runDefers(){
-	while(!_deferStack.isEmpty()){
-		Scheduler.push(_goroutine,_deferStack.pop());
-	}
+	if(_deferStack!=null)
+		while(!_deferStack.isEmpty()){
+			Scheduler.push(_goroutine,_deferStack.pop());
+		}
 }
 
 }
@@ -2660,6 +2692,7 @@ public var _debugVars:Map<String,Dynamic>;
 function run():StackFrame; // function state machine (set up by each Go function Haxe class)
 function res():Dynamic; // function result (set up by each Go function Haxe class)
 function nullOnExitSF():Void; // call this when exiting the function
+function setDebugVar(name:String,value:Dynamic):Void;
 }
 `)
 	pogo.WriteAsClass("Scheduler", `
@@ -2668,7 +2701,7 @@ class Scheduler { // NOTE this code requires a single-thread, as there is no loc
 // public
 public static var doneInit:Bool=false; // flag to limit go-routines to 1 during the init() processing phase
 // private
-static var grStacks:Array<Array<StackFrame>>=new Array<Array<StackFrame>>(); // was Array<List
+static var grStacks:Array<Array<StackFrame>>=new Array<Array<StackFrame>>(); 
 static var grInPanic:Array<Bool>=new Array<Bool>();
 static var grPanicMsg:Array<Interface>=new Array<Interface>();
 static var panicStackDump:String="";
@@ -2710,14 +2743,7 @@ static function hashesEqual(a:Array<Null<Int>>,b:Array<Null<Int>>):Bool{
 
 static function makeStateHash():Array<Null<Int>> { // TODO this is very ugly, and probably slow, so improve by checking for change on the fly?
 	var hash=new Array<Null<Int>>();
-	for( gr in 0 ... grStacks.length){
-		/* was:
-		var first = grStacks[gr].first();
-		if(first==null)
-			hash[gr] = null;
-		else
-			hash[gr] = first._functionPH + first._Next;
-		*/
+	for( gr in 0 ... grStacks.length){  // TODO optimise to not use .length
 		for(ent in 0 ... grStacks[gr].length){
 			hash[gr] += grStacks[gr][ent]._functionPH ;
 		}
@@ -2733,54 +2759,62 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 		throw "Scheduler.runAll() entryCount exceeded - "+stackDump();
 	}
 
+	var thisStack:Array<StackFrame>;
+	var thisStackLen:Int;
+
 	// special handling for goroutine 0, which is used in the initialisation phase and re-entrantly, where only one goroutine may operate		
-	if(grStacks[0].length==0/*grStacks[0].isEmpty()*/) { // check if there is ever likley to be anything to do
+	thisStack=grStacks[0];
+	thisStackLen=thisStack.length;
+	if(thisStackLen==0) { // check if there is ever likley to be anything to do
 		if(grStacks.length<=1) { 
 			throw "Scheduler: there is only one goroutine and its stack is empty\n"+stackDump();		
 		}
 	} else { // run goroutine zero
-		runOne(0,entryCount);
+		runOne(0,entryCount,thisStack,thisStackLen);
+
 	}
 
 	if(doneInit && entryCount==1 ) {	 // don't run extra goroutines when we are re-entrant or have not finished initialistion
 									     // NOTE this means that Haxe->Go->Haxe->Go code cannot run goroutines 
-		for(cg in 1...grStacks.length) { // length may grow during a run through, NOTE goroutine 0 not run again
-			if(grStacks[cg].length>0 /*!grStacks[cg].isEmpty()*/) {
-				runOne(cg,entryCount);
+		var grStacksLen=grStacks.length;
+		for(cg in 1...grStacksLen) { // length may grow during a run through, NOTE goroutine 0 not run again
+			thisStack=grStacks[cg];
+			thisStackLen=thisStack.length;
+			if(thisStackLen>0) {
+				runOne(cg,entryCount,thisStack,thisStackLen);
 			}
 		}
+
 		// prune the list of goroutines only at the end (goroutine numbers are in the stack frames, so can't be altered) 
-		while(grStacks.length>1){
-			if(grStacks[grStacks.length-1].length==0/*grStacks[grStacks.length-1].isEmpty()*/)
+		if(grStacks[grStacks.length-1].length==0) // there may be more goroutines than we started with
 				grStacks.pop();
-			else
-				break;
-		}
 	}
+	thisStack=null; // for GC
 	entryCount--;
 }
-static inline function runOne(gr:Int,entryCount:Int){ // called from above to call individual goroutines TODO: Review for multi-threading
+static inline function runOne(gr:Int,entryCount:Int,thisStack:Array<StackFrame>,thisStackLen:Int){ // called from above to call individual goroutines TODO: Review for multi-threading
 	if(grInPanic[gr]) {
 		if(entryCount!=1) { // we are in re-entrant code, so we can't panic again, as this may be part of the panic handling...
 				// NOTE this means that Haxe->Go->Haxe->Go code cannot use panic() reliably 
-				run1(gr);
+				run1a(gr,thisStack,thisStackLen);
 		} else {
 			while(grInPanic[gr]){
-				if(grStacks[gr].length==0/*grStacks[gr].isEmpty()*/){
+				if(grStacks[gr].length==0){
 					 Console.naclWrite("Panic in goroutine "+gr+"\n"+panicStackDump); // use stored stack dump
 					 throw "Go panic";
 				} else {
 					var sf:StackFrame=grStacks[gr].pop();
-					while(!sf._deferStack.isEmpty() && grInPanic[gr]) { 
-						// NOTE this will run all of the defered code for a function, 
-						// NOTE if recover() is encountered it should set grInPanic[gr] to false.
-						// TODO consider merging code with RunDefers()
-						var def:StackFrame=sf._deferStack.pop();
-						//trace("DEBUG runOne panic defer:",def._functionName);
-						Scheduler.push(gr,def);
-						while(def._incomplete) 
-							runAll(); // with entryCount >1, so run as above 
-					}
+					if(sf._deferStack!=null)
+						while(!sf._deferStack.isEmpty() && grInPanic[gr]) { 
+							// NOTE this will run all of the defered code for a function, 
+							// NOTE if recover() is encountered it should set grInPanic[gr] to false.
+							// TODO consider merging code with RunDefers()
+							var def:StackFrame=sf._deferStack.pop();
+							//trace("DEBUG runOne panic defer:",def._functionName);
+							Scheduler.push(gr,def);
+							while(def._incomplete) 
+								runAll(); // with entryCount >1, so run as above 
+						}
 					if(!grInPanic[gr]){
 					 	//trace("DEBUG runOne panic - recovered");
 						if(sf._recoverNext != null) {
@@ -2789,44 +2823,39 @@ static inline function runOne(gr:Int,entryCount:Int){ // called from above to ca
 						} 
 						grStacks[gr].push(sf); // now run the recovery code
 					}
+					sf=null; // for GC
 				}
 			}
 		}
 	} else {
-		run1(gr);
+		run1a(gr,thisStack,thisStackLen);
 	}
 }
+public static inline function run1a(gr:Int,thisStack:Array<StackFrame>,thisStackLen:Int){ 
+	currentGR=gr;
+	thisStack[thisStackLen-1].run();  
+}
 public static inline function run1(gr:Int){ // used by callFromRT() for every go function
-		//if(grStacks[gr][grStacks[gr].length-1]==null/*grStacks[gr].first()==null*/) { 
-		//	throw "Panic:"+grPanicMsg+"\nScheduler: null stack entry for goroutine "+gr+"\n"+stackDump();
-		//} else {
-			currentGR=gr;
-			//grStacks[gr].first().run(); // run() may call haxe which calls these routines recursively 
-			grStacks[gr][grStacks[gr].length-1].run(); // run() may call haxe which calls these routines recursively 
-		//}	
+	run1a(gr,grStacks[gr],grStacks[gr].length); // run() may call haxe which calls these routines recursively 
 }
 public static function makeGoroutine():Int {
 	for (r in 1 ... grStacks.length) // goroutine zero is reserved for init activities, main.main() and Haxe call-backs
-		if(grStacks[r].length==0/*grStacks[r].isEmpty()*/)
+		if(grStacks[r].length==0)
 		{
 			grInPanic[r]=false;
 			grPanicMsg[r]=null;
 			return r;	// reuse a previous goroutine number if possible
 		}
 	var l:Int=grStacks.length;
-	grStacks[l]=new Array<StackFrame>(); //new List<StackFrame>();
+	grStacks[l]=new Array<StackFrame>(); 
 	grInPanic[l]=false;
 	grPanicMsg[l]=null;
 	return l;
 }
-public static function pop(gr:Int):StackFrame {
-	//if(gr>=grStacks.length||gr<0)
-	//	throw "Scheduler.pop() invalid goroutine";
-	return grStacks[gr].pop();
+public static inline function pop(gr:Int):StackFrame {
+	return grStacks[gr].pop(); // NOTE removing old object pointer does not improve GC
 }
-public static function push(gr:Int,sf:StackFrame){
-	//if(gr>=grStacks.length||gr<0)
-	//	throw "Scheduler.push() invalid goroutine";
+public static inline function push(gr:Int,sf:StackFrame){
 	grStacks[gr].push(sf);
 }
 public static inline function NumGoroutine():Int {
@@ -2842,15 +2871,12 @@ public static function stackDump():String {
 	ret += "runAll() entryCount="+entryCount+"\n";
 	for(gr in 0...grStacks.length) {
 		ret += "---\nGoroutine " + gr + " "+grPanicMsg[gr]+"\n"; //may need to unpack the interface
-		if(grStacks[gr].length==0 /*grStacks[gr].isEmpty()*/) {
+		if(grStacks[gr].length==0) {
 			ret += "Stack is empty\n";
 		} else {
 			ret += "Stack has " +grStacks[gr].length+ " entries:\n";
 			var e = grStacks[gr].length -1;
 			while( e >= 0){
-			//var it=grStacks[gr].iterator();
-			//while(it.hasNext()) {
-				//var ent=it.next();
 				var ent = grStacks[gr][e];
 				if(ent==null) {
 					ret += "\tStack entry is null\n";
@@ -2865,10 +2891,12 @@ public static function stackDump():String {
 								if(t==null) t="nil";
 								if(Std.is(t,Pointer)) t=t.toUniqueVal();
 								ret += "\t\tvar "+k+" = "+t+"\n";
+								t=null; // for GC
 							}
 						}
 					}
 				}
+				ent=null; // for GC
 				e -= 1;
 			}
 		}
@@ -2877,7 +2905,7 @@ public static function stackDump():String {
 }
 
 public static function getNumCallers(gr:Int):Int {
-	if(grStacks[gr].length==0 /*grStacks[gr].isEmpty()*/) {
+	if(grStacks[gr].length==0) {
 		return 0;
 	} else {
 		return grStacks[gr].length;
@@ -2885,14 +2913,11 @@ public static function getNumCallers(gr:Int):Int {
 }
 
 public static function getCallerX(gr:Int,x:Int):Int {
-	if(grStacks[gr].length==0 /*grStacks[gr].isEmpty()*/) {
+	if(grStacks[gr].length==0) {
 		return 0; // error
 	} else {
 		var e = grStacks[gr].length -1;
 		while(e >= 0){
-		//var it=grStacks[gr].iterator();
-		//while(it.hasNext()) {
-		//	var ent=it.next();
 			var ent=grStacks[gr][e];
 			if(x==0) {
 				if(ent==null) {
@@ -2901,6 +2926,7 @@ public static function getCallerX(gr:Int,x:Int):Int {
 					return ent._latestPH;
 				}
 			}
+			ent=null; // for GC
 			x -= 1;
 			e -= 1;
 		}

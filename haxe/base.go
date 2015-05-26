@@ -211,7 +211,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		}
 		ret += prefix + pogo.MakeID(fn.Params[p].Name()) + "=p_" + pogo.MakeID(fn.Params[p].Name()) + ";\n"
 		if pogo.DebugFlag {
-			ret += `this._debugVars.set("` + fn.Params[p].Name() + `",p_` + pogo.MakeID(fn.Params[p].Name()) + ");\n"
+			ret += `this.setDebugVar("` + fn.Params[p].Name() + `",p_` + pogo.MakeID(fn.Params[p].Name()) + ");\n"
 		}
 		if fn.Params[p].Name() == "_" {
 			hadBlank = true

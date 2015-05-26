@@ -32,5 +32,5 @@ func (l langType) copy(register string, args []ssa.Value, errorInfo string) stri
 }
 
 func (l langType) DebugRef(userName string, val interface{}, errorInfo string) string {
-	return `this._debugVars.set("` + userName + `",` + l.IndirectValue(val, errorInfo) + ");"
+	return `this.setDebugVar("` + userName + `",` + l.IndirectValue(val, errorInfo) + ");"
 }
