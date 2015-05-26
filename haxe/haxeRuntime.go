@@ -2696,7 +2696,7 @@ function setDebugVar(name:String,value:Dynamic):Void;
 }
 `)
 	pogo.WriteAsClass("Scheduler", `
-
+@:keep
 class Scheduler { // NOTE this code requires a single-thread, as there is no locking TODO detect deadlocks
 // public
 public static var doneInit:Bool=false; // flag to limit go-routines to 1 during the init() processing phase
@@ -2786,7 +2786,9 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 		}
 
 		// prune the list of goroutines only at the end (goroutine numbers are in the stack frames, so can't be altered) 
-		if(grStacks[grStacks.length-1].length==0) // there may be more goroutines than we started with
+		grStacksLen=grStacks.length;// there may be more goroutines than we started with
+		if(grStacksLen>1) // we must always have goroutine 0
+			if(grStacks[grStacksLen-1].length==0) 
 				grStacks.pop();
 	}
 	thisStack=null; // for GC
