@@ -395,8 +395,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	}
 	// return the UTF8 version of a string in a Slice
 	public static function toUTF8slice(gr:Int,s:String):Slice { // TODO remove gr param
-		var obj = Object.make(s.length);
-		for(i in 0...s.length) {
+		var sl=s.length;
+		var obj = Object.make(sl);
+		for(i in 0...sl) {
 			#if (js || php || neko ) // nullable targets
 				var t:Null<Int>=s.charCodeAt(i);
 				if(t==null) t=0;
@@ -405,23 +406,41 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				obj.set_uint8(i,s.charCodeAt(i));
 			#end
 		}
-		var ret = new Slice(Pointer.make(obj),0,-1,s.length,1);
-		obj=null; // for GC
+		var ptr = Pointer.make(obj);
+		var ret = new Slice(ptr,0,-1,sl,1);
+		ptr=null; obj=null; // for GC
 		return ret;
 	}
 	public static function toRawString(gr:Int,sl:Slice):String { // TODO remove gr param
 		if(sl==null) return "";
-		if(sl.len()==0) return "";
-		var ret = new StringBuf(); // use StringBuf for speed
+		var sll=sl.len();
+		if(sll==0) return "";
 		var ptr = sl.itemAddr(0); // pointer to the start of the slice
 		var obj = ptr.obj; // the object containing the slice data
 		var off = ptr.off; // the offset to the start of that data
-		for( i in off...(sl.len()+off) ) {
-			ret.addChar( obj.get_uint8(i) );
-		}
-		ptr=null;
-		obj=null;
-		return ret.toString();
+		var end = sll+off;
+		#if cpp
+			var buf=haxe.io.Bytes.alloc(sll);
+			for( i in off...end) {
+				buf.set(i-off,obj.get_uint8(i));
+			}
+			var ret=buf.getString(0,sll);
+			buf=null;
+			ptr=null;
+			obj=null;
+			return ret;
+		#else
+			// very slow for cpp:
+			var ret = new StringBuf(); // use StringBuf for speed
+			for( i in off...end ) {
+				ret.addChar( obj.get_uint8(i) );
+			}
+			ptr=null;
+			obj=null;
+			var s=ret.toString();
+			ret=null;
+			return s;
+		#end
 	}
 
 	public static function toHaxeParam(v:Dynamic):Dynamic { // TODO optimize if we know it is a function or string
@@ -544,7 +563,8 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		var _ret:String="";
 		var _r:Slice=Go_haxegoruntime_RRune2RRaw.callFromRT(0,rune);
 		var _ptr:Pointer;
-		for(_i in 0..._r.len()){
+		var rl=_r.len();
+		for(_i in 0...rl){
 			_ptr=_r.itemAddr(_i);
 			_ret+=String.fromCharCode(_ptr.load_int32());
 		}
@@ -2485,6 +2505,8 @@ public function new(gr:Int,ph:Int,name:String){
 
 public inline function nullOnExitSF(){
 	_functionName=null;
+	// the next three items could be optimized to only be set to null on exit if they are used in a Go func
+	_bds=null;
 	_deferStack=null;
 	_debugVars=null;
 	#if godebug

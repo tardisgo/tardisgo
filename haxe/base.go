@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"go/token"
 	"reflect"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -129,16 +130,17 @@ type regToFree struct {
 }
 
 func recycle(list []regToFree) string {
-	ret := ""
+	ret := []string{}
 	for _, x := range list {
 		switch x.typ {
 		case "GOint64":
 			//ret += "#if !(cpp|cs|java) " + x.reg + "=null; #end\n" // TODO
 		default:
-			ret += "" + x.reg + "=null; // " + x.typ + " \n" // this improves GC performance on all targets
+			ret = append(ret, ""+x.reg+"=null; // "+x.typ+"") // this improves GC performance on all targets
 		}
 	}
-	return ret
+	ret = sort.StringSlice(ret) // make sure it is always done in the same order
+	return strings.Join(ret, "\n") + "\n"
 }
 
 var useRegisterArray bool // should we use an array rather than individual register vars
@@ -170,6 +172,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	fnUsesGr = usesGr
 	fnTracksPhi = trackPhi
 	fnCanOptMap = canOptMap
+	nullOnExitList := []regToFree{} // names to set to null before we exit the function
 
 	ret := ""
 
@@ -190,8 +193,14 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		if hadBlank && fn.Params[p].Name() == "_" {
 			prefix += fmt.Sprintf("%d", p)
 		}
-		ret += "private var " + prefix + pogo.MakeID(fn.Params[p].Name()) + ":" + l.LangType(fn.Params[p].Type(), /*.Underlying()*/
-			false, fn.Params[p].Name()+position) + ";\n"
+		p_nam := prefix + pogo.MakeID(fn.Params[p].Name())
+		p_typ := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		ret += "private var " + p_nam + ":" + p_typ + ";\n"
+		switch p_typ {
+		case "Int", "Float", "Bool": // not objects
+		default:
+			nullOnExitList = append(nullOnExitList, regToFree{p_nam, p_typ})
+		}
 		if fn.Params[p].Name() == "_" {
 			hadBlank = true
 		}
@@ -200,7 +209,9 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	ret += "_bds:Dynamic" //bindings
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		p_nam := "p_" + pogo.MakeID(fn.Params[p].Name())
+		p_typ := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		ret += p_nam + " : " + p_typ
 	}
 	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
 	hadBlank = false
@@ -377,7 +388,6 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	regCount := 0
 	regDefs := ""
 	useRegisterArray = false
-	nullOnExitList := []regToFree{} // names to set to null before we exit the function
 
 	pseudoNextReturnAddress = -1
 	for b := range fn.Blocks {
