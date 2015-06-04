@@ -489,24 +489,24 @@ var allCompile = [][][]string{
 }
 var allBenchmark = [][][]string{
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
-		[]string{"echo", `"CPP:"`},
-		[]string{"time", "./tardis/cpp/Go"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers"*/, "-cpp", "tardis/cpp-bench"},
+		[]string{"echo", `"CPP (bench):"`},
+		[]string{"time", "./tardis/cpp-bench/Go"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-java", "tardis/java"},
-		[]string{"echo", `"Java:"`},
-		[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers"*/, "-java", "tardis/java-bench"},
+		[]string{"echo", `"Java (bench):"`},
+		[]string{"time", "java", "-jar", "tardis/java-bench/Go.jar"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cs", "tardis/cs"},
-		[]string{"echo", `"CS:"`},
-		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers"*/, "-cs", "tardis/cs-bench"},
+		[]string{"echo", `"CS (bench):"`},
+		[]string{"time", "mono", "./tardis/cs-bench/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
-		[]string{"echo", `"Node/JS:"`},
-		[]string{"time", "node", "tardis/go.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers", "-D", "uselocalfunctions"*/, "-js", "tardis/go-bench.js"},
+		[]string{"echo", `"Node/JS (bench):"`},
+		[]string{"time", "node", "tardis/go-bench.js"},
 	},
 	// as this mode is no longer used for testing, remove it from the "all" tests
 	//[][]string{

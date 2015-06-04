@@ -3046,7 +3046,16 @@ class GOmap {
 		vz = vDef;
 	}
 
+	#if cpp
+		static var setDefaultFormat:Bool=true;
+	#end
 	public static function makeKey(a:Dynamic):String{
+		#if cpp
+			if(setDefaultFormat){ // TODO rewrite this so that we don't check every time
+				cpp.Lib.setFloatFormat("%.17g");
+				setDefaultFormat=false;
+			}
+		#end
 		//trace("DEBUG makeKey",a);
 		if(a==null) return "<<<<NULL>>>>"; // TODO how can this be more unique?
 		if(Reflect.isObject(a)){
@@ -3082,10 +3091,10 @@ class GOmap {
 				return GOint64.toString(a);
 			#end
 		}
-		#if (cpp || cs)	
-			// in cpp & cs, Std.string(1.9999999999999998) => "2"
-			// TODO consider how to deal with this issue in the compound types above
+		#if cs			
 			if(Std.is(a,Float)) {
+				// in cpp & cs, Std.string(1.9999999999999998) => "2"
+				// TODO consider how to deal with this issue in the compound types above
 				return GOint64.toString(Go_haxegoruntime_FFloat64bits.callFromRT(0,a));
 			}
 		#end
