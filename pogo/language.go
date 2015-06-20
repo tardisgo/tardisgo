@@ -11,6 +11,8 @@ import (
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
+
+	"github.com/tardisgo/tardisgo/tgossa"
 )
 
 // The Language interface enables multiple target languages for TARDIS Go.
@@ -36,7 +38,7 @@ type Language interface {
 	Const(lit ssa.Const, position string) (string, string)
 	NamedConst(packageName, objectName string, val ssa.Const, position string) string
 	Global(packageName, objectName string, glob ssa.Global, position string, isPublic bool) string
-	FuncStart(pName, mName string, fn *ssa.Function, posStr string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool) string
+	FuncStart(pName, mName string, fn *ssa.Function, blks []*ssa.BasicBlock, posStr string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool, reconstruct []tgossa.BlockFormat) string
 	RunEnd(fn *ssa.Function) string
 	FuncEnd(fn *ssa.Function) string
 	BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) string

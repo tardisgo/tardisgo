@@ -375,8 +375,8 @@ func doTestable(args []string) error {
 			for _ = range targets {
 				r := <-results
 				fmt.Println(r.output)
-				if r.err != nil || len(strings.TrimSpace(r.output)) == 0 {
-					os.Exit(1) // exit with an error if the test fails
+				if (r.err != nil || len(strings.TrimSpace(r.output)) == 0) && *allFlag != "bench" {
+					os.Exit(1) // exit with an error if the test fails, but not for benchmarking
 				}
 				r.backChan <- true
 			}
@@ -482,29 +482,29 @@ var allCompile = [][][]string{
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, "-D", "uselocalfunctions"*/, "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},
 }
 var allBenchmark = [][][]string{
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers"*/, "-cpp", "tardis/cpp-bench"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, "-D", "analyzer" */, "-D", "inlinepointers" /*, "-D", "abstractobjects"*/, "-cpp", "tardis/cpp-bench"},
 		[]string{"echo", `"CPP (bench):"`},
 		[]string{"time", "./tardis/cpp-bench/Go"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers"*/, "-java", "tardis/java-bench"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, "-D", "analyzer" */, "-D", "inlinepointers" /*, "-D", "abstractobjects"*/, "-java", "tardis/java-bench"},
 		[]string{"echo", `"Java (bench):"`},
 		[]string{"time", "java", "-jar", "tardis/java-bench/Go.jar"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers"*/, "-cs", "tardis/cs-bench"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, "-D", "analyzer" */, "-D", "inlinepointers" /*, "-D", "abstractobjects"*/, "-cs", "tardis/cs-bench"},
 		[]string{"echo", `"CS (bench):"`},
 		[]string{"time", "mono", "./tardis/cs-bench/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "analyzer" /*"inlinepointers", "-D", "uselocalfunctions"*/, "-js", "tardis/go-bench.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, "-D", "analyzer" */, "-D", "inlinepointers" /*, "-D", "abstractobjects" */, "-D", "uselocalfunctions", "-js", "tardis/go-bench.js"},
 		[]string{"echo", `"Node/JS (bench):"`},
 		[]string{"time", "node", "tardis/go-bench.js"},
 	},

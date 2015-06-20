@@ -16,6 +16,8 @@ import (
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
+
+	"github.com/tardisgo/tardisgo/tgossa"
 )
 
 var haxeStdSizes = types.StdSizes{
@@ -157,8 +159,10 @@ var fnTracksPhi bool            // does the current function track Phi?
 
 var funcNamesUsed = make(map[string]bool)
 var fnCanOptMap map[string]bool
+var reconstructInstrs []tgossa.BlockFormat
+var elseStack []string
 
-func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, position string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool) string {
+func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, blks []*ssa.BasicBlock, position string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool, reconstruct []tgossa.BlockFormat) string {
 
 	//fmt.Println("DEBUG: HAXE FuncStart: ", packageName, ".", objectName, usesGr)
 
@@ -173,6 +177,12 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 	fnTracksPhi = trackPhi
 	fnCanOptMap = canOptMap
 	nullOnExitList := []regToFree{} // names to set to null before we exit the function
+	if pogo.DebugFlag {
+		reconstructInstrs = nil
+	} else {
+		reconstructInstrs = reconstruct
+	}
+	elseStack = []string{}
 
 	ret := ""
 
@@ -229,12 +239,13 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		}
 	}
 	if fn.Recover != nil {
-		for b := 0; b < len(fn.Blocks); b++ {
-			if fn.Recover == fn.Blocks[b] {
-				ret += fmt.Sprintf("this._recoverNext=%d;\n", b)
-				break
-			}
-		}
+		//for b := 0; b < len(blks); b++ {
+		//	if fn.Recover.Index == blks[b].Index {
+		//		ret += fmt.Sprintf("this._recoverNext=%d;\n", b)
+		//		break
+		//	}
+		//}
+		ret += fmt.Sprintf("this._recoverNext=%d;\n", fn.Recover.Index)
 	}
 	ret += emitTrace(`New:` + l.LangName(packageName, objectName))
 	ret += "Scheduler.push(gr,this);\n}\n"
@@ -385,14 +396,24 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 		ret += l.runFunctionCode(packageName, objectName, "[ OPTIMIZED NON-GOROUTINE FUNCTION ]")
 	}
 
+	/*
+		if reconstructInstrs != nil {
+			for k, v := range reconstructInstrs {
+				if v.IsWhileCandidate {
+					ret += fmt.Sprintf("#if jsX var _wh%d:Dynamic=null; #end\n", blks[k].Index)
+				}
+			}
+		}
+	*/
+
 	regCount := 0
 	regDefs := ""
 	useRegisterArray = false
 
 	pseudoNextReturnAddress = -1
-	for b := range fn.Blocks {
-		for i := range fn.Blocks[b].Instrs {
-			in := fn.Blocks[b].Instrs[i]
+	for b := range blks {
+		for i := range blks[b].Instrs {
+			in := blks[b].Instrs[i]
 			if !l.CanInline(in) {
 
 				reg := l.Value(in, pogo.CodePosition(in.Pos()))
@@ -416,7 +437,12 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 								ret += " #if js =null #end " // v8 opt
 								ret += ";\n"
 							} else {
-								ret += "=null;\n" // need to initalize when using the native stack for these vars
+								if reconstructInstrs == nil {
+									ret += "=null;\n" // need to initalize when using the native stack for these vars
+								} else {
+									ret += " #if js =null #end " // v8 opt
+									ret += ";"
+								}
 							}
 						}
 						pseudoNextReturnAddress--
@@ -458,11 +484,15 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, po
 								if init == "null" {
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 								}
-								init = "#if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
+								init = " #if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
 							} else {
-								init = " = " + init + " " // when not using goroutines, sadly they all need initializing because of using switch(){}
 								if init == "null" {
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
+								}
+								if reconstructInstrs == nil {
+									init = " = " + init + " " // when not using goroutines, sadly they all need initializing because of using switch(){}
+								} else {
+									init = " #if js =" + init + " #end " // unless we are reconstructing... but still for JS V8
 								}
 							}
 							switch typ {
@@ -523,20 +553,8 @@ func (l langType) whileCaseCode() string {
 	ret += "function " + currentfnName + "_loop():" + currentfnName + "{\n"
 	ret += "\tvar retVal:" + currentfnName + "=null;\n"
 
-	/*
-		ret += "\tvar jumpTable:Array<Void->Dynamic>=[\n"
-		//for p := -1; p > pseudoNextReturnAddress; p-- {
-		for p := pseudoNextReturnAddress + 1; p < 0; p++ {
-			ret += fmt.Sprintf("\t\t_Block_%d,\n", -p)
-		}
-		for b := range currentfn.Blocks {
-			ret += fmt.Sprintf("\t\t_Block%d,\n", b)
-		}
-		ret += "\tnull];\n"
-	*/
 	ret += "\twhile(retVal==null) \n"
 
-	//ret += fmt.Sprintf("\t\tretVal=jumpTable[_Next+%d]();\n", (-pseudoNextReturnAddress)-1)
 	if fnUsesGr {
 		ret += "\t\tswitch(_Next){\n"
 		for k, v := range localFunctionMap {
@@ -547,18 +565,6 @@ func (l langType) whileCaseCode() string {
 		ret += "\t\tretVal=fnMap.get(_Next)();\n"
 		ret += "\tfnMap=null;\n" // tidy up
 	}
-	/*
-		ret += "\t\tswitch(_Next){\n"
-		for b := range currentfn.Blocks {
-			ret += fmt.Sprintf("\t\tcase %d: retVal=_Block%d();\n", b, b)
-		}
-		for p := -1; p > pseudoNextReturnAddress; p-- {
-			ret += fmt.Sprintf("\t\tcase %d: retVal=_Block_%d();\n", p, -p)
-		}
-		ret += "\t\tdefault: Scheduler.bbi();\n"
-		ret += "\t\t}\n"
-	*/
-	//ret += "\tjumpTable=null;\n" // tidy up
 	ret += "\treturn retVal;\n"
 	ret += "}\n"
 	if !fnUsesGr {
@@ -578,19 +584,26 @@ func (l langType) whileCaseCode() string {
 
 func (l langType) RunEnd(fn *ssa.Function) string {
 	// TODO reoptimize if blocks >0 and no calls that create synthetic block entries
-	/*
-		ret := ""
-		if len(fn.Blocks) == 1 && !hadReturn {
-			ret += l.Ret(nil, "") // required because sometimes the SSA code is not generated for this
+	ret := ""
+	if reconstructInstrs == nil {
+		ret += emitUnseenPseudoBlocks()
+		ret += l.whileCaseCode()
+		if fnUsesGr {
+			ret += "\n#if !uselocalfunctions return this; } #end\n"
+		} else {
+			ret += "\n#if !uselocalfunctions return this; #end\n}\n"
 		}
-		return ret + `default: Scheduler.bbi();}}}`
-	*/
-	ret := emitUnseenPseudoBlocks()
-	ret += l.whileCaseCode()
-	if fnUsesGr {
-		ret += "\n#if !uselocalfunctions return this; } #end\n"
 	} else {
-		ret += "\n#if !uselocalfunctions return this; #end\n}\n"
+		thisBlock++
+		ret += reconstructBlock()
+		/*
+			for b := thisBlock; b < len(reconstructInstrs); b++ {
+				for i := 0; i < reconstructInstrs[b].EndBracketCount; i++ {
+					ret += " } "
+				}
+			}
+		*/
+		ret += "}\n" // for the run function
 	}
 	return ret
 }
@@ -618,17 +631,25 @@ func (l langType) SetPosHash() string {
 }
 
 var localFunctionMap map[int]string
+var thisBlock int
 
 func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) string {
 	rangeChecks = make(map[string]struct{})
+	thisBlock = num
 
 	hadBlockReturn = false
 	// TODO optimise is only 1 block AND no calls
 	// TODO if len(block) > 1 { // no need for a case statement if only one block
 	ret := ""
-	if num == 0 {
-		localFunctionMap = make(map[int]string)
-		ret += `
+
+	ret += fmt.Sprintf("// BlockID: %d Idom: %v Dominees: %v Successors: %v\n",
+		block[num].Index, block[num].Idom(), block[num].Dominees(), block[num].Succs)
+
+	if reconstructInstrs == nil { // Normal unreconstructed code
+
+		if num == 0 {
+			localFunctionMap = make(map[int]string)
+			ret += `
 #if !uselocalfunctions
 	#if js
 		var sw = function(){ switch(_Next){  // put in a separate function to encourage JS V8 optimisation
@@ -637,66 +658,161 @@ func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) str
 	#end
 #end
 `
-		ret += "#if uselocalfunctions "
-		if fnUsesGr {
-			ret += "return " + currentfnName + "_loop(); } "
-		} else {
-			ret += "var fnMap=new Map<Int,Void->" + currentfnName + ">(); "
+			ret += "#if uselocalfunctions "
+			if fnUsesGr {
+				ret += "return " + currentfnName + "_loop(); } "
+			} else {
+				ret += "var fnMap=new Map<Int,Void->" + currentfnName + ">(); "
+			}
+			ret += "#end\n"
 		}
-		ret += "#end\n"
+		ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end", block[num].Index) + l.Comment(block[num].Comment) + "\n"
+		if fnUsesGr {
+			fn := fmt.Sprintf(currentfnName+"_%d", block[num].Index)
+			localFunctionMap[block[num].Index] = fn
+			ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+		} else {
+			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"_%d():"+currentfnName+" { #end\n",
+				block[num].Index, block[num].Index)
+		}
+		ret += emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), block[num].Index))
+		if pogo.DebugFlag {
+			ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", block[num].Index) + ");\n"
+		}
+
+	} else { // reconstruct
+		ret += reconstructBlock()
 	}
-	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end", num) + l.Comment(block[num].Comment) + "\n"
-	if fnUsesGr {
-		fn := fmt.Sprintf(currentfnName+"_%d", num)
-		localFunctionMap[num] = fn
-		ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
-	} else {
-		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"_%d():"+currentfnName+" { #end\n", num, num)
+	return ret
+}
+
+func reconstructBlock() string {
+	ret := ""
+	for e := len(reconstructInstrs[thisBlock].IsElseStack) - 1; e >= 0; e-- {
+		switch reconstructInstrs[thisBlock].IsElseStack[e] {
+		case tgossa.ContinueWhile:
+			ret += " continue; /* ContinueWhile */ } else { "
+		case tgossa.NotElse:
+			ret += " } else { /* NotElse */ "
+		case tgossa.IsElse:
+			ret += " } else { "
+		}
+		if len(elseStack) == 0 {
+			msg := "haxe.BlockStart internal error elseStack is empty "
+			panic(msg)
+			//ret += " // DEBUG HELP! " + msg + "\n"
+		} else {
+			ret += elseStack[len(elseStack)-1]
+			elseStack = elseStack[0 : len(elseStack)-1] // pop the stack
+		}
+		switch reconstructInstrs[thisBlock].IsElseStack[e] {
+		case tgossa.NotElse, tgossa.ContinueWhile:
+			ret += " } \n"
+		}
 	}
-	ret += emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), num))
-	if pogo.DebugFlag {
-		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", num) + ");\n"
+	if thisBlock > 0 {
+		if reconstructInstrs[thisBlock-1].IsWhleCandidateEnd {
+			ret += "break;}"
+			ret += " /* EndWhile */\n"
+		}
+	}
+	if reconstructInstrs[thisBlock].IsWhileCandidate {
+		ret += "\nwhile(true){\n"
 	}
 	return ret
 }
 
 func (l langType) BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) string {
 	ret := ""
-	//if emitPhi {
-	//	ret += fmt.Sprintf(" _Phi=%d;\n", num)
-	//}
-	if !hadBlockReturn {
-		ret += "#if uselocalfunctions return null; #end\n"
-	}
-	hadBlockReturn = true
-	if fnUsesGr {
-		ret += "#if uselocalfunctions } #end\n"
-	} else {
-		ret += "#if uselocalfunctions }); #end\n"
-		//if num == 0 {
-		//	ret += "#if uselocalfunctions var fnNext:Void->" + currentfnName + "=" + currentfnName + "_0; #end\n"
+	if reconstructInstrs == nil { // Normal unreconstructed code
+		if !hadBlockReturn {
+			ret += "#if uselocalfunctions return null; #end\n"
+		}
+		hadBlockReturn = true
+		if fnUsesGr {
+			ret += "#if uselocalfunctions } #end\n"
+		} else {
+			ret += "#if uselocalfunctions }); #end\n"
+		}
+	} else { // reconstruct
+		for i := 0; i < reconstructInstrs[thisBlock].EndBracketCount; i++ {
+			ret += " } /* EndBracket */"
+		}
+		//if block[num].Succs[len(block[num].Succs)-1].Index != block[num+1].Index {
+		//	ret += "continue;"
 		//}
 	}
 	return ret
 }
 
 func (l langType) Jump(block int, phi int, code string) string {
-	// use tail-calls for backward jumps where we definately know the function name
-	ret := "#if uselocalfunctions\n"
-	ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
-	ret += " #end\n"
-	if (block < phi) && !inMustSplitSubFn { // already seen it so we can optimise when using local functions
-		return ret + code + fmt.Sprintf(" #if uselocalfunctions return "+currentfnName+"_%d(); #else _Next=%d; #end", block, block)
+	if reconstructInstrs == nil { // Normal unreconstructed code
+		// use tail-calls for backward jumps where we definately know the function name
+		ret := "#if uselocalfunctions\n"
+		ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
+		ret += " #end\n"
+		//NOTE optimisation below no longer possible because of ordering by dominance
+		//if (block < phi) && !inMustSplitSubFn { // already seen it so we can optimise when using local functions
+		//	return ret + code + fmt.Sprintf(" #if uselocalfunctions return "+currentfnName+"_%d(); #else _Next=%d; #end", block, block)
+		//}
+		return ret + code + fmt.Sprintf("_Next=%d;", block) + "\n#if uselocalfunctions return null; #end "
+	} else { // reconstruct
+		ret := ""
+		//for reconstructInstrs[thisBlock].EndBracketCount > 0 {
+		//	ret += " } "
+		//	reconstructInstrs[thisBlock].EndBracketCount--
+		//}
+		ret += fmt.Sprintf("// Jump to ID %d\n", block) + code
+		//if reconstructInstrs[thisBlock].EndWhileIndex > 0 {
+		//	ret += "continue;\n"
+		//}
+		for _, ri := range reconstructInstrs { // TODO pull reconstruct lookup map through
+			if ri.Index == block {
+				if ri.Seq != thisBlock+1 {
+					if ri.Seq < thisBlock {
+						ret += "continue;\n"
+					} else {
+						ret += "break;\n"
+					}
+				}
+				break
+			}
+		}
+		return ret
 	}
-	return ret + code + fmt.Sprintf("_Next=%d;", block) + "\n#if uselocalfunctions return null; #end "
 }
 
 func (l langType) If(v interface{}, trueNext, falseNext, phi int, trueCode, falseCode, errorInfo string) string {
-	ret := "if(" + l.IndirectValue(v, errorInfo) + "){\n"
-	ret += l.Jump(trueNext, phi, trueCode)
-	ret += "\n}else{\n"
-	ret += l.Jump(falseNext, phi, falseCode)
-	return ret + "\n}\n"
+	if reconstructInstrs == nil { // Normal unreconstructed code
+		ret := "if(" + l.IndirectValue(v, errorInfo) + "){\n"
+		ret += l.Jump(trueNext, phi, trueCode)
+		ret += "\n}else{\n"
+		ret += l.Jump(falseNext, phi, falseCode)
+		return ret + "\n}\n"
+	} else { // reconstruct
+		ret := ""
+		//if reconstructInstrs[thisBlock].IsWhile {
+		//	ret += fmt.Sprintf(
+		//		" #if jsX if(_wh%d==null) _wh%d = function():Dynamic { #end /*DEBUG-isWhile*/ while(",
+		//		phi, phi)
+		//} else {
+		ret += "if("
+		//}
+		if reconstructInstrs[thisBlock].ReversePolarity {
+			ret += "!(" + l.IndirectValue(v, errorInfo) + ")"
+		} else {
+			ret += l.IndirectValue(v, errorInfo)
+		}
+		ret += "){\n"
+		if reconstructInstrs[thisBlock].ReversePolarity {
+			ret += falseCode
+			elseStack = append(elseStack, trueCode)
+		} else { // as you would expect
+			ret += trueCode
+			elseStack = append(elseStack, falseCode)
+		}
+		return ret
+	}
 }
 
 func (l langType) Phi(register string, phiEntries []int, valEntries []interface{}, defaultValue, errorInfo string) string {
@@ -1996,9 +2112,12 @@ func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 
 func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
 	inMustSplitSubFn = false
-	ret := "#if !uselocalfunctions\n"
-	ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
-	ret += " #end\n"
+	ret := ""
+	if reconstructInstrs == nil {
+		ret += "#if !uselocalfunctions\n"
+		ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
+		ret += " #end\n"
+	}
 	if alwaysStackdump || pogo.DebugFlag {
 		ret += fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
 	}

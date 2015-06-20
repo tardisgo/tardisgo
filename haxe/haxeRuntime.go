@@ -587,9 +587,9 @@ class Object {
 	public static inline function make(size:Int,?byts:haxe.io.Bytes):Object {
 		#if abstractobjects
 			var ret = new haxe.ds.Vector<Dynamic>(size);
-			if(byts!=null) 
-				for(i in 0 ... byts.length) 
-					ret[i] = byts.get(i);
+			if(byts!=null){ 
+				for(i in 0 ... byts.length) ret[i] = byts.get(i);
+			}
 			return ret;
 		#else
 			return new Object(size,byts);
@@ -603,11 +603,13 @@ class Object {
 	#end
 
 #if abstractobjects
+	public var length(get, never):Int;
+	function get_length() return this.length;
 	public inline function len():Int {
-		return this.length;
+		return length;
 	}
 	public inline function uniqueRef():Int {
-		Console.naclWrite("uniqueRef!");
+		Console.naclWrite("uniqueRef!\n");
 		return 0; // TODO
 	}
 #else
@@ -773,14 +775,16 @@ class Object {
 `
 	if pogo.DebugFlag {
 		objClass += `
-		if(!Std.is(src,Object)) { 
-			Scheduler.panicFromHaxe("Object.objBlt() src parameter is not an Object - Value: "+Std.string(src)+" Type: "+Type.typeof(src));
-			return;
-		}
-		if(!Std.is(dest,Object)) { 
-			Scheduler.panicFromHaxe("Object.objBlt() dest parameter is not an Object - Value: "+Std.string(dest)+" Type: "+Type.typeof(dest));
-			return;
-		}
+		#if !abstractobjects
+			if(!Std.is(src,Object)) { 
+				Scheduler.panicFromHaxe("Object.objBlt() src parameter is not an Object - Value: "+Std.string(src)+" Type: "+Type.typeof(src));
+				return;
+			}
+			if(!Std.is(dest,Object)) { 
+				Scheduler.panicFromHaxe("Object.objBlt() dest parameter is not an Object - Value: "+Std.string(dest)+" Type: "+Type.typeof(dest));
+				return;
+			}
+		#end
 		if(srcPos<0 || srcPos>=src.length){
 			Scheduler.panicFromHaxe("Object.objBlt() srcPos out-of-range - Value= "+Std.string(srcPos)+
 				" src.length= "+Std.string(src.length));

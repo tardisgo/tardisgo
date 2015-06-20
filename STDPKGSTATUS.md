@@ -104,7 +104,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | log             | c++, c#, java, js     |                                   |
 | -- syslog       | no tests              |                                   |
 | math            | c++, c#, java, js     |                                   |
-| -- big          | [c++], c#, java, js   |                                   |
+| -- big          | c++, c#, java, js     |                                   |
 | -- cmplx        | c++, c#, java, js     |                                   |
 | -- rand         |                       | js/c++: 1 numerical error c#/java: 2 |
 | mime            | c++, c#, java, js   * |                                   |

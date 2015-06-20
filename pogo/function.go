@@ -189,12 +189,13 @@ func emitFunc(fn *ssa.Function) {
 			//println("DEBUG mustSplitCode => large function length:", instrCount, " in ", fn.Name())
 			mustSplitCode = true
 		}
-		for b := range fn.Blocks { // go though the blocks looking for sub-functions
+		blks := fn.DomPreorder() // was fn.Blocks 
+		for b := range blks { // go though the blocks looking for sub-functions
 			instrsEmitted := 0
 			inSubFn := false
-			for i := range fn.Blocks[b].Instrs {
+			for i := range blks[b].Instrs {
 				canPutInSubFn := true
-				in := fn.Blocks[b].Instrs[i]
+				in := blks[b].Instrs[i]
 				switch in.(type) {
 				case *ssa.Phi: // phi uses self-referential temp vars that must be pre-initialised
 					canPutInSubFn = false
@@ -234,26 +235,26 @@ func emitFunc(fn *ssa.Function) {
 				instrsEmitted++
 			}
 			if inSubFn {
-				subFnList[len(subFnList)-1].end = len(fn.Blocks[b].Instrs)
+				subFnList[len(subFnList)-1].end = len(blks[b].Instrs)
 			}
 		}
 		for sf := range subFnList { // go though the sub-functions looking for optimisable temp vars
 			var instrMap = make(map[ssa.Instruction]bool)
 			for ii := subFnList[sf].start; ii < subFnList[sf].end; ii++ {
-				instrMap[fn.Blocks[subFnList[sf].block].Instrs[ii]] = true
+				instrMap[blks[subFnList[sf].block].Instrs[ii]] = true
 			}
 
 			for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
-				instrVal, hasVal := fn.Blocks[subFnList[sf].block].Instrs[i].(ssa.Value)
+				instrVal, hasVal := blks[subFnList[sf].block].Instrs[i].(ssa.Value)
 				if hasVal {
-					refs := *fn.Blocks[subFnList[sf].block].Instrs[i].(ssa.Value).Referrers()
+					refs := *blks[subFnList[sf].block].Instrs[i].(ssa.Value).Referrers()
 					switch len(refs) {
 					case 0: // no other instruction uses the result of this one
 					default: //multiple usage of the register
 						canOpt := true
 						for r := range refs {
 							user := refs[r]
-							if user.Block() != fn.Blocks[subFnList[sf].block] {
+							if user.Block() != blks[subFnList[sf].block] {
 								canOpt = false
 								break
 							}
@@ -264,7 +265,7 @@ func emitFunc(fn *ssa.Function) {
 							}
 						}
 						if canOpt &&
-							!LanguageList[TargetLang].CanInline(fn.Blocks[subFnList[sf].block].Instrs[i]) {
+							!LanguageList[TargetLang].CanInline(blks[subFnList[sf].block].Instrs[i]) {
 							canOptMap[instrVal.Name()] = true
 						}
 					}
@@ -272,13 +273,18 @@ func emitFunc(fn *ssa.Function) {
 			}
 		}
 
-		emitFuncStart(fn, trackPhi, canOptMap, mustSplitCode)
+		reconstruct := tgossa.Reconstruct(blks,grMap[fn] || mustSplitCode)
+		if reconstruct != nil {
+			//fmt.Printf("DEBUG reconstruct %s %#v\n",fn.Package().String()+"."+fn.Name(),reconstruct)
+		}
+
+		emitFuncStart(fn, blks, trackPhi, canOptMap, mustSplitCode,reconstruct)
 		thisSubFn := 0
-		for b := range fn.Blocks {
+		for b := range blks {
 			emitPhi := trackPhi
-			emitBlockStart(fn.Blocks, b, emitPhi)
+			emitBlockStart(blks, b, emitPhi)
 			inSubFn := false
-			for i := 0; i < len(fn.Blocks[b].Instrs); i++ {
+			for i := 0; i < len(blks[b].Instrs); i++ {
 				if thisSubFn >= 0 && thisSubFn < len(subFnList) { // not at the end of the list
 					if b == subFnList[thisSubFn].block {
 						if i >= subFnList[thisSubFn].end && inSubFn {
@@ -298,7 +304,7 @@ func emitFunc(fn *ssa.Function) {
 							if mustSplitCode {
 								fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnCall(thisSubFn))
 							} else {
-								emitSubFn(fn, subFnList, thisSubFn, mustSplitCode, canOptMap)
+								emitSubFn(fn, blks, subFnList, thisSubFn, mustSplitCode, canOptMap)
 							}
 						}
 					}
@@ -307,21 +313,21 @@ func emitFunc(fn *ssa.Function) {
 					// optimize phi case statements
 					phiList := 0
 				phiLoop:
-					switch fn.Blocks[b].Instrs[i+phiList].(type) {
+					switch blks[b].Instrs[i+phiList].(type) {
 					case *ssa.Phi:
-						if len(*fn.Blocks[b].Instrs[i+phiList].(*ssa.Phi).Referrers()) > 0 {
+						if len(*blks[b].Instrs[i+phiList].(*ssa.Phi).Referrers()) > 0 {
 							phiList++
-							if (i + phiList) < len(fn.Blocks[b].Instrs) {
+							if (i + phiList) < len(blks[b].Instrs) {
 								goto phiLoop
 							}
 						}
 					}
 					if phiList > 0 {
-						peephole(fn.Blocks[b].Instrs[i : i+phiList])
+						peephole(blks[b].Instrs[i : i+phiList])
 						i += phiList - 1
 					} else {
-						emitPhi = emitInstruction(fn.Blocks[b].Instrs[i],
-							fn.Blocks[b].Instrs[i].Operands(make([]*ssa.Value, 0)))
+						emitPhi = emitInstruction(blks[b].Instrs[i],
+							blks[b].Instrs[i].Operands(make([]*ssa.Value, 0)))
 					}
 				}
 			}
@@ -335,23 +341,23 @@ func emitFunc(fn *ssa.Function) {
 					}
 				}
 			}
-			emitBlockEnd(fn.Blocks, b, emitPhi && trackPhi)
+			emitBlockEnd(blks, b, emitPhi && trackPhi)
 		}
 		emitRunEnd(fn)
 		if mustSplitCode {
 			for sf := range subFnList {
-				emitSubFn(fn, subFnList, sf, mustSplitCode, canOptMap)
+				emitSubFn(fn, blks, subFnList, sf, mustSplitCode, canOptMap)
 			}
 		}
 		emitFuncEnd(fn)
 	}
 }
 
-func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode bool, canOptMap map[string]bool) {
+func emitSubFn(fn *ssa.Function, blks []*ssa.BasicBlock, subFnList []subFnInstrs, sf int, mustSplitCode bool, canOptMap map[string]bool) {
 	l := TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnStart(sf, mustSplitCode))
 	for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
-		instrVal, hasVal := fn.Blocks[subFnList[sf].block].Instrs[i].(ssa.Value)
+		instrVal, hasVal := blks[subFnList[sf].block].Instrs[i].(ssa.Value)
 		if hasVal {
 			if canOptMap[instrVal.Name()] == true {
 				l := TargetLang
@@ -359,7 +365,7 @@ func emitSubFn(fn *ssa.Function, subFnList []subFnInstrs, sf int, mustSplitCode 
 			}
 		}
 	}
-	peephole(fn.Blocks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end])
+	peephole(blks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end])
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf, int(LatestValidPosHash), mustSplitCode))
 }
 
@@ -379,13 +385,13 @@ func GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 }
 
 // Emit the start of a function.
-func emitFuncStart(fn *ssa.Function, trackPhi bool, canOptMap map[string]bool, mustSplitCode bool) {
+func emitFuncStart(fn *ssa.Function, blks []*ssa.BasicBlock, trackPhi bool, canOptMap map[string]bool, mustSplitCode bool, reconstruct []tgossa.BlockFormat) {
 	l := TargetLang
 	posStr := CodePosition(fn.Pos())
 	pName, mName := GetFnNameParts(fn)
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
 	fmt.Fprintln(&LanguageList[l].buffer,
-		LanguageList[l].FuncStart(pName, mName, fn, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap))
+		LanguageList[l].FuncStart(pName, mName, fn, blks, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap,reconstruct))
 }
 
 // Emit the end of a function.

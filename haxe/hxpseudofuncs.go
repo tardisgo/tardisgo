@@ -112,7 +112,8 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		} else {
 			code += "("
 		}
-		aLen, err := strconv.ParseUint(l.IndirectValue(args[argOff], errorInfo), 0, 64)
+		textLen := l.IndirectValue(args[argOff], errorInfo) // see Const() for format
+		aLen, err := strconv.ParseUint(textLen, 0, 64)
 		if err != nil {
 			code += " ERROR Go ParseUint on number of arguments to hx.Meth() or hx.Call() - " + err.Error() + "! "
 		} else {

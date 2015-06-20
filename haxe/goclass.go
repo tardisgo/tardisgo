@@ -270,7 +270,7 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 				panic("haxe.Const() unhandled integer constant for: " +
 					lit.Type().Underlying().(*types.Basic).String())
 			}
-			return "Int", ret
+			return "Int", ret // NOTE format of this string matters in hxpseudofuncs.go
 		}
 	case exact.Unknown: // not sure we should ever get here!
 		return "Dynamic", "null"
