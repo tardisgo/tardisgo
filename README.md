@@ -109,14 +109,14 @@ Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 ev
 
 Tabulating the very simple indicative [benchmarking](https://github.com/tardisgo/tardisgo-samples/blob/master/benchmarks) results, looking only at elapsed (rather than cpu) time in seconds, as a multiple of the Go time: 
 
-| Test - of what functionality               | Go     | C++   | C#    | Java  | JS    | [GopherJS](http://www.gopherjs.org/) |
-| ------------------------------------------ | ------ | ----- | ----- | ----- | ----- | -------- |
-| mandel.go - floating point                 | (9.9s) | 1.7x  | 2.9x  | 5.4x  | 15.3x | 1.0x     |
-| fannkuch.go - array indexing               | (2.5s) | 38.9x | 33.5x | 21.0x | 56.7x | 5.0x     |
-| fannkuch.go (using haxe -D inlinepointers) | (2.5s) | 31.5x | 21.6x | 17.7x | 43.8x | 5.0x     |
-| binarytree.go - garbage collection         | (8.0s) | 22.9x | 20.4x | 3.3x  | 21.3x | 0.4x (!) |
+| Test - of what functionality               | C++      | mono/C#  | Java     | node/JS  | [GopherJS](http://www.gopherjs.org/) |
+| ------------------------------------------ | -------- | -------- | -------- | -------- | -------- |
+| mandel.go - floating point                 | 1.1x     | 2.7x     | 1.3x     | 1.3x     | 1.0x     |
+| fannkuch.go - array indexing               | 36.6x    | 27.9x    | 12.5x    | 30.4x    | 4.0x     |
+| fannkuch.go (using haxe -D inlinepointers) | 30.9x    | 18.2x    | 10.7x    | 36.7x    | 4.0x     |
+| binarytree.go - garbage collection         | 18.0x    | 12.3x    | 1.5x     | 13.5x    | 0.3x (!) |
 
-Figures above are the latest results as at 25th May 2015, after some simple code generation optimizations. Clearly further improvements are required, with better pointer handling high on the list.
+Figures above are the latest results as at 23rd June 2015. Execution speed significantly improved after re-writing code generation for non-goroutine functions to reconstruct Haxe "while" and "if" control structures from the SSA form where possible. Clearly further improvements are always possible, with better pointer handling high on the list.
 
 ## Unsupported Haxe targets: ActionScript, PHP, Python and Neko
 

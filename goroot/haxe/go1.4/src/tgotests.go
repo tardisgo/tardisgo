@@ -16,6 +16,7 @@ import (
 
 var parallelism = 1 + runtime.NumCPU()/2 // control resource usage here
 const groupAll = true                    // control grouping of tests here
+const onlyJS = false                     // requires groupAll=false - control if only the JS tests are run (for quick partial testing)
 
 // space required before and after package names
 
@@ -94,6 +95,10 @@ var passes, failures uint32
 
 func doTarget(target string, pkg []string) {
 	//println("DEBUG ", target, pkg)
+	if onlyJS && target != "js" {
+		results <- resChan{string("Target " + target + " ignored"), nil}
+		return
+	}
 	var lastErr error
 	exe := "bash"
 	_, err := exec.LookPath(exe)

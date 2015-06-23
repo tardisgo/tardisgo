@@ -12,6 +12,10 @@ import (
 	"golang.org/x/tools/go/types"
 )
 
+func vprintln(args ...interface{}) {
+	//fmt.Println(args...)
+}
+
 type isOverloaded func(*ssa.Function) bool
 
 // TARDISGO VERSION MODIFIED FROM
@@ -50,13 +54,13 @@ type visitor struct {
 }
 
 func (visit *visitor) program(isOvl isOverloaded) {
-	//fmt.Println("DEBUG base packages:", visit.packs)
+	//fmt.vprintln("DEBUG base packages:", visit.packs)
 	for p := range visit.packs {
 		if visit.packs[p] != nil {
 			if visit.packs[p].Members != nil {
 				for _, mem := range visit.packs[p].Members { //was pkg.Members {
 					if fn, ok := mem.(*ssa.Function); ok {
-						//fmt.Println("DEBUG base function:", fn.String())
+						//fmt.vprintln("DEBUG base function:", fn.String())
 						visit.function(fn, isOvl)
 						if visit.usesGR[fn] {
 							visit.refsUseGR(fn.Referrers(), make(map[*ssa.Function]bool))
@@ -96,30 +100,36 @@ func (visit *visitor) refsUseGR(refs *[]ssa.Instruction, refed map[*ssa.Function
 
 func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 	if !visit.seen[fn] { // been, exists := visit.seen[fn]; !been || !exists {
-		//fmt.Println("DEBUG 1st visit to: ", fn.String())
+		vprintln("DEBUG 1st visit to: ", fn.String())
 		visit.seen[fn] = true
 		visit.usesGR[fn] = false
 		if isOvl(fn) {
-			//fmt.Println("DEBUG overloaded: ", fn.String())
+			vprintln("DEBUG overloaded: ", fn.String())
 			return
 		}
 		if len(fn.Blocks) == 0 { // exclude functions that reference C/assembler code
 			// NOTE: not marked as seen, because we don't want to include in output
 			// if used, the symbol will be included in the golibruntime replacement packages
 			// TODO review
-			//fmt.Println("DEBUG no code for: ", fn.String())
+			vprintln("DEBUG no code for: ", fn.String())
 			return // external functions cannot use goroutines
 		}
 		var buf [10]*ssa.Value // avoid alloc in common case
 		for _, b := range fn.Blocks {
 			for _, instr := range b.Instrs {
 				for _, op := range instr.Operands(buf[:0]) {
-					if afn, ok := (*op).(*ssa.Function); ok {
+					areRecursing := false
+					afn, isFn := (*op).(*ssa.Function)
+					if isFn {
+						if afn == fn {
+							areRecursing = true
+						}
 						visit.function(afn, isOvl)
 						if visit.usesGR[afn] {
+							vprintln("marked as using GR because referenced func uses GR")
 							visit.usesGR[fn] = true
 						}
-						//println(fn.Name(), " calls ", afn.Name())
+						vprintln(fn.Name(), " calls ", afn.Name())
 					}
 					// TODO, review if this code should be included
 					if !visit.usesGR[fn] {
@@ -127,9 +137,17 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 							typ := (*op).Type()
 							typ = DeRefUl(typ)
 							switch typ.(type) {
-							case *types.Chan, *types.Interface, *types.Signature:
-								// TODO use oracle techniques to determine which interfaces or functions may require GR
+							// TODO use oracle techniques to determine which interfaces or functions may require GR
+							case *types.Chan, *types.Interface:
 								visit.usesGR[fn] = true // may be too conservative
+								vprintln("marked as using GR because uses Chan/Interface")
+							case *types.Signature:
+								if !areRecursing {
+									if !isFn {
+										visit.usesGR[fn] = true
+										vprintln("marked as using GR because uses Signature")
+									}
+								}
 							}
 						}
 					}
@@ -146,8 +164,9 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 								visit.function(afn, isOvl)
 								if visit.usesGR[afn] {
 									visit.usesGR[fn] = true
+									vprintln("marked as using GR because call target uses GR")
 								}
-								//println(fn.Name(), " calls ", afn.Name())
+								vprintln(fn.Name(), " calls ", afn.Name())
 							}
 						}
 					}
@@ -156,10 +175,11 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 					switch instr.(type) {
 					case *ssa.Go, *ssa.MakeChan, *ssa.Defer, *ssa.Panic,
 						*ssa.Send, *ssa.Select:
-						//fmt.Println("usesGR", fn.Name())
+						vprintln("usesGR because uses Go...", fn.Name())
 						visit.usesGR[fn] = true
 					case *ssa.UnOp:
 						if instr.(*ssa.UnOp).Op.String() == "<-" {
+							vprintln("usesGR because uses <-", fn.Name())
 							visit.usesGR[fn] = true
 						}
 					}

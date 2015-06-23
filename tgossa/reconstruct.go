@@ -2,32 +2,87 @@ package tgossa
 
 import "golang.org/x/tools/go/ssa"
 
-const (
-	unset = iota
-	IsElse
-	NotElse
-	ContinueWhile
-)
-
-type BlockFormat struct {
-	Seq, Index         int
-	IsElseStack        []int
-	EndBracketCount    int
-	IsWhileCandidate   bool
-	WhileCandidateEnd  int
-	IsWhleCandidateEnd bool
-	//IsWhile           bool
-	//EndWhileIndex     int
-	ReversePolarity bool
-}
-
 func rPrintf(s string, args ...interface{}) {
 	//fmt.Printf(s, args...)
 }
 
+type BlockAction int
+
+const (
+	unset BlockAction = iota
+	IsElse
+	NotElse
+	EndElseBracket
+	EndWhile
+)
+
+func (ba BlockAction) String() string {
+	switch ba {
+	default:
+		return "???"
+	case IsElse:
+		return "else"
+	case NotElse:
+		return "if(){}"
+	case EndElseBracket:
+		return "if(){}else{...}"
+	case EndWhile:
+		return "while(){}"
+	}
+}
+
+type BlockStackEntry struct {
+	action     BlockAction
+	seq, index int
+}
+
+type BlockStack struct {
+	bse []BlockStackEntry
+}
+
+func (bs *BlockStack) Len() int {
+	//rPrintf("DEBUG BlockStack.len=%d\n", len(bs.bse))
+	return len(bs.bse)
+}
+func (bs *BlockStack) Push(action BlockAction, seq, index int) bool {
+	item := BlockStackEntry{action, seq, index}
+	for _, bb := range bs.bse { // TODO remove these belt-and-braces tests
+		if bb.seq > seq {
+			rPrintf("DEBUG BlockStack Push invalid of %#v onto %#v\n", item, bs)
+			return false
+		}
+	}
+	bs.bse = append(bs.bse, item)
+	//rPrintf("DEBUG Push %#v\n", item)
+	return true
+}
+func (bs *BlockStack) Pop() (action BlockAction, seq, index int, ok bool) {
+	l := bs.Len()
+	if l == 0 {
+		return // ok==false
+	}
+	l--
+	action = bs.bse[l].action
+	seq = bs.bse[l].seq
+	index = bs.bse[l].index
+	bs.bse = bs.bse[:l]
+	ok = true
+	//rPrintf("DEBUG Pop %d %d %d %v\n", action, seq, index, ok)
+	return
+}
+
+type BlockFormat struct {
+	Seq, Index        int
+	Stack             *BlockStack
+	IsWhileCandidate  bool
+	WhileCandidateEnd int
+	IfCandidate       BlockAction
+	ReversePolarity   bool
+}
+
 // Reconstruct builds instructions for reconstructing SSA form into a High Level Language
 func Reconstruct(blocksIn []*ssa.BasicBlock, usesGr bool) []BlockFormat {
-	if usesGr || len(blocksIn) == 0 /*|| len(blocksIn) > 16*/ { // NOTE only very small functions work at present
+	if usesGr || len(blocksIn) == 0 /*|| len(blocksIn) > 16*/ { // NOTE only very small functions for testing
 		return nil // cannot reconstruct
 	}
 	if blocksIn[0].Index != 0 {
@@ -37,7 +92,7 @@ func Reconstruct(blocksIn []*ssa.BasicBlock, usesGr bool) []BlockFormat {
 	rPrintf("\nDEBUG reconstructing %s\n", blocksIn[0].Parent().String())
 	r := make([]BlockFormat, len(blocksIn)+1)
 	for b := range r {
-		r[b].IsElseStack = make([]int, 0, 1)
+		r[b].Stack = &BlockStack{}
 	}
 
 	mapIdxToSeq := make(map[int]int)
@@ -57,13 +112,6 @@ func reconstruct(blocks []*ssa.BasicBlock, formats []BlockFormat, mapIdxToSeq ma
 				return nil
 			}
 			if targetSeq < b { // while candidate
-				if targetSeq > 0 {
-					if containsIf(blocks[targetSeq-1]) > 0 {
-						rPrintf("DEBUG while-candidate %s ID %d seq %d has jump target %d with prior block containing an if\n",
-							blocks[0].Parent().Name(), bb.Index, b, targetSeq)
-						return nil
-					}
-				}
 				formats[targetSeq].IsWhileCandidate = true
 				formats[targetSeq].WhileCandidateEnd = lastDomineeSeq(blocks, b, mapIdxToSeq) // if more than 1 jump-back, the latest/largest will be used
 			}
@@ -72,9 +120,6 @@ func reconstruct(blocks []*ssa.BasicBlock, formats []BlockFormat, mapIdxToSeq ma
 	whileStack := make([]*BlockFormat, 0, 6)
 	whileStack = append(whileStack, &BlockFormat{Index: 0, Seq: 0, IsWhileCandidate: true, WhileCandidateEnd: len(blocks)})
 	for b, bb := range blocks {
-		if formats[b].WhileCandidateEnd > 0 {
-			formats[formats[b].WhileCandidateEnd].IsWhleCandidateEnd = true
-		}
 		targetSeq, found := mapIdxToSeq[containsJump(bb)]
 		if found {
 			for whileStack[len(whileStack)-1].WhileCandidateEnd <= b {
@@ -121,8 +166,14 @@ func reconstruct(blocks []*ssa.BasicBlock, formats []BlockFormat, mapIdxToSeq ma
 			rPrintf("DEBUG block contains forbidden fruit %s seq %d\n", blocks[0].Parent().Name(), lower)
 			return nil // TODO 	remove once all working
 		}
-		switch len(blocks[lower].Dominees()) {
-		case 0:
+		if formats[lower].WhileCandidateEnd > 0 {
+			afterAWhile := formats[lower].WhileCandidateEnd + 1
+			if !(formats[afterAWhile].Stack.Push(EndWhile, lower, blocks[lower].Index)) {
+				return nil // push fail has rPrintf()
+			}
+		}
+		switch len(blocks[lower].Succs) {
+		case 0, 1:
 			target := containsJump(blocks[lower])
 			if target >= 0 {
 				targetSeq, ok := mapIdxToSeq[target]
@@ -135,13 +186,15 @@ func reconstruct(blocks []*ssa.BasicBlock, formats []BlockFormat, mapIdxToSeq ma
 						rPrintf("DEBUG jump back to non-while block\n")
 						return nil
 					}
-				} else {
-					if targetSeq == lower+1 {
-						if len(formats[targetSeq].IsElseStack) == 0 {
-							rPrintf("DEBUG jump forward by 1 to non-else block\n")
-							return nil // not an else point = help!
+					for target := lower; target > targetSeq; target-- {
+						if formats[target].IsWhileCandidate &&
+							formats[target].WhileCandidateEnd >= lower {
+							rPrintf("DEBUG jump back has while before target while\n")
+							return nil
 						}
-					} else {
+					}
+				} else {
+					if targetSeq != lower+1 {
 						rPrintf("DEBUG the next block does not follow this\n")
 						return nil // the next block does not follow this
 					}
@@ -149,73 +202,8 @@ func reconstruct(blocks []*ssa.BasicBlock, formats []BlockFormat, mapIdxToSeq ma
 			}
 			target = containsIf(blocks[lower])
 			if target >= 0 {
-				rPrintf("DEBUG if statements without dominees are not supported\n")
-				return nil // if statements without dominees are not supported
-			}
-			switch len(blocks[lower].Succs) {
-			case 0, 1: //NoOp
-			default:
-				rPrintf("DEBUG more than one successor in non-dominating block\n")
+				rPrintf("DEBUG if statements without successors are not supported\n")
 				return nil
-			}
-		case 1:
-			if blocks[lower].Dominees()[0].Index == blocks[lower+1].Index {
-				// the next block flows from this, and this alone
-				if len(blocks[lower].Succs) == 2 && containsIf(blocks[lower]) > 0 {
-					targetNextEndSeq := lastDomineeSeq(blocks, lower+1, mapIdxToSeq)
-					targetElseStartSeq := targetNextEndSeq + 1
-					if targetElseStartSeq < lower {
-						rPrintf("DEBUG (1 dom) targetElseStartSeq %d < lower %d\n", targetElseStartSeq, lower)
-						return nil
-					}
-					if len(blocks[targetNextEndSeq].Succs) == 1 &&
-						(mapIdxToSeq[blocks[targetNextEndSeq].Succs[0].Index] == targetElseStartSeq) ||
-						dominatorHasSuccessor(blocks, targetNextEndSeq, targetElseStartSeq, mapIdxToSeq) {
-						formats[targetElseStartSeq].IsElseStack = append(formats[targetElseStartSeq].IsElseStack, NotElse)
-						rPrintf("DEBUG Found (1-dom) not-else %s at sequence %d blockId %d\n",
-							blocks[0].Parent().Name(), targetElseStartSeq, formats[targetElseStartSeq].Index)
-					} else {
-						//	formats[targetElseEndSeq].EndBracketCount++
-						//	formats[targetElseStartSeq].IsElseStack = append(formats[targetElseStartSeq].IsElseStack, IsElse)
-						rPrintf("DEBUG TODO Found else %s at sequence %d blockId %d\n",
-							blocks[0].Parent().Name(), targetElseStartSeq, formats[targetElseStartSeq].Index)
-						return nil
-					}
-
-					/*
-
-						s, ok := mapIdxToSeq[ifNextID]
-						if !ok {
-							return nil
-						}
-						if s <= lower {
-							if formats[s].IsWhileCandidate {
-								end := formats[s].WhileCandidateEnd
-								if lower == end {
-									rPrintf("DEBUG final jump back to While - follow-on block id %d jumps back from block id %d func %s\n",
-										ifNextID, blocks[lower].Index, blocks[0].Parent().String())
-									return nil
-									//formats[end+1].IsElseStack = append(formats[end+1].IsElseStack, ContinueWhile)
-								} else {
-									rPrintf("DEBUG non-final jump back to While - follow-on block id %d jumps back from block id %d func %s (lower=%d end=%d)\n",
-										ifNextID, blocks[lower].Index, blocks[0].Parent().String(), lower, end)
-									//return nil
-									formats[end].IsElseStack = append(formats[end].IsElseStack, ContinueWhile)
-								}
-							} else {
-								rPrintf("DEBUG non-While follow-on block id %d jumps back from block id %d func %s\n",
-									ifNextID, blocks[lower].Index, blocks[0].Parent().String())
-								return nil
-							}
-						} else {
-							formats[s].IsElseStack = append(formats[s].IsElseStack, NotElse)
-						}
-
-					*/
-				}
-			} else {
-				rPrintf("DEBUG dominated block not the next one %s %d\n", blocks[0].Parent().Name(), lower)
-				return nil // only dominates one block, but that's not the next one!
 			}
 		case 2:
 			if containsIf(blocks[lower]) > 0 {
@@ -238,35 +226,131 @@ func reconstruct(blocks []*ssa.BasicBlock, formats []BlockFormat, mapIdxToSeq ma
 						targetElse, blocks[0].Parent().Name(), mapIdxToSeq)
 					return nil // did not find the else block
 				}
+				if targetElseStartSeq < lower && len(blocks[lower].Dominees()) == 1 {
+					for target := lower; target > targetElseStartSeq; target-- {
+						if formats[target].IsWhileCandidate &&
+							formats[target].WhileCandidateEnd >= lower {
+							rPrintf("DEBUG (doms==1) targetElseStartSeq < lower - while before target while\n")
+							return nil
+						}
+					}
+					rPrintf("DEBUG (doms==1) targetElseStartSeq < lower - reverse polarity\n")
+					formats[lower].ReversePolarity = !(formats[lower].ReversePolarity)
+					targetElseStartSeq = lower + 1
+				}
 				targetElseEndSeq := lastDomineeSeq(blocks, targetElseStartSeq, mapIdxToSeq)
-				if targetNextEndSeq < lower+1 ||
-					targetElseStartSeq < targetNextEndSeq ||
-					targetElseEndSeq < targetElseStartSeq ||
-					targetNextEndSeq+1 != targetElseStartSeq {
-					rPrintf("DEBUG if statement elements in wrong sequence")
+				if targetNextEndSeq < lower+1 {
+					rPrintf("DEBUG if statement elements in wrong sequence: targetNextEndSeq < lower+1\n")
+					return nil
+				}
+				if targetElseStartSeq < targetNextEndSeq && len(blocks[lower].Dominees()) > 1 {
+					rPrintf("DEBUG (doms>1) if statement elements in wrong sequence: targetElseStartSeq < targetNextEndSeq\n")
+					return nil
+				}
+				if targetElseEndSeq < targetElseStartSeq {
+					rPrintf("DEBUG if statement elements in wrong sequence: targetElseEndSeq < targetElseStartSeq\n")
+					return nil
+				}
+				if targetNextEndSeq+1 != targetElseStartSeq && len(blocks[lower].Dominees()) > 1 {
+					rPrintf("DEBUG (doms>1) if statement elements in wrong sequence: targetNextEndSeq+1 != targetElseStartSeq\n")
 					return nil
 				}
 				if targetElseStartSeq < lower {
 					rPrintf("DEBUG targetElseStartSeq %d < lower %d\n", targetElseStartSeq, lower)
 					return nil
 				}
-				if len(blocks[targetNextEndSeq].Succs) == 1 &&
-					(mapIdxToSeq[blocks[targetNextEndSeq].Succs[0].Index] == targetElseStartSeq) ||
-					dominatorHasSuccessor(blocks, targetNextEndSeq, targetElseStartSeq, mapIdxToSeq) {
-					formats[targetElseStartSeq].IsElseStack = append(formats[targetElseStartSeq].IsElseStack, NotElse)
+				for t := lower; t <= targetElseEndSeq; t++ {
+					if formats[t].IsWhileCandidate && formats[t].WhileCandidateEnd > targetElseEndSeq {
+						rPrintf("DEBUG if range overlaps while loop\n")
+						return nil
+					}
+				}
+				if len(blocks[lower].Dominees()) == 1 {
+					formats[lower].IfCandidate = NotElse
+					if !(formats[targetElseStartSeq].Stack.Push(NotElse, lower, blocks[lower].Index)) {
+						return nil
+					}
 					rPrintf("DEBUG Found not-else %s at sequence %d blockId %d\n",
-						blocks[0].Parent().Name(), targetElseStartSeq, blocks[targetElseStartSeq].Index)
+						blocks[0].Parent().Name(), targetElseStartSeq, formats[targetElseStartSeq].Index)
 				} else {
-					formats[targetElseEndSeq].EndBracketCount++
-					formats[targetElseStartSeq].IsElseStack = append(formats[targetElseStartSeq].IsElseStack, IsElse)
+					targetElseEndSeq++
+					formats[lower].IfCandidate = EndElseBracket
+					if !(formats[targetElseStartSeq].Stack.Push(EndElseBracket, lower, blocks[lower].Index)) {
+						return nil
+					}
+					rPrintf("DEBUG EndBracket set for %s at sequence %d blockId %d\n",
+						blocks[0].Parent().Name(), targetElseEndSeq, formats[targetElseEndSeq].Index)
+					if !(formats[targetElseStartSeq].Stack.Push(IsElse, lower, blocks[lower].Index)) {
+						return nil
+					}
 					rPrintf("DEBUG Found else %s at sequence %d blockId %d\n",
 						blocks[0].Parent().Name(), targetElseStartSeq, blocks[targetElseStartSeq].Index)
 				}
+			} else {
+				rPrintf("DEBUG two Succs %s but no if\n", blocks[0].Parent().Name())
+				return nil
 			}
 		default:
-			rPrintf("DEBUG more than two dominees %s %d\n", blocks[0].Parent().Name(), len(blocks[lower].Dominees()))
-			return nil // more than 2 dominees!
+			rPrintf("DEBUG more than two Succs %s %d\n", blocks[0].Parent().Name(), len(blocks[lower].Succs))
+			return nil // more than 2 successors!
 		}
+	}
+	// Now check that everthing is actually in the correct allignment
+	indent := []int{}
+	for f, ff := range formats {
+		rPrintf("DEBUG before block at seq %d id %d stack %v\n",
+			f, ff.Index, indent)
+		for s := len(ff.Stack.bse) - 1; s >= 0; s-- {
+			ss := ff.Stack.bse[s]
+			rPrintf("DEBUG stack level %d action %s \n",
+				s, ss.action)
+			if len(indent) == 0 {
+				rPrintf("DEBUG empty block stack!\n")
+				return nil
+			}
+			tos := indent[len(indent)-1]
+			off := tos
+			if off < 0 {
+				off = -off
+			}
+			switch ss.action {
+			case NotElse, EndElseBracket:
+				if -ss.seq != tos || ss.action != formats[off].IfCandidate {
+					rPrintf("DEBUG (end if) non-matching current block %d stack entry %d", -ss.seq, tos)
+					rPrintf(" start action %s end action %s\n", formats[off].IfCandidate, ss.action)
+					return nil
+				}
+				indent = indent[:len(indent)-1]
+			case EndWhile:
+				if ss.seq != tos {
+					rPrintf("DEBUG (end while) non-matching current block %d stack entry \n%d", ss.seq, tos)
+					return nil
+				}
+				indent = indent[:len(indent)-1]
+			case IsElse:
+				if -ss.seq != tos ||
+					(NotElse != formats[off].IfCandidate && EndElseBracket != formats[off].IfCandidate) {
+					rPrintf("DEBUG (else) non-matching current block %d stack entry %d", ss.seq, tos)
+					rPrintf(" start action %s end action %s\n", formats[off].IfCandidate, ss.action)
+					return nil
+				}
+				// NOTE: No Stack Pop
+			default:
+				rPrintf("DEBUG unhandled action!\n")
+				return nil
+			}
+		}
+		// these are processed after the above in the code
+		if ff.IsWhileCandidate {
+			indent = append(indent, f)
+		}
+		if ff.IfCandidate > 0 {
+			indent = append(indent, -f) // use -ve numbers for if blocks
+		}
+	}
+	if len(indent) != 0 {
+		rPrintf("DEBUG not all blocks have been closed, stack: %v\n", indent)
+		return nil
 	}
 	return formats
 }
@@ -307,7 +391,7 @@ func containsJump(bl *ssa.BasicBlock) int {
 }
 
 func containsForbidden(blks []*ssa.BasicBlock, targetSeq int, mapIdxToSeq map[int]int) bool {
-
+	/* allow everything for testing...
 	for _, s := range blks[targetSeq].Succs {
 		if mapIdxToSeq[s.Index] < targetSeq {
 			return true // the successors are before this in the sequence
@@ -315,7 +399,7 @@ func containsForbidden(blks []*ssa.BasicBlock, targetSeq int, mapIdxToSeq map[in
 	}
 
 	for _, instr := range blks[targetSeq].Instrs {
-		/* backward jumps */
+		// backward jumps
 		jmp, isJump := instr.(*ssa.Jump)
 		if isJump {
 			for b := 0; b < targetSeq && b < len(blks); b++ {
@@ -324,12 +408,14 @@ func containsForbidden(blks []*ssa.BasicBlock, targetSeq int, mapIdxToSeq map[in
 				}
 			}
 		}
-		/**/
+
+		// calls
 		_, isCall := instr.(*ssa.Call)
 		if isCall {
 			return true
 		}
 	}
+	*/
 	return false
 }
 

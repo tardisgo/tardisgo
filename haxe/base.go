@@ -251,23 +251,29 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "Scheduler.push(gr,this);\n}\n"
 
 	rTyp := ""
+	rInit := ""
 	switch fn.Signature.Results().Len() {
 	case 0:
 		// NoOp
 	case 1:
 		rTyp = l.LangType(fn.Signature.Results().At(0).Type() /*.Underlying()*/, false, position)
+		rInit = l.LangType(fn.Signature.Results().At(0).Type() /*.Underlying()*/, true, position)
 	default:
 		rTyp = "{"
+		rInit = "{"
 		for r := 0; r < fn.Signature.Results().Len(); r++ {
 			if r != 0 {
 				rTyp += ", "
+				rInit += ", "
 			}
 			rTyp += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type() /*.Underlying()*/, false, position)
+			rInit += fmt.Sprintf("r%d:", r) + l.LangType(fn.Signature.Results().At(r).Type() /*.Underlying()*/, true, position)
 		}
 		rTyp += "}"
+		rInit += "}"
 	}
 	if rTyp != "" {
-		ret += "private var _res:" + rTyp + ";\n"
+		ret += "private var _res:" + rTyp + "=" + rInit + ";\n" // code may not be generated if return val is default
 		ret += "public inline function res():Dynamic " + "{return _res;}\n"
 	} else {
 		ret += "public inline function res():Dynamic {return null;}\n" // just to keep the interface definition happy
@@ -393,7 +399,11 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "}\n"
 
 	if !usesGr {
-		ret += l.runFunctionCode(packageName, objectName, "[ OPTIMIZED NON-GOROUTINE FUNCTION ]")
+		if reconstructInstrs != nil {
+			ret += l.runFunctionCode(packageName, objectName, "[ RECONSTRUCTED NON-GOROUTINE FUNCTION ]")
+		} else {
+			ret += l.runFunctionCode(packageName, objectName, "[ UN-RECONSTRUCTED NON-GOROUTINE FUNCTION ]")
+		}
 	}
 
 	/*
@@ -441,7 +451,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 									ret += "=null;\n" // need to initalize when using the native stack for these vars
 								} else {
 									ret += " #if js =null #end " // v8 opt
-									ret += ";"
+									ret += ";\n"
 								}
 							}
 						}
@@ -489,11 +499,11 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 								if init == "null" {
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 								}
-								if reconstructInstrs == nil {
-									init = " = " + init + " " // when not using goroutines, sadly they all need initializing because of using switch(){}
-								} else {
-									init = " #if js =" + init + " #end " // unless we are reconstructing... but still for JS V8
-								}
+								//if reconstructInstrs == nil {
+								init = " = " + init + " " // when not using goroutines, sadly they all need initializing
+								//} else {
+								//	init = " #if js =" + init + " #end " // unless we are reconstructing... but still for JS V8
+								//}
 							}
 							switch typ {
 							case "String", "GOint64":
@@ -594,15 +604,22 @@ func (l langType) RunEnd(fn *ssa.Function) string {
 			ret += "\n#if !uselocalfunctions return this; #end\n}\n"
 		}
 	} else {
+		ret += "// Func code all emitted (handle extra reconstruction block for function)\n"
 		thisBlock++
 		ret += reconstructBlock()
-		/*
-			for b := thisBlock; b < len(reconstructInstrs); b++ {
-				for i := 0; i < reconstructInstrs[b].EndBracketCount; i++ {
-					ret += " } "
-				}
-			}
-		*/
+
+		//for b := thisBlock; b < len(reconstructInstrs); b++ {
+		//	for i := 0; i < reconstructInstrs[b].EndBracketCount; i++ {
+		//		ret += " } "
+		//	}
+		//}
+
+		// TODO optimise to only emit this code if previous block does not have explicit return
+		ret += `this._incomplete=false;
+Scheduler.pop(this._goroutine);
+nullOnExit();
+return this;
+` // for when the SSA code does not contain an explicit return;
 		ret += "}\n" // for the run function
 	}
 	return ret
@@ -688,32 +705,36 @@ func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) str
 
 func reconstructBlock() string {
 	ret := ""
-	for e := len(reconstructInstrs[thisBlock].IsElseStack) - 1; e >= 0; e-- {
-		switch reconstructInstrs[thisBlock].IsElseStack[e] {
-		case tgossa.ContinueWhile:
-			ret += " continue; /* ContinueWhile */ } else { "
-		case tgossa.NotElse:
-			ret += " } else { /* NotElse */ "
-		case tgossa.IsElse:
-			ret += " } else { "
-		}
-		if len(elseStack) == 0 {
-			msg := "haxe.BlockStart internal error elseStack is empty "
+	for reconstructInstrs[thisBlock].Stack.Len() > 0 {
+		action, seq, idx, ok := reconstructInstrs[thisBlock].Stack.Pop()
+		if !ok {
+			msg := "haxe.reconstructBlock internal error blockStack is empty "
 			panic(msg)
-			//ret += " // DEBUG HELP! " + msg + "\n"
-		} else {
-			ret += elseStack[len(elseStack)-1]
-			elseStack = elseStack[0 : len(elseStack)-1] // pop the stack
 		}
-		switch reconstructInstrs[thisBlock].IsElseStack[e] {
-		case tgossa.NotElse, tgossa.ContinueWhile:
-			ret += " } \n"
+		switch action {
+		case tgossa.EndWhile:
+			ret += fmt.Sprintf(" break; } /* EndWhile for seq %d id %d */ \n", seq, idx)
+		case tgossa.NotElse:
+			ret += fmt.Sprintf(" } else { /* NotElse for seq %d id %d */ \n", seq, idx)
+		case tgossa.IsElse:
+			ret += fmt.Sprintf(" } else { /* for seq %d id %d */ \n", seq, idx)
+		case tgossa.EndElseBracket:
+			ret += fmt.Sprintf(" } /* EndElse for seq %d id %d */ \n", seq, idx)
 		}
-	}
-	if thisBlock > 0 {
-		if reconstructInstrs[thisBlock-1].IsWhleCandidateEnd {
-			ret += "break;}"
-			ret += " /* EndWhile */\n"
+		switch action {
+		case tgossa.NotElse, tgossa.IsElse:
+			if len(elseStack) == 0 {
+				msg := "haxe.reconstructBlock internal error elseStack is empty "
+				panic(msg)
+				//ret += " // DEBUG HELP! " + msg + "\n"
+			} else {
+				ret += elseStack[len(elseStack)-1]
+				elseStack = elseStack[0 : len(elseStack)-1] // pop the stack
+			}
+		}
+		switch action {
+		case tgossa.NotElse:
+			ret += " /*end NotElse*/ } \n"
 		}
 	}
 	if reconstructInstrs[thisBlock].IsWhileCandidate {
@@ -735,9 +756,9 @@ func (l langType) BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) strin
 			ret += "#if uselocalfunctions }); #end\n"
 		}
 	} else { // reconstruct
-		for i := 0; i < reconstructInstrs[thisBlock].EndBracketCount; i++ {
-			ret += " } /* EndBracket */"
-		}
+		//for i := 0; i < reconstructInstrs[thisBlock].EndBracketCount; i++ {
+		//	ret += " } /* EndBracket */"
+		//}
 		//if block[num].Succs[len(block[num].Succs)-1].Index != block[num+1].Index {
 		//	ret += "continue;"
 		//}
@@ -772,7 +793,7 @@ func (l langType) Jump(block int, phi int, code string) string {
 					if ri.Seq < thisBlock {
 						ret += "continue;\n"
 					} else {
-						ret += "break;\n"
+						//ret += "break;\n"
 					}
 				}
 				break
@@ -805,11 +826,11 @@ func (l langType) If(v interface{}, trueNext, falseNext, phi int, trueCode, fals
 		}
 		ret += "){\n"
 		if reconstructInstrs[thisBlock].ReversePolarity {
-			ret += falseCode
-			elseStack = append(elseStack, trueCode)
+			ret += l.Jump(falseNext, phi, falseCode)
+			elseStack = append(elseStack, l.Jump(trueNext, phi, trueCode))
 		} else { // as you would expect
-			ret += trueCode
-			elseStack = append(elseStack, falseCode)
+			ret += l.Jump(trueNext, phi, trueCode)
+			elseStack = append(elseStack, l.Jump(falseNext, phi, falseCode))
 		}
 		return ret
 	}

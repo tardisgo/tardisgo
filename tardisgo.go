@@ -482,7 +482,7 @@ var allCompile = [][][]string{
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full" /*, "-D", "uselocalfunctions"*/, "-js", "tardis/go.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},

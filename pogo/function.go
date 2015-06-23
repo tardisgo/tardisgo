@@ -275,7 +275,7 @@ func emitFunc(fn *ssa.Function) {
 
 		reconstruct := tgossa.Reconstruct(blks,grMap[fn] || mustSplitCode)
 		if reconstruct != nil {
-			//fmt.Printf("DEBUG reconstruct %s %#v\n",fn.Package().String()+"."+fn.Name(),reconstruct)
+			//fmt.Printf("DEBUG reconstruct %s %#v\n",fn.String(),reconstruct)
 		}
 
 		emitFuncStart(fn, blks, trackPhi, canOptMap, mustSplitCode,reconstruct)
