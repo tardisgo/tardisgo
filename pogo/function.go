@@ -189,8 +189,8 @@ func emitFunc(fn *ssa.Function) {
 			//println("DEBUG mustSplitCode => large function length:", instrCount, " in ", fn.Name())
 			mustSplitCode = true
 		}
-		blks := fn.DomPreorder() // was fn.Blocks 
-		for b := range blks { // go though the blocks looking for sub-functions
+		blks := fn.DomPreorder() // was fn.Blocks
+		for b := range blks {    // go though the blocks looking for sub-functions
 			instrsEmitted := 0
 			inSubFn := false
 			for i := range blks[b].Instrs {
@@ -273,12 +273,12 @@ func emitFunc(fn *ssa.Function) {
 			}
 		}
 
-		reconstruct := tgossa.Reconstruct(blks,grMap[fn] || mustSplitCode)
+		reconstruct := tgossa.Reconstruct(blks, grMap[fn] || mustSplitCode)
 		if reconstruct != nil {
 			//fmt.Printf("DEBUG reconstruct %s %#v\n",fn.String(),reconstruct)
 		}
 
-		emitFuncStart(fn, blks, trackPhi, canOptMap, mustSplitCode,reconstruct)
+		emitFuncStart(fn, blks, trackPhi, canOptMap, mustSplitCode, reconstruct)
 		thisSubFn := 0
 		for b := range blks {
 			emitPhi := trackPhi
@@ -391,7 +391,7 @@ func emitFuncStart(fn *ssa.Function, blks []*ssa.BasicBlock, trackPhi bool, canO
 	pName, mName := GetFnNameParts(fn)
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
 	fmt.Fprintln(&LanguageList[l].buffer,
-		LanguageList[l].FuncStart(pName, mName, fn, blks, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap,reconstruct))
+		LanguageList[l].FuncStart(pName, mName, fn, blks, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap, reconstruct))
 }
 
 // Emit the end of a function.

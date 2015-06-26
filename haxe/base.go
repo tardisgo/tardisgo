@@ -177,6 +177,8 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	fnTracksPhi = trackPhi
 	fnCanOptMap = canOptMap
 	nullOnExitList := []regToFree{} // names to set to null before we exit the function
+	reset1useMap()
+
 	if pogo.DebugFlag {
 		reconstructInstrs = nil
 	} else {
@@ -919,11 +921,21 @@ func (l langType) FieldAddr(register string, v interface{}, errorInfo string) st
 		fld := v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field)
 		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
 		if off == 0 {
-			return fmt.Sprintf(`%s=%s; // .fieldAddr( /*%d : %s */ %d )`, register,
-				ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
+			if is1usePtr(v) {
+				map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}
+				return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+			} else {
+				return fmt.Sprintf(`%s=%s; // .fieldAddr( /*%d : %s */ %d )`, register,
+					ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
+			}
 		}
-		return fmt.Sprintf(`%s=%s.fieldAddr( /*%d : %s */ %d );`, register,
-			ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
+		if is1usePtr(v) {
+			map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: fmt.Sprintf("%d", off) + "+" + ptr + ".off"}
+			return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+		} else {
+			return deDupAssign(register, fmt.Sprintf(`%s.fieldAddr( /*%d : %s */ %d );`,
+				ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off))
+		}
 	}
 	return ""
 }
@@ -954,14 +966,29 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 		}
 		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
 		if idxString == "0" {
-			return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
+			if is1usePtr(v) {
+				map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}
+				return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+			} else {
+				return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
+			}
 		}
-		return fmt.Sprintf(`%s=%s.addr(%s%s);`, register,
-			ptr, idxString, arrayOffsetCalc(ele))
+		idxString += arrayOffsetCalc(ele)
+		if is1usePtr(v) {
+			map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: "(" + idxString + ")+" + ptr + ".off"}
+			return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+		} else {
+			return deDupAssign(register, fmt.Sprintf(`%s.addr(%s);`, ptr, idxString))
+		}
 	case *types.Slice:
-		return fmt.Sprintf(`%s=%s.itemAddr(%s);`, register,
-			l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo),
-			idxString)
+		x := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
+		if is1usePtr(v) {
+			map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: x + ".baseArray.obj", off: x + ".itemOff(" + idxString + ")+" + x + ".baseArray.off"}
+			return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+		} else {
+			code := fmt.Sprintf(`%s.itemAddr(%s);`, x, idxString)
+			return deDupAssign(register, code)
+		}
 	default:
 		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
 		return ""
@@ -1014,6 +1041,15 @@ func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
 	ptr := l.IndirectValue(v1, errorInfo)
 	if pogo.DebugFlag {
 		ptr = "Pointer.check(" + ptr + ")"
+	}
+	if is1usePtr(v1) {
+		oup, found := map1usePtr[v1.(ssa.Value)]
+		if !found {
+			panic("pogo.Store can't find oneUsePtr " + v1.(ssa.Value).Name() + "=" + v1.(ssa.Value).String())
+		}
+		return oup.obj + ".set" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) + oup.off + "," +
+			l.IndirectValue(v2, errorInfo) + ");" +
+			" /* " + v2.(ssa.Value).Type().Underlying().String() + " */ "
 	}
 	return ptr + ".store" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) +
 		l.IndirectValue(v2, errorInfo) + ");" +
@@ -1893,7 +1929,13 @@ var rangeChecks map[string]struct{}
 // TODO error on 64-bit indexes
 func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) string {
 	chk := ""
-	iStr := l.IndirectValue(i, errorInfo)
+	iStr := ""
+	switch i.(type) {
+	case string:
+		iStr = i.(string)
+	default:
+		iStr = l.IndirectValue(i, errorInfo)
+	}
 	if length <= 0 { // length unknown at compile time
 		xStr := l.IndirectValue(x, errorInfo)
 		tPtr := x.(ssa.Value).Type().Underlying()
@@ -2111,11 +2153,26 @@ func (l langType) EmitInvoke(register, path string, isGo, isDefer, usesGr bool, 
 	return l.doCall(register, cc.Signature().Results(), ret+"]);", usesGr)
 }
 
+var deDupRHS map[string]string
+
+func deDupAssign(register, code string) string {
+	if deDupRHS != nil {
+		prevReg, found := deDupRHS[code]
+		if found {
+			code = prevReg
+		} else {
+			deDupRHS[code] = register + "; // DE-DUP: " + code
+		}
+	}
+	return register + "=" + code
+}
+
 const alwaysStackdump = false
 
 var inMustSplitSubFn = false
 
 func (l langType) SubFnStart(id int, mustSplitCode bool) string {
+	deDupRHS = make(map[string]string)
 	tempVarList = []regToFree{}
 	if mustSplitCode {
 		inMustSplitSubFn = true
@@ -2132,6 +2189,7 @@ func (l langType) SubFnStart(id int, mustSplitCode bool) string {
 }
 
 func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
+	deDupRHS = nil
 	inMustSplitSubFn = false
 	ret := ""
 	if reconstructInstrs == nil {
@@ -2157,6 +2215,9 @@ var tempVarList []regToFree
 func (l langType) DeclareTempVar(v ssa.Value) string {
 	if useRegisterArray {
 		return ""
+	}
+	if is1usePtr(v) {
+		return "// virtual oneUsePtr _" + v.Name()
 	}
 	typ := l.LangType(v.Type(), false, "temp var declaration")
 	if typ == "" {

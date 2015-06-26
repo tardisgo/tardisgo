@@ -388,12 +388,12 @@ func doTestable(args []string) error {
 			//}
 			mathCmds := [][][]string{
 				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
 				},
 				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
 					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 					[]string{"time", "node", "tardis/go-fu.js"},
 				},
@@ -420,31 +420,31 @@ func doTestable(args []string) error {
 				}, results)
 			case "cpp":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
 					[]string{"echo", `"CPP:"`},
 					[]string{"time", "./tardis/cpp/Go"},
 				}, results)
 			case "cs":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cs", "tardis/cs"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cs", "tardis/cs"},
 					[]string{"echo", `"CS:"`},
 					[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 				}, results)
 			case "js":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
 					[]string{"echo", `"Node/JS:"`},
 					[]string{"time", "node", "tardis/go.js"},
 				}, results)
 			case "jsfu":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
 					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
 					[]string{"time", "node", "tardis/go-fu.js"},
 				}, results)
 			case "java":
 				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-java", "tardis/java"},
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-java", "tardis/java"},
 					[]string{"echo", `"Java:"`},
 					[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
 				}, results)
@@ -467,22 +467,22 @@ func doTestable(args []string) error {
 
 var allCompile = [][][]string{
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cpp", "tardis/cpp"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
 		[]string{"echo", `"CPP:"`},
 		[]string{"time", "./tardis/cpp/Go"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-java", "tardis/java"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-java", "tardis/java"},
 		[]string{"echo", `"Java:"`},
 		[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-cs", "tardis/cs"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cs", "tardis/cs"},
 		[]string{"echo", `"CS:"`},
 		[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
 	},
 	[][]string{
-		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
+		[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
 		[]string{"echo", `"Node/JS:"`},
 		[]string{"time", "node", "tardis/go.js"},
 	},

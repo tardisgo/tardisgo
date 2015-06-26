@@ -1376,7 +1376,7 @@ class Pointer {
 	sliceClass := `
 @:keep
 class Slice {
-	private var baseArray:Pointer;
+	public var baseArray:Pointer;
 	public var itemSize:Int; // for the size of each item in bytes 
 	private var start:Int;
 	private var end:Int;
@@ -1558,7 +1558,7 @@ class Slice {
 	sliceClass += `
 		return new Pointer(baseArray.obj,baseArray.off+itemOff(idx));
 	}
-	private inline function itemOff(idx:Int):Int {
+	public inline function itemOff(idx:Int):Int {
 		return (idx+start)*itemSize;
 	}
 	public function toString():String {

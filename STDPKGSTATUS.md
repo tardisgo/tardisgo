@@ -22,7 +22,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | compress        | no code               |                                   |
 | -- bzip2        | c++, c#, java, js   * |                                   |
 | -- flate        | c++, c#, java, js   * |                                   |
-| -- gzip         | c++, c#, java, js   * |                                   |
+| -- gzip         | c++, c#, js         * | java: Copy hung - regression to be fixed |
 | -- lzw          | c++, c#, java, js   * |                                   |
 | -- zlib         | c++, c#, java, js   * |                                   |
 | container       | no code               |                                   |
@@ -46,7 +46,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- sha512       | c++, c#, java, js     |                                   |
 | -- subtle       | c++, c#, java, js     |                                   |
 | -- tls          |                     * | panic: duplicate function name: crypto/tls.run$1 |
-| -- x509         | [c++, c#, java, js]   | mod tests (as Windows) but slow js>30mins |
+| -- x509         | [c++, c#, java, js]   | mod tests (as Windows) but c#/java/js >30mins to compile and run |
 | -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       | panic: duplicate function name: database/sql.Query$1 |
@@ -71,7 +71,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- pem          | c++, c#, java, js     |                                   |
 | -- xml          | c++, c#, java, js     |                                   |
 | errors          | c++, c#, java, js     |                                   |
-| expvar          | js                    | c++: clang seg fault, cs/java: haxe compiler hangs |
+| expvar          |                       | c++: clang seg fault, cs/java: haxe compiler hangs |
 | flag            | c++, c#, java, js     | but no way to pass flags in yet   |
 | fmt             | c++, c#, java, js     | minor differences in type names   |
 | go              | no code               |                                   |
@@ -112,16 +112,16 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | net             |                       | fatal at 1st test                 |
 | -- http         |                       | M not declared by dummy package testing |
 | -- -- cgi       | -                     | fork/exec not implemented         |
-| -- -- cookiejar | js                    | other targets to be investigated  |
-| -- -- fcgi      | js                    | other targets fail or take too long to compile |
-| -- -- httptest  | js                    | other targets to be investigated  |
-| -- -- httputil  | js                    | other targets to be investigated  |
+| -- -- cookiejar |                       |                                   |
+| -- -- fcgi      |                       |                                   |
+| -- -- httptest  |                       |                                   |
+| -- -- httputil  |                       |                                   |
 | -- -- internal  | c++, c#, java, js     |                                   |
 | -- -- pprof     | no tests              |                                   |
 | -- mail         | c++, c#, java, js     |                                   |
 | -- rpc          |                       | hangs                             |
 | -- -- jsonrpc   |                       | hangs                             |
-| -- smtp         | js                    | c++/cs: net.Listen() err, java: tgotypes code too large |
+| -- smtp         |                       | c++/cs: net.Listen() err, java: tgotypes code too large |
 | -- textproto    | c++, c#, java, js     |                                   |
 | -- url          | c++, c#, java, js     |                                   |
 | os              | c++, c#, java, js   * | passes modified tests (no system files to read) |

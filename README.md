@@ -111,12 +111,17 @@ Tabulating the very simple indicative [benchmarking](https://github.com/tardisgo
 
 | Test - of what functionality               | C++      | mono/C#  | Java     | node/JS  | [GopherJS](http://www.gopherjs.org/) |
 | ------------------------------------------ | -------- | -------- | -------- | -------- | -------- |
-| mandel.go - floating point                 | 1.1x     | 2.7x     | 1.3x     | 1.3x     | 1.0x     |
-| fannkuch.go - array indexing               | 36.6x    | 27.9x    | 12.5x    | 30.4x    | 4.0x     |
-| fannkuch.go (using haxe -D inlinepointers) | 30.9x    | 18.2x    | 10.7x    | 36.7x    | 4.0x     |
-| binarytree.go - garbage collection         | 18.0x    | 12.3x    | 1.5x     | 13.5x    | 0.3x (!) |
+| mandel.go - floating point                 | 1.1x     | 2.8x     | 1.2x     | 1.4x     | 1.0x     |
+| fannkuch.go - slice & array indexing       | 2.7x     | 5.1x     | 3.5x     | 9.2x     | 3.4x     |
+| binarytree.go - garbage collection         | 16.8x    | 11.9x    | 1.7x     | 13.0x    | 0.3x (!) |
 
-Figures above are the latest results as at 23rd June 2015. Execution speed significantly improved after re-writing code generation for non-goroutine functions to reconstruct Haxe "while" and "if" control structures from the SSA form where possible. Clearly further improvements are always possible, with better pointer handling high on the list.
+Figures above are the latest results as at 25th June 2015. The Haxe compilation flag "-D inlinepointers" was used for all targets, the additional flag "-D useloacalfunctions" was used for the JS target.
+
+Execution speed significantly improved after:
+* re-writing code generation for non-goroutine functions to reconstruct Haxe "while" and "if" control structures from the SSA form where possible; and
+* optimising away local pointers that are only used once in a single block.
+
+Expect further improvements over time.
 
 ## Unsupported Haxe targets: ActionScript, PHP, Python and Neko
 

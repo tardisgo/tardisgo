@@ -42,10 +42,18 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 		//if strings.HasPrefix(lt, "Pointer") {
 		//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
 		//}
+		if is1usePtr(v) {
+			oup, found := map1usePtr[v.(ssa.Value)]
+			if !found {
+				panic(fmt.Sprintf("pogo.UnOp can't find oneUsePtr: %#v %s val %s=%s",
+					map1usePtr, errorInfo, v.(ssa.Value).Name(), v.(ssa.Value).String()))
+			}
+			return oup.obj + ".get" + loadStoreSuffix(goTyp, true) + oup.off + ")"
+		}
 		if pogo.DebugFlag {
 			iVal = "Pointer.check(" + iVal + ")"
 		}
-		return iVal + ".load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */", goTyp)
+		return iVal + ".load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */ ", goTyp)
 		//}
 	case "-":
 		if l.LangType(v.(ssa.Value).Type().Underlying(), false, errorInfo) == "Complex" {

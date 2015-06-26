@@ -55,8 +55,7 @@ var allList = []string{
 
 var js1 = "" // "crypto/x509" //runtime very long at 30+ mins
 var js = ` archive/tar 
- debug/elf expvar go/doc  
- net/http/cookiejar net/http/fcgi net/http/httptest net/http/httputil net/smtp 
+ debug/elf go/doc  
 `
 
 var cs = ` 

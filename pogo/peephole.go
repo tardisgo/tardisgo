@@ -118,21 +118,21 @@ func peephole(instrs []ssa.Instruction) {
 func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 	switch instrs[0].(type) {
 	case *ssa.IndexAddr, *ssa.FieldAddr:
+		ptrChainSize := 1
 		if len(instrs) < 2 {
 			return // fail
 		}
 		//fmt.Println("DEBUG looking for ptrChain num refs=", len(*(instrs[0].(ssa.Value).Referrers())))
 		if len(*(instrs[0].(ssa.Value).Referrers())) == 0 || !addrInstrUsesPointer(instrs[0]) {
-			return // fail
+			goto nextOpts
 		}
 		//fmt.Println("DEBUG instr 0: ", instrs[0].String())
-		ptrChainSize := 1
 		for ; ptrChainSize < len(instrs); ptrChainSize++ {
 			//fmt.Println("DEBUG instr ", ptrChainSize, instrs[ptrChainSize].String())
 			switch instrs[ptrChainSize].(type) {
 			case *ssa.IndexAddr, *ssa.FieldAddr:
 				if !addrInstrUsesPointer(instrs[ptrChainSize]) {
-					return // fail
+					goto nextOpts
 				}
 				/*
 					fmt.Println("DEBUG i, refs,  prev, this, instr(prev), instr(this)=",
@@ -145,10 +145,10 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 				*/
 				if len(*instrs[ptrChainSize-1].(ssa.Value).Referrers()) != 1 ||
 					"_"+(*instrs[ptrChainSize].Operands(nil)[0]).Name() != RegisterName(instrs[ptrChainSize-1].(ssa.Value)) {
-					return // fail
+					goto nextOpts
 				}
 			default:
-				return // fail
+				goto nextOpts
 			}
 		}
 		if ptrChainSize > 1 {
@@ -161,6 +161,7 @@ func peepholeFindOpt(instrs []ssa.Instruction) (optName, regName string) {
 			*/
 			return "pointerChain", RegisterName(instrs[ptrChainSize-1].(ssa.Value))
 		}
+	nextOpts:
 		return // fail
 
 	case *ssa.UnOp:

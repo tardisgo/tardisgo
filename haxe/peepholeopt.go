@@ -16,6 +16,8 @@ import (
 	"github.com/tardisgo/tardisgo/pogo"
 )
 
+var boPeep int
+
 type phiEntry struct{ reg, val string }
 
 // PeepholeOpt implements the optimisations spotted by pogo.peephole
@@ -31,38 +33,47 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 				ret += fmt.Sprintf("// %s=%s\n", cod.(*ssa.FieldAddr).Name(), cod.String())
 			}
 		}
-		ret += register + "="
-		if pogo.DebugFlag {
-			ret += "Pointer.check("
-		}
+		basePointer := ""
 		switch code[0].(type) {
 		case *ssa.IndexAddr:
-			ret += l.IndirectValue(code[0].(*ssa.IndexAddr).X, errorInfo)
+			basePointer = l.IndirectValue(code[0].(*ssa.IndexAddr).X, errorInfo)
 		case *ssa.FieldAddr:
-			ret += l.IndirectValue(code[0].(*ssa.FieldAddr).X, errorInfo)
+			basePointer = l.IndirectValue(code[0].(*ssa.FieldAddr).X, errorInfo)
 		default:
 			panic(fmt.Errorf("unexpected type %T", code[0]))
 		}
-		if pogo.DebugFlag {
-			ret += ")"
-		}
-		ret += ".addr("
+		chainGang := ""
 		for c, cod := range code {
 			if c > 0 {
-				ret += "+"
+				chainGang += "+"
 			}
 			switch cod.(type) {
 			case *ssa.IndexAddr:
 				idxString := wrapForce_toUInt(l.IndirectValue(cod.(*ssa.IndexAddr).Index, errorInfo),
 					cod.(*ssa.IndexAddr).Index.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 				ele := cod.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
-				ret += "(" + idxString + arrayOffsetCalc(ele) + ")"
+				chainGang += "(" + idxString + arrayOffsetCalc(ele) + ")"
 			case *ssa.FieldAddr:
 				off := fieldOffset(cod.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), cod.(*ssa.FieldAddr).Field)
-				ret += fmt.Sprintf(`%d`, off)
+				chainGang += fmt.Sprintf(`%d`, off)
 			}
 		}
-		ret += "); // PEEPHOLE OPTIMIZATION pointerChain\n"
+		if is1usePtr(code[len(code)-1]) {
+			map1usePtr[code[len(code)-1].(ssa.Value)] = oneUsePtr{obj: basePointer + ".obj", off: chainGang + "+" + basePointer + ".off"}
+			ret += "// virtual oneUsePtr " + register + "=" + map1usePtr[code[len(code)-1].(ssa.Value)].obj + ":" + map1usePtr[code[len(code)-1].(ssa.Value)].off
+			ret += " PEEPHOLE OPTIMIZATION pointerChain\n"
+		} else {
+			ret += register + "="
+			if pogo.DebugFlag {
+				ret += "Pointer.check("
+			}
+			ret += basePointer
+			if pogo.DebugFlag {
+				ret += ")"
+			}
+			ret += ".addr(" + chainGang
+			ret += "); // PEEPHOLE OPTIMIZATION pointerChain\n"
+		}
 
 	case "loadObject":
 		idx := ""
@@ -75,8 +86,6 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 				ret += fmt.Sprintf("// %s=%s\n", cod.(*ssa.Field).Name(), cod.String())
 			}
 		}
-		ptrString := l.IndirectValue(code[0].(*ssa.UnOp).X, errorInfo)
-		ret += fmt.Sprintf("%s=%s", register, ptrString)
 		for _, cod := range code[1:] {
 			switch cod.(type) {
 			case *ssa.Index:
@@ -106,12 +115,24 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 			//ret += fmt.Sprintf(".load%s); // PEEPHOLE OPTIMIZATION loadObject (Field)\n",
 			//	loadStoreSuffix(code[len(code)-1].(*ssa.Field).Type().Underlying(), false))
 		}
-		ret += fmt.Sprintf(".obj.get%s%s+%s.off); // PEEPHOLE OPTIMIZATION loadObject\n",
-			suffix, idx, ptrString)
+		if is1usePtr(code[0].(*ssa.UnOp).X) {
+			oup, found := map1usePtr[code[0].(*ssa.UnOp).X]
+			if !found {
+				panic("unable to find virtual 1usePtr")
+			}
+			ret += register + "=" + oup.obj + ".get" + suffix + idx + "+" + oup.off + "); // PEEPHOLE OPTIMIZATION loadObject\n"
+		} else {
+			ptrString := l.IndirectValue(code[0].(*ssa.UnOp).X, errorInfo)
+			ret += fmt.Sprintf("%s=%s", register, ptrString)
+			ret += fmt.Sprintf(".obj.get%s%s+%s.off); // PEEPHOLE OPTIMIZATION loadObject\n",
+				suffix, idx, ptrString)
+		}
 
 	case "phiList":
-		ret += "// PEEPHOLE OPTIMIZATION phiList\n"
+		//ret += "// PEEPHOLE OPTIMIZATION phiList\n"
 		//ret += l.PhiCode(true, 0, code, errorInfo)
+	default:
+		panic("Unhandled peephole optimization: " + opt)
 	}
 	return ret
 }
@@ -312,6 +333,50 @@ func blockContainsBreaks(b *ssa.BasicBlock, producer, consumer ssa.Instruction) 
 			if i == producer {
 				//println("DEBUG producer is ", ii)
 				hadProducer = true
+			}
+		}
+	}
+	return false
+}
+
+type oneUsePtr struct {
+	obj, off string
+}
+
+var map1usePtr map[ssa.Value]oneUsePtr
+
+func reset1useMap() {
+	map1usePtr = make(map[ssa.Value]oneUsePtr)
+}
+
+func is1usePtr(v interface{}) bool {
+	var bl *ssa.BasicBlock
+	switch v.(type) {
+	case *ssa.FieldAddr:
+		bl = v.(*ssa.FieldAddr).Block()
+	case *ssa.IndexAddr:
+		bl = v.(*ssa.IndexAddr).Block()
+	default:
+		return false
+	}
+	val := v.(ssa.Value)
+	if fnCanOptMap[val.Name()] {
+		switch val.Type().Underlying().(type) {
+		case *types.Pointer:
+			refs := val.Referrers()
+			if len(*refs) == 1 {
+				if (*refs)[0].Block() == bl {
+					switch (*refs)[0].(type) {
+					case *ssa.Store:
+						if (*refs)[0].(*ssa.Store).Addr == val {
+							return true
+						}
+					case *ssa.UnOp:
+						if (*refs)[0].(*ssa.UnOp).Op.String() == "*" {
+							return true
+						}
+					}
+				}
 			}
 		}
 	}

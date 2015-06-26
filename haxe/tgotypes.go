@@ -164,18 +164,18 @@ func BuildTypeHaxe() string {
 		}
 	}
 
-	ret += "public static function setup() {\nvar ptr:Pointer;\nvar a=Go.haxegoruntime_TTypeTTable.load();\n"
-
+	ret += "public static function setup() {\nvar a=Go.haxegoruntime_TTypeTTable.load();\n"
+	ret += "var b=a.baseArray.obj;\nvar f=a.baseArray.off+a.itemOff(0);\nvar s=a.itemOff(1)-a.itemOff(0);\n"
 	for i := range typesByID {
 		if i > 0 {
 			//fmt.Println("DEBUG setup",i,t)
 			ret += fmt.Sprintf(
-				"ptr=a.itemAddr(%d); ptr.store(type%d());\n",
+				"b.set((%d*s)+f,type%d());\n",
 				i, i)
 		}
 	}
 
-	ret += "ptr=null;\n" + "}\n" + "}\n"
+	ret +=  "}\n" + "}\n"
 
 	pogo.WriteAsClass("Tgotypes", ret)
 

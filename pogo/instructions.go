@@ -378,7 +378,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 					doRangeCheck = false
 				}
 			}
-			if doRangeCheck { // now inside Addr function to reduce emitted code size
+			if doRangeCheck {
 				fmt.Fprintln(&LanguageList[l].buffer,
 					LanguageList[l].RangeCheck(instruction.(*ssa.IndexAddr).X, instruction.(*ssa.IndexAddr).Index, aLen, errorInfo)+
 						LanguageList[l].Comment(comment+" [POINTER]"))
