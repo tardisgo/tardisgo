@@ -355,7 +355,8 @@ func emitFunc(fn *ssa.Function) {
 
 func emitSubFn(fn *ssa.Function, blks []*ssa.BasicBlock, subFnList []subFnInstrs, sf int, mustSplitCode bool, canOptMap map[string]bool) {
 	l := TargetLang
-	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnStart(sf, mustSplitCode))
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnStart(sf, mustSplitCode,
+		blks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end]))
 	for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
 		instrVal, hasVal := blks[subFnList[sf].block].Instrs[i].(ssa.Value)
 		if hasVal {

@@ -59,7 +59,7 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 			}
 		}
 		if is1usePtr(code[len(code)-1]) {
-			map1usePtr[code[len(code)-1].(ssa.Value)] = oneUsePtr{obj: basePointer + ".obj", off: chainGang + "+" + basePointer + ".off"}
+			ret += set1usePtr(code[len(code)-1].(ssa.Value), oneUsePtr{obj: basePointer + ".obj", off: chainGang + "+" + basePointer + ".off"})
 			ret += "// virtual oneUsePtr " + register + "=" + map1usePtr[code[len(code)-1].(ssa.Value)].obj + ":" + map1usePtr[code[len(code)-1].(ssa.Value)].off
 			ret += " PEEPHOLE OPTIMIZATION pointerChain\n"
 		} else {
@@ -340,13 +340,47 @@ func blockContainsBreaks(b *ssa.BasicBlock, producer, consumer ssa.Instruction) 
 }
 
 type oneUsePtr struct {
-	obj, off string
+	obj, off, objOrig, offOrig string
+	varObj, varOff             bool
 }
 
 var map1usePtr map[ssa.Value]oneUsePtr
 
 func reset1useMap() {
 	map1usePtr = make(map[ssa.Value]oneUsePtr)
+}
+
+func set1usePtr(v ssa.Value, oup oneUsePtr) string {
+	if useRegisterArray {
+		map1usePtr[v] = oneUsePtr{obj: oup.obj, off: oup.off}
+		return ""
+	}
+	nam := v.Name()
+	newObj := ""
+	newOff := ""
+	ret := ""
+	madeVarObj := false
+	madeVarOff := false
+	for _, eoup := range map1usePtr { // TODO speed this up with another map or two
+		if oup.obj == eoup.objOrig && eoup.varObj {
+			newObj = eoup.obj
+		}
+		if oup.off == eoup.offOrig && eoup.varOff {
+			newOff = eoup.off
+		}
+	}
+	if newObj == "" {
+		ret += "var " + nam + "obj=" + oup.obj + ";\n"
+		newObj = nam + "obj"
+		madeVarObj = true
+	}
+	if newOff == "" {
+		ret += "var " + nam + "off=" + oup.off + ";\n"
+		newOff = nam + "off"
+		madeVarOff = true
+	}
+	map1usePtr[v] = oneUsePtr{newObj, newOff, oup.obj, oup.off, madeVarObj, madeVarOff}
+	return ret
 }
 
 func is1usePtr(v interface{}) bool {
@@ -364,17 +398,28 @@ func is1usePtr(v interface{}) bool {
 		switch val.Type().Underlying().(type) {
 		case *types.Pointer:
 			refs := val.Referrers()
-			if len(*refs) == 1 {
-				if (*refs)[0].Block() == bl {
-					switch (*refs)[0].(type) {
+			//if len(*refs) == 1 {
+			//	l := 0
+			for l := range *refs {
+				if (*refs)[l].Block() == bl {
+					for _, i := range subFnInstrs {
+						if i == (*refs)[l].(ssa.Instruction) {
+							goto foundInSubFn
+						}
+					}
+					return false
+				foundInSubFn:
+					switch (*refs)[l].(type) {
 					case *ssa.Store:
-						if (*refs)[0].(*ssa.Store).Addr == val {
+						if (*refs)[l].(*ssa.Store).Addr == val {
 							return true
 						}
 					case *ssa.UnOp:
-						if (*refs)[0].(*ssa.UnOp).Op.String() == "*" {
+						if (*refs)[l].(*ssa.UnOp).Op.String() == "*" {
 							return true
 						}
+					default: // something we don't know how to handle!
+						return false
 					}
 				}
 			}

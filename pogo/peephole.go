@@ -90,8 +90,8 @@ func peephole(instrs []ssa.Instruction) {
 			parts[0] = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(parts[0]), "="))
 			//println("DEBUG inlineMap[" + parts[0] + "]=" + parts[1])
 			found := 0
-			for k, v := range inlineMap {
-				if v == parts[1] && keysSeen[k] == 0 {
+			for _, v := range inlineMap {
+				if v == parts[1] {
 					found++
 				}
 			}

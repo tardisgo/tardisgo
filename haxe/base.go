@@ -922,16 +922,16 @@ func (l langType) FieldAddr(register string, v interface{}, errorInfo string) st
 		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
 		if off == 0 {
 			if is1usePtr(v) {
-				map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}
-				return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+				return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
+					"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
 			} else {
 				return fmt.Sprintf(`%s=%s; // .fieldAddr( /*%d : %s */ %d )`, register,
 					ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
 			}
 		}
 		if is1usePtr(v) {
-			map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: fmt.Sprintf("%d", off) + "+" + ptr + ".off"}
-			return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+			return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: fmt.Sprintf("%d", off) + "+" + ptr + ".off"}) +
+				"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
 		} else {
 			return deDupAssign(register, fmt.Sprintf(`%s.fieldAddr( /*%d : %s */ %d );`,
 				ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off))
@@ -967,24 +967,24 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
 		if idxString == "0" {
 			if is1usePtr(v) {
-				map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}
-				return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+				return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
+					"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
 			} else {
 				return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
 			}
 		}
 		idxString += arrayOffsetCalc(ele)
 		if is1usePtr(v) {
-			map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: ptr + ".obj", off: "(" + idxString + ")+" + ptr + ".off"}
-			return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+			return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: "(" + idxString + ")+" + ptr + ".off"}) +
+				"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
 		} else {
 			return deDupAssign(register, fmt.Sprintf(`%s.addr(%s);`, ptr, idxString))
 		}
 	case *types.Slice:
 		x := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
 		if is1usePtr(v) {
-			map1usePtr[v.(ssa.Value)] = oneUsePtr{obj: x + ".baseArray.obj", off: x + ".itemOff(" + idxString + ")+" + x + ".baseArray.off"}
-			return "// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+			return set1usePtr(v.(ssa.Value), oneUsePtr{obj: x + ".baseArray.obj", off: x + ".itemOff(" + idxString + ")+" + x + ".baseArray.off"}) +
+				"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
 		} else {
 			code := fmt.Sprintf(`%s.itemAddr(%s);`, x, idxString)
 			return deDupAssign(register, code)
@@ -2171,7 +2171,11 @@ const alwaysStackdump = false
 
 var inMustSplitSubFn = false
 
-func (l langType) SubFnStart(id int, mustSplitCode bool) string {
+var subFnInstrs []ssa.Instruction
+
+func (l langType) SubFnStart(id int, mustSplitCode bool, ins []ssa.Instruction) string {
+	reset1useMap()
+	subFnInstrs = ins
 	deDupRHS = make(map[string]string)
 	tempVarList = []regToFree{}
 	if mustSplitCode {

@@ -27,7 +27,7 @@ type Language interface {
 	RunDefers(usesGr bool) string
 	GoClassStart() string
 	GoClassEnd(*ssa.Package) string
-	SubFnStart(int, bool) string
+	SubFnStart(int, bool,[]ssa.Instruction) string
 	SubFnEnd(id int, pos int, mustSplit bool) string
 	SubFnCall(int) string
 	FuncName(*ssa.Function) string

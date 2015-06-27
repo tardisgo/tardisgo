@@ -1382,9 +1382,9 @@ class Slice {
 	private var end:Int;
 	private var capacity:Int; // of the array, in items
 
-	public var length(get, null):Int;
-	inline function get_length():Int {
-		return end-start;
+	public var length:Int;
+	inline function setLength() {
+		length=end-start;
 	}
 	public static #if inlinepointers inline #end function nullLen(s:Slice):Int{
 		if(s==null) return 0;
@@ -1412,6 +1412,7 @@ class Slice {
 			start = low;
 			end = high;
 		}
+		setLength();
 	} 
 	public static function fromResource(name:String):Slice {
 		return fromBytes(haxe.Resource.getBytes(name));
@@ -1448,6 +1449,7 @@ class Slice {
 					retEnt.baseArray.obj,retEnt.itemOff(offset+i)+retEnt.baseArray.off,oldEnt.itemSize);
 			}
 			oldEnt=null;newEnt=null;
+			retEnt.setLength();
 			return retEnt;
 		}else{
 			var newLen = oldEnt.length+newEnt.len();
@@ -1467,6 +1469,7 @@ class Slice {
 			var ptr = Pointer.make(newObj);
 			var ret = new Slice(ptr,0,newLen,newCap,oldEnt.itemSize);
 			oldEnt=null;newEnt=null;newObj=null;ptr=null;
+			ret.setLength();
 			return ret;
 		}
 	}
@@ -1504,6 +1507,7 @@ class Slice {
 					target.itemSize);
 			}
 		}
+		target.setLength();
 		return copySize;
 	}
 	public function param(idx:Int):Dynamic { // special case for .hx pseudo functions
@@ -1527,6 +1531,7 @@ class Slice {
 	public function setLen(n:Int) {
 		if(n<0||n>this.cap())  Scheduler.panicFromHaxe("Slice setLen invalid:"+n);
 		end = start+n;
+		setLength();
 	}
 	public function cap():Int {
 		// TODO remove null and capacity test when stable

@@ -112,14 +112,14 @@ Tabulating the very simple indicative [benchmarking](https://github.com/tardisgo
 | Test - of what functionality               | C++      | mono/C#  | Java     | node/JS  | [GopherJS](http://www.gopherjs.org/) |
 | ------------------------------------------ | -------- | -------- | -------- | -------- | -------- |
 | mandel.go - floating point                 | 1.1x     | 2.8x     | 1.2x     | 1.4x     | 1.0x     |
-| fannkuch.go - slice & array indexing       | 2.7x     | 5.1x     | 3.5x     | 9.2x     | 3.4x     |
-| binarytree.go - garbage collection         | 16.8x    | 11.9x    | 1.7x     | 13.0x    | 0.3x (!) |
+| fannkuch.go - slice & array indexing       | 2.1x     | 4.4x     | 3.5x     | 5.4x     | 3.4x     |
+| binarytree.go - garbage collection         | 17.2x    | 11.8x    | 1.6x     | 13.0x    | 0.3x (!) |
 
-Figures above are the latest results as at 25th June 2015. The Haxe compilation flag "-D inlinepointers" was used for all targets, the additional flag "-D useloacalfunctions" was used for the JS target.
+Figures above are the latest results as at 27th June 2015. The Haxe compilation flag "-D inlinepointers" was used for all targets, the additional flag "-D useloacalfunctions" was used for the JS target.
 
 Execution speed significantly improved after:
 * re-writing code generation for non-goroutine functions to reconstruct Haxe "while" and "if" control structures from the SSA form where possible; and
-* optimising away local pointers that are only used once in a single block.
+* optimising away local pointers that are only used in a local sub-block and creating temporary local variables to speed execution and reduce code size.
 
 Expect further improvements over time.
 

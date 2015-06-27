@@ -312,7 +312,7 @@ Console.hx:22:
 Executing test: TestZeroList 
 Console.hx:22: 
 Executing test: TestZeroReader 
-       19.77 real        18.82 user         0.54 sys
+       20.04 real        18.95 user         0.64 sys
 
 "CPP:"
 testing.Main
@@ -624,7 +624,7 @@ Executing test: TestWriterReset
 Executing test: TestZeroList 
 
 Executing test: TestZeroReader 
-       12.86 real        15.20 user         0.19 sys
+       16.26 real        16.34 user         0.21 sys
 
 "CS:"
 testing.Main
@@ -936,7 +936,7 @@ Executing test: TestWriteTo
 Executing test: TestZeroList 
 
 Executing test: TestZeroReader 
-       25.27 real        25.10 user         0.11 sys
+       52.40 real        48.44 user         0.32 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -1249,7 +1249,7 @@ Executing test: TestWriterReset
 Executing test: TestZeroList 
 
 Executing test: TestZeroReader 
-        6.75 real        14.30 user         0.63 sys
+        7.91 real        16.91 user         0.65 sys
 
 
 
@@ -1380,7 +1380,7 @@ Console.hx:22:
 Executing test: TestWeakKeys 
 Console.hx:22: 
 Executing test: TestXOR 
-      108.24 real       104.10 user         0.69 sys
+      114.52 real       109.12 user         1.41 sys
 
 "CPP:"
 testing.Main
@@ -1502,7 +1502,7 @@ Executing test: TestVectors
 Executing test: TestWeakKeys 
 
 Executing test: TestXOR 
-       18.80 real        23.20 user         0.26 sys
+       15.22 real        18.46 user         0.36 sys
 
 "CS:"
 testing.Main
@@ -1624,7 +1624,7 @@ Executing test: TestVectors
 Executing test: TestWeakKeys 
 
 Executing test: TestXOR 
-        9.05 real         8.96 user         0.05 sys
+       17.14 real        15.91 user         0.14 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -1747,7 +1747,7 @@ Executing test: TestVectors
 Executing test: TestWeakKeys 
 
 Executing test: TestXOR 
-        6.94 real        14.74 user         0.65 sys
+       10.55 real        19.50 user         0.83 sys
 
 
 
@@ -1890,7 +1890,7 @@ Console.hx:22:
 Executing test: TestSize 
 Console.hx:22: 
 Executing test: TestSize 
-       29.78 real        29.49 user         0.42 sys
+       34.01 real        33.81 user         0.58 sys
 
 "CPP:"
 testing.Main
@@ -2026,7 +2026,7 @@ Executing test: TestSize
 Executing test: TestSize 
 
 Executing test: TestSize 
-       37.54 real        57.08 user         1.40 sys
+       40.05 real        58.17 user         1.05 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -2163,7 +2163,7 @@ Executing test: TestSize
 Executing test: TestSize 
 
 Executing test: TestSize 
-       15.95 real        24.90 user         0.85 sys
+       17.13 real        25.97 user         1.00 sys
 
 "CS:"
 testing.Main
@@ -2299,7 +2299,7 @@ Executing test: TestSize
 Executing test: TestSize 
 
 Executing test: TestSize 
-      124.05 real       119.29 user         0.42 sys
+      165.82 real       155.33 user         0.95 sys
 
 
 
@@ -2318,7 +2318,7 @@ Console.hx:22:
 Executing test: TestPCLine 
 Console.hx:22: 
 Executing test: TestValueConverters 
-        1.97 real         1.66 user         0.26 sys
+        2.70 real         2.19 user         0.33 sys
 
 "CPP:"
 testing.Main
@@ -2330,7 +2330,7 @@ Executing test: TestLineFromAline
 Executing test: TestPCLine 
 
 Executing test: TestValueConverters 
-        0.27 real         0.13 user         0.03 sys
+        0.29 real         0.16 user         0.04 sys
 
 "CS:"
 testing.Main
@@ -2342,7 +2342,7 @@ Executing test: TestLineFromAline
 Executing test: TestPCLine 
 
 Executing test: TestValueConverters 
-        0.92 real         0.87 user         0.03 sys
+        1.16 real         1.10 user         0.03 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -2355,7 +2355,7 @@ Executing test: TestLineFromAline
 Executing test: TestPCLine 
 
 Executing test: TestValueConverters 
-        0.78 real         1.38 user         0.10 sys
+        1.28 real         1.97 user         0.13 sys
 
 
 
@@ -2518,7 +2518,7 @@ Console.hx:22:
 Executing test: TestWriteSlice 
 Console.hx:22: 
 Executing test: TestWriteT 
-        4.18 real         4.23 user         0.35 sys
+        4.66 real         4.57 user         0.39 sys
 
 "CPP:"
 testing.Main
@@ -2674,7 +2674,7 @@ Executing test: TestVarint
 Executing test: TestWriteSlice 
 
 Executing test: TestWriteT 
-        1.17 real         1.54 user         0.08 sys
+        0.95 real         1.10 user         0.05 sys
 
 "CS:"
 testing.Main
@@ -2830,7 +2830,7 @@ Executing test: TestVarint
 Executing test: TestWriteSlice 
 
 Executing test: TestWriteT 
-        1.70 real         1.64 user         0.03 sys
+        3.16 real         2.93 user         0.06 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -2987,7 +2987,7 @@ Executing test: TestVarint
 Executing test: TestWriteSlice 
 
 Executing test: TestWriteT 
-        1.52 real         3.38 user         0.15 sys
+        1.50 real         3.47 user         0.15 sys
 
 
 
@@ -3166,7 +3166,7 @@ Console.hx:22:
 Executing test: TestValuelessAttrs 
 Console.hx:22: 
 Executing test: TestWrite 
-        6.94 real         7.27 user         0.35 sys
+       11.58 real         9.22 user         0.46 sys
 
 "CPP:"
 testing.Main
@@ -3338,7 +3338,7 @@ Executing test: TestUnquotedAttrs
 Executing test: TestValuelessAttrs 
 
 Executing test: TestWrite 
-        5.28 real         8.25 user         0.15 sys
+        4.83 real         5.99 user         0.11 sys
 
 "CS:"
 testing.Main
@@ -3510,7 +3510,7 @@ Executing test: TestUnquotedAttrs
 Executing test: TestValuelessAttrs 
 
 Executing test: TestWrite 
-        3.49 real         3.41 user         0.04 sys
+        6.62 real         6.15 user         0.07 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -3683,7 +3683,7 @@ Executing test: TestUnquotedAttrs
 Executing test: TestValuelessAttrs 
 
 Executing test: TestWrite 
-        2.39 real         7.30 user         0.25 sys
+        4.12 real         9.43 user         0.47 sys
 
 
 
@@ -3820,7 +3820,7 @@ Console.hx:22:
 Executing test: TestUserDefinedForCommandLine 
 Console.hx:22: 
 Executing test: TestWidthAndPrecision 
-       10.14 real        10.50 user         0.36 sys
+       10.80 real        11.05 user         0.41 sys
 
 "CPP:"
 testing.Main
@@ -3944,7 +3944,7 @@ Usage of test:
 Executing test: TestUserDefinedForCommandLine 
 
 Executing test: TestWidthAndPrecision 
-       13.15 real        16.29 user         1.90 sys
+        8.36 real         9.26 user         1.59 sys
 
 "CS:"
 testing.Main
@@ -4068,7 +4068,7 @@ Usage of test:
 Executing test: TestUserDefinedForCommandLine 
 
 Executing test: TestWidthAndPrecision 
-       20.64 real        18.01 user         2.58 sys
+       39.12 real        32.83 user         3.85 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -4193,7 +4193,7 @@ Usage of test:
 Executing test: TestUserDefinedForCommandLine 
 
 Executing test: TestWidthAndPrecision 
-        9.47 real        16.70 user         0.88 sys
+       13.52 real        20.68 user         1.24 sys
 
 
 
@@ -4242,7 +4242,7 @@ Console.hx:22:
 Executing test: TestSerialization 
 Console.hx:22: 
 Executing test: TestStdErrorHander 
-       10.51 real        10.62 user         0.44 sys
+       11.07 real        11.07 user         0.47 sys
 
 "CPP:"
 testing.Main
@@ -4284,7 +4284,7 @@ Executing test: TestSemis
 Executing test: TestSerialization 
 
 Executing test: TestStdErrorHander 
-        5.22 real         7.25 user         0.12 sys
+        8.34 real        11.71 user         0.18 sys
 
 "CS:"
 testing.Main
@@ -4326,7 +4326,7 @@ Executing test: TestSemis
 Executing test: TestSerialization 
 
 Executing test: TestStdErrorHander 
-        3.28 real         3.21 user         0.04 sys
+        3.44 real         3.36 user         0.06 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -4369,7 +4369,7 @@ Executing test: TestSemis
 Executing test: TestSerialization 
 
 Executing test: TestStdErrorHander 
-        3.76 real        11.82 user         0.33 sys
+        3.09 real        10.14 user         0.31 sys
 
 
 
@@ -4494,7 +4494,7 @@ Console.hx:22:
 Executing test: TestUnescape 
 Console.hx:22: 
 Executing test: TestUnescapeEscape 
-       10.67 real        11.08 user         0.45 sys
+       17.94 real        13.97 user         0.56 sys
 
 "CPP:"
 testing.Main
@@ -4612,7 +4612,7 @@ Executing test: TestURLNormalizer
 Executing test: TestUnescape 
 
 Executing test: TestUnescapeEscape 
-        4.27 real         5.74 user         0.35 sys
+        3.99 real         5.42 user         0.22 sys
 
 "CS:"
 testing.Main
@@ -4730,7 +4730,7 @@ Executing test: TestUnescapeEscape
 Executing test: TestURLFilters 
 
 Executing test: TestURLNormalizer 
-        4.46 real         4.39 user         0.04 sys
+        6.38 real         6.14 user         0.06 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -4849,7 +4849,7 @@ Executing test: TestURLNormalizer
 Executing test: TestUnescape 
 
 Executing test: TestUnescapeEscape 
-        4.15 real        11.19 user         0.43 sys
+        4.64 real        12.56 user         0.52 sys
 
 
 
@@ -4962,7 +4962,7 @@ Console.hx:22:
 Executing test: TestURLString 
 Console.hx:22: 
 Executing test: TestUnescape 
-        4.25 real         4.03 user         0.32 sys
+        4.39 real         4.23 user         0.35 sys
 
 "CPP:"
 testing.Main
@@ -5064,7 +5064,7 @@ Executing test: TestSplit
 Executing test: TestURLString 
 
 Executing test: TestUnescape 
-        0.86 real         0.79 user         0.05 sys
+        0.68 real         0.60 user         0.04 sys
 
 "CS:"
 testing.Main
@@ -5166,7 +5166,7 @@ Executing test: TestSplit
 Executing test: TestUnescape 
 
 Executing test: TestURLString 
-        2.38 real         2.21 user         0.05 sys
+        2.19 real         2.06 user         0.04 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -5269,7 +5269,7 @@ Executing test: TestSplit
 Executing test: TestURLString 
 
 Executing test: TestUnescape 
-        2.03 real         3.97 user         0.24 sys
+        2.01 real         4.19 user         0.24 sys
 
 
 
@@ -5691,7 +5691,7 @@ Console.hx:22:
 Executing test: TestWriteStringError 
 Console.hx:22: 
 Executing test: TestWriteTo 
-      513.42 real       395.42 user         1.96 sys
+      475.95 real       382.36 user         1.90 sys
 
 "CPP:"
 testing.Main
@@ -6070,7 +6070,7 @@ Executing test: TestValuePanic
 Executing test: TestWriteStringError 
 
 Executing test: TestWriteTo 
-      296.14 real       373.45 user         6.12 sys
+      257.77 real       303.50 user         5.12 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -6450,7 +6450,7 @@ Executing test: TestValuePanic
 Executing test: TestWriteStringError 
 
 Executing test: TestWriteTo 
-      138.16 real       161.31 user         2.52 sys
+      138.23 real       160.55 user         2.43 sys
 
 "CS:"
 testing.Main
@@ -6829,7 +6829,7 @@ Executing test: TestValuePanic
 Executing test: TestWriteStringError 
 
 Executing test: TestWriteTo 
-      310.76 real       294.94 user         2.65 sys
+      302.93 real       287.85 user         2.16 sys
 
 
 
@@ -6942,113 +6942,7 @@ Console.hx:22:
 Executing test: TestValid 
 Console.hx:22: 
 Executing test: TestValidRune 
-        2.83 real         2.52 user         0.26 sys
-
-"CS:"
-testing.Main
-
-Executing test: TestCalibrate 
-
-Executing test: TestCategories 
-
-Executing test: TestConstants 
-
-Executing test: TestConstants 
-
-Executing test: TestConstants 
-
-Executing test: TestConstants 
-
-Executing test: TestDecode 
-
-Executing test: TestDecodeRune 
-
-Executing test: TestDecodeRune 
-
-Executing test: TestDecodeRune 
-
-Executing test: TestDecodeRune 
-
-Executing test: TestDecodeSurrogateRune 
-
-Executing test: TestDigit 
-
-Executing test: TestDigitOptimization 
-
-Executing test: TestEncode 
-
-Executing test: TestEncodeRune 
-
-Executing test: TestEncodeRune 
-
-Executing test: TestEncodeRune 
-
-Executing test: TestEncodeRune 
-
-Executing test: TestFullRune 
-
-Executing test: TestIntConversion 
-
-Executing test: TestIsControlLatin1 
-
-Executing test: TestIsGraphicLatin1 
-
-Executing test: TestIsLetter 
-
-Executing test: TestIsLetterLatin1 
-
-Executing test: TestIsLowerLatin1 
-
-Executing test: TestIsPrintLatin1 
-
-Executing test: TestIsPunctLatin1 
-
-Executing test: TestIsSpace 
-
-Executing test: TestIsSpaceLatin1 
-
-Executing test: TestIsSurrogate 
-
-Executing test: TestIsSymbolLatin1 
-
-Executing test: TestIsUpper 
-
-Executing test: TestIsUpperLatin1 
-
-Executing test: TestLatinOffset 
-
-Executing test: TestLetterOptimizations 
-
-Executing test: TestNegativeRune 
-
-Executing test: TestNumberLatin1 
-
-Executing test: TestProperties 
-
-Executing test: TestRuneCount 
-
-Executing test: TestRuneLen 
-
-Executing test: TestScripts 
-
-Executing test: TestSequencing 
-
-Executing test: TestSimpleFold 
-
-Executing test: TestTo 
-
-Executing test: TestToLowerCase 
-
-Executing test: TestToTitleCase 
-
-Executing test: TestToUpperCase 
-
-Executing test: TestTurkishCase 
-
-Executing test: TestValid 
-
-Executing test: TestValidRune 
-        1.80 real         1.68 user         0.04 sys
+        2.98 real         2.75 user         0.28 sys
 
 "CPP:"
 testing.Main
@@ -7154,7 +7048,113 @@ Executing test: TestTurkishCase
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-        0.57 real         0.46 user         0.06 sys
+        0.52 real         0.40 user         0.04 sys
+
+"CS:"
+testing.Main
+
+Executing test: TestCalibrate 
+
+Executing test: TestCategories 
+
+Executing test: TestConstants 
+
+Executing test: TestConstants 
+
+Executing test: TestConstants 
+
+Executing test: TestConstants 
+
+Executing test: TestDecode 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestDecodeRune 
+
+Executing test: TestDecodeSurrogateRune 
+
+Executing test: TestDigit 
+
+Executing test: TestDigitOptimization 
+
+Executing test: TestEncode 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestEncodeRune 
+
+Executing test: TestFullRune 
+
+Executing test: TestIntConversion 
+
+Executing test: TestIsControlLatin1 
+
+Executing test: TestIsGraphicLatin1 
+
+Executing test: TestIsLetter 
+
+Executing test: TestIsLetterLatin1 
+
+Executing test: TestIsLowerLatin1 
+
+Executing test: TestIsPrintLatin1 
+
+Executing test: TestIsPunctLatin1 
+
+Executing test: TestIsSpace 
+
+Executing test: TestIsSpaceLatin1 
+
+Executing test: TestIsSurrogate 
+
+Executing test: TestIsSymbolLatin1 
+
+Executing test: TestIsUpper 
+
+Executing test: TestIsUpperLatin1 
+
+Executing test: TestLatinOffset 
+
+Executing test: TestLetterOptimizations 
+
+Executing test: TestNegativeRune 
+
+Executing test: TestNumberLatin1 
+
+Executing test: TestProperties 
+
+Executing test: TestRuneCount 
+
+Executing test: TestRuneLen 
+
+Executing test: TestScripts 
+
+Executing test: TestSequencing 
+
+Executing test: TestSimpleFold 
+
+Executing test: TestTo 
+
+Executing test: TestToLowerCase 
+
+Executing test: TestToTitleCase 
+
+Executing test: TestToUpperCase 
+
+Executing test: TestTurkishCase 
+
+Executing test: TestValid 
+
+Executing test: TestValidRune 
+        1.04 real         1.01 user         0.02 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -7261,7 +7261,7 @@ Executing test: TestTurkishCase
 Executing test: TestValid 
 
 Executing test: TestValidRune 
-        1.31 real         2.65 user         0.14 sys
+        1.36 real         2.55 user         0.14 sys
 
 
 
@@ -7755,7 +7755,7 @@ Executing test: TestY1
 Executing test: TestYn 
 
 Executing test: TestZeroRat 
-      410.25 real       507.79 user         6.17 sys
+      362.32 real       444.74 user         4.73 sys
 
 "Node/JS:"
 Console.hx:15: testing.Main
@@ -8244,495 +8244,7 @@ Console.hx:22:
 Executing test: TestYn 
 Console.hx:22: 
 Executing test: TestZeroRat 
-     2779.52 real      2240.77 user        20.46 sys
-
-"CS:"
-testing.Main
-
-Executing test: TestAbs 
-
-Executing test: TestAbs 
-
-Executing test: TestAbs 
-
-Executing test: TestAbs 
-
-Executing test: TestAbsZ 
-
-Executing test: TestAcos 
-
-Executing test: TestAcos 
-
-Executing test: TestAcos 
-
-Executing test: TestAcos 
-
-Executing test: TestAcosh 
-
-Executing test: TestAcosh 
-
-Executing test: TestAcosh 
-
-Executing test: TestAcosh 
-
-Executing test: TestAll 
-
-Executing test: TestAsin 
-
-Executing test: TestAsin 
-
-Executing test: TestAsin 
-
-Executing test: TestAsin 
-
-Executing test: TestAsinh 
-
-Executing test: TestAsinh 
-
-Executing test: TestAsinh 
-
-Executing test: TestAsinh 
-
-Executing test: TestAtan 
-
-Executing test: TestAtan 
-
-Executing test: TestAtan 
-
-Executing test: TestAtan 
-
-Executing test: TestAtan2 
-
-Executing test: TestAtanh 
-
-Executing test: TestAtanh 
-
-Executing test: TestAtanh 
-
-Executing test: TestAtanh 
-
-Executing test: TestBitLen 
-
-Executing test: TestBitSet 
-
-Executing test: TestBitwise 
-
-Executing test: TestBytes 
-
-Executing test: TestCalibrate 
-
-Executing test: TestCbrt 
-
-Executing test: TestCeil 
-
-Executing test: TestCmp 
-
-Executing test: TestConj 
-
-Executing test: TestCopy 
-
-Executing test: TestCopyN 
-
-Executing test: TestCopyNEOF 
-
-Executing test: TestCopyNReadFrom 
-
-Executing test: TestCopyNWriteTo 
-
-Executing test: TestCopyPriority 
-
-Executing test: TestCopyReadFrom 
-
-Executing test: TestCopysign 
-
-Executing test: TestCopyWriteTo 
-
-Executing test: TestCos 
-
-Executing test: TestCos 
-
-Executing test: TestCos 
-
-Executing test: TestCos 
-
-Executing test: TestCosh 
-
-Executing test: TestCosh 
-
-Executing test: TestCosh 
-
-Executing test: TestCosh 
-
-Executing test: TestDim 
-
-Executing test: TestDivisionSigns 
-
-Executing test: TestErf 
-
-Executing test: TestErfc 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp 
-
-Executing test: TestExp2 
-
-Executing test: TestExpm1 
-
-Executing test: TestExpNN 
-
-Executing test: TestFlagAndPrefixSetting 
-
-Executing test: TestFloat32Distribution 
-
-Executing test: TestFloat32SpecialCases 
-
-Executing test: TestFloat64Distribution 
-
-Executing test: TestFloat64SpecialCases 
-
-Executing test: TestFloatMinMax 
-
-Executing test: TestFloatString 
-
-Executing test: TestFloor 
-
-Executing test: TestFormat 
-
-Executing test: TestFrexp 
-
-Executing test: TestFunNN 
-
-Executing test: TestFunVV 
-
-Executing test: TestFunVW 
-
-Executing test: TestFunVWW 
-
-Executing test: TestFunWW 
-
-Executing test: TestGamma 
-
-Executing test: TestGcd 
-
-Executing test: TestGetString 
-
-Executing test: TestGobEncodingNilIntInSlice 
-
-Executing test: TestGobEncodingNilRatInSlice 
-
-Executing test: TestHilbert 
-
-Executing test: TestHypot 
-
-Executing test: TestHypotGo 
-
-Executing test: TestIlogb 
-
-Executing test: TestIndex 
-
-Executing test: TestInt64 
-
-Executing test: TestIntGobEncoding 
-
-Executing test: TestIntJSONEncoding 
-
-Executing test: TestIntJSONEncodingTextMarshaller 
-
-Executing test: TestIntXMLEncodingTextMarshaller 
-
-Executing test: TestIsFinite 
-
-Executing test: TestIsInt 
-
-Executing test: TestIsNaN 
-
-Executing test: TestIssue2379 
-
-Executing test: TestIssue2607 
-
-Executing test: TestIssue3521 
-
-Executing test: TestIssue820 
-
-Executing test: TestJ0 
-
-Executing test: TestJ1 
-
-Executing test: TestJn 
-
-Executing test: TestLargeCos 
-
-Executing test: TestLargeSin 
-
-Executing test: TestLargeSincos 
-
-Executing test: TestLargeTan 
-
-Executing test: TestLdexp 
-
-Executing test: TestLeadingZeros 
-
-Executing test: TestLgamma 
-
-Executing test: TestLog 
-
-Executing test: TestLog 
-
-Executing test: TestLog 
-
-Executing test: TestLog 
-
-Executing test: TestLog10 
-
-Executing test: TestLog10 
-
-Executing test: TestLog10 
-
-Executing test: TestLog10 
-
-Executing test: TestLog1p 
-
-Executing test: TestLog2 
-
-Executing test: TestLogb 
-
-Executing test: TestLsh 
-
-Executing test: TestLshRsh 
-
-Executing test: TestLshSelf 
-
-Executing test: TestMax 
-
-Executing test: TestMin 
-
-Executing test: TestMod 
-
-Executing test: TestModf 
-
-Executing test: TestModInverse 
-
-Executing test: TestModW 
-
-Executing test: TestMul 
-
-Executing test: TestMulAddWWW 
-
-Executing test: TestMulRangeN 
-
-Executing test: TestMulRangeZ 
-
-Executing test: TestMultiReader 
-
-Executing test: TestMultiReaderCopy 
-
-Executing test: TestMultiWriter 
-
-Executing test: TestMultiWriterCopy 
-
-Executing test: TestMulUnbalanced 
-
-Executing test: TestMulWW 
-
-Executing test: TestNaN 
-
-Executing test: TestNextafter32 
-
-Executing test: TestNextafter64 
-
-Executing test: TestNot 
-
-Executing test: TestOutput 
-
-Executing test: TestPipe1 
-
-Executing test: TestPipe2 
-
-Executing test: TestPipe3 
-
-Executing test: TestPipeReadClose 
-
-Executing test: TestPipeReadClose2 
-
-Executing test: TestPipeWriteClose 
-
-Executing test: TestPolar 
-
-Executing test: TestPow 
-
-Executing test: TestPow 
-
-Executing test: TestPow 
-
-Executing test: TestPow 
-
-Executing test: TestPow10 
-
-Executing test: TestProbablyPrime 
-
-Executing test: TestProdZZ 
-
-Executing test: TestQuo 
-
-Executing test: TestQuoStepD6 
-
-Executing test: TestRatAbs 
-
-Executing test: TestRatBin 
-
-Executing test: TestRatCmp 
-
-Executing test: TestRatGobEncoding 
-
-Executing test: TestRatInv 
-
-Executing test: TestRatJSONEncoding 
-
-Executing test: TestRatNeg 
-
-Executing test: TestRatScan 
-
-Executing test: TestRatSetFrac64Rat 
-
-Executing test: TestRatSetString 
-
-Executing test: TestRatSign 
-
-Executing test: TestRatXMLEncoding 
-
-Executing test: TestReadAtLeast 
-
-Executing test: TestReadAtLeastWithDataAndEOF 
-
-Executing test: TestReadAtLeastWithDataAndError 
-
-Executing test: TestRect 
-
-Executing test: TestRemainder 
-
-Executing test: TestRsh 
-
-Executing test: TestRshSelf 
-
-Executing test: TestScan 
-
-Executing test: TestScanBase 
-
-Executing test: TestScanPi 
-
-Executing test: TestScanPiParallel 
-
-Executing test: TestSectionReader_ReadAt 
-
-Executing test: TestSectionReader_Seek 
-
-Executing test: TestSectionReader_Size 
-
-Executing test: TestSet 
-
-Executing test: TestSetBytes 
-
-Executing test: TestSetFloat64NonFinite 
-
-Executing test: TestSetString 
-
-Executing test: TestSetZ 
-
-Executing test: TestShiftLeft 
-
-Executing test: TestShiftRight 
-
-Executing test: TestSignbit 
-
-Executing test: TestSignZ 
-
-Executing test: TestSin 
-
-Executing test: TestSin 
-
-Executing test: TestSin 
-
-Executing test: TestSin 
-
-Executing test: TestSincos 
-
-Executing test: TestSinh 
-
-Executing test: TestSinh 
-
-Executing test: TestSinh 
-
-Executing test: TestSinh 
-
-Executing test: TestSqrt 
-
-Executing test: TestSqrt 
-
-Executing test: TestSqrt 
-
-Executing test: TestSqrt 
-
-Executing test: TestString 
-
-Executing test: TestStringPowers 
-
-Executing test: TestSumZZ 
-
-Executing test: TestTan 
-
-Executing test: TestTan 
-
-Executing test: TestTan 
-
-Executing test: TestTan 
-
-Executing test: TestTanh 
-
-Executing test: TestTanh 
-
-Executing test: TestTanh 
-
-Executing test: TestTanh 
-
-Executing test: TestTeeReader 
-
-Executing test: TestTrailingZeroBits 
-
-Executing test: TestTrunc 
-
-Executing test: TestUint64 
-
-Executing test: TestWordBitLen 
-
-Executing test: TestWriteAfterWriterClose 
-
-Executing test: TestWriteEmpty 
-
-Executing test: TestWriteNil 
-
-Executing test: TestY0 
-
-Executing test: TestY1 
-
-Executing test: TestYn 
-
-Executing test: TestZeroRat 
-      291.24 real       256.30 user         1.55 sys
+     2672.57 real      2209.09 user        19.78 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -9221,7 +8733,495 @@ Executing test: TestY1
 Executing test: TestYn 
 
 Executing test: TestZeroRat 
-       89.16 real       113.15 user         1.94 sys
+       88.93 real       115.40 user         2.05 sys
+
+"CS:"
+testing.Main
+
+Executing test: TestAbs 
+
+Executing test: TestAbs 
+
+Executing test: TestAbs 
+
+Executing test: TestAbs 
+
+Executing test: TestAbsZ 
+
+Executing test: TestAcos 
+
+Executing test: TestAcos 
+
+Executing test: TestAcos 
+
+Executing test: TestAcos 
+
+Executing test: TestAcosh 
+
+Executing test: TestAcosh 
+
+Executing test: TestAcosh 
+
+Executing test: TestAcosh 
+
+Executing test: TestAll 
+
+Executing test: TestAsin 
+
+Executing test: TestAsin 
+
+Executing test: TestAsin 
+
+Executing test: TestAsin 
+
+Executing test: TestAsinh 
+
+Executing test: TestAsinh 
+
+Executing test: TestAsinh 
+
+Executing test: TestAsinh 
+
+Executing test: TestAtan 
+
+Executing test: TestAtan 
+
+Executing test: TestAtan 
+
+Executing test: TestAtan 
+
+Executing test: TestAtan2 
+
+Executing test: TestAtanh 
+
+Executing test: TestAtanh 
+
+Executing test: TestAtanh 
+
+Executing test: TestAtanh 
+
+Executing test: TestBitLen 
+
+Executing test: TestBitSet 
+
+Executing test: TestBitwise 
+
+Executing test: TestBytes 
+
+Executing test: TestCalibrate 
+
+Executing test: TestCbrt 
+
+Executing test: TestCeil 
+
+Executing test: TestCmp 
+
+Executing test: TestConj 
+
+Executing test: TestCopy 
+
+Executing test: TestCopyN 
+
+Executing test: TestCopyNEOF 
+
+Executing test: TestCopyNReadFrom 
+
+Executing test: TestCopyNWriteTo 
+
+Executing test: TestCopyPriority 
+
+Executing test: TestCopyReadFrom 
+
+Executing test: TestCopysign 
+
+Executing test: TestCopyWriteTo 
+
+Executing test: TestCos 
+
+Executing test: TestCos 
+
+Executing test: TestCos 
+
+Executing test: TestCos 
+
+Executing test: TestCosh 
+
+Executing test: TestCosh 
+
+Executing test: TestCosh 
+
+Executing test: TestCosh 
+
+Executing test: TestDim 
+
+Executing test: TestDivisionSigns 
+
+Executing test: TestErf 
+
+Executing test: TestErfc 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp 
+
+Executing test: TestExp2 
+
+Executing test: TestExpm1 
+
+Executing test: TestExpNN 
+
+Executing test: TestFlagAndPrefixSetting 
+
+Executing test: TestFloat32Distribution 
+
+Executing test: TestFloat32SpecialCases 
+
+Executing test: TestFloat64Distribution 
+
+Executing test: TestFloat64SpecialCases 
+
+Executing test: TestFloatMinMax 
+
+Executing test: TestFloatString 
+
+Executing test: TestFloor 
+
+Executing test: TestFormat 
+
+Executing test: TestFrexp 
+
+Executing test: TestFunNN 
+
+Executing test: TestFunVV 
+
+Executing test: TestFunVW 
+
+Executing test: TestFunVWW 
+
+Executing test: TestFunWW 
+
+Executing test: TestGamma 
+
+Executing test: TestGcd 
+
+Executing test: TestGetString 
+
+Executing test: TestGobEncodingNilIntInSlice 
+
+Executing test: TestGobEncodingNilRatInSlice 
+
+Executing test: TestHilbert 
+
+Executing test: TestHypot 
+
+Executing test: TestHypotGo 
+
+Executing test: TestIlogb 
+
+Executing test: TestIndex 
+
+Executing test: TestInt64 
+
+Executing test: TestIntGobEncoding 
+
+Executing test: TestIntJSONEncoding 
+
+Executing test: TestIntJSONEncodingTextMarshaller 
+
+Executing test: TestIntXMLEncodingTextMarshaller 
+
+Executing test: TestIsFinite 
+
+Executing test: TestIsInt 
+
+Executing test: TestIsNaN 
+
+Executing test: TestIssue2379 
+
+Executing test: TestIssue2607 
+
+Executing test: TestIssue3521 
+
+Executing test: TestIssue820 
+
+Executing test: TestJ0 
+
+Executing test: TestJ1 
+
+Executing test: TestJn 
+
+Executing test: TestLargeCos 
+
+Executing test: TestLargeSin 
+
+Executing test: TestLargeSincos 
+
+Executing test: TestLargeTan 
+
+Executing test: TestLdexp 
+
+Executing test: TestLeadingZeros 
+
+Executing test: TestLgamma 
+
+Executing test: TestLog 
+
+Executing test: TestLog 
+
+Executing test: TestLog 
+
+Executing test: TestLog 
+
+Executing test: TestLog10 
+
+Executing test: TestLog10 
+
+Executing test: TestLog10 
+
+Executing test: TestLog10 
+
+Executing test: TestLog1p 
+
+Executing test: TestLog2 
+
+Executing test: TestLogb 
+
+Executing test: TestLsh 
+
+Executing test: TestLshRsh 
+
+Executing test: TestLshSelf 
+
+Executing test: TestMax 
+
+Executing test: TestMin 
+
+Executing test: TestMod 
+
+Executing test: TestModf 
+
+Executing test: TestModInverse 
+
+Executing test: TestModW 
+
+Executing test: TestMul 
+
+Executing test: TestMulAddWWW 
+
+Executing test: TestMulRangeN 
+
+Executing test: TestMulRangeZ 
+
+Executing test: TestMultiReader 
+
+Executing test: TestMultiReaderCopy 
+
+Executing test: TestMultiWriter 
+
+Executing test: TestMultiWriterCopy 
+
+Executing test: TestMulUnbalanced 
+
+Executing test: TestMulWW 
+
+Executing test: TestNaN 
+
+Executing test: TestNextafter32 
+
+Executing test: TestNextafter64 
+
+Executing test: TestNot 
+
+Executing test: TestOutput 
+
+Executing test: TestPipe1 
+
+Executing test: TestPipe2 
+
+Executing test: TestPipe3 
+
+Executing test: TestPipeReadClose 
+
+Executing test: TestPipeReadClose2 
+
+Executing test: TestPipeWriteClose 
+
+Executing test: TestPolar 
+
+Executing test: TestPow 
+
+Executing test: TestPow 
+
+Executing test: TestPow 
+
+Executing test: TestPow 
+
+Executing test: TestPow10 
+
+Executing test: TestProbablyPrime 
+
+Executing test: TestProdZZ 
+
+Executing test: TestQuo 
+
+Executing test: TestQuoStepD6 
+
+Executing test: TestRatAbs 
+
+Executing test: TestRatBin 
+
+Executing test: TestRatCmp 
+
+Executing test: TestRatGobEncoding 
+
+Executing test: TestRatInv 
+
+Executing test: TestRatJSONEncoding 
+
+Executing test: TestRatNeg 
+
+Executing test: TestRatScan 
+
+Executing test: TestRatSetFrac64Rat 
+
+Executing test: TestRatSetString 
+
+Executing test: TestRatSign 
+
+Executing test: TestRatXMLEncoding 
+
+Executing test: TestReadAtLeast 
+
+Executing test: TestReadAtLeastWithDataAndEOF 
+
+Executing test: TestReadAtLeastWithDataAndError 
+
+Executing test: TestRect 
+
+Executing test: TestRemainder 
+
+Executing test: TestRsh 
+
+Executing test: TestRshSelf 
+
+Executing test: TestScan 
+
+Executing test: TestScanBase 
+
+Executing test: TestScanPi 
+
+Executing test: TestScanPiParallel 
+
+Executing test: TestSectionReader_ReadAt 
+
+Executing test: TestSectionReader_Seek 
+
+Executing test: TestSectionReader_Size 
+
+Executing test: TestSet 
+
+Executing test: TestSetBytes 
+
+Executing test: TestSetFloat64NonFinite 
+
+Executing test: TestSetString 
+
+Executing test: TestSetZ 
+
+Executing test: TestShiftLeft 
+
+Executing test: TestShiftRight 
+
+Executing test: TestSignbit 
+
+Executing test: TestSignZ 
+
+Executing test: TestSin 
+
+Executing test: TestSin 
+
+Executing test: TestSin 
+
+Executing test: TestSin 
+
+Executing test: TestSincos 
+
+Executing test: TestSinh 
+
+Executing test: TestSinh 
+
+Executing test: TestSinh 
+
+Executing test: TestSinh 
+
+Executing test: TestSqrt 
+
+Executing test: TestSqrt 
+
+Executing test: TestSqrt 
+
+Executing test: TestSqrt 
+
+Executing test: TestString 
+
+Executing test: TestStringPowers 
+
+Executing test: TestSumZZ 
+
+Executing test: TestTan 
+
+Executing test: TestTan 
+
+Executing test: TestTan 
+
+Executing test: TestTan 
+
+Executing test: TestTanh 
+
+Executing test: TestTanh 
+
+Executing test: TestTanh 
+
+Executing test: TestTanh 
+
+Executing test: TestTeeReader 
+
+Executing test: TestTrailingZeroBits 
+
+Executing test: TestTrunc 
+
+Executing test: TestUint64 
+
+Executing test: TestWordBitLen 
+
+Executing test: TestWriteAfterWriterClose 
+
+Executing test: TestWriteEmpty 
+
+Executing test: TestWriteNil 
+
+Executing test: TestY0 
+
+Executing test: TestY1 
+
+Executing test: TestYn 
+
+Executing test: TestZeroRat 
+      237.14 real       218.89 user         1.29 sys
 
 
 
@@ -9258,37 +9258,7 @@ Console.hx:22:
 Executing test: TestRandomData2 
 Console.hx:22: 
 Executing test: TestRandomData3 
-        4.62 real         3.17 user         0.35 sys
-
-"CS:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/e.txt.bz2
- 
-syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt.bz2
- 
-
-Executing test: TestBitReader 
-
-Executing test: TestBitReaderLarge 
-
-Executing test: TestBufferOverrun 
-
-Executing test: TestConcat 
-
-Executing test: TestHelloWorldBZ2 
-
-Executing test: TestMTF 
-
-Executing test: TestOutOfRangeSelector 
-
-Executing test: TestRandomData1 
-
-Executing test: TestRandomData2 
-
-Executing test: TestRandomData3 
-        7.75 real         5.18 user         0.73 sys
+        4.74 real         3.43 user         0.38 sys
 
 "CPP:"
 testing.Main
@@ -9318,7 +9288,37 @@ Executing test: TestRandomData1
 Executing test: TestRandomData2 
 
 Executing test: TestRandomData3 
-        1.19 real         0.91 user         0.25 sys
+        1.29 real         0.99 user         0.25 sys
+
+"CS:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/e.txt.bz2
+ 
+syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt.bz2
+ 
+
+Executing test: TestBitReader 
+
+Executing test: TestBitReaderLarge 
+
+Executing test: TestBufferOverrun 
+
+Executing test: TestConcat 
+
+Executing test: TestHelloWorldBZ2 
+
+Executing test: TestMTF 
+
+Executing test: TestOutOfRangeSelector 
+
+Executing test: TestRandomData1 
+
+Executing test: TestRandomData2 
+
+Executing test: TestRandomData3 
+        5.69 real         4.46 user         0.74 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -9349,7 +9349,7 @@ Executing test: TestRandomData1
 Executing test: TestRandomData2 
 
 Executing test: TestRandomData3 
-        4.45 real         6.39 user         0.75 sys
+        4.08 real         6.03 user         0.71 sys
 
 
 
@@ -9425,7 +9425,7 @@ Console.hx:22: DEBUG writing file header number  61440
 Console.hx:22: DEBUG writing file header number  65536 
 Console.hx:22: DEBUG Close... 
 Console.hx:22: DEBUG Closed buffer len: 7191458 
-Console.hx:15: DEBUG NewReader complete, took: 1m33.871999979s
+Console.hx:15: DEBUG NewReader complete, took: 1m14.053999901s
 
 Console.hx:22: DEBUG reading file number  0 
 Console.hx:22: DEBUG reading file number  4096 
@@ -9463,9 +9463,9 @@ Console.hx:15: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/ha
 
 Console.hx:15: slow test; skipping
 
-      137.94 real       112.59 user         7.89 sys
+      111.78 real       100.52 user         7.55 sys
 
-"CPP:"
+"CS:"
 testing.Main
 syscall.unzip() file: testdata/
  
@@ -9532,7 +9532,7 @@ DEBUG writing file header number  61440
 DEBUG writing file header number  65536 
 DEBUG Close... 
 DEBUG Closed buffer len: 7191458 
-DEBUG NewReader complete, took: 2m0s
+DEBUG NewReader complete, took: 1m47.9193573s
 DEBUG reading file number  0 
 DEBUG reading file number  4096 
 DEBUG reading file number  8192 
@@ -9552,9 +9552,9 @@ DEBUG reading file number  61440
 DEBUG reading file number  65536 
 DEBUG >65k files complete 
 
-Executing test: TestRLEBuffer 
-
 Executing test: TestReader 
+
+Executing test: TestRLEBuffer 
 
 Executing test: TestWriter 
 
@@ -9567,7 +9567,7 @@ Executing test: TestZip64
   
 Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/archive/zip/zip_haxe_test.go 248
 slow test; skipping
-      300.97 real       667.78 user         4.38 sys
+      180.14 real       100.43 user         5.84 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -9637,7 +9637,7 @@ DEBUG writing file header number  61440
 DEBUG writing file header number  65536 
 DEBUG Close... 
 DEBUG Closed buffer len: 7191458 
-DEBUG NewReader complete, took: 19.68200016s
+DEBUG NewReader complete, took: 35.106999874s
 DEBUG reading file number  0 
 DEBUG reading file number  4096 
 DEBUG reading file number  8192 
@@ -9672,9 +9672,9 @@ Executing test: TestZip64
   
 Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/archive/zip/zip_haxe_test.go 248
 slow test; skipping
-       32.97 real        46.31 user         1.58 sys
+       56.20 real        51.60 user         1.51 sys
 
-"CS:"
+"CPP:"
 testing.Main
 syscall.unzip() file: testdata/
  
@@ -9741,7 +9741,7 @@ DEBUG writing file header number  61440
 DEBUG writing file header number  65536 
 DEBUG Close... 
 DEBUG Closed buffer len: 7191458 
-DEBUG NewReader complete, took: 1m10.814750671s
+DEBUG NewReader complete, took: 1m46s
 DEBUG reading file number  0 
 DEBUG reading file number  4096 
 DEBUG reading file number  8192 
@@ -9761,9 +9761,9 @@ DEBUG reading file number  61440
 DEBUG reading file number  65536 
 DEBUG >65k files complete 
 
-Executing test: TestReader 
-
 Executing test: TestRLEBuffer 
+
+Executing test: TestReader 
 
 Executing test: TestWriter 
 
@@ -9776,7 +9776,7 @@ Executing test: TestZip64
   
 Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/archive/zip/zip_haxe_test.go 248
 slow test; skipping
-      119.55 real        96.61 user         5.55 sys
+      621.07 real      1465.37 user         5.87 sys
 
 
 
@@ -11368,7 +11368,7 @@ Console.hx:22:
 Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468
 
 Console.hx:15: got 49 bytes
-      101.33 real        74.38 user         1.51 sys
+       91.62 real        71.30 user         1.60 sys
 
 "CPP:"
 testing.Main
@@ -12337,7 +12337,7 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/co
 got 49 bytes  
   
 Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468
-got 49 bytes      162.46 real       211.75 user         6.66 sys
+got 49 bytes      102.74 real       135.50 user         5.48 sys
 
 "CS:"
 testing.Main
@@ -13306,7 +13306,7 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/co
 got 49 bytes  
   
 Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468
-got 49 bytes      124.16 real        90.82 user        11.74 sys
+got 49 bytes       94.03 real        76.73 user        10.72 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -14276,7 +14276,7 @@ Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/co
 got 49 bytes  
   
 Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468
-got 49 bytes       81.22 real        81.21 user         1.40 sys
+got 49 bytes       63.86 real        73.33 user         1.37 sys
 
 
 
@@ -14318,7 +14318,7 @@ Console.hx:22:
 Executing test: TestWriterFlush 
 Console.hx:22: 
 Executing test: TestWriterReset 
-        2.78 real         2.43 user         0.29 sys
+        3.03 real         2.68 user         0.31 sys
 
 "CPP:"
 testing.Main
@@ -14384,7 +14384,7 @@ Executing test: TestRoundTrip
 Executing test: TestWriterFlush 
 
 Executing test: TestWriterReset 
-        1.98 real         1.81 user         0.05 sys
+        1.99 real         1.86 user         0.05 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -14406,10 +14406,7 @@ Executing test: TestIssue6550
   
   
 Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/gzip/gunzip_test.go 341
-  
-  
-Copy failed (correctly): flate: corrupt input before offset 24Errorf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/gzip/gunzip_test.go 330
-Copy hung
+Copy failed (correctly): flate: corrupt input before offset 24
 Executing test: TestLatin1 
 
 Executing test: TestLatin1RoundTrip 
@@ -14421,11 +14418,11 @@ Executing test: TestRoundTrip
 Executing test: TestWriterFlush 
 
 Executing test: TestWriterReset 
-        1.51 real         2.74 user         0.16 sys
-exit status 1
+        1.53 real         2.81 user         0.16 sys
 
 
-68 passes, 1 failures.
+
+69 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  compress/lzw
 =========================================
@@ -14446,7 +14443,7 @@ Console.hx:22:
 Executing test: TestWriter 
 Console.hx:22: 
 Executing test: TestWriterReturnValues 
-       25.67 real        19.16 user         0.33 sys
+       25.12 real        18.85 user         0.35 sys
 
 "CPP:"
 testing.Main
@@ -14464,25 +14461,7 @@ Executing test: TestReader
 Executing test: TestWriter 
 
 Executing test: TestWriterReturnValues 
-       25.54 real        20.79 user         4.05 sys
-
-"CS:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt
- 
-syscall.unzip() file: testdata/e.txt
- 
-syscall.unzip() file: testdata/pi.txt
- 
-
-Executing test: TestReader 
-
-Executing test: TestWriter 
-
-Executing test: TestWriterReturnValues 
-       91.33 real        70.37 user        10.60 sys
+       22.71 real        17.44 user         3.44 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -14501,11 +14480,29 @@ Executing test: TestReader
 Executing test: TestWriter 
 
 Executing test: TestWriterReturnValues 
-       41.18 real        44.19 user         1.00 sys
+       41.48 real        44.42 user         1.00 sys
+
+"CS:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt
+ 
+syscall.unzip() file: testdata/e.txt
+ 
+syscall.unzip() file: testdata/pi.txt
+ 
+
+Executing test: TestReader 
+
+Executing test: TestWriter 
+
+Executing test: TestWriterReturnValues 
+       87.24 real        67.21 user        11.22 sys
 
 
 
-69 passes, 1 failures.
+70 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  compress/zlib
 =========================================
@@ -14532,7 +14529,7 @@ Console.hx:22:
 Executing test: TestWriterDictIsUsed 
 Console.hx:22: 
 Executing test: TestWriterReset 
-      100.69 real        86.89 user         0.79 sys
+       80.88 real        77.59 user         0.80 sys
 
 "CPP:"
 testing.Main
@@ -14556,7 +14553,31 @@ Executing test: TestWriterDict
 Executing test: TestWriterDictIsUsed 
 
 Executing test: TestWriterReset 
-       99.94 real        88.23 user         4.81 sys
+       95.15 real        82.52 user         4.78 sys
+
+"CS:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt
+ 
+syscall.unzip() file: testdata/e.txt
+ 
+syscall.unzip() file: testdata/pi.txt
+ 
+
+Executing test: TestDecompressor 
+
+Executing test: TestWriter 
+
+Executing test: TestWriterBig 
+
+Executing test: TestWriterDict 
+
+Executing test: TestWriterDictIsUsed 
+
+Executing test: TestWriterReset 
+      177.34 real       124.47 user        13.56 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -14581,35 +14602,11 @@ Executing test: TestWriterDict
 Executing test: TestWriterDictIsUsed 
 
 Executing test: TestWriterReset 
-      109.21 real       103.17 user         1.44 sys
-
-"CS:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/Mark.Twain-Tom.Sawyer.txt
- 
-syscall.unzip() file: testdata/e.txt
- 
-syscall.unzip() file: testdata/pi.txt
- 
-
-Executing test: TestDecompressor 
-
-Executing test: TestWriter 
-
-Executing test: TestWriterBig 
-
-Executing test: TestWriterDict 
-
-Executing test: TestWriterDictIsUsed 
-
-Executing test: TestWriterReset 
-      173.39 real       124.19 user        13.29 sys
+      111.02 real       105.03 user         1.45 sys
 
 
 
-70 passes, 1 failures.
+71 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  debug/dwarf
 =========================================
@@ -14632,7 +14629,7 @@ Console.hx:22:
 Executing test: TestTypedefsELFDwarf4 
 Console.hx:22: 
 Executing test: TestTypedefsMachO 
-        3.91 real         3.81 user         0.30 sys
+        4.37 real         4.17 user         0.35 sys
 
 "CPP:"
 testing.Main
@@ -14652,7 +14649,7 @@ Executing test: TestTypedefsELF
 Executing test: TestTypedefsELFDwarf4 
 
 Executing test: TestTypedefsMachO 
-        1.07 real         1.25 user         0.05 sys
+        1.31 real         1.57 user         0.06 sys
 
 "CS:"
 testing.Main
@@ -14672,7 +14669,7 @@ Executing test: TestTypedefsELF
 Executing test: TestTypedefsELFDwarf4 
 
 Executing test: TestTypedefsMachO 
-        1.44 real         1.40 user         0.03 sys
+        1.45 real         1.40 user         0.03 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -14693,11 +14690,11 @@ Executing test: TestTypedefsELF
 Executing test: TestTypedefsELFDwarf4 
 
 Executing test: TestTypedefsMachO 
-        1.29 real         3.45 user         0.18 sys
+        1.31 real         3.24 user         0.19 sys
 
 
 
-71 passes, 1 failures.
+72 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  debug/macho
 =========================================
@@ -14724,7 +14721,7 @@ Console.hx:22:
 Executing test: TestOpenFat 
 Console.hx:22: 
 Executing test: TestOpenFatFailure 
-        2.51 real         2.63 user         0.21 sys
+        2.65 real         2.71 user         0.25 sys
 
 "CPP:"
 testing.Main
@@ -14748,7 +14745,7 @@ Executing test: TestOpenFailure
 Executing test: TestOpenFat 
 
 Executing test: TestOpenFatFailure 
-        0.57 real         0.65 user         0.05 sys
+        0.74 real         1.05 user         0.07 sys
 
 "CS:"
 testing.Main
@@ -14772,7 +14769,7 @@ Executing test: TestOpenFailure
 Executing test: TestOpenFat 
 
 Executing test: TestOpenFatFailure 
-        1.10 real         1.06 user         0.03 sys
+        1.12 real         1.07 user         0.03 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -14797,11 +14794,11 @@ Executing test: TestOpenFailure
 Executing test: TestOpenFat 
 
 Executing test: TestOpenFatFailure 
-        1.04 real         2.69 user         0.16 sys
+        1.05 real         2.67 user         0.14 sys
 
 
 
-72 passes, 1 failures.
+73 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  crypto/rsa
 =========================================
@@ -14847,7 +14844,51 @@ Executing test: TestSignPKCS1v15
 Executing test: TestUnpaddedSignature 
 
 Executing test: TestVerifyPKCS1v15 
-      208.51 real       234.11 user         2.37 sys
+      191.54 real       212.22 user         2.42 sys
+
+"CS:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/pss-vect.txt.bz2
+ 
+
+Executing test: TestDecryptOAEP 
+
+Executing test: TestDecryptPKCS1v15 
+
+Executing test: TestEMSAPSS 
+
+Executing test: TestEncryptOAEP 
+
+Executing test: TestEncryptPKCS1v15 
+
+Executing test: TestEncryptPKCS1v15SessionKey 
+
+Executing test: TestGnuTLSKey 
+
+Executing test: TestKeyGeneration 
+
+Executing test: TestNonZeroRandomBytes 
+
+Executing test: TestNPrimeKeyGeneration 
+
+Executing test: TestOverlongMessagePKCS1v15 
+
+Executing test: TestPSSGolden 
+
+Executing test: TestPSSOpenSSL 
+
+Executing test: TestPSSSigning 
+
+Executing test: TestShortSessionKey 
+
+Executing test: TestSignPKCS1v15 
+
+Executing test: TestUnpaddedSignature 
+
+Executing test: TestVerifyPKCS1v15 
+      154.56 real       121.99 user         0.52 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -14892,51 +14933,7 @@ Executing test: TestSignPKCS1v15
 Executing test: TestUnpaddedSignature 
 
 Executing test: TestVerifyPKCS1v15 
-       26.39 real        37.93 user         1.30 sys
-
-"CS:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/pss-vect.txt.bz2
- 
-
-Executing test: TestDecryptOAEP 
-
-Executing test: TestDecryptPKCS1v15 
-
-Executing test: TestEMSAPSS 
-
-Executing test: TestEncryptOAEP 
-
-Executing test: TestEncryptPKCS1v15 
-
-Executing test: TestEncryptPKCS1v15SessionKey 
-
-Executing test: TestGnuTLSKey 
-
-Executing test: TestKeyGeneration 
-
-Executing test: TestNonZeroRandomBytes 
-
-Executing test: TestNPrimeKeyGeneration 
-
-Executing test: TestOverlongMessagePKCS1v15 
-
-Executing test: TestPSSGolden 
-
-Executing test: TestPSSOpenSSL 
-
-Executing test: TestPSSSigning 
-
-Executing test: TestShortSessionKey 
-
-Executing test: TestSignPKCS1v15 
-
-Executing test: TestUnpaddedSignature 
-
-Executing test: TestVerifyPKCS1v15 
-      102.75 real        95.27 user         0.42 sys
+       25.88 real        36.82 user         1.28 sys
 
 "Node/JS:"
 Console.hx:15: testing.Main
@@ -14981,11 +14978,11 @@ Console.hx:22:
 Executing test: TestUnpaddedSignature 
 Console.hx:22: 
 Executing test: TestVerifyPKCS1v15 
-     2042.76 real      1727.96 user         7.83 sys
+     1957.73 real      1703.95 user         6.48 sys
 
 
 
-73 passes, 1 failures.
+74 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  debug/pe
 =========================================
@@ -15008,7 +15005,7 @@ Console.hx:22:
 Executing test: TestOpen 
 Console.hx:22: 
 Executing test: TestOpenFailure 
-        4.40 real         4.52 user         0.19 sys
+        4.45 real         4.55 user         0.20 sys
 
 "CPP:"
 testing.Main
@@ -15028,7 +15025,7 @@ syscall.unzip() file: testdata/hello.c
 Executing test: TestOpen 
 
 Executing test: TestOpenFailure 
-       10.01 real        13.48 user         0.91 sys
+        7.56 real         9.72 user         0.79 sys
 
 "CS:"
 testing.Main
@@ -15048,7 +15045,7 @@ syscall.unzip() file: testdata/hello.c
 Executing test: TestOpen 
 
 Executing test: TestOpenFailure 
-       15.19 real        11.43 user         3.16 sys
+       15.85 real        11.66 user         3.35 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -15069,11 +15066,11 @@ syscall.unzip() file: testdata/hello.c
 Executing test: TestOpen 
 
 Executing test: TestOpenFailure 
-       12.92 real        16.67 user         1.01 sys
+       12.40 real        16.34 user         0.98 sys
 
 
 
-74 passes, 1 failures.
+75 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  debug/plan9obj
 =========================================
@@ -15092,7 +15089,7 @@ Console.hx:22:
 Executing test: TestOpen 
 Console.hx:22: 
 Executing test: TestOpenFailure 
-        1.93 real         1.80 user         0.18 sys
+        2.72 real         2.04 user         0.19 sys
 
 "CS:"
 testing.Main
@@ -15108,7 +15105,23 @@ syscall.unzip() file: testdata/hello.c
 Executing test: TestOpen 
 
 Executing test: TestOpenFailure 
-        2.57 real         1.67 user         0.27 sys
+        1.97 real         1.56 user         0.28 sys
+
+"CPP:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/386-plan9-exec
+ 
+syscall.unzip() file: testdata/amd64-plan9-exec
+ 
+syscall.unzip() file: testdata/hello.c
+ 
+
+Executing test: TestOpen 
+
+Executing test: TestOpenFailure 
+        0.63 real         0.46 user         0.10 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -15125,27 +15138,11 @@ syscall.unzip() file: testdata/hello.c
 Executing test: TestOpen 
 
 Executing test: TestOpenFailure 
-        3.20 real         3.10 user         0.62 sys
-
-"CPP:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/386-plan9-exec
- 
-syscall.unzip() file: testdata/amd64-plan9-exec
- 
-syscall.unzip() file: testdata/hello.c
- 
-
-Executing test: TestOpen 
-
-Executing test: TestOpenFailure 
-        0.52 real         0.42 user         0.08 sys
+        1.79 real         2.53 user         0.50 sys
 
 
 
-75 passes, 1 failures.
+76 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  go/format
 =========================================
@@ -15160,7 +15157,7 @@ Console.hx:22:
 Executing test: TestPartial 
 Console.hx:22: 
 Executing test: TestSource 
-        5.73 real         4.75 user         0.31 sys
+        4.73 real         4.53 user         0.33 sys
 
 "CPP:"
 testing.Main
@@ -15172,7 +15169,7 @@ Executing test: TestNode
 Executing test: TestPartial 
 
 Executing test: TestSource 
-        1.66 real         1.94 user         0.06 sys
+        1.57 real         1.71 user         0.05 sys
 
 "CS:"
 testing.Main
@@ -15184,7 +15181,7 @@ Executing test: TestNode
 Executing test: TestPartial 
 
 Executing test: TestSource 
-        2.63 real         2.44 user         0.05 sys
+        1.60 real         1.51 user         0.04 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -15197,11 +15194,11 @@ Executing test: TestNode
 Executing test: TestPartial 
 
 Executing test: TestSource 
-        1.42 real         3.87 user         0.16 sys
+        1.46 real         3.86 user         0.17 sys
 
 
 
-76 passes, 1 failures.
+77 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  go/parser
 =========================================
@@ -15252,7 +15249,7 @@ Console.hx:22:
 Executing test: TestValid 
 Console.hx:22: 
 Executing test: TestVarScope 
-       10.79 real         8.45 user         0.36 sys
+        7.92 real         7.99 user         0.39 sys
 
 "CPP:"
 testing.Main
@@ -15300,7 +15297,7 @@ Executing test: TestUnresolved
 Executing test: TestValid 
 
 Executing test: TestVarScope 
-        3.60 real         6.51 user         0.22 sys
+        3.55 real         5.49 user         0.16 sys
 
 "CS:"
 testing.Main
@@ -15348,7 +15345,7 @@ Executing test: TestUnresolved
 Executing test: TestValid 
 
 Executing test: TestVarScope 
-        4.50 real         4.00 user         0.19 sys
+        3.56 real         3.28 user         0.18 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -15397,11 +15394,11 @@ Executing test: TestUnresolved
 Executing test: TestValid 
 
 Executing test: TestVarScope 
-        3.98 real         8.58 user         0.65 sys
+        4.05 real         8.84 user         0.66 sys
 
 
 
-77 passes, 1 failures.
+78 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  go/printer
 =========================================
@@ -15470,7 +15467,7 @@ Console.hx:22:
 Executing test: TestStmtLists 
 Console.hx:22: 
 Executing test: TestX 
-       80.98 real        75.14 user         0.85 sys
+       73.06 real        71.32 user         1.08 sys
 
 "CPP:"
 testing.Main
@@ -15536,7 +15533,7 @@ Executing test: TestSourcePos
 Executing test: TestStmtLists 
 
 Executing test: TestX 
-      143.52 real       186.23 user         2.09 sys
+      140.95 real       190.26 user         2.22 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -15603,7 +15600,7 @@ Executing test: TestSourcePos
 Executing test: TestStmtLists 
 
 Executing test: TestX 
-       20.24 real        53.30 user         2.11 sys
+       17.04 real        49.59 user         1.75 sys
 
 "CS:"
 testing.Main
@@ -15669,11 +15666,11 @@ Executing test: TestSourcePos
 Executing test: TestStmtLists 
 
 Executing test: TestX 
-      134.64 real       117.18 user         0.49 sys
+      116.44 real       107.83 user         0.70 sys
 
 
 
-78 passes, 1 failures.
+79 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  image
 =========================================
@@ -15734,7 +15731,7 @@ Console.hx:22:
 Executing test: TestImage 
 Console.hx:22: 
 Executing test: TestYCbCr 
-       19.30 real        14.55 user         0.40 sys
+       19.16 real        14.39 user         0.39 sys
 
 "CPP:"
 testing.Main
@@ -15792,7 +15789,7 @@ Executing test: TestDecode
 Executing test: TestImage 
 
 Executing test: TestYCbCr 
-        9.54 real        11.38 user         0.37 sys
+        8.62 real        10.32 user         0.38 sys
 
 "CS:"
 testing.Main
@@ -15850,7 +15847,7 @@ Executing test: TestDecode
 Executing test: TestImage 
 
 Executing test: TestYCbCr 
-       23.36 real        21.37 user         0.78 sys
+       17.98 real        16.83 user         0.73 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -15909,11 +15906,11 @@ Executing test: TestDecode
 Executing test: TestImage 
 
 Executing test: TestYCbCr 
-        9.59 real        19.81 user         1.03 sys
+       11.61 real        19.10 user         1.00 sys
 
 
 
-79 passes, 1 failures.
+80 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  image/draw
 =========================================
@@ -15946,7 +15943,7 @@ Console.hx:22:
 Executing test: TestNonZeroSrcPt 
 Console.hx:22: 
 Executing test: TestPaletted 
-       15.04 real        14.78 user         0.31 sys
+       15.23 real        14.87 user         0.36 sys
 
 "CPP:"
 testing.Main
@@ -15976,7 +15973,7 @@ Executing test: TestFloydSteinbergCheckerboard
 Executing test: TestNonZeroSrcPt 
 
 Executing test: TestPaletted 
-       15.26 real        15.47 user         0.14 sys
+       17.23 real        15.57 user         0.17 sys
 
 "CS:"
 testing.Main
@@ -16006,7 +16003,7 @@ Executing test: TestFloydSteinbergCheckerboard
 Executing test: TestNonZeroSrcPt 
 
 Executing test: TestPaletted 
-       41.51 real        39.07 user         0.15 sys
+       45.81 real        40.43 user         0.18 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -16037,11 +16034,11 @@ Executing test: TestFloydSteinbergCheckerboard
 Executing test: TestNonZeroSrcPt 
 
 Executing test: TestPaletted 
-       14.81 real        24.09 user         1.13 sys
+        8.98 real        20.94 user         0.85 sys
 
 
 
-80 passes, 1 failures.
+81 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  image/gif
 =========================================
@@ -16112,7 +16109,7 @@ Console.hx:22:
 Executing test: TestTransparentIndex 
 Console.hx:22: 
 Executing test: TestWriter 
-       30.70 real        22.89 user         0.40 sys
+       36.66 real        23.55 user         0.43 sys
 
 "CPP:"
 testing.Main
@@ -16180,7 +16177,7 @@ Executing test: TestSubImage
 Executing test: TestTransparentIndex 
 
 Executing test: TestWriter 
-        8.56 real         9.90 user         0.38 sys
+        8.84 real         9.31 user         0.35 sys
 
 "CS:"
 testing.Main
@@ -16248,7 +16245,7 @@ Executing test: TestSubImage
 Executing test: TestTransparentIndex 
 
 Executing test: TestWriter 
-       21.19 real        19.21 user         0.88 sys
+       29.25 real        20.58 user         0.96 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -16317,11 +16314,11 @@ Executing test: TestSubImage
 Executing test: TestTransparentIndex 
 
 Executing test: TestWriter 
-        9.27 real        14.16 user         0.79 sys
+        8.97 real        14.86 user         0.94 sys
 
 
 
-81 passes, 1 failures.
+82 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  image/jpeg
 =========================================
@@ -16392,7 +16389,7 @@ Console.hx:22:
 Executing test: TestWriter 
 Console.hx:22: 
 Executing test: TestZigUnzig 
-       38.78 real        31.06 user         0.47 sys
+       28.73 real        28.13 user         0.51 sys
 
 "CPP:"
 testing.Main
@@ -16460,7 +16457,7 @@ Executing test: TestWriteGrayscale
 Executing test: TestWriter 
 
 Executing test: TestZigUnzig 
-       24.95 real        41.32 user         1.34 sys
+       34.64 real        52.43 user         2.36 sys
 
 "CS:"
 testing.Main
@@ -16528,7 +16525,7 @@ Executing test: TestWriteGrayscale
 Executing test: TestWriter 
 
 Executing test: TestZigUnzig 
-       27.23 real        24.97 user         0.83 sys
+       23.03 real        20.57 user         0.87 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -16597,11 +16594,11 @@ Executing test: TestWriteGrayscale
 Executing test: TestWriter 
 
 Executing test: TestZigUnzig 
-       10.25 real        20.28 user         1.01 sys
+       11.24 real        19.49 user         0.87 sys
 
 
 
-82 passes, 1 failures.
+83 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  io/ioutil
 =========================================
@@ -16638,7 +16635,7 @@ Console.hx:22:
 Executing test: TestTempFile 
 Console.hx:22: 
 Executing test: TestWriteFile 
-        2.24 real         1.99 user         0.26 sys
+        5.45 real         2.86 user         0.36 sys
 
 "CPP:"
 testing.Main
@@ -16672,7 +16669,7 @@ Executing test: TestTempDir
 Executing test: TestTempFile 
 
 Executing test: TestWriteFile 
-        0.41 real         0.29 user         0.03 sys
+        0.43 real         0.35 user         0.04 sys
 
 "CS:"
 testing.Main
@@ -16706,7 +16703,7 @@ Executing test: TestTempDir
 Executing test: TestTempFile 
 
 Executing test: TestWriteFile 
-        1.46 real         1.37 user         0.03 sys
+        1.69 real         1.37 user         0.03 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -16741,11 +16738,11 @@ Executing test: TestTempDir
 Executing test: TestTempFile 
 
 Executing test: TestWriteFile 
-        1.33 real         2.53 user         0.16 sys
+        1.11 real         2.18 user         0.14 sys
 
 
 
-83 passes, 1 failures.
+84 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  mime
 =========================================
@@ -16776,7 +16773,7 @@ Console.hx:22:
 Executing test: TestTypeByExtension 
 Console.hx:22: 
 Executing test: TestTypeByExtensionCase 
-        1.86 real         1.74 user         0.23 sys
+        2.97 real         2.70 user         0.31 sys
 
 "CS:"
 testing.Main
@@ -16804,7 +16801,7 @@ Executing test: TestParseMediaTypeBogus
 Executing test: TestTypeByExtension 
 
 Executing test: TestTypeByExtensionCase 
-        2.90 real         1.73 user         0.04 sys
+        2.94 real         1.82 user         0.05 sys
 
 "CPP:"
 testing.Main
@@ -16832,7 +16829,7 @@ Executing test: TestParseMediaTypeBogus
 Executing test: TestTypeByExtension 
 
 Executing test: TestTypeByExtensionCase 
-        0.31 real         0.18 user         0.03 sys
+        0.30 real         0.16 user         0.03 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -16861,11 +16858,11 @@ Executing test: TestParseMediaTypeBogus
 Executing test: TestTypeByExtension 
 
 Executing test: TestTypeByExtensionCase 
-        1.38 real         2.22 user         0.14 sys
+        1.39 real         2.24 user         0.15 sys
 
 
 
-84 passes, 1 failures.
+85 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  path/filepath
 =========================================
@@ -16932,7 +16929,7 @@ Console.hx:22:
 Executing test: TestWalk 
 Console.hx:22: 
 Executing test: TestWalkFileError 
-        3.38 real         2.50 user         0.24 sys
+        4.01 real         2.82 user         0.34 sys
 
 "CS:"
 testing.Main
@@ -16990,7 +16987,7 @@ Executing test: TestVolumeName
 Executing test: TestWalk 
 
 Executing test: TestWalkFileError 
-        2.04 real         1.82 user         0.05 sys
+        1.95 real         1.79 user         0.04 sys
 
 "CPP:"
 testing.Main
@@ -17048,7 +17045,7 @@ Executing test: TestVolumeName
 Executing test: TestWalk 
 
 Executing test: TestWalkFileError 
-        0.30 real         0.17 user         0.03 sys
+        0.23 real         0.13 user         0.02 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -17107,11 +17104,11 @@ Executing test: TestVolumeName
 Executing test: TestWalk 
 
 Executing test: TestWalkFileError 
-        0.88 real         1.55 user         0.09 sys
+        1.20 real         1.74 user         0.11 sys
 
 
 
-85 passes, 1 failures.
+86 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  os
 =========================================
@@ -17291,7 +17288,7 @@ Console.hx:22:
 Executing test: TestUnsetenv 
 Console.hx:22: 
 Executing test: TestWriteAt 
-       82.52 real        59.01 user         0.46 sys
+       68.16 real        58.65 user         0.40 sys
 
 "CPP:"
 testing.Main
@@ -17441,7 +17438,7 @@ Executing test: TestTruncate
 Executing test: TestUnsetenv 
 
 Executing test: TestWriteAt 
-        0.96 real         0.92 user         0.05 sys
+        0.99 real         0.92 user         0.05 sys
 
 "CS:"
 testing.Main
@@ -17591,7 +17588,7 @@ Executing test: TestTruncate
 Executing test: TestUnsetenv 
 
 Executing test: TestWriteAt 
-       39.68 real        33.69 user         3.04 sys
+       28.16 real        24.77 user         2.70 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -17742,11 +17739,359 @@ Executing test: TestTruncate
 Executing test: TestUnsetenv 
 
 Executing test: TestWriteAt 
-       30.62 real        32.03 user         0.52 sys
+       24.02 real        25.96 user         0.49 sys
 
 
 
-86 passes, 1 failures.
+87 passes, 0 failures.
+=========================================
+Unit Test ( all ) :  strconv
+=========================================
+"Node/JS:"
+Console.hx:15: testing.Main
+
+Console.hx:22: syscall.unzip() file: testdata/
+ 
+Console.hx:22: syscall.unzip() file: testdata/testfp.txt
+ 
+Console.hx:22: 
+Executing test: TestAppendBool 
+Console.hx:22: 
+Executing test: TestAtof 
+Console.hx:22: 
+Executing test: TestAtofRandom 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
+
+Console.hx:15: tested 100 random numbers
+Console.hx:22: 
+Executing test: TestAtofSlow 
+Console.hx:22: 
+Executing test: TestCanBackquote 
+Console.hx:22: 
+Executing test: TestCountMallocs 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:15: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
+
+Console.hx:15: skipping malloc count in short mode
+
+Console.hx:22: 
+Executing test: TestDecimalRound 
+Console.hx:22: 
+Executing test: TestDecimalRoundedInteger 
+Console.hx:22: 
+Executing test: TestDecimalShift 
+Console.hx:22: 
+Executing test: TestFormatBool 
+Console.hx:22: 
+Executing test: TestFp 
+Console.hx:22: 
+Executing test: TestFtoa 
+Console.hx:22: 
+Executing test: TestFtoaRandom 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
+
+Console.hx:15: testing 100 random numbers with fast and slow FormatFloat
+Console.hx:22: 
+Executing test: TestIsPrint 
+Console.hx:22: 
+Executing test: TestItoa 
+Console.hx:22: 
+Executing test: TestNumError 
+Console.hx:22: 
+Executing test: TestParseBool 
+Console.hx:22: 
+Executing test: TestParseInt 
+Console.hx:22: 
+Executing test: TestParseInt64 
+Console.hx:22: 
+Executing test: TestParseInt64Base 
+Console.hx:22: 
+Executing test: TestParseUint 
+Console.hx:22: 
+Executing test: TestParseUint64 
+Console.hx:22: 
+Executing test: TestParseUint64Base 
+Console.hx:22: 
+Executing test: TestQuote 
+Console.hx:22: 
+Executing test: TestQuoteRune 
+Console.hx:22: 
+Executing test: TestQuoteRuneToASCII 
+Console.hx:22: 
+Executing test: TestQuoteToASCII 
+Console.hx:22: 
+Executing test: TestRoundTrip 
+Console.hx:22: 
+Executing test: TestRoundTrip32 
+Console.hx:22:   
+Console.hx:22:   
+Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
+
+Console.hx:15: tested 21393 float32's
+Console.hx:22: 
+Executing test: TestUitoa 
+Console.hx:22: 
+Executing test: TestUnquote 
+      125.60 real       107.77 user         0.53 sys
+
+"CS:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/testfp.txt
+ 
+
+Executing test: TestAppendBool 
+
+Executing test: TestAtof 
+
+Executing test: TestAtofRandom 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
+tested 100 random numbers
+Executing test: TestAtofSlow 
+
+Executing test: TestCanBackquote 
+
+Executing test: TestCountMallocs 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
+skipping malloc count in short mode
+
+Executing test: TestDecimalRound 
+
+Executing test: TestDecimalRoundedInteger 
+
+Executing test: TestDecimalShift 
+
+Executing test: TestFormatBool 
+
+Executing test: TestFp 
+
+Executing test: TestFtoa 
+
+Executing test: TestFtoaRandom 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
+testing 100 random numbers with fast and slow FormatFloat
+Executing test: TestIsPrint 
+
+Executing test: TestItoa 
+
+Executing test: TestNumError 
+
+Executing test: TestParseBool 
+
+Executing test: TestParseInt 
+
+Executing test: TestParseInt64 
+
+Executing test: TestParseInt64Base 
+
+Executing test: TestParseUint 
+
+Executing test: TestParseUint64 
+
+Executing test: TestParseUint64Base 
+
+Executing test: TestQuote 
+
+Executing test: TestQuoteRune 
+
+Executing test: TestQuoteRuneToASCII 
+
+Executing test: TestQuoteToASCII 
+
+Executing test: TestRoundTrip 
+
+Executing test: TestRoundTrip32 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
+tested 21393 float32's
+Executing test: TestUitoa 
+
+Executing test: TestUnquote 
+       25.13 real        23.34 user         0.11 sys
+
+"CPP:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/testfp.txt
+ 
+
+Executing test: TestAppendBool 
+
+Executing test: TestAtof 
+
+Executing test: TestAtofRandom 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
+tested 100 random numbers
+Executing test: TestAtofSlow 
+
+Executing test: TestCanBackquote 
+
+Executing test: TestCountMallocs 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
+skipping malloc count in short mode
+
+Executing test: TestDecimalRound 
+
+Executing test: TestDecimalRoundedInteger 
+
+Executing test: TestDecimalShift 
+
+Executing test: TestFormatBool 
+
+Executing test: TestFp 
+
+Executing test: TestFtoa 
+
+Executing test: TestFtoaRandom 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
+testing 100 random numbers with fast and slow FormatFloat
+Executing test: TestIsPrint 
+
+Executing test: TestItoa 
+
+Executing test: TestNumError 
+
+Executing test: TestParseBool 
+
+Executing test: TestParseInt 
+
+Executing test: TestParseInt64 
+
+Executing test: TestParseInt64Base 
+
+Executing test: TestParseUint 
+
+Executing test: TestParseUint64 
+
+Executing test: TestParseUint64Base 
+
+Executing test: TestQuote 
+
+Executing test: TestQuoteRune 
+
+Executing test: TestQuoteRuneToASCII 
+
+Executing test: TestQuoteToASCII 
+
+Executing test: TestRoundTrip 
+
+Executing test: TestRoundTrip32 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
+tested 21393 float32's
+Executing test: TestUitoa 
+
+Executing test: TestUnquote 
+       57.77 real        75.78 user         1.58 sys
+
+"Java:"
+Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/testfp.txt
+ 
+
+Executing test: TestAppendBool 
+
+Executing test: TestAtof 
+
+Executing test: TestAtofRandom 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
+tested 100 random numbers
+Executing test: TestAtofSlow 
+
+Executing test: TestCanBackquote 
+
+Executing test: TestCountMallocs 
+  
+  
+Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
+skipping malloc count in short mode
+
+Executing test: TestDecimalRound 
+
+Executing test: TestDecimalRoundedInteger 
+
+Executing test: TestDecimalShift 
+
+Executing test: TestFormatBool 
+
+Executing test: TestFp 
+
+Executing test: TestFtoa 
+
+Executing test: TestFtoaRandom 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
+testing 100 random numbers with fast and slow FormatFloat
+Executing test: TestIsPrint 
+
+Executing test: TestItoa 
+
+Executing test: TestNumError 
+
+Executing test: TestParseBool 
+
+Executing test: TestParseInt 
+
+Executing test: TestParseInt64 
+
+Executing test: TestParseInt64Base 
+
+Executing test: TestParseUint 
+
+Executing test: TestParseUint64 
+
+Executing test: TestParseUint64Base 
+
+Executing test: TestQuote 
+
+Executing test: TestQuoteRune 
+
+Executing test: TestQuoteRuneToASCII 
+
+Executing test: TestQuoteToASCII 
+
+Executing test: TestRoundTrip 
+
+Executing test: TestRoundTrip32 
+  
+  
+Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
+tested 21393 float32's
+Executing test: TestUitoa 
+
+Executing test: TestUnquote 
+        6.09 real        12.00 user         0.63 sys
+
+
+
+88 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  regexp
 =========================================
@@ -17900,7 +18245,7 @@ Console.hx:22:
 Executing test: TestSplit 
 Console.hx:22: 
 Executing test: TestSubexp 
-       13.28 real        13.81 user         0.39 sys
+       13.91 real        13.89 user         0.45 sys
 
 "CPP:"
 testing.Main
@@ -18031,7 +18376,7 @@ Executing test: TestReplaceAllLiteral
 Executing test: TestSplit 
 
 Executing test: TestSubexp 
-       10.23 real        11.42 user         0.21 sys
+       11.19 real        13.15 user         0.24 sys
 
 "CS:"
 testing.Main
@@ -18162,7 +18507,7 @@ Executing test: TestReplaceAllLiteral
 Executing test: TestSplit 
 
 Executing test: TestSubexp 
-        9.96 real         9.26 user         0.14 sys
+       10.44 real         8.85 user         0.14 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -18294,359 +18639,11 @@ Executing test: TestReplaceAllLiteral
 Executing test: TestSplit 
 
 Executing test: TestSubexp 
-        5.81 real        18.64 user         0.81 sys
+        8.19 real        20.31 user         1.00 sys
 
 
 
-87 passes, 1 failures.
-=========================================
-Unit Test ( all ) :  strconv
-=========================================
-"Node/JS:"
-Console.hx:15: testing.Main
-
-Console.hx:22: syscall.unzip() file: testdata/
- 
-Console.hx:22: syscall.unzip() file: testdata/testfp.txt
- 
-Console.hx:22: 
-Executing test: TestAppendBool 
-Console.hx:22: 
-Executing test: TestAtof 
-Console.hx:22: 
-Executing test: TestAtofRandom 
-Console.hx:22:   
-Console.hx:22:   
-Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
-
-Console.hx:15: tested 100 random numbers
-Console.hx:22: 
-Executing test: TestAtofSlow 
-Console.hx:22: 
-Executing test: TestCanBackquote 
-Console.hx:22: 
-Executing test: TestCountMallocs 
-Console.hx:22:   
-Console.hx:22:   
-Console.hx:15: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
-
-Console.hx:15: skipping malloc count in short mode
-
-Console.hx:22: 
-Executing test: TestDecimalRound 
-Console.hx:22: 
-Executing test: TestDecimalRoundedInteger 
-Console.hx:22: 
-Executing test: TestDecimalShift 
-Console.hx:22: 
-Executing test: TestFormatBool 
-Console.hx:22: 
-Executing test: TestFp 
-Console.hx:22: 
-Executing test: TestFtoa 
-Console.hx:22: 
-Executing test: TestFtoaRandom 
-Console.hx:22:   
-Console.hx:22:   
-Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
-
-Console.hx:15: testing 100 random numbers with fast and slow FormatFloat
-Console.hx:22: 
-Executing test: TestIsPrint 
-Console.hx:22: 
-Executing test: TestItoa 
-Console.hx:22: 
-Executing test: TestNumError 
-Console.hx:22: 
-Executing test: TestParseBool 
-Console.hx:22: 
-Executing test: TestParseInt 
-Console.hx:22: 
-Executing test: TestParseInt64 
-Console.hx:22: 
-Executing test: TestParseInt64Base 
-Console.hx:22: 
-Executing test: TestParseUint 
-Console.hx:22: 
-Executing test: TestParseUint64 
-Console.hx:22: 
-Executing test: TestParseUint64Base 
-Console.hx:22: 
-Executing test: TestQuote 
-Console.hx:22: 
-Executing test: TestQuoteRune 
-Console.hx:22: 
-Executing test: TestQuoteRuneToASCII 
-Console.hx:22: 
-Executing test: TestQuoteToASCII 
-Console.hx:22: 
-Executing test: TestRoundTrip 
-Console.hx:22: 
-Executing test: TestRoundTrip32 
-Console.hx:22:   
-Console.hx:22:   
-Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
-
-Console.hx:15: tested 21393 float32's
-Console.hx:22: 
-Executing test: TestUitoa 
-Console.hx:22: 
-Executing test: TestUnquote 
-      192.71 real       118.91 user         0.61 sys
-
-"CS:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/testfp.txt
- 
-
-Executing test: TestAppendBool 
-
-Executing test: TestAtof 
-
-Executing test: TestAtofRandom 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
-tested 100 random numbers
-Executing test: TestAtofSlow 
-
-Executing test: TestCanBackquote 
-
-Executing test: TestCountMallocs 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
-skipping malloc count in short mode
-
-Executing test: TestDecimalRound 
-
-Executing test: TestDecimalRoundedInteger 
-
-Executing test: TestDecimalShift 
-
-Executing test: TestFormatBool 
-
-Executing test: TestFp 
-
-Executing test: TestFtoa 
-
-Executing test: TestFtoaRandom 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
-testing 100 random numbers with fast and slow FormatFloat
-Executing test: TestIsPrint 
-
-Executing test: TestItoa 
-
-Executing test: TestNumError 
-
-Executing test: TestParseBool 
-
-Executing test: TestParseInt 
-
-Executing test: TestParseInt64 
-
-Executing test: TestParseInt64Base 
-
-Executing test: TestParseUint 
-
-Executing test: TestParseUint64 
-
-Executing test: TestParseUint64Base 
-
-Executing test: TestQuote 
-
-Executing test: TestQuoteRune 
-
-Executing test: TestQuoteRuneToASCII 
-
-Executing test: TestQuoteToASCII 
-
-Executing test: TestRoundTrip 
-
-Executing test: TestRoundTrip32 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
-tested 21393 float32's
-Executing test: TestUitoa 
-
-Executing test: TestUnquote 
-       29.35 real        24.99 user         0.19 sys
-
-"CPP:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/testfp.txt
- 
-
-Executing test: TestAppendBool 
-
-Executing test: TestAtof 
-
-Executing test: TestAtofRandom 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
-tested 100 random numbers
-Executing test: TestAtofSlow 
-
-Executing test: TestCanBackquote 
-
-Executing test: TestCountMallocs 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
-skipping malloc count in short mode
-
-Executing test: TestDecimalRound 
-
-Executing test: TestDecimalRoundedInteger 
-
-Executing test: TestDecimalShift 
-
-Executing test: TestFormatBool 
-
-Executing test: TestFp 
-
-Executing test: TestFtoa 
-
-Executing test: TestFtoaRandom 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
-testing 100 random numbers with fast and slow FormatFloat
-Executing test: TestIsPrint 
-
-Executing test: TestItoa 
-
-Executing test: TestNumError 
-
-Executing test: TestParseBool 
-
-Executing test: TestParseInt 
-
-Executing test: TestParseInt64 
-
-Executing test: TestParseInt64Base 
-
-Executing test: TestParseUint 
-
-Executing test: TestParseUint64 
-
-Executing test: TestParseUint64Base 
-
-Executing test: TestQuote 
-
-Executing test: TestQuoteRune 
-
-Executing test: TestQuoteRuneToASCII 
-
-Executing test: TestQuoteToASCII 
-
-Executing test: TestRoundTrip 
-
-Executing test: TestRoundTrip32 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
-tested 21393 float32's
-Executing test: TestUitoa 
-
-Executing test: TestUnquote 
-       74.19 real        76.31 user         1.11 sys
-
-"Java:"
-Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/testfp.txt
- 
-
-Executing test: TestAppendBool 
-
-Executing test: TestAtof 
-
-Executing test: TestAtofRandom 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 286
-tested 100 random numbers
-Executing test: TestAtofSlow 
-
-Executing test: TestCanBackquote 
-
-Executing test: TestCountMallocs 
-  
-  
-Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/strconv_test.go 44
-skipping malloc count in short mode
-
-Executing test: TestDecimalRound 
-
-Executing test: TestDecimalRoundedInteger 
-
-Executing test: TestDecimalShift 
-
-Executing test: TestFormatBool 
-
-Executing test: TestFp 
-
-Executing test: TestFtoa 
-
-Executing test: TestFtoaRandom 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/ftoa_test.go 157
-testing 100 random numbers with fast and slow FormatFloat
-Executing test: TestIsPrint 
-
-Executing test: TestItoa 
-
-Executing test: TestNumError 
-
-Executing test: TestParseBool 
-
-Executing test: TestParseInt 
-
-Executing test: TestParseInt64 
-
-Executing test: TestParseInt64Base 
-
-Executing test: TestParseUint 
-
-Executing test: TestParseUint64 
-
-Executing test: TestParseUint64Base 
-
-Executing test: TestQuote 
-
-Executing test: TestQuoteRune 
-
-Executing test: TestQuoteRuneToASCII 
-
-Executing test: TestQuoteToASCII 
-
-Executing test: TestRoundTrip 
-
-Executing test: TestRoundTrip32 
-  
-  
-Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/strconv/atof_haxe_test.go 338
-tested 21393 float32's
-Executing test: TestUitoa 
-
-Executing test: TestUnquote 
-       12.41 real        18.33 user         1.22 sys
-
-
-
-88 passes, 1 failures.
+89 passes, 0 failures.
 =========================================
 Unit Test ( via  cpp ) :  archive/tar
 =========================================
@@ -18732,11 +18729,11 @@ Executing test: TestUninitializedRead
 Executing test: TestValidTypeflagWithPAXHeader 
 
 Executing test: TestWriter 
-        0.95 real         0.82 user         0.04 sys
+        0.92 real         0.76 user         0.04 sys
 
 
 
-89 passes, 1 failures.
+90 passes, 0 failures.
 =========================================
 Unit Test ( via  java ) :  archive/tar
 =========================================
@@ -18823,11 +18820,11 @@ Executing test: TestUninitializedRead
 Executing test: TestValidTypeflagWithPAXHeader 
 
 Executing test: TestWriter 
-        3.25 real         4.51 user         0.24 sys
+        3.31 real         4.61 user         0.26 sys
 
 
 
-90 passes, 1 failures.
+91 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  archive/tar
 =========================================
@@ -18914,11 +18911,11 @@ Console.hx:22:
 Executing test: TestValidTypeflagWithPAXHeader 
 Console.hx:22: 
 Executing test: TestWriter 
-        7.88 real         4.64 user         0.34 sys
+        8.33 real         4.88 user         0.37 sys
 
 
 
-91 passes, 1 failures.
+92 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  debug/elf
 =========================================
@@ -18957,11 +18954,137 @@ Console.hx:22:
 Executing test: TestOpen 
 Console.hx:22: 
 Executing test: TestSymbols 
-        8.78 real         6.44 user         0.42 sys
+        9.35 real         6.81 user         0.47 sys
 
 
 
-92 passes, 1 failures.
+93 passes, 0 failures.
+=========================================
+Unit Test ( via  cpp ) :  go/doc
+=========================================
+"CPP:"
+testing.Main
+syscall.unzip() file: testdata/
+ 
+syscall.unzip() file: testdata/a.0.golden
+ 
+syscall.unzip() file: testdata/a.1.golden
+ 
+syscall.unzip() file: testdata/a.2.golden
+ 
+syscall.unzip() file: testdata/a0.go
+ 
+syscall.unzip() file: testdata/a1.go
+ 
+syscall.unzip() file: testdata/b.0.golden
+ 
+syscall.unzip() file: testdata/b.1.golden
+ 
+syscall.unzip() file: testdata/b.2.golden
+ 
+syscall.unzip() file: testdata/b.go
+ 
+syscall.unzip() file: testdata/benchmark.go
+ 
+syscall.unzip() file: testdata/blank.0.golden
+ 
+syscall.unzip() file: testdata/blank.1.golden
+ 
+syscall.unzip() file: testdata/blank.2.golden
+ 
+syscall.unzip() file: testdata/blank.go
+ 
+syscall.unzip() file: testdata/bugpara.0.golden
+ 
+syscall.unzip() file: testdata/bugpara.1.golden
+ 
+syscall.unzip() file: testdata/bugpara.2.golden
+ 
+syscall.unzip() file: testdata/bugpara.go
+ 
+syscall.unzip() file: testdata/c.0.golden
+ 
+syscall.unzip() file: testdata/c.1.golden
+ 
+syscall.unzip() file: testdata/c.2.golden
+ 
+syscall.unzip() file: testdata/c.go
+ 
+syscall.unzip() file: testdata/d.0.golden
+ 
+syscall.unzip() file: testdata/d.1.golden
+ 
+syscall.unzip() file: testdata/d.2.golden
+ 
+syscall.unzip() file: testdata/d1.go
+ 
+syscall.unzip() file: testdata/d2.go
+ 
+syscall.unzip() file: testdata/e.0.golden
+ 
+syscall.unzip() file: testdata/e.1.golden
+ 
+syscall.unzip() file: testdata/e.2.golden
+ 
+syscall.unzip() file: testdata/e.go
+ 
+syscall.unzip() file: testdata/error1.0.golden
+ 
+syscall.unzip() file: testdata/error1.1.golden
+ 
+syscall.unzip() file: testdata/error1.2.golden
+ 
+syscall.unzip() file: testdata/error1.go
+ 
+syscall.unzip() file: testdata/error2.0.golden
+ 
+syscall.unzip() file: testdata/error2.1.golden
+ 
+syscall.unzip() file: testdata/error2.2.golden
+ 
+syscall.unzip() file: testdata/error2.go
+ 
+syscall.unzip() file: testdata/example.go
+ 
+syscall.unzip() file: testdata/f.0.golden
+ 
+syscall.unzip() file: testdata/f.1.golden
+ 
+syscall.unzip() file: testdata/f.2.golden
+ 
+syscall.unzip() file: testdata/f.go
+ 
+syscall.unzip() file: testdata/template.txt
+ 
+syscall.unzip() file: testdata/testing.0.golden
+ 
+syscall.unzip() file: testdata/testing.1.golden
+ 
+syscall.unzip() file: testdata/testing.2.golden
+ 
+syscall.unzip() file: testdata/testing.go
+ 
+
+Executing test: Test 
+
+Executing test: TestBlocks 
+
+Executing test: TestEmphasize 
+
+Executing test: TestExamples 
+
+Executing test: TestIsHeading 
+
+Executing test: TestPairedParensPrefixLen 
+
+Executing test: TestSynopsis 
+
+Executing test: TestToText 
+       13.68 real        19.85 user         0.23 sys
+
+
+
+94 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  go/doc
 =========================================
@@ -19084,137 +19207,11 @@ Console.hx:22:
 Executing test: TestSynopsis 
 Console.hx:22: 
 Executing test: TestToText 
-       20.06 real        16.50 user         0.60 sys
+       15.16 real        15.08 user         0.61 sys
 
 
 
-93 passes, 1 failures.
-=========================================
-Unit Test ( via  cpp ) :  go/doc
-=========================================
-"CPP:"
-testing.Main
-syscall.unzip() file: testdata/
- 
-syscall.unzip() file: testdata/a.0.golden
- 
-syscall.unzip() file: testdata/a.1.golden
- 
-syscall.unzip() file: testdata/a.2.golden
- 
-syscall.unzip() file: testdata/a0.go
- 
-syscall.unzip() file: testdata/a1.go
- 
-syscall.unzip() file: testdata/b.0.golden
- 
-syscall.unzip() file: testdata/b.1.golden
- 
-syscall.unzip() file: testdata/b.2.golden
- 
-syscall.unzip() file: testdata/b.go
- 
-syscall.unzip() file: testdata/benchmark.go
- 
-syscall.unzip() file: testdata/blank.0.golden
- 
-syscall.unzip() file: testdata/blank.1.golden
- 
-syscall.unzip() file: testdata/blank.2.golden
- 
-syscall.unzip() file: testdata/blank.go
- 
-syscall.unzip() file: testdata/bugpara.0.golden
- 
-syscall.unzip() file: testdata/bugpara.1.golden
- 
-syscall.unzip() file: testdata/bugpara.2.golden
- 
-syscall.unzip() file: testdata/bugpara.go
- 
-syscall.unzip() file: testdata/c.0.golden
- 
-syscall.unzip() file: testdata/c.1.golden
- 
-syscall.unzip() file: testdata/c.2.golden
- 
-syscall.unzip() file: testdata/c.go
- 
-syscall.unzip() file: testdata/d.0.golden
- 
-syscall.unzip() file: testdata/d.1.golden
- 
-syscall.unzip() file: testdata/d.2.golden
- 
-syscall.unzip() file: testdata/d1.go
- 
-syscall.unzip() file: testdata/d2.go
- 
-syscall.unzip() file: testdata/e.0.golden
- 
-syscall.unzip() file: testdata/e.1.golden
- 
-syscall.unzip() file: testdata/e.2.golden
- 
-syscall.unzip() file: testdata/e.go
- 
-syscall.unzip() file: testdata/error1.0.golden
- 
-syscall.unzip() file: testdata/error1.1.golden
- 
-syscall.unzip() file: testdata/error1.2.golden
- 
-syscall.unzip() file: testdata/error1.go
- 
-syscall.unzip() file: testdata/error2.0.golden
- 
-syscall.unzip() file: testdata/error2.1.golden
- 
-syscall.unzip() file: testdata/error2.2.golden
- 
-syscall.unzip() file: testdata/error2.go
- 
-syscall.unzip() file: testdata/example.go
- 
-syscall.unzip() file: testdata/f.0.golden
- 
-syscall.unzip() file: testdata/f.1.golden
- 
-syscall.unzip() file: testdata/f.2.golden
- 
-syscall.unzip() file: testdata/f.go
- 
-syscall.unzip() file: testdata/template.txt
- 
-syscall.unzip() file: testdata/testing.0.golden
- 
-syscall.unzip() file: testdata/testing.1.golden
- 
-syscall.unzip() file: testdata/testing.2.golden
- 
-syscall.unzip() file: testdata/testing.go
- 
-
-Executing test: Test 
-
-Executing test: TestBlocks 
-
-Executing test: TestEmphasize 
-
-Executing test: TestExamples 
-
-Executing test: TestIsHeading 
-
-Executing test: TestPairedParensPrefixLen 
-
-Executing test: TestSynopsis 
-
-Executing test: TestToText 
-       14.25 real        21.41 user         0.27 sys
-
-
-
-94 passes, 1 failures.
+95 passes, 0 failures.
 =========================================
 Unit Test ( all ) :  time
 =========================================
@@ -19384,7 +19381,7 @@ Console.hx:22:
 Executing test: TestZeroTimerStopPanics 
 Console.hx:22: 
 Executing test: TestZoneData 
-      210.82 real       124.07 user         0.88 sys
+      160.76 real       125.43 user         0.81 sys
 
 "CPP:"
 testing.Main
@@ -19545,7 +19542,7 @@ Executing test: TestZeroTimerResetPanics
 Executing test: TestZeroTimerStopPanics 
 
 Executing test: TestZoneData 
-      197.85 real       250.79 user         3.45 sys
+      196.78 real       255.70 user         3.50 sys
 
 "CS:"
 testing.Main
@@ -19706,7 +19703,7 @@ Executing test: TestZeroTimerResetPanics
 Executing test: TestZeroTimerStopPanics 
 
 Executing test: TestZoneData 
-       87.91 real        79.55 user         3.33 sys
+       93.06 real        84.57 user         3.34 sys
 
 "Java:"
 Picked up JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
@@ -19868,11 +19865,11 @@ Executing test: TestZeroTimerResetPanics
 Executing test: TestZeroTimerStopPanics 
 
 Executing test: TestZoneData 
-       91.86 real       105.33 user         1.44 sys
+       91.09 real       104.38 user         1.36 sys
 
 
 
-95 passes, 1 failures.
+96 passes, 0 failures.
 =========================================
 Unit Test ( via  java ) :  debug/elf
 =========================================
@@ -19911,11 +19908,11 @@ Executing test: TestNoSectionOverlaps
 Executing test: TestOpen 
 
 Executing test: TestSymbols 
-        2.16 real         5.84 user         0.34 sys
+        2.15 real         5.77 user         0.33 sys
 
 
 
-96 passes, 1 failures.
+97 passes, 0 failures.
 =========================================
 Unit Test ( via  cs ) :  debug/elf
 =========================================
@@ -19953,11 +19950,11 @@ Executing test: TestNoSectionOverlaps
 Executing test: TestOpen 
 
 Executing test: TestSymbols 
-        2.51 real         2.42 user         0.08 sys
+        2.55 real         2.45 user         0.08 sys
 
 
 
-97 passes, 1 failures.
+98 passes, 0 failures.
 
 Results
 =======
@@ -19969,7 +19966,7 @@ bufio                     all       Pass
 bytes                     all       Pass
 compress/bzip2            all       Pass
 compress/flate            all       Pass
-compress/gzip             all       Fail
+compress/gzip             all       Pass
 compress/lzw              all       Pass
 compress/zlib             all       Pass
 container/heap            all       Pass
@@ -20060,4 +20057,4 @@ unicode                   all       Pass
 unicode/utf16             all       Pass
 unicode/utf8              all       Pass
 
-97 passes, 1 failures.
+98 passes, 0 failures.

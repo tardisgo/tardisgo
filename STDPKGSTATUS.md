@@ -22,7 +22,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | compress        | no code               |                                   |
 | -- bzip2        | c++, c#, java, js   * |                                   |
 | -- flate        | c++, c#, java, js   * |                                   |
-| -- gzip         | c++, c#, js         * | java: Copy hung - regression to be fixed |
+| -- gzip         | c++, c#, java, js   * |                                   |
 | -- lzw          | c++, c#, java, js   * |                                   |
 | -- zlib         | c++, c#, java, js   * |                                   |
 | container       | no code               |                                   |
@@ -46,7 +46,7 @@ Tests bracketed by "[]" work, but currently take too long, so are excluded from 
 | -- sha512       | c++, c#, java, js     |                                   |
 | -- subtle       | c++, c#, java, js     |                                   |
 | -- tls          |                     * | panic: duplicate function name: crypto/tls.run$1 |
-| -- x509         | [c++, c#, java, js]   | mod tests (as Windows) but c#/java/js >30mins to compile and run |
+| -- x509         | [c++, c#, java, js]   | mod tests (as Windows) but c#/java>30mins js=2hrs to compile and run |
 | -- -- pkix      | no tests              |                                   |
 | database        | no code               |                                   |
 | -- sql          |                       | panic: duplicate function name: database/sql.Query$1 |
