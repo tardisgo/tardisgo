@@ -373,6 +373,7 @@ func set1usePtr(v ssa.Value, oup oneUsePtr) string {
 		ret += "var " + nam + "obj=" + oup.obj + ";\n"
 		newObj = nam + "obj"
 		madeVarObj = true
+		tempVarList = append(tempVarList, regToFree{nam + "obj", "Dynamic"})
 	}
 	if newOff == "" {
 		ret += "var " + nam + "off=" + oup.off + ";\n"

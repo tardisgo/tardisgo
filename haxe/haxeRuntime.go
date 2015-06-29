@@ -408,7 +408,9 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 		}
 		var ptr = Pointer.make(obj);
 		var ret = new Slice(ptr,0,-1,sl,1);
-		ptr=null; obj=null; // for GC
+		#if nulltempvars
+			ptr=null; obj=null; // for GC
+		#end
 		return ret;
 	}
 	public static function toRawString(gr:Int,sl:Slice):String { // TODO remove gr param
@@ -425,9 +427,11 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				buf.set(i-off,obj.get_uint8(i));
 			}
 			var ret=buf.getString(0,sll);
-			buf=null;
-			ptr=null;
-			obj=null;
+			#if nulltempvars
+				buf=null;
+				ptr=null;
+				obj=null;
+			#end
 			return ret;
 		#else
 			// very slow for cpp:
@@ -435,10 +439,12 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			for( i in off...end ) {
 				ret.addChar( obj.get_uint8(i) );
 			}
-			ptr=null;
-			obj=null;
 			var s=ret.toString();
-			ret=null;
+			#if nulltempvars
+				ptr=null;
+				obj=null;
+				ret=null;
+			#end
 			return s;
 		#end
 	}
@@ -479,9 +485,11 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				ptr = slo.itemAddr(i);
 				v += String.fromCharCode( ptr.load_uint16() );
 			}
-			ptr=null;
-			slr=null;
-			slo=null;
+			#if nulltempvars
+				ptr=null;
+				slr=null;
+				slo=null;
+			#end
 		#end
 		return v;
 	}
@@ -502,9 +510,11 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 				ptr=slo.itemAddr(i);
 				v += String.fromCharCode( ptr.load_uint8() );
 			}
-			ptr=null;
-			slr=null;
-			slo=null;
+			#if nulltempvars
+				ptr=null;
+				slr=null;
+				slo=null;
+			#end
 		#end
 		return v;
 	}
@@ -568,8 +578,10 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 			_ptr=_r.itemAddr(_i);
 			_ret+=String.fromCharCode(_ptr.load_int32());
 		}
-		_ptr=null;
-		_r=null;
+		#if nulltempvars
+			_ptr=null;
+			_r=null;
+		#end
 		return	_ret;
 	}
 }
@@ -1421,7 +1433,9 @@ class Slice {
 		var obj = res==null?Object.make(0):Object.make(res.length,res); 
 		var ptr = Pointer.make(obj);
 		var ret = new Slice(ptr,0,-1,res==null?0:res.length,1); // []byte
-		obj=null;ptr=null;
+		#if nulltempvars
+			obj=null;ptr=null;
+		#end
 		return ret;
 	}
 	public function subSlice(low:Int, high:Int):Slice {
@@ -1448,7 +1462,9 @@ class Slice {
 				Object.objBlit(newEnt.baseArray.obj,newEnt.itemOff(i)+newEnt.baseArray.off,
 					retEnt.baseArray.obj,retEnt.itemOff(offset+i)+retEnt.baseArray.off,oldEnt.itemSize);
 			}
-			oldEnt=null;newEnt=null;
+			#if nulltempvars
+				oldEnt=null;newEnt=null;
+			#end
 			retEnt.setLength();
 			return retEnt;
 		}else{
@@ -1468,7 +1484,9 @@ class Slice {
 			}
 			var ptr = Pointer.make(newObj);
 			var ret = new Slice(ptr,0,newLen,newCap,oldEnt.itemSize);
-			oldEnt=null;newEnt=null;newObj=null;ptr=null;
+			#if nulltempvars
+				oldEnt=null;newEnt=null;newObj=null;ptr=null;
+			#end
 			ret.setLength();
 			return ret;
 		}
@@ -1513,7 +1531,9 @@ class Slice {
 	public function param(idx:Int):Dynamic { // special case for .hx pseudo functions
 		var ptr=itemAddr(idx);
 		var ret=ptr.load();
-		ptr=null;
+		#if nulltempvars
+			ptr=null;
+		#end
 		return ret;
 	}
 	//public inline function getAt(idx:Int):Dynamic {
@@ -1575,7 +1595,9 @@ class Slice {
 				ptr=baseArray.addr(i*itemSize);
 				ret+=ptr.toString(itemSize); // only works for basic types
 			}
-		ptr=null;
+		#if nulltempvars
+			ptr=null;
+		#end
 		return ret+"]}";
 	}
 }
@@ -1782,9 +1804,11 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 			methodCache.set(key,fn);
 		}
 		var ret=Reflect.callMethod(null, fn, args);
-		// set created objects to null for GC
-		key=null;
-		fn=null;
+		#if nulltempvars
+			// set created objects to null for GC
+			key=null;
+			fn=null;
+		#end
 		// return what was asked for
 		return ret;
 	}
@@ -2513,13 +2537,15 @@ public function new(gr:Int,ph:Int,name:String){
 }
 
 public inline function nullOnExitSF(){
-	_functionName=null;
-	// the next three items could be optimized to only be set to null on exit if they are used in a Go func
-	_bds=null;
-	_deferStack=null;
-	_debugVars=null;
-	#if godebug
-		_debugVarsLast=null;
+	#if nulltempvars
+		_functionName=null;
+		// TODO the next three items could be optimized to only be set to null on exit if they are used in a Go func
+		_bds=null;
+		_deferStack=null;
+		_debugVars=null;
+		#if godebug
+			_debugVarsLast=null;
+		#end
 	#end
 }
 
@@ -2717,7 +2743,7 @@ public var _latestBlock:Int;
 public var _functionPH:Int;
 public var _functionName:String;
 public var _goroutine(default,null):Int;
-public var _bds:Dynamic; // bindings for closures as a anonymous struct
+public var _bds:Dynamic; // bindings for closures as an anonymous struct
 public var _deferStack:List<StackFrame>;
 public var _debugVars:Map<String,Dynamic>;
 function run():StackFrame; // function state machine (set up by each Go function Haxe class)
@@ -2802,7 +2828,6 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 		}
 	} else { // run goroutine zero
 		runOne(0,entryCount,thisStack,thisStackLen);
-
 	}
 
 	if(doneInit && entryCount==1 ) {	 // don't run extra goroutines when we are re-entrant or have not finished initialistion
@@ -2822,7 +2847,9 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 			if(grStacks[grStacksLen-1].length==0) 
 				grStacks.pop();
 	}
-	thisStack=null; // for GC
+	#if nulltempvars
+		thisStack=null; // for GC
+	#end
 	entryCount--;
 }
 static inline function runOne(gr:Int,entryCount:Int,thisStack:Array<StackFrame>,thisStackLen:Int){ // called from above to call individual goroutines TODO: Review for multi-threading
@@ -2856,7 +2883,9 @@ static inline function runOne(gr:Int,entryCount:Int,thisStack:Array<StackFrame>,
 						} 
 						grStacks[gr].push(sf); // now run the recovery code
 					}
-					sf=null; // for GC
+					#if nulltempvars
+						sf=null; // for GC
+					#end
 				}
 			}
 		}
@@ -2886,7 +2915,7 @@ public static function makeGoroutine():Int {
 	return l;
 }
 public static inline function pop(gr:Int):StackFrame {
-	return grStacks[gr].pop(); // NOTE removing old object pointer does not improve GC
+	return grStacks[gr].pop(); // NOTE removing old object pointer does not improve GC (tested 3 times)
 }
 public static inline function push(gr:Int,sf:StackFrame){
 	grStacks[gr].push(sf);
@@ -2924,12 +2953,16 @@ public static function stackDump():String {
 								if(t==null) t="nil";
 								if(Std.is(t,Pointer)) t=t.toUniqueVal();
 								ret += "\t\tvar "+k+" = "+t+"\n";
-								t=null; // for GC
+								#if nulltempvars
+									t=null; // for GC
+								#end
 							}
 						}
 					}
 				}
-				ent=null; // for GC
+				#if nulltempvars
+					ent=null; // for GC
+				#end
 				e -= 1;
 			}
 		}
@@ -2959,7 +2992,9 @@ public static function getCallerX(gr:Int,x:Int):Int {
 					return ent._latestPH;
 				}
 			}
-			ent=null; // for GC
+			#if nulltempvars
+				ent=null; // for GC
+			#end
 			x -= 1;
 			e -= 1;
 		}

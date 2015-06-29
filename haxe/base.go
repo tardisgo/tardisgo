@@ -446,15 +446,15 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 							ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
 							nullOnExitList = append(nullOnExitList, regToFree{fmt.Sprintf("_SF%d", -pseudoNextReturnAddress), "StackFrame"})
 							if usesGr {
-								ret += " #if js =null #end " // v8 opt
+								ret += " #if jsinit =null #end " // v8 opt
 								ret += ";\n"
 							} else {
-								if reconstructInstrs == nil {
-									ret += "=null;\n" // need to initalize when using the native stack for these vars
-								} else {
-									ret += " #if js =null #end " // v8 opt
-									ret += ";\n"
-								}
+								//if reconstructInstrs == nil {
+								//	ret += "=null;\n" // need to initalize when using the native stack for these vars
+								//} else {
+								ret += " #if jsinit =null #end " // v8 opt
+								ret += ";\n"
+								//}
 							}
 						}
 						pseudoNextReturnAddress--
@@ -490,36 +490,27 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 					if typ != "" {
 						switch len(*in.(ssa.Value).Referrers()) {
 						case 0: // don't allocate unused temporary variables
-						//case 1: // TODO optimization possible using register replacement but does not currenty work for: a,b=b,a+b, so code removed
 						default:
 							if usesGr {
 								if init == "null" {
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 								}
-								init = " #if js =" + init + " #end " // only init in JS, to tell the var type for v8 opt
+								init = " #if jsinit =" + init + " #end " // only init in JS, to tell the var type for v8 opt
 							} else {
 								if init == "null" {
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 								}
-								//if reconstructInstrs == nil {
-								init = " = " + init + " " // when not using goroutines, sadly they all need initializing
-								//} else {
-								//	init = " #if js =" + init + " #end " // unless we are reconstructing... but still for JS V8
-								//}
+								if init == "null" && reconstructInstrs != nil {
+									init = " #if jsinit = null #end "
+								} else {
+									init = " = " + init + " " // when not using goroutines, sadly they all need initializing because the Haxe compiler objects
+								}
 							}
 							switch typ {
 							case "String", "GOint64":
 								nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 							}
-							//if usesGr {
-							//	ret += "private "
-							//}
 							hv := haxeVar(reg, typ, init, position, "FuncStart()") + "\n"
-							//if usesGr {
-							//	if strings.Contains(hv, ":") {
-							//		hv = strings.Replace(hv, ":", "(null,null):", 1)
-							//	}
-							//}
 							regDefs += hv
 							regCount++
 						}
@@ -538,7 +529,9 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		useRegisterArray = false
 		ret += regDefs
 		ret += "inline function nullOnExit(){\n"
+		ret += "#if nulltempvars\n"
 		ret += recycle(nullOnExitList)
+		ret += "#end\n"
 		ret += "nullOnExitSF();\n"
 		ret += "};\n"
 	}
@@ -616,12 +609,13 @@ func (l langType) RunEnd(fn *ssa.Function) string {
 		//	}
 		//}
 
-		// TODO optimise to only emit this code if previous block does not have explicit return
+		// TODO optimise to only emit this code if directly previous block does not have an explicit return
 		ret += `this._incomplete=false;
 Scheduler.pop(this._goroutine);
 nullOnExit();
 return this;
 ` // for when the SSA code does not contain an explicit return;
+
 		ret += "}\n" // for the run function
 	}
 	return ret
@@ -655,7 +649,7 @@ var thisBlock int
 func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) string {
 	rangeChecks = make(map[string]struct{})
 	thisBlock = num
-
+	tempVarList = []regToFree{}
 	hadBlockReturn = false
 	// TODO optimise is only 1 block AND no calls
 	// TODO if len(block) > 1 { // no need for a case statement if only one block
@@ -769,26 +763,14 @@ func (l langType) BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) strin
 }
 
 func (l langType) Jump(block int, phi int, code string) string {
+
+	ret := nullTempVars()
+
 	if reconstructInstrs == nil { // Normal unreconstructed code
 		// use tail-calls for backward jumps where we definately know the function name
-		ret := "#if uselocalfunctions\n"
-		ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
-		ret += " #end\n"
-		//NOTE optimisation below no longer possible because of ordering by dominance
-		//if (block < phi) && !inMustSplitSubFn { // already seen it so we can optimise when using local functions
-		//	return ret + code + fmt.Sprintf(" #if uselocalfunctions return "+currentfnName+"_%d(); #else _Next=%d; #end", block, block)
-		//}
 		return ret + code + fmt.Sprintf("_Next=%d;", block) + "\n#if uselocalfunctions return null; #end "
 	} else { // reconstruct
-		ret := ""
-		//for reconstructInstrs[thisBlock].EndBracketCount > 0 {
-		//	ret += " } "
-		//	reconstructInstrs[thisBlock].EndBracketCount--
-		//}
 		ret += fmt.Sprintf("// Jump to ID %d\n", block) + code
-		//if reconstructInstrs[thisBlock].EndWhileIndex > 0 {
-		//	ret += "continue;\n"
-		//}
 		for _, ri := range reconstructInstrs { // TODO pull reconstruct lookup map through
 			if ri.Index == block {
 				if ri.Seq != thisBlock+1 {
@@ -1244,6 +1226,7 @@ func (l langType) Ret(values []*ssa.Value, errorInfo string) string {
 	hadReturn = true
 	_BlockEnd := "this._incomplete=false;\nScheduler.pop(this._goroutine);\n"
 	hadBlockReturn = true
+	//_BlockEnd += nullTempVars()
 	_BlockEnd += "nullOnExit();\nreturn this;\n"
 	switch len(values) {
 	case 0:
@@ -2196,11 +2179,7 @@ func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
 	deDupRHS = nil
 	inMustSplitSubFn = false
 	ret := ""
-	if reconstructInstrs == nil {
-		ret += "#if !uselocalfunctions\n"
-		ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
-		ret += " #end\n"
-	}
+	ret += nullTempVars()
 	if alwaysStackdump || pogo.DebugFlag {
 		ret += fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
 	}
@@ -2220,8 +2199,11 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 	if useRegisterArray {
 		return ""
 	}
+	if len(*(v.Referrers())) == 0 {
+		return ""
+	}
 	if is1usePtr(v) {
-		return "// virtual oneUsePtr _" + v.Name()
+		return "" // "// virtual oneUsePtr _" + v.Name()
 	}
 	typ := l.LangType(v.Type(), false, "temp var declaration")
 	if typ == "" {
@@ -2240,6 +2222,14 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 		init = "null"
 		tempVarList = append(tempVarList, regToFree{"_" + v.Name(), typ})
 	}
-	init = "#if js =" + init + " #end " // to allow V8 optimisation?
+	init = "#if jsinit =" + init + " #end " // to allow V8 optimisation?
 	return "var _" + v.Name() + ":" + typ + " " + init + ";"
+}
+
+func nullTempVars() string {
+	ret := " #if nulltempvars\n"
+	ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
+	ret += " #end\n"
+	tempVarList = []regToFree{}
+	return ret
 }
