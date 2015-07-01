@@ -492,7 +492,7 @@ func (l langType) EmitTypeInfo() string {
 
 	BuildTypeHaxe() // generate the code to emulate compiler reflect data output
 
-	var ret string = ""
+	var ret string
 	ret += "\nclass TypeInfo{\n\n"
 
 	ret += fmt.Sprintf("public static var nextTypeID=%d;\n", pogo.NextTypeID) // must be last as will change during processing
@@ -759,7 +759,7 @@ func loadStoreSuffix(T types.Type, hasParameters bool) string {
 			types.Complex64,
 			types.Complex128,
 			types.String:
-			return "_" + types.TypeString(nil, T) + "("
+			return "_" + types.TypeString( T, nil/* TODO should be?: (*types.Package).Name*/) + "("
 		case types.Uint8: // to avoid "byte"
 			return "_uint8("
 		case types.Int, types.Int32: // for int and to avoid "rune"
