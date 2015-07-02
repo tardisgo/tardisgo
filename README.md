@@ -109,13 +109,13 @@ Please note that strings in Go are held as Haxe strings, but encoded as UTF-8 ev
 
 Tabulating the very simple indicative [benchmarking](https://github.com/tardisgo/tardisgo-samples/blob/master/benchmarks) results, looking only at elapsed (rather than cpu) time in seconds, as a multiple of the Go time: 
 
-| Test - of what functionality         | C++      | mono/C#  | Java     | node/JS  | [GopherJS](http://www.gopherjs.org/) |
-| ------------------------------------ | -------- | -------- | -------- | -------- | -------- |
-| mandel.go - floating point           | 1.1x     | 2.8x     | 1.3x     | 1.3x     | 1.0x     |
-| fannkuch.go - slice & array indexing | 2.1x     | 4.2x     | 3.4x     | 5.4x     | 3.5x     |
-| binarytree.go - garbage collection   | 17.0x    | 11.6x    | 1.6x     | 8.4x     | 0.3x (!) |
+| Test - of what functionality         | C++      | C#       | Java     | JS       |Closure/JS| [GopherJS](http://www.gopherjs.org/) |
+| ------------------------------------ | -------- | -------- | -------- | -------- | -------- | -------- |
+| mandel.go - floating point           | 1.07x    | 2.73x    | 1.25x    | 1.24x    | 1.11x    | 0.99x    |
+| fannkuch.go - slice & array indexing | 2.09x    | 4.22x    | 3.35x    | 5.31x    | 5.23x    | 3.54x    |
+| binarytree.go - garbage collection   | 16.92x   | 11.62x   | 1.61x    | 8.56x    | 6.58x    | 0.32x(!) |
 
-Figures above are the latest results as at 29th June 2015. The Haxe compilation flag "-D inlinepointers" was used for all targets, the additional flag "-D useloacalfunctions" was used for the JS target.
+Figures above are the latest results as at 2nd July 2015, including performace figures after running the [Google Closure Compiler](https://developers.google.com/closure/compiler/) on the JS and from the parallel project GopherJS (un-minified). The Haxe compilation flag "-D inlinepointers" was used for all targets, the additional flag "-D useloacalfunctions" was used for the JS target.
 
 Execution speed significantly improved after:
 * re-writing code generation for non-goroutine functions to reconstruct Haxe "while" and "if" control structures from the SSA form where possible; and
