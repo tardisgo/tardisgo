@@ -14,6 +14,8 @@ Goroutines are implemented as co-operatively scheduled co-routines. Other gorout
 
 [Well over half of the standard packages pass their tests for all targets](https://github.com/tardisgo/tardisgo/blob/master/STDPKGSTATUS.md). 
 
+The GOOS for TARDISgo is ['nacl'](https://github.com/golang/go/wiki/NativeClient), complete with an in-memory file system. However please note that NaCl provides no access to traditional networking. Go programs written for TARDISgo must use Haxe APIs to access host OS functionality.
+
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
 The code is developed and tested on OS X 10.10.2, using Go 1.4.2 and Haxe 3.2.0. The short CI test runs on 64-bit Ubuntu. No other platforms are currently regression tested. 
@@ -113,7 +115,7 @@ Tabulating the very simple indicative [benchmarking](https://github.com/tardisgo
 | ------------------------------------ | -------- | -------- | -------- | -------- | -------- | -------- |
 | mandel.go - floating point           | 1.07x    | 2.73x    | 1.25x    | 1.24x    | 1.11x    | 0.99x    |
 | fannkuch.go - slice & array indexing | 2.09x    | 4.22x    | 3.35x    | 5.31x    | 5.23x    | 3.54x    |
-| binarytree.go - garbage collection   | 16.92x   | 11.62x   | 1.61x    | 8.56x    | 6.58x    | 0.32x(!) |
+| binarytree.go - garbage collection   | 16.92x   | 11.62x   | 1.61x    | 8.56x    | 6.58x    | 0.32x (!)|
 
 Figures above are the latest results as at 2nd July 2015, including performace figures after running the [Google Closure Compiler](https://developers.google.com/closure/compiler/) on the JS and from the parallel project GopherJS (un-minified). The Haxe compilation flag "-D inlinepointers" was used for all targets, the additional flag "-D useloacalfunctions" was used for the JS target.
 

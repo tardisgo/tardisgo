@@ -2,10 +2,13 @@ package haxe
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/tardisgo/tardisgo/pogo"
+	"golang.org/x/tools/go/exact"
 	"golang.org/x/tools/go/ssa"
 )
 
@@ -16,6 +19,19 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	fnToCall = strings.TrimPrefix(fnToCall, pseudoFnPrefix)
 
 	switch fnToCall {
+	case "SSource":
+		fn := strings.Trim(args[0].(*ssa.Const).Value.String(), "\"")
+		fn = pogo.TgtDir + string(os.PathSeparator) + fn + ".hx"
+		code := strings.Trim(args[1].(*ssa.Const).Value.String(), "\"")
+		code = strings.Replace(code, "\\n", "\n", -1)
+		code = strings.Replace(code, "\\t", "\t", -1)
+		code = strings.Replace(code, "\\\"", "\"", -1)
+		//println("DEBUG fn: " + fn + "\nCode: " + code)
+		err := ioutil.WriteFile(fn, []byte(code), 0666)
+		if err != nil {
+			pogo.LogError(errorInfo, "Haxe", err)
+		}
+		return ""
 	case "init":
 		return "" // no need to generate code for the go init function
 	case "RResource":
@@ -96,7 +112,24 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	if strings.HasPrefix(fnToCall, "NNew") {
 		code = "new "
 	}
-	code += strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) // trim quotes if it has any
+	if strings.HasPrefix(fnToCall, "CCode") || strings.HasPrefix(fnToCall, "GGet") {
+		givenConst, givenConstOK := args[argOff].(*ssa.Const)
+		if givenConstOK {
+			if givenConst.Value.Kind() == exact.String {
+				goto codeOK
+			}
+		}
+		pogo.LogError(errorInfo, "Haxe",
+			fmt.Errorf("hx.???() code is not a usable string constant: %s", args[argOff].String()))
+		return ""
+	codeOK:
+		tcode := strings.Trim(givenConst.Value.String(), `"`) // trim quotes
+		tcode = strings.Replace(tcode, "\\\"", "\"", -1)      // replace backslash quote with quote
+		//println("DEBUG string=", tcode)
+		code += tcode
+	} else {
+		code += strings.Trim(l.IndirectValue(args[argOff], errorInfo), `"`) // trim quotes if it has any
+	}
 	if strings.HasPrefix(fnToCall, "CCall") ||
 		strings.HasPrefix(fnToCall, "MMeth") || strings.HasPrefix(fnToCall, "NNew") {
 		argOff++

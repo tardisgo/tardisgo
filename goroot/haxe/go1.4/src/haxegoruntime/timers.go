@@ -7,17 +7,46 @@ import (
 	"github.com/tardisgo/tardisgo/haxe/hx"
 )
 
-// TODO(haxe): optimize to use the Timer call-back methods for the targets - flash, flash8, java, js, python
+// TODO optimize to use the Timer call-back methods for the targets - flash, java, js, python
 func HaxeWait(target *int64, whileTrue *bool) {
 	fNow := hx.CallFloat("", "haxe.Timer.stamp", 0)
-	firstTarget := *target
 	fTarget := reverseNano(*target)
 	//println("DEBUG haxeWait:start now, target, *whileTrue diff = ", fNow, *target, *whileTrue, fTarget-fNow)
-	for fNow < fTarget && *target == firstTarget && *whileTrue {
+	/* this "optimization" is not working, and may not be better anyway
+	useCallback := false
+	switch runtime.GOARCH {
+	case "js":
+		if JScallbackOK {
+			useCallback = true
+		}
+	case "flash", "java", "python":
+		useCallback = true
+	}
+	if useCallback {
+		wait := true
+		ms := int(1000 * (fTarget - fNow))
+		println("DEBUG TIMER MS DELAY=", ms)
+		if ms > 0 {
+			tmr := hx.New("flash||java||js||python", "haxe.Timer", 1, ms)
+			hx.Code("flash||java||js||python",
+				"_a.param(0).val.run=_a.param(1).val;",
+				tmr,
+				func() {
+					wait = true
+				})
+			for wait && *whileTrue {
+				runtime.Gosched() // let other code run
+			}
+			hx.Meth("flash||java||js||python", tmr, "haxe.Timer", "stop", 0)
+		}
+	} else {
+	*/
+	for fNow < fTarget && *whileTrue {
 		runtime.Gosched() // let other code run
 		fNow = hx.CallFloat("", "haxe.Timer.stamp", 0)
 		//println("DEBUG haxeWait:loop now, target, *whileTrue diff = ", fNow, *target, *whileTrue, fTarget-fNow)
 	}
+	/*}*/
 }
 
 // RuntimeNano returns the current value of the runtime clock in nanoseconds.

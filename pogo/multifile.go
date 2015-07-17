@@ -33,10 +33,10 @@ func WriteAsClass(name, code string) {
 	emitFileStart()
 }
 
-const tgtDir = "tardis" // TODO move to the correct directory based on a command line argument
+const TgtDir = "tardis" // TODO move to the correct directory based on a command line argument
 
 func targetDir() error {
-	if err := os.Mkdir(tgtDir, os.ModePerm); err != nil {
+	if err := os.Mkdir(TgtDir, os.ModePerm); err != nil {
 		if !os.IsExist(err) { // no problem if it already exists
 			LogError("Unable to create tardis output directory", "pogo", err)
 			return err
@@ -56,7 +56,7 @@ func writeFiles() {
 	if err == nil {
 		for _, fo := range LanguageList[l].files {
 			err = writeIfChanged(
-				tgtDir+string(os.PathSeparator)+fo.filename+LanguageList[l].FileTypeSuffix(), // Ubuntu requires the first letter of the haxe file to be uppercase
+				TgtDir+string(os.PathSeparator)+fo.filename+LanguageList[l].FileTypeSuffix(), // Ubuntu requires the first letter of the haxe file to be uppercase
 				fo.data)
 			if err != nil {
 				break

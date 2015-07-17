@@ -863,7 +863,7 @@ func openRandom() (devFile, error) {
 	//if err != nil {
 	//	return nil, err
 	//}
-	return &randomFile{ /*naclFD: fd*/}, nil
+	return &randomFile{ /*naclFD: fd*/ }, nil
 }
 
 func (f *randomFile) close() error {

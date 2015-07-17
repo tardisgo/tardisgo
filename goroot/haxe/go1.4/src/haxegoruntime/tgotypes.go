@@ -321,12 +321,25 @@ func getTypeString(id int) string {
 }
 
 func getTypeID(s string) int {
+again:
 	for id := 1; id < len(TypeTable); id++ { // TODO optimise this runtime loop to use a map
 		if s == *(TypeTable[id].string) {
 			return id
 		}
 	}
-	return 0
+	switch s {
+	case "rune":
+		s = "int32"
+	case "[]rune":
+		s = "[]int32"
+	case "byte":
+		s = "uint8"
+	case "[]byte":
+		s = "[]uint8"
+	default:
+		return 0 // TODO panic here?
+	}
+	goto again
 }
 
 func getMethod(tid int, path, name string) uintptr {

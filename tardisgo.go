@@ -410,7 +410,7 @@ func doTestable(args []string) error {
 				r.backChan <- true
 			}
 
-		case "interp", "cpp", "cs", "js", "jsfu", "java": // for running tests
+		case "interp", "cpp", "cs", "js", "jsfu", "java", "flash": // for running tests
 			switch *allFlag {
 			case "interp":
 				go doTarget([][]string{
@@ -447,6 +447,12 @@ func doTestable(args []string) error {
 					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-java", "tardis/java"},
 					[]string{"echo", `"Java:"`},
 					[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
+				}, results)
+			case "flash":
+				go doTarget([][]string{
+					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-swf", "tardis/go.swf"},
+					[]string{"echo", `"Flash:"`},
+					[]string{"time", "open", "tardis/go.swf"},
 				}, results)
 			}
 			r := <-results

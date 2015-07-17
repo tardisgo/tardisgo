@@ -1438,6 +1438,14 @@ class Slice {
 		#end
 		return ret;
 	}
+	public static function toBytes(sl:Slice):haxe.io.Bytes {
+		var wdSz = 4;
+		var szAdj = (wdSz - (sl.length % wdSz)) % wdSz; // get to a wdSz-byte boundary
+		var byts = haxe.io.Bytes.alloc(sl.length+szAdj);
+		for(i in 0...sl.length)
+			byts.set(i,sl.itemAddr(i).load_uint8()); 
+		return byts;
+	}	
 	public function subSlice(low:Int, high:Int):Slice {
 		if(high==-1) high = length; //default upper bound is the length of the current slice
 		return new Slice(baseArray,low+start,high+start,capacity,itemSize);
@@ -1608,9 +1616,9 @@ class Slice {
 @:keep
 class Closure { // "closure" is a keyword in PHP but solved using compiler flag  --php-prefix go  //TODO tidy names
 	public var fn:Dynamic; 
-	public var bds:Dynamic; // actually an anon struct
+	public var bds:Array<Dynamic>;
 
-	public function new(f:Dynamic,b:Dynamic) {
+	public function new(f:Dynamic,b:Array<Dynamic>) {
 		if(Std.is(f,Closure))	{
 			if(!Reflect.isFunction(f.fn)) Scheduler.panicFromHaxe( "invalid function reference in existing Closure passed to make Closure(): "+f.fn);
 			fn=f.fn; 
@@ -2516,7 +2524,7 @@ public var _latestBlock:Int=0;
 public var _functionPH:Int;
 public var _functionName:String;
 public var _goroutine(default,null):Int;
-public var _bds:Dynamic; // bindings for closures
+public var _bds:Array<Dynamic>; // bindings for closures
 public var _deferStack:List<StackFrame>;
 public var _debugVars:Map<String,Dynamic>;
 #if godebug
@@ -2743,7 +2751,7 @@ public var _latestBlock:Int;
 public var _functionPH:Int;
 public var _functionName:String;
 public var _goroutine(default,null):Int;
-public var _bds:Dynamic; // bindings for closures as an anonymous struct
+public var _bds:Array<Dynamic>; // bindings for closures
 public var _deferStack:List<StackFrame>;
 public var _debugVars:Map<String,Dynamic>;
 function run():StackFrame; // function state machine (set up by each Go function Haxe class)
@@ -2753,6 +2761,9 @@ function setDebugVar(name:String,value:Dynamic):Void;
 }
 `)
 	pogo.WriteAsClass("Scheduler", `
+
+@:cppFileCode('extern "C" int tardisgo_timereventhandler(int rl) { tardis::Scheduler_obj::runLimit=rl; tardis::Scheduler_obj::timerEventHandler(0); return 0; }')
+
 @:keep
 class Scheduler { // NOTE this code requires a single-thread, as there is no locking TODO detect deadlocks
 // public
@@ -2774,35 +2785,31 @@ public static function timerEventHandler(dummy:Dynamic) {
 		runToStasis(runLimit); 
 }
 
-static inline function runToStasis(cycles:Int) {
-	var lastHash=new Array<Null<Int>>();
-	var thisHash=makeStateHash();
-	while( !hashesEqual(lastHash,thisHash) && cycles>0){
+static inline function runToStasis(cyclesLimit:Int) {
+	var lastHash:Int=0;
+	var thisHash:Int=makeStateHash();
+	var cycles:Int=0;
+	while( lastHash!=thisHash && cycles<cyclesLimit ){
 		lastHash = thisHash;
 		runAll();
 		thisHash = makeStateHash();
-		cycles -= 1;
+		cycles += 1;
 	}
-	//if(cycles>0)
-	//	trace("Stasis achieved at "+cycles);
+	//if(cycles<cyclesLimit)
+	//	trace("Stasis achieved after "+cycles+" cycles");
 	//else
 	//	trace("Stasis not achieved");
 }
 
-static function hashesEqual(a:Array<Null<Int>>,b:Array<Null<Int>>):Bool{
-	if(a.length != b.length) 
-		return false;
-	for(i in 0...a.length)
-		if(a[i]!=b[i]) 
-			return false;
-	return true;
-}
-
-static function makeStateHash():Array<Null<Int>> { // TODO this is very ugly, and probably slow, so improve by checking for change on the fly?
-	var hash=new Array<Null<Int>>();
-	for( gr in 0 ... grStacks.length){  // TODO optimise to not use .length
-		for(ent in 0 ... grStacks[gr].length){
-			hash[gr] += grStacks[gr][ent]._functionPH ;
+static inline function makeStateHash():Int { // TODO improve by checking for change on the fly?
+	var numGR=grStacks.length;
+	var hash:Int=numGR;
+	for( gr in 0 ... numGR ){  
+		var thisGR=grStacks[gr];
+		var stacklen=thisGR.length;
+		if( stacklen>0 ) {
+			var top=thisGR[stacklen-1];
+			hash+=stacklen+top._functionPH+top._Next;
 		}
 	}
 	//trace("makeStateHash()="+hash);
@@ -2824,7 +2831,8 @@ public static function runAll() { // this must be re-entrant, in order to allow 
 	thisStackLen=thisStack.length;
 	if(thisStackLen==0) { // check if there is ever likley to be anything to do
 		if(grStacks.length<=1) { 
-			throw "Scheduler: there is only one goroutine and its stack is empty\n"+stackDump();		
+			//throw "Scheduler: there is only one goroutine and its stack is empty\n"+stackDump();		
+			return; // nothing to do...
 		}
 	} else { // run goroutine zero
 		runOne(0,entryCount,thisStack,thisStackLen);

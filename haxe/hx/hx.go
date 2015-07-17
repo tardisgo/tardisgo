@@ -33,6 +33,9 @@ func Complex(x uintptr) complex128 { return 0 + 0i }
 // Int64 provides a cast from haxe Dynamic type
 func Int64(x uintptr) int64 { return 0 }
 
+// Source places the contents into a classname.hx file in the haxe output directory at compile time.
+func Source(classname, contents string) {}
+
 // Code inserts the given constant Haxe code at this point. This is not suitable for the casual programmer.
 // ifLogic = a constant string giving the logic for wrapping Haxe complie time condition, ignored if "": #if (ifLogic) ... #end
 // resTyp = a constant string giving the Go name of the type of the data to be returned as an interface. "" if nothing is returned.

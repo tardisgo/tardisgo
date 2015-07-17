@@ -69,7 +69,8 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	main += ""
 	main += "Scheduler.doneInit=true;\n"
 	main += "}\n"
-	// Haxe main function, only called in a go-only environment
+	// Haxe main function, only called in a go-only environment,
+	// or ends with a call to haxegoruntime.BrowserMain() to set-up JS timed callbacks
 	main += "\npublic static function main() : Void {\n"
 	main += "Go_" + l.LangName(pkg.Object.Path(), "main") + `.hx();` + "\n"
 	main += "}\n"
@@ -186,7 +187,7 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 	if lit.Value == nil {
 		return "Dynamic", "null"
 	}
-	lit.Name()
+	lit.Name() // TODO can this be removed, seems to have no effect
 	switch lit.Value.Kind() {
 	case exact.Bool:
 		return "Bool", lit.Value.String()

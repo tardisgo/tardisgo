@@ -218,7 +218,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		}
 	}
 	ret += "public function new(gr:Int,"
-	ret += "_bds:Dynamic" //bindings
+	ret += "_bds:Array<Dynamic>" //bindings
 	for p := range fn.Params {
 		ret += ", "
 		p_nam := "p_" + pogo.MakeID(fn.Params[p].Name())
@@ -384,7 +384,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 
 	// call
 	ret += "public static function call( gr:Int," //this just creates the stack frame, NOTE does not run anything because also used for defer
-	ret += "_bds:Dynamic"                         //bindings
+	ret += "_bds:Array<Dynamic>"                  //bindings
 	for p := range fn.Params {
 		ret += ", "
 		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
@@ -851,7 +851,13 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	case *ssa.Parameter:
 		return "p_" + pogo.MakeID(v.(*ssa.Parameter).Name())
 	case *ssa.FreeVar:
-		return `_bds.` + v.(*ssa.FreeVar).Name()
+		for n := 0; n < len(currentfn.FreeVars); n++ {
+			if currentfn.FreeVars[n].Name() == v.(*ssa.FreeVar).Name() {
+				return fmt.Sprintf(`_bds[%d /*%s*/]`, n, v.(*ssa.FreeVar).Name())
+			}
+		}
+		panic(fmt.Sprintf("unable to find FreeVar %s in function %s with freeVars %v",
+			v.(*ssa.FreeVar).Name(), currentfn, currentfn.FreeVars))
 	case *ssa.Function:
 		pk, _ := pogo.FuncPathName(v.(*ssa.Function))  //fmt.Sprintf("fn%d", v.(*ssa.Function).Pos())
 		if v.(*ssa.Function).Signature.Recv() != nil { // it's a method
@@ -1291,7 +1297,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 
 	//special case of: defer close(x)
 	if isDefer && isBuiltin && fnToCall == "close" {
-		fnToCall = "(new Closure(Go_haxegoruntime_defer_close.call,[]))"
+		fnToCall = "(new Closure(Go_haxegoruntime_defer_close.call,null))"
 		isBuiltin = false
 	}
 
@@ -2079,15 +2085,15 @@ func (l langType) Next(register string, v interface{}, isString bool, errorInfo 
 
 func (l langType) MakeClosure(reg string, v interface{}, errorInfo string) string {
 	// use a closure type
-	ret := reg + "= new Closure(" + l.IndirectValue(v.(*ssa.MakeClosure).Fn, errorInfo) + ",{"
+	ret := reg + "= new Closure(" + l.IndirectValue(v.(*ssa.MakeClosure).Fn, errorInfo) + ",["
 	for b := range v.(*ssa.MakeClosure).Bindings {
 		if b != 0 {
 			ret += ","
 		}
-		ret += `"` + v.(*ssa.MakeClosure).Fn.(*ssa.Function).FreeVars[b].Name() + `": `
+		//ret += `` + v.(*ssa.MakeClosure).Fn.(*ssa.Function).FreeVars[b].Name() + `: `
 		ret += l.IndirectValue(v.(*ssa.MakeClosure).Bindings[b], errorInfo)
 	}
-	return ret + "});"
+	return ret + "]);"
 
 	//it does not work to try just returning the function, and let the invloking call do the binding
 	//as in: return reg + "=" + l.IndirectValue(v.(*ssa.MakeClosure).Fn, errorInfo) + ";"

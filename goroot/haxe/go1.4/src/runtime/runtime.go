@@ -22,9 +22,9 @@ func UnzipTestFS() { // this will be overwritten by the compiler
 
 // Constant values
 
-const Compiler = "gc" //"TARDISgo" // this is checked by the proper runtime, so might need to be "gc"
+const Compiler = "gc" // this is checked by the proper runtime, so needs to be "gc"
 
-var GOARCH string = hx.CallString("", "Go.Platform", 0)
+var GOARCH string = hx.CallString("", "Go.Platform", 0) // note this is a constant in real Go
 
 const GOOS string = "nacl" // of course it is only an emulation of nacl...
 
