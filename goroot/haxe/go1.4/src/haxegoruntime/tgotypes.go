@@ -21,6 +21,9 @@ func addrString(s string) *string {
 
 // nilIfEmpty is an utiltiy to substitute nil pointer if the pointed at string is ""
 func nilIfEmpty(sp *string) *string {
+	if sp == nil {
+		return nil
+	}
 	if *sp == "" {
 		return nil
 	}

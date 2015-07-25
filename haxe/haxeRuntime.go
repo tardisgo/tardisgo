@@ -42,13 +42,14 @@ class Console {
 	}
 	static function join(v:Array<Dynamic>):String {
 		var s = "";
+		if(v==null) return s;
 		for (i in 0...v.length) {
-			if(Std.is(v[i],String)) 
-				s+= Force.toHaxeString(v[i]) + " ";
+			if(v[i]==null) 
+				s += " ";
 			else
 				s += Std.string(v[i]) + " " ;
 		}
-		return s;
+		return Force.toHaxeString(s);
 	}
 	public static function readln():Null<String> {
 		#if (cpp || cs || java || neko || php )
@@ -471,19 +472,29 @@ class Force { // TODO maybe this should not be a separate haxe class, as no non-
 	
 	public static #if (cpp || neko || php) inline #end function toHaxeString(v:String):String {
 		#if !( cpp || neko || php ) // need to translate back to UTF16 when passing back to Haxe
+			#if js if(v==null) return ""; #end 
+			if(v.length==0) return "";
 			var sli:Slice=new Slice(Pointer.make(Object.make(v.length)),0,-1,v.length,1);
-			var ptr:Pointer;
+			var ptr:Pointer=null;
+			var ch:Int=0;
 			for(i in 0...v.length){
 				//if(v.charCodeAt(i)>0xff) return v; // probably already encoded as UTF-16
 				ptr=sli.itemAddr(i);
-				ptr.store_uint8(v.charCodeAt(i));
+				ch=v.charCodeAt(i);
+				//trace("DEBUG toHaxeString utf8 in=",i,ch);
+				ptr.store_uint8(ch);
 			}
+			//trace("DEBUG sli=",sli);
 			var slr = Go_haxegoruntime_UUTTFF8toRRunes.callFromRT(0,sli);
+			//trace("DEBUG slr=",slr);
 			var slo = Go_haxegoruntime_RRunesTToUUTTFF16.callFromRT(0,slr);
-			v="";
+			//trace("DEBUG slo=",slo);
+			v=""; 
 			for(i in 0...slo.len()) {
 				ptr = slo.itemAddr(i);
-				v += String.fromCharCode( ptr.load_uint16() );
+				ch = ptr.load_uint16();
+				//trace("DEBUG toHaxeString utf16 out=",i,ptr,ch);
+				v += String.fromCharCode( ch );
 			}
 			#if nulltempvars
 				ptr=null;
@@ -1824,7 +1835,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 `)
 	pogo.WriteAsClass("Channel", `
 
-class Channel { //TODO check close & rangeing over a channel
+class Channel { // NOTE single-threaded implementation, no locking
 var entries:Array<Dynamic>;
 var max_entries:Int;
 var num_entries:Int;
@@ -1847,31 +1858,32 @@ public function new(how_many_entries:Int) {
 	uniqueId = nextId;
 	nextId++;
 }
-public function hasSpace():Bool {
-	if(this==null) return false; // non-existant channels never have space
-	if(closed) return false; // closed channels don't have space
-	return num_entries < max_entries;
+public static function hasSpace(ch:Channel):Bool {
+	if(ch==null) return false; // non-existant channels never have space
+	if(ch.closed) return false; // closed channels don't have space
+	return ch.num_entries < ch.max_entries;
 }
 public function send(source:Dynamic):Bool {
-	if(closed) Scheduler.panicFromHaxe( "attempt to send to closed channel"); 
-	var next_element:Int;
-	if (this.hasSpace()) {
+	if(closed) 
+		Scheduler.panicFromHaxe( "attempt to send to closed channel"); 
+	if (hasSpace(this)) {
+		var next_element:Int;
 		next_element = (oldest_entry + num_entries) % max_entries;
 		num_entries++;
 		entries[next_element]=source;  
 		return true;
-	} else
-		return false;
+	} 
+	return false;
 }
-public function hasNoContents():Bool { // used by channel read
-	if (this==null) return true; // spec: "Receiving from a nil channel blocks forever."
-	if (closed) return false; // spec: "Receiving from a closed channel always succeeds..."
-	else return num_entries == 0;
+public static function hasNoContents(ch:Channel):Bool { // used by channel read
+	if (ch==null) return true; // spec: "Receiving from a nil channel blocks forever."
+	if (ch.closed) return false; // spec: "Receiving from a closed channel always succeeds..."
+	else return ch.num_entries == 0;
 }
-public function hasContents():Bool { // used by select
-	if (this==null) return false; // spec: "Receiving from a nil channel blocks forever."
-	if (closed) return true; // spec: "Receiving from a closed channel always succeeds..."
-	return num_entries != 0;
+public static function hasContents(ch:Channel):Bool { // used by select
+	if (ch==null) return false; // spec: "Receiving from a nil channel blocks forever."
+	if (ch.closed) return true; // spec: "Receiving from a closed channel always succeeds..."
+	return ch.num_entries != 0;
 }
 public function receive(zero:Dynamic):{r0:Dynamic ,r1:Bool} {
 	var ret:Dynamic=zero;

@@ -15,8 +15,8 @@ import (
 )
 
 var parallelism = 1 + runtime.NumCPU()/2 // control resource usage here
-const groupAll = true                    // control grouping of tests here
-const onlyJS = false                     // requires groupAll=false - control if only the JS tests are run (for quicker partial testing)
+const groupAll = false                   // control grouping of tests here
+const onlyJS = true                      // requires groupAll=false - control if only the JS tests are run (for quicker partial testing)
 
 // space required before and after package names
 

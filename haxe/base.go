@@ -1068,7 +1068,7 @@ func (l langType) Send(v1, v2 interface{}, errorInfo string) string {
 	}
 	ret += emitTrace(fmt.Sprintf("Block:%d", nextReturnAddress))
 	// TODO panic if the chanel is null
-	ret += "if(!" + l.IndirectValue(v1, errorInfo) + ".hasSpace())return this;\n" // go round the loop again and wait if not OK
+	ret += "if(!Channel.hasSpace(" + l.IndirectValue(v1, errorInfo) + "))return this;\n" // go round the loop again and wait if not OK
 	ret += l.IndirectValue(v1, errorInfo) + ".send(" + l.IndirectValue(v2, errorInfo) + ");"
 	nextReturnAddress-- // decrement to set new return address for next code generation
 	hadBlockReturn = false
@@ -1169,10 +1169,10 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 				switch sel.States[s].Dir {
 				case types.SendOnly:
 					ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-					ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasSpace();\n", s, ch, ch)
+					ret += fmt.Sprintf("_states[%d]=Channel.hasSpace(%s);\n", s, ch)
 				case types.RecvOnly:
 					ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
-					ret += fmt.Sprintf("_states[%d]=%s==null?false:%s.hasContents();\n", s, ch, ch)
+					ret += fmt.Sprintf("_states[%d]=Channel.hasContents(%s);\n", s, ch)
 				default:
 					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
 					return ""
@@ -1210,7 +1210,7 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 		}
 
 	} else {
-		ret += "if(" + l.IndirectValue(v, errorInfo) + ".hasNoContents())return this;\n" // go round the loop again and wait if not OK
+		ret += "if(Channel.hasNoContents(" + l.IndirectValue(v, errorInfo) + "))return this;\n" // go round the loop again and wait if not OK
 		if register != "" {
 			ret += register + "="
 		}
