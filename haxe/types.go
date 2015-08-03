@@ -759,7 +759,7 @@ func loadStoreSuffix(T types.Type, hasParameters bool) string {
 			types.Complex64,
 			types.Complex128,
 			types.String:
-			return "_" + types.TypeString( T, nil/* TODO should be?: (*types.Package).Name*/) + "("
+			return "_" + types.TypeString(T, nil /* TODO should be?: (*types.Package).Name*/) + "("
 		case types.Uint8: // to avoid "byte"
 			return "_uint8("
 		case types.Int, types.Int32: // for int and to avoid "rune"

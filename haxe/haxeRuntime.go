@@ -1293,9 +1293,9 @@ class Pointer {
 	}
 `
 	} else { // TODO null test could be removed in some future NoChecking mode maybe?
-		/*	ptrClass += `	public inline static function check(p:Pointer):Pointer {
+		ptrClass += `	public inline static function check(p:Pointer):Pointer {
 			return p;
-		}`*/
+		}`
 	}
 	pogo.WriteAsClass("Pointer", ptrClass+
 		`	public static function isEqual(p1:Pointer,p2:Pointer):Bool {

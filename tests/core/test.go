@@ -610,6 +610,10 @@ func (f MyFloat) Abs() float64 {
 	return float64(f)
 }
 
+func (f MyFloat) UncalledMethod() {
+	panic("Why are we here?")
+}
+
 func (mf *MyFloat) set42() {
 	*mf = 42
 }

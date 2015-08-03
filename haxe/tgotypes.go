@@ -175,7 +175,7 @@ func BuildTypeHaxe() string {
 		}
 	}
 
-	ret +=  "}\n" + "}\n"
+	ret += "}\n" + "}\n"
 
 	pogo.WriteAsClass("Tgotypes", ret)
 
@@ -426,49 +426,52 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 		//_, isIF := t.Underlying().(*types.Interface)
 		//if !isIF {
 		for m := 0; m < numMethods; m++ {
-			fn := "null"
-			fnToCall := "null"
-			var name, str, path string
 			sel := methods.At(m)
-			fid, haveFn := pte.At(sel.Obj().Type()).(int)
-			if haveFn {
-				fn = fmt.Sprintf("type%d()", fid)
-			}
-			name = sel.Obj().Name()
-			str = sel.String()
-			funcObj, ok := sel.Obj().(*types.Func)
-			if ok {
-				pn := "unknown"
-				if funcObj.Pkg() != nil {
-					pn = sel.Obj().Pkg().Name()
-					path = sel.Obj().Pkg().Path()
+			ssaFn := pogo.RootProgram().Method(sel)
+			if pogo.FnIsCalled(ssaFn) {
+				fn := "null"
+				fnToCall := "null"
+				var name, str, path string
+				fid, haveFn := pte.At(sel.Obj().Type()).(int)
+				if haveFn {
+					fn = fmt.Sprintf("type%d()", fid)
 				}
-				fnToCall = `Go_` + langType{}.LangName(
-					pn+":"+sel.Recv().String(),
-					funcObj.Name())
-			}
+				name = sel.Obj().Name()
+				str = sel.String()
+				funcObj, ok := sel.Obj().(*types.Func)
+				if ok {
+					pn := "unknown"
+					if funcObj.Pkg() != nil {
+						pn = sel.Obj().Pkg().Name()
+						path = sel.Obj().Pkg().Path()
+					}
+					fnToCall = `Go_` + langType{}.LangName(
+						pn+":"+sel.Recv().String(),
+						funcObj.Name())
+				}
 
-			// now write out the method information
-			meths = "Go_haxegoruntime_addMMethod.callFromRT(0," + meths + ",\n"
-			meths += fmt.Sprintf("\n\t\t\t/*name:*/ \"%s\", // %s\n", name, str)
-			rune1, _ := utf8.DecodeRune([]byte(name))
-			if unicode.IsUpper(rune1) {
-				path = ""
-			}
+				// now write out the method information
+				meths = "Go_haxegoruntime_addMMethod.callFromRT(0," + meths + ",\n"
+				meths += fmt.Sprintf("\n\t\t\t/*name:*/ \"%s\", // %s\n", name, str)
+				rune1, _ := utf8.DecodeRune([]byte(name))
+				if unicode.IsUpper(rune1) {
+					path = ""
+				}
 
-			meths += fmt.Sprintf("\t\t\t/*pkgPath:*/ \"%s\",\n", path)
-			// TODO should the two lines below be different?
-			meths += fmt.Sprintf("\t\t\t/*mtyp:*/ %s,\n", fn)
-			meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
-			// add links to the functions ...
+				meths += fmt.Sprintf("\t\t\t/*pkgPath:*/ \"%s\",\n", path)
+				// TODO should the two lines below be different?
+				meths += fmt.Sprintf("\t\t\t/*mtyp:*/ %s,\n", fn)
+				meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
+				// add links to the functions ...
 
-			if funcNamesUsed[fnToCall] {
-				fnToCall += ".call"
-			} else {
-				//println("DEBUG uncommonBuild function name not found: ", fnToCall)
-				fnToCall = "null /* " + fnToCall + " */ "
+				if funcNamesUsed[fnToCall] {
+					fnToCall += ".call"
+				} else {
+					//println("DEBUG uncommonBuild function name not found: ", fnToCall)
+					fnToCall = "null /* " + fnToCall + " */ "
+				}
+				meths += "\t\t\t" + fnToCall + "," + fnToCall + ")"
 			}
-			meths += "\t\t\t" + fnToCall + "," + fnToCall + ")"
 		}
 		//}
 		ret += meths

@@ -51,6 +51,10 @@ func haxeInterfaceUnpack(i interface{}) *emptyInterface {
 }
 
 func haxe2go(ret *emptyInterface, i interface{}) {
+	if ret == nil {
+		i = interface{}(nil)
+		return
+	}
 	/*
 		if ret.typ == nil { // HELP! assume dynamic?
 			panic("DEBUG reflect.haxe2go() nil Go type")

@@ -15,21 +15,26 @@ import (
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
-	//"golang.org/x/tools/go/ssa/ssautil"
-)
+
+	/* for DCE tests
+	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/pointer"
+	*/)
 
 var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the functions use goroutines/channels
 
-var Tardisgotypes *ssa.Package
+func FnIsCalled(fn *ssa.Function) bool {
+	return fnMap[fn]
+}
+
+var Tardisgotypes *ssa.Package // TODO is this still used?
 
 // For every function, maybe emit the code...
 func emitFunctions() {
-	//fnMap := ssautil.AllFunctions(rootProgram)
-	//fmt.Println("DEBUG Tardisgotypes:",Tardisgotypes)
 	dceList := []*ssa.Package{
 		mainPackage,
 		rootProgram.ImportedPackage(LanguageList[TargetLang].Goruntime),
-		Tardisgotypes}
+	}
 	dceExceptions := []string{}
 	if LanguageList[TargetLang].TestFS != "" { // need to load file system
 		dceExceptions = append(dceExceptions, "syscall") // so that we keep UnzipFS()
@@ -44,6 +49,114 @@ func emitFunctions() {
 		}
 	}
 	fnMap, grMap = tgossa.VisitedFunctions(rootProgram, dceList, IsOverloaded)
+
+	/* NOTE non-working code below attempts to improve Dead Code Elimination,
+	//	but is unreliable so far, in part because haxegoruntime uses "unsafe" pointers
+	//  and in any case, every program of any consequence uses "reflect"
+
+	// but pointer analysis only fully works when the "reflect" and "unsafe" packages are not used
+	canPointerAnalyse := len(dceExceptions) == 0 // and with no DCE exceptions
+	for _, pkg := range rootProgram.AllPackages() {
+		switch pkg.Object.Name() {
+		case "reflect", "unsafe":
+			canPointerAnalyse = false
+		}
+	}
+	if canPointerAnalyse {
+		println("DEBUG can use pointer analysis")
+		roots := []*ssa.Function{}
+		for _, pkg := range rootProgram.AllPackages() {
+			if pkg != nil {
+				for _, mem := range pkg.Members {
+					fn, ok := mem.(*ssa.Function)
+					if ok { // TODO - not hard-coded values, more descrimination
+						if (pkg.Object.Name() == "main" && fn.Name() == "main") ||
+							strings.HasPrefix(fn.Name(), "init") {
+							//(pkg.Object.Name() == LanguageList[TargetLang].Goruntime && fn.Name() == "main") ||
+							//pkg.Object.Name() == "reflect" ||
+							//(pkg.Object.Name() == "syscall" && fn.Name() == "UnzipFS") {
+							roots = append(roots, fn)
+							//fmt.Println("DEBUG root added:",fn.String())
+						}
+					}
+				}
+			}
+		}
+		config := &pointer.Config{
+			Mains:          []*ssa.Package{mainPackage},
+			BuildCallGraph: true,
+			Reflection:     true,
+		}
+		ptrResult, err := pointer.Analyze(config)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, pkg := range rootProgram.AllPackages() {
+			funcs := []*ssa.Function{}
+			for _, mem := range pkg.Members {
+				fn, ok := mem.(*ssa.Function)
+				if ok {
+					funcs = append(funcs, fn)
+				}
+				typ, ok := mem.(*ssa.Type)
+				if ok {
+					mset := rootProgram.MethodSets.MethodSet(typ.Type())
+					for i, n := 0, mset.Len(); i < n; i++ {
+						mf := rootProgram.Method(mset.At(i))
+						funcs = append(funcs, mf)
+						//fmt.Printf("DEBUG method %v\n", mf)
+					}
+				}
+			}
+			for _, fn := range funcs {
+				notRoot := true
+				for _, r := range roots {
+					if r == fn {
+						notRoot = false
+						break
+					}
+				}
+				if notRoot {
+					_, found := fnMap[fn]
+					hasPath := false
+					if fn != nil {
+						for _, r := range roots {
+							if r != nil {
+								nod, ok := ptrResult.CallGraph.Nodes[r]
+								if ok {
+									pth := callgraph.PathSearch(nod,
+										func(n *callgraph.Node) bool {
+											if n == nil {
+												return false
+											}
+											return n.Func == fn
+										})
+									if pth != nil {
+										//fmt.Printf("DEBUG path from %v to %v = %v\n",
+										//	r, fn, pth)
+										hasPath = true
+										break
+									}
+
+								}
+							}
+						}
+					}
+					if found != hasPath {
+						if found { // we found it when we should not have
+							println("DEBUG DCE function not called: ", fn.String())
+							delete(fnMap, fn)
+							delete(grMap, fn)
+						} else {
+							panic("function not found in DCE cross-check: " + fn.String())
+						}
+					}
+				}
+			}
+		}
+	}
+	*/
 	/*
 		fmt.Println("DEBUG funcs not requiring goroutines:")
 		for df, db := range grMap {
@@ -52,20 +165,21 @@ func emitFunctions() {
 			}
 		}
 	*/
-	/*
-		fmt.Println("DEBUG functions removed by Dead Code Eliminaiton:")
-		for _,pkg := range rootProgram.AllPackages() {
-			for _,mem := range pkg.Members {
-				fn,ok := mem.(*ssa.Function)
+
+	// Remove virtual functions
+	for _, pkg := range rootProgram.AllPackages() {
+		if pkg.Object.Name() == "hx" { // TODO - not a hard-coded value
+			for _, mem := range pkg.Members {
+				fn, ok := mem.(*ssa.Function)
 				if ok {
-					_,found := fnMap[fn]
-					if !found {
-						println(fn.String())
-					}
+					//println("DEBUG DCE virtual function: ", fn.String())
+					delete(fnMap, fn)
+					delete(grMap, fn)
 				}
 			}
+			break
 		}
-	*/
+	}
 
 	var dupCheck = make(map[string]*ssa.Function)
 	for f := range fnMap {
