@@ -8,7 +8,7 @@
 
 ## Project status: a working curiosity, currently on-ice, libraries frozen at Go 1.4
 
-## The advent of Go 1.5, with support for both iOS and Android, together with the GopherJS project, mean that the cross-platform UI objectives of this project are now largely redundant. [The author](https://github.com/elliott5) has therefore paused development of the project (see "Future Plans" below). 
+### The advent of Go 1.5, with support for both iOS and Android, together with [GopherJS](http://www.gopherjs.org/), mean that the cross-platform UI objectives of this project are likely to soon be redundant, as libraries to achieve this can now be written directly in Go. [The author](https://github.com/elliott5) has therefore paused development of the project (but see "Future Plans" below). 
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
