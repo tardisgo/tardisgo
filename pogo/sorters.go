@@ -28,9 +28,9 @@ func (a fnMapSorter) Len() int           { return len(a) }
 func (a fnMapSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a fnMapSorter) Less(i, j int) bool { return a[i].String() < a[j].String() }
 
-func fnMapSorted() []*ssa.Function {
+func (comp *Compilation) fnMapSorted() []*ssa.Function {
 	var fms = fnMapSorter([]*ssa.Function{})
-	for f := range fnMap {
+	for f := range comp.fnMap {
 		fms = append(fms, f)
 	}
 	sort.Sort(fms)

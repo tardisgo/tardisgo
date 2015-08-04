@@ -15,11 +15,11 @@ import (
 	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
-	"golang.org/x/tools/go/types/typeutil"
+	//"golang.org/x/tools/go/types/typeutil"
 )
 
 func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) string {
-	if pogo.IsValidInPogo(t, errorInfo) {
+	if l.PogoComp().IsValidInPogo(t, errorInfo) {
 		switch t.(type) {
 		case *types.Basic:
 			switch t.(*types.Basic).Kind() {
@@ -70,7 +70,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				}
 				return "Dynamic"
 			default:
-				pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.LangType() unrecognised basic type, Dynamic assumed"))
+				l.PogoComp().LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.LangType() unrecognised basic type, Dynamic assumed"))
 				if retInitVal {
 					return "null"
 				}
@@ -169,7 +169,7 @@ func (l langType) LangType(t types.Type, retInitVal bool, errorInfo string) stri
 				}
 				return "Dynamic"
 			}
-			pogo.LogError(errorInfo, "Haxe",
+			l.PogoComp().LogError(errorInfo, "Haxe",
 				fmt.Errorf("haxe.LangType() internal error, unhandled non-basic type: %s", rTyp))
 		}
 	}
@@ -197,13 +197,13 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 	case "Pointer":
 		if srcTyp == "Dynamic" {
 			_ptr := "_ptr"
-			if pogo.DebugFlag {
+			if l.PogoComp().DebugFlag {
 				_ptr = "Pointer.check(_ptr)"
 			}
 			return register + "=({var _ptr=" + l.IndirectValue(v, errorInfo) + ";_ptr==null?null:" +
 				_ptr + ";});"
 		}
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - can only convert uintptr to unsafe.Pointer"))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - can only convert uintptr to unsafe.Pointer"))
 		return ""
 	case "String":
 		switch srcTyp {
@@ -216,7 +216,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			case types.Byte: // []byte
 				return register + "=Force.toRawString(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected slice type to convert to String"))
+				l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected slice type to convert to String"))
 				return ""
 			}
 		case "Int": // make a string from a single rune
@@ -232,12 +232,12 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Dynamic":
 			return register + "=cast(" + l.IndirectValue(v, errorInfo) + ",String);"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected type to convert to String: %s", srcTyp))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected type to convert to String: %s", srcTyp))
 			return ""
 		}
 	case "Slice": // []rune or []byte
 		if srcTyp != "String" {
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected type to convert to %s ([]rune or []byte): %s",
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected type to convert to %s ([]rune or []byte): %s",
 				langType, srcTyp))
 			return ""
 		}
@@ -256,7 +256,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case types.Byte:
 			return register + "=Force.toUTF8slice(this._goroutine," + l.IndirectValue(v, errorInfo) + ");"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected slice elementto convert to %s ([]rune/[]byte): %s",
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unexpected slice elementto convert to %s ([]rune/[]byte): %s",
 				langType, srcTyp))
 			return ""
 		}
@@ -272,7 +272,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Dynamic":
 			vInt = "Force.toInt(" + l.IndirectValue(v, errorInfo) + ")" // Dynamic == uintptr
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - unhandled convert to u/int from: %s", srcTyp))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - unhandled convert to u/int from: %s", srcTyp))
 			return ""
 		}
 		return register + "=" + l.intTypeCoersion(destType, vInt, errorInfo) + ";"
@@ -291,7 +291,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		case "Dynamic": // uintptr
 			return register + "=GOint64.ofUInt(Force.toInt(" + l.IndirectValue(v, errorInfo) + "));" // let Haxe work out how to do the cast
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - unhandled convert to u/int64 from: %s", srcTyp))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - unhandled convert to u/int64 from: %s", srcTyp))
 			return ""
 		}
 	case "Float":
@@ -315,7 +315,7 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 			}
 			return register + "=Force.toFloat(" + l.IndirectValue(v, errorInfo) + ");"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - unhandled convert to float from: %s", srcTyp))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - unhandled convert to float from: %s", srcTyp))
 			return ""
 		}
 	case "UnsafePointer":
@@ -323,17 +323,17 @@ func (l langType) Convert(register, langType string, destType types.Type, v inte
 		return register + "=" + l.IndirectValue(v, errorInfo) + ";" // ALL Pointers are unsafe ?
 	default:
 		if strings.HasPrefix(srcTyp, "Array<") {
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - No way to convert to %s from %s ", langType, srcTyp))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - No way to convert to %s from %s ", langType, srcTyp))
 			return ""
 		}
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unhandled convert to %s from %s ", langType, srcTyp))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Convert() - Unhandled convert to %s from %s ", langType, srcTyp))
 		//return register + "=cast(" + l.IndirectValue(v, errorInfo) + "," + langType + ");"
 		return ""
 	}
 }
 
 func (l langType) MakeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string {
-	ret := `new Interface(` + pogo.LogTypeUse(v.(ssa.Value).Type() /*NOT underlying()*/) + `,` +
+	ret := `new Interface(` + l.PogoComp().LogTypeUse(v.(ssa.Value).Type() /*NOT underlying()*/) + `,` +
 		l.IndirectValue(v, errorInfo) + ")"
 	if getHaxeClass(regTyp.String()) != "" {
 		ret = "Force.toHaxeParam(" + ret + ")" // as interfaces are not native to haxe, so need to convert
@@ -343,8 +343,8 @@ func (l langType) MakeInterface(register string, regTyp types.Type, v interface{
 }
 
 func (l langType) ChangeInterface(register string, regTyp types.Type, v interface{}, errorInfo string) string {
-	pogo.LogTypeUse(regTyp) // make sure it is in the DB
-	return register + `=Interface.change(` + pogo.LogTypeUse(v.(ssa.Value).Type() /*NOT underlying()*/) + `,` +
+	l.PogoComp().LogTypeUse(regTyp) // make sure it is in the DB
+	return register + `=Interface.change(` + l.PogoComp().LogTypeUse(v.(ssa.Value).Type() /*NOT underlying()*/) + `,` +
 		l.IndirectValue(v, errorInfo) + ");"
 }
 
@@ -365,7 +365,7 @@ func (l langType) ChangeType(register string, regTyp interface{}, v interface{},
 	switch v.(ssa.Value).(type) {
 	case *ssa.Function:
 		return register + "=" +
-			"new Closure(Go_" + l.LangName(pogo.FuncPathName(v.(*ssa.Function))) + ".call,[]);"
+			"new Closure(Go_" + l.LangName(l.PogoComp().FuncPathName(v.(*ssa.Function))) + ".call,[]);"
 	default:
 		hType := getHaxeClass(regTyp.(types.Type).String())
 		if hType != "" {
@@ -397,9 +397,9 @@ func (l langType) TypeAssert(register string, v ssa.Value, AssertedType types.Ty
 		return ""
 	}
 	if CommaOk {
-		return register + `=Interface.assertOk(` + pogo.LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
+		return register + `=Interface.assertOk(` + l.PogoComp().LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
 	}
-	return register + `=Interface.assert(` + pogo.LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
+	return register + `=Interface.assert(` + l.PogoComp().LogTypeUse(AssertedType) + `,` + l.IndirectValue(v, errorInfo) + ");"
 }
 
 func getHaxeClass(fullname string) string { // NOTE capital letter de-doubling not handled here
@@ -473,35 +473,31 @@ func notInterface(t types.Type) bool {
 	return false
 }
 
-var typesByID []types.Type
-var pte typeutil.Map
-var pteKeys []types.Type
-
-func buildTBI() {
-	pte = pogo.TypesEncountered
-	pteKeys = pogo.TypesEncountered.Keys()
-	sort.Sort(pogo.TypeSorter(pteKeys))
-	typesByID = make([]types.Type, pogo.NextTypeID)
-	for k := range pteKeys {
-		v := pte.At(pteKeys[k]).(int)
-		typesByID[v] = pteKeys[k]
+func (l langType) buildTBI() {
+	l.hc.pte = l.PogoComp().TypesEncountered
+	l.hc.pteKeys = l.PogoComp().TypesEncountered.Keys()
+	sort.Sort(pogo.TypeSorter(l.hc.pteKeys))
+	l.hc.typesByID = make([]types.Type, l.PogoComp().NextTypeID)
+	for k := range l.hc.pteKeys {
+		v := l.hc.pte.At(l.hc.pteKeys[k]).(int)
+		l.hc.typesByID[v] = l.hc.pteKeys[k]
 	}
 }
 
 func (l langType) EmitTypeInfo() string {
 
-	BuildTypeHaxe() // generate the code to emulate compiler reflect data output
+	l.BuildTypeHaxe() // generate the code to emulate compiler reflect data output
 
 	var ret string
 	ret += "\nclass TypeInfo{\n\n"
 
-	ret += fmt.Sprintf("public static var nextTypeID=%d;\n", pogo.NextTypeID) // must be last as will change during processing
+	ret += fmt.Sprintf("public static var nextTypeID=%d;\n", l.PogoComp().NextTypeID) // must be last as will change during processing
 
 	// TODO review if this is required
 	ret += "public static function isHaxeClass(id:Int):Bool {\nswitch(id){" + "\n"
-	for k := range pteKeys {
-		v := pte.At(pteKeys[k])
-		goType := pteKeys[k].String()
+	for k := range l.hc.pteKeys {
+		v := l.hc.pte.At(l.hc.pteKeys[k])
+		goType := l.hc.pteKeys[k].String()
 		//fmt.Println("DEBUG full goType", goType)
 		haxeClass := getHaxeClass(goType)
 		if haxeClass != "" {
@@ -542,9 +538,9 @@ func (l langType) EmitTypeInfo() string {
 
 	//function to answer the question is the type a concrete value?
 	ret += "public static function isConcrete(t:Int):Bool {\nswitch(t){" + "\n"
-	for T := range pteKeys {
-		t := pte.At(pteKeys[T])
-		switch pteKeys[T].Underlying().(type) {
+	for T := range l.hc.pteKeys {
+		t := l.hc.pte.At(l.hc.pteKeys[T])
+		switch l.hc.pteKeys[T].Underlying().(type) {
 		case *types.Interface:
 			ret += `case ` + fmt.Sprintf("%d", t) + `: return false;` + "\n"
 		}
@@ -553,12 +549,12 @@ func (l langType) EmitTypeInfo() string {
 
 	//emulation of: func IsIdentical(x, y Type) bool
 	ret += "public static function isIdentical(v:Int,t:Int):Bool {\nif(v==t) return true;\nswitch(v){" + "\n"
-	for V := range pteKeys {
-		v := pte.At(pteKeys[V])
+	for V := range l.hc.pteKeys {
+		v := l.hc.pte.At(l.hc.pteKeys[V])
 		ret0 := ""
-		for T := range pteKeys {
-			t := pte.At(pteKeys[T])
-			if v != t && types.Identical(pteKeys[V], pteKeys[T]) {
+		for T := range l.hc.pteKeys {
+			t := l.hc.pte.At(l.hc.pteKeys[T])
+			if v != t && types.Identical(l.hc.pteKeys[V], l.hc.pteKeys[T]) {
 				ret0 += `case ` + fmt.Sprintf("%d", t) + `: return true;` + "\n"
 			}
 		}
@@ -572,7 +568,7 @@ func (l langType) EmitTypeInfo() string {
 
 	ret += "}\n"
 
-	pogo.WriteAsClass("TypeInfo", ret)
+	l.PogoComp().WriteAsClass("TypeInfo", ret)
 
 	ret = "class TypeAssign {"
 
@@ -582,11 +578,11 @@ func (l langType) EmitTypeInfo() string {
 	ret += "\treturn false;\n}\n"
 
 	ret += "static var isAsssignableToArray:Array<Int> = ["
-	for V := range pteKeys {
-		v := pte.At(pteKeys[V])
-		for T := range pteKeys {
-			t := pte.At(pteKeys[T])
-			if v != t && types.AssignableTo(pteKeys[V], pteKeys[T]) {
+	for V := range l.hc.pteKeys {
+		v := l.hc.pte.At(l.hc.pteKeys[V])
+		for T := range l.hc.pteKeys {
+			t := l.hc.pte.At(l.hc.pteKeys[T])
+			if v != t && types.AssignableTo(l.hc.pteKeys[V], l.hc.pteKeys[T]) {
 				ret += fmt.Sprintf("%d,", v.(int)<<16|t.(int))
 			}
 		}
@@ -596,7 +592,7 @@ func (l langType) EmitTypeInfo() string {
 
 	ret += "}\n"
 
-	pogo.WriteAsClass("TypeAssign", ret)
+	l.PogoComp().WriteAsClass("TypeAssign", ret)
 
 	/*
 		ret = "class TypeAssert {"
@@ -638,9 +634,9 @@ func (l langType) EmitTypeInfo() string {
 
 	// function to give the zero value for each type
 	ret += "public static function zeroValue(t:Int):Dynamic {\nswitch(t){" + "\n"
-	for T := range pteKeys {
-		t := pte.At(pteKeys[T])
-		z := l.LangType(pteKeys[T], true, "EmitTypeInfo()")
+	for T := range l.hc.pteKeys {
+		t := l.hc.pte.At(l.hc.pteKeys[T])
+		z := l.LangType(l.hc.pteKeys[T], true, "EmitTypeInfo()")
 		if z == "" {
 			z = "null"
 		}
@@ -653,7 +649,7 @@ func (l langType) EmitTypeInfo() string {
 
 	ret += "}\n"
 
-	pogo.WriteAsClass("TypeZero", ret)
+	l.PogoComp().WriteAsClass("TypeZero", ret)
 	/*
 		ret = "class MethodTypeInfo {"
 
@@ -888,7 +884,7 @@ func (l langType) TypeStart(nt *types.Named, err string) string {
 		}
 	}
 
-	pogo.WriteAsClass(typName, ret+"}\n")
+	l.PogoComp().WriteAsClass(typName, ret+"}\n")
 
 	return "" //ret
 }

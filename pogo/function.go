@@ -21,37 +21,33 @@ import (
 	"golang.org/x/tools/go/pointer"
 	*/)
 
-var fnMap, grMap map[*ssa.Function]bool // which functions are used and if the functions use goroutines/channels
-
-func FnIsCalled(fn *ssa.Function) bool {
-	return fnMap[fn]
+func (comp *Compilation) FnIsCalled(fn *ssa.Function) bool {
+	return comp.fnMap[fn]
 }
 
-var Tardisgotypes *ssa.Package // TODO is this still used?
-
 // For every function, maybe emit the code...
-func emitFunctions() {
+func (comp *Compilation) emitFunctions() {
 	dceList := []*ssa.Package{
-		mainPackage,
-		rootProgram.ImportedPackage(LanguageList[TargetLang].Goruntime),
+		comp.mainPackage,
+		comp.rootProgram.ImportedPackage(LanguageList[comp.TargetLang].Goruntime),
 	}
 	dceExceptions := []string{}
-	if LanguageList[TargetLang].TestFS != "" { // need to load file system
+	if LanguageList[comp.TargetLang].TestFS != "" { // need to load file system
 		dceExceptions = append(dceExceptions, "syscall") // so that we keep UnzipFS()
 	}
-	dceExceptions = append(dceExceptions, LibListNoDCE...)
+	dceExceptions = append(dceExceptions, comp.LibListNoDCE...)
 	for _, ex := range dceExceptions {
-		exip := rootProgram.ImportedPackage(ex)
+		exip := comp.rootProgram.ImportedPackage(ex)
 		if exip != nil {
 			dceList = append(dceList, exip)
 		} else {
 			//fmt.Println("DEBUG exip nil for package: ",ex)
 		}
 	}
-	fnMap, grMap = tgossa.VisitedFunctions(rootProgram, dceList, IsOverloaded)
+	comp.fnMap, comp.grMap = tgossa.VisitedFunctions(comp.rootProgram, dceList, comp.IsOverloaded)
 
 	/* NOTE non-working code below attempts to improve Dead Code Elimination,
-	//	but is unreliable so far, in part because haxegoruntime uses "unsafe" pointers
+	//	but is unreliable so far, in part because the target lang runtime may use "unsafe" pointers
 	//  and in any case, every program of any consequence uses "reflect"
 
 	// but pointer analysis only fully works when the "reflect" and "unsafe" packages are not used
@@ -167,23 +163,24 @@ func emitFunctions() {
 	*/
 
 	// Remove virtual functions
-	for _, pkg := range rootProgram.AllPackages() {
-		if pkg.Object.Name() == "hx" { // TODO - not a hard-coded value
-			for _, mem := range pkg.Members {
-				fn, ok := mem.(*ssa.Function)
-				if ok {
-					//println("DEBUG DCE virtual function: ", fn.String())
-					delete(fnMap, fn)
-					delete(grMap, fn)
+	for _, pkg := range comp.rootProgram.AllPackages() {
+		for _, vf := range LanguageList[comp.TargetLang].PseudoPkgPaths {
+			if pkg.Object.Path() == vf {
+				for _, mem := range pkg.Members {
+					fn, ok := mem.(*ssa.Function)
+					if ok {
+						//println("DEBUG DCE virtual function: ", fn.String())
+						delete(comp.fnMap, fn)
+						delete(comp.grMap, fn)
+					}
 				}
 			}
-			break
 		}
 	}
 
 	var dupCheck = make(map[string]*ssa.Function)
-	for f := range fnMap {
-		p, n := GetFnNameParts(f)
+	for f := range comp.fnMap {
+		p, n := comp.GetFnNameParts(f)
 		first, exists := dupCheck[p+"."+n]
 		if exists {
 			panic(fmt.Sprintf(
@@ -193,17 +190,17 @@ func emitFunctions() {
 		dupCheck[p+"."+n] = f
 	}
 
-	for _, f := range fnMapSorted() {
-		if !IsOverloaded(f) {
+	for _, f := range comp.fnMapSorted() {
+		if !comp.IsOverloaded(f) {
 			if err := tgossa.CheckNames(f); err != nil {
 				panic(err)
 			}
-			emitFunc(f)
+			comp.emitFunc(f)
 		}
 	}
 }
 
-func IsOverloaded(f *ssa.Function) bool {
+func (comp *Compilation) IsOverloaded(f *ssa.Function) bool {
 	pn := "unknown" // Defensive, as some synthetic or other edge-case functions may not have a valid package name
 	rx := f.Signature.Recv()
 	if rx == nil { // ordinary function
@@ -236,7 +233,7 @@ func IsOverloaded(f *ssa.Function) bool {
 	ts := tss[len(tss)-1]         // take the last part of the path
 	pn = ts                       // TODO this is incorrect, but not currently a problem as there is no function overloading
 	//println("DEBUG package name: " + pn)
-	if LanguageList[TargetLang].FunctionOverloaded(pn, f.Name()) ||
+	if LanguageList[comp.TargetLang].FunctionOverloaded(pn, f.Name()) ||
 		strings.HasPrefix(pn, "_") { // the package is not in the target language, signaled by a leading underscore and
 		return true
 	}
@@ -257,7 +254,7 @@ type subFnInstrs struct {
 }
 
 // Emit a particular function.
-func emitFunc(fn *ssa.Function) {
+func (comp *Compilation) emitFunc(fn *ssa.Function) {
 
 	/* TODO research if the ssautil.Switches() function can be incorporated to provide any run-time improvement to the code
 	// it would give a big adavantage, but only to a very small number of functions - so definately TODO
@@ -272,7 +269,7 @@ func emitFunc(fn *ssa.Function) {
 	canOptMap := make(map[string]bool) // TODO review use of this mechanism
 
 	//println("DEBUG processing function: ", fn.Name())
-	MakePosHash(fn.Pos()) // mark that we have entered a function
+	comp.MakePosHash(fn.Pos()) // mark that we have entered a function
 	trackPhi := true
 	switch len(fn.Blocks) {
 	case 0: // NoOp - only output a function if it has a body... so ignore pure definitions (target language may generate an error, if truely undef)
@@ -299,7 +296,7 @@ func emitFunc(fn *ssa.Function) {
 			instrCount += len(fn.Blocks[b].Instrs)
 		}
 		mustSplitCode := false
-		if instrCount > LanguageList[TargetLang].InstructionLimit {
+		if instrCount > LanguageList[comp.TargetLang].InstructionLimit {
 			//println("DEBUG mustSplitCode => large function length:", instrCount, " in ", fn.Name())
 			mustSplitCode = true
 		}
@@ -331,7 +328,7 @@ func emitFunc(fn *ssa.Function) {
 				}
 				if canPutInSubFn {
 					if inSubFn {
-						if instrsEmitted > LanguageList[TargetLang].SubFnInstructionLimit {
+						if instrsEmitted > LanguageList[comp.TargetLang].SubFnInstructionLimit {
 							subFnList[len(subFnList)-1].end = i
 							subFnList = append(subFnList, subFnInstrs{b, i, 0})
 							instrsEmitted = 0
@@ -379,7 +376,7 @@ func emitFunc(fn *ssa.Function) {
 							}
 						}
 						if canOpt &&
-							!LanguageList[TargetLang].CanInline(blks[subFnList[sf].block].Instrs[i]) {
+							!LanguageList[comp.TargetLang].CanInline(blks[subFnList[sf].block].Instrs[i]) {
 							canOptMap[instrVal.Name()] = true
 						}
 					}
@@ -387,16 +384,16 @@ func emitFunc(fn *ssa.Function) {
 			}
 		}
 
-		reconstruct := tgossa.Reconstruct(blks, grMap[fn] || mustSplitCode)
+		reconstruct := tgossa.Reconstruct(blks, comp.grMap[fn] || mustSplitCode)
 		if reconstruct != nil {
 			//fmt.Printf("DEBUG reconstruct %s %#v\n",fn.String(),reconstruct)
 		}
 
-		emitFuncStart(fn, blks, trackPhi, canOptMap, mustSplitCode, reconstruct)
+		comp.emitFuncStart(fn, blks, trackPhi, canOptMap, mustSplitCode, reconstruct)
 		thisSubFn := 0
 		for b := range blks {
 			emitPhi := trackPhi
-			emitBlockStart(blks, b, emitPhi)
+			comp.emitBlockStart(blks, b, emitPhi)
 			inSubFn := false
 			for i := 0; i < len(blks[b].Instrs); i++ {
 				if thisSubFn >= 0 && thisSubFn < len(subFnList) { // not at the end of the list
@@ -414,11 +411,11 @@ func emitFunc(fn *ssa.Function) {
 					if b == subFnList[thisSubFn].block {
 						if i == subFnList[thisSubFn].start {
 							inSubFn = true
-							l := TargetLang
+							l := comp.TargetLang
 							if mustSplitCode {
 								fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnCall(thisSubFn))
 							} else {
-								emitSubFn(fn, blks, subFnList, thisSubFn, mustSplitCode, canOptMap)
+								comp.emitSubFn(fn, blks, subFnList, thisSubFn, mustSplitCode, canOptMap)
 							}
 						}
 					}
@@ -437,10 +434,10 @@ func emitFunc(fn *ssa.Function) {
 						}
 					}
 					if phiList > 0 {
-						peephole(blks[b].Instrs[i : i+phiList])
+						comp.peephole(blks[b].Instrs[i : i+phiList])
 						i += phiList - 1
 					} else {
-						emitPhi = emitInstruction(blks[b].Instrs[i],
+						emitPhi = comp.emitInstruction(blks[b].Instrs[i],
 							blks[b].Instrs[i].Operands(make([]*ssa.Value, 0)))
 					}
 				}
@@ -455,38 +452,38 @@ func emitFunc(fn *ssa.Function) {
 					}
 				}
 			}
-			emitBlockEnd(blks, b, emitPhi && trackPhi)
+			comp.emitBlockEnd(blks, b, emitPhi && trackPhi)
 		}
-		emitRunEnd(fn)
+		comp.emitRunEnd(fn)
 		if mustSplitCode {
 			for sf := range subFnList {
-				emitSubFn(fn, blks, subFnList, sf, mustSplitCode, canOptMap)
+				comp.emitSubFn(fn, blks, subFnList, sf, mustSplitCode, canOptMap)
 			}
 		}
-		emitFuncEnd(fn)
+		comp.emitFuncEnd(fn)
 	}
 }
 
-func emitSubFn(fn *ssa.Function, blks []*ssa.BasicBlock, subFnList []subFnInstrs, sf int, mustSplitCode bool, canOptMap map[string]bool) {
-	l := TargetLang
+func (comp *Compilation) emitSubFn(fn *ssa.Function, blks []*ssa.BasicBlock, subFnList []subFnInstrs, sf int, mustSplitCode bool, canOptMap map[string]bool) {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnStart(sf, mustSplitCode,
 		blks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end]))
 	for i := subFnList[sf].start; i < subFnList[sf].end; i++ {
 		instrVal, hasVal := blks[subFnList[sf].block].Instrs[i].(ssa.Value)
 		if hasVal {
 			if canOptMap[instrVal.Name()] == true {
-				l := TargetLang
+				l := comp.TargetLang
 				fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].DeclareTempVar(instrVal))
 			}
 		}
 	}
-	peephole(blks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end])
-	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf, int(LatestValidPosHash), mustSplitCode))
+	comp.peephole(blks[subFnList[sf].block].Instrs[subFnList[sf].start:subFnList[sf].end])
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf, int(comp.LatestValidPosHash), mustSplitCode))
 }
 
-func GetFnNameParts(fn *ssa.Function) (pack, nam string) {
+func (comp *Compilation) GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 	mName := fn.Name()
-	pName, _ := FuncPathName(fn) //fmt.Sprintf("fn%d", fn.Pos()) //uintptr(unsafe.Pointer(fn)))
+	pName, _ := comp.FuncPathName(fn) //fmt.Sprintf("fn%d", fn.Pos()) //uintptr(unsafe.Pointer(fn)))
 	if fn.Pkg != nil {
 		if fn.Pkg.Object != nil {
 			pName = fn.Pkg.Object.Path() // was .Name()
@@ -500,50 +497,49 @@ func GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 }
 
 // Emit the start of a function.
-func emitFuncStart(fn *ssa.Function, blks []*ssa.BasicBlock, trackPhi bool, canOptMap map[string]bool, mustSplitCode bool, reconstruct []tgossa.BlockFormat) {
-	l := TargetLang
-	posStr := CodePosition(fn.Pos())
-	pName, mName := GetFnNameParts(fn)
+func (comp *Compilation) emitFuncStart(fn *ssa.Function, blks []*ssa.BasicBlock, trackPhi bool, canOptMap map[string]bool, mustSplitCode bool, reconstruct []tgossa.BlockFormat) {
+	l := comp.TargetLang
+	posStr := comp.CodePosition(fn.Pos())
+	pName, mName := comp.GetFnNameParts(fn)
 	isPublic := unicode.IsUpper(rune(mName[0])) // TODO check rules for non-ASCII 1st characters and fix
 	fmt.Fprintln(&LanguageList[l].buffer,
-		LanguageList[l].FuncStart(pName, mName, fn, blks, posStr, isPublic, trackPhi, grMap[fn] || mustSplitCode, canOptMap, reconstruct))
+		LanguageList[l].FuncStart(pName, mName, fn, blks, posStr, isPublic, trackPhi, comp.grMap[fn] || mustSplitCode, canOptMap, reconstruct))
 }
 
 // Emit the end of a function.
-func emitFuncEnd(fn *ssa.Function) {
-	l := TargetLang
+func (comp *Compilation) emitFuncEnd(fn *ssa.Function) {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FuncEnd(fn))
 }
 
 // Emit code for after the end of all the case statements for a functions _Next phi switch, but before the sub-functions.
-func emitRunEnd(fn *ssa.Function) {
-	l := TargetLang
+func (comp *Compilation) emitRunEnd(fn *ssa.Function) {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].RunEnd(fn))
 }
 
-// Emit the start of the code to handle a particular SSA code block,
-// for Haxe this handles a particular _Next value (in phi or -ve if synthetic because of call or channel Rx/Tx).
-func emitBlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) {
-	l := TargetLang
+// Emit the start of the code to handle a particular SSA code block
+func (comp *Compilation) emitBlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].BlockStart(block, num, emitPhi))
 }
 
 // Emit the end of the SSA code block
-func emitBlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) {
-	l := TargetLang
+func (comp *Compilation) emitBlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].BlockEnd(block, num, emitPhi))
 }
 
 // Emit the code for a call to a function or builtin, which could be deferred.
-func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo ssa.CallCommon, errorInfo, comment string) {
+func (comp *Compilation) emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo ssa.CallCommon, errorInfo, comment string) {
 	// usesGr gives the default position
-	l := TargetLang
+	l := comp.TargetLang
 	fnToCall := ""
 	if isBuiltin {
 		fnToCall = callInfo.Value.(*ssa.Builtin).Name()
 		usesGr = false
 	} else if callInfo.StaticCallee() != nil {
-		pName, _ := FuncPathName(callInfo.StaticCallee()) //fmt.Sprintf("fn%d", callInfo.StaticCallee().Pos())
+		pName, _ := comp.FuncPathName(callInfo.StaticCallee()) //fmt.Sprintf("fn%d", callInfo.StaticCallee().Pos())
 		if callInfo.Signature().Recv() != nil {
 			pName = callInfo.Signature().Recv().Pkg().Name() + ":" + callInfo.Signature().Recv().Type().String() // no use of Underlying() here
 		} else {
@@ -553,7 +549,7 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 			}
 		}
 		fnToCall = LanguageList[l].LangName(pName, callInfo.StaticCallee().Name())
-		usesGr = grMap[callInfo.StaticCallee()]
+		usesGr = comp.grMap[callInfo.StaticCallee()]
 	} else { // Dynamic call (take the default on usesGr)
 		fnToCall = LanguageList[l].Value(callInfo.Value, errorInfo)
 	}
@@ -562,14 +558,14 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 		switch fnToCall {
 		case "len", "cap", "append", "real", "imag", "complex": //  "copy" may have the results unused
 			if register == "" {
-				LogError(errorInfo, "pogo", fmt.Errorf("the result from a built-in function is not used"))
+				comp.LogError(errorInfo, "pogo", fmt.Errorf("the result from a built-in function is not used"))
 			}
 		default:
 		}
 	} else {
 		if callInfo.Signature().Results().Len() > 0 {
 			if register == "" {
-				LogWarning(errorInfo, "pogo", fmt.Errorf("the result from a function call is not used")) //TODO is this needed?
+				comp.LogWarning(errorInfo, "pogo", fmt.Errorf("the result from a function call is not used")) //TODO is this needed?
 			}
 		}
 	}
@@ -579,6 +575,6 @@ func emitCall(isBuiltin, isGo, isDefer, usesGr bool, register string, callInfo s
 }
 
 // FuncValue is a utility function to avoid publishing rootProgram from this package.
-func FuncValue(obj *types.Func) ssa.Value {
-	return rootProgram.FuncValue(obj)
+func (comp *Compilation) FuncValue(obj *types.Func) ssa.Value {
+	return comp.rootProgram.FuncValue(obj)
 }

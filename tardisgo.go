@@ -64,6 +64,7 @@ T	[T]race execution of the program.  Best for single-threaded programs!
 `)
 
 // TARDIS Go addition
+var targetFlag = flag.String("target", "haxe", "language to target (default is haxe)")
 var allFlag = flag.String("haxe", "", "invokes the Haxe compiler (output ignored) and then runs the compiled program on the command line (OSX only): all=all targets, math=math-safe targets (cpp & js -D fullunsafe), interp=haxe interpreter")
 var debugFlag = flag.Bool("debug", false, "Instrument the code to enable debugging, add comments, and give more meaningful information during a stack dump (warning: increased code size)")
 var traceFlag = flag.Bool("trace", false, "Output trace information for every block visited (warning: huge output)")
@@ -138,6 +139,8 @@ func doTestable(args []string) error {
 		Build: &build.Default,
 	}
 
+	langName := *targetFlag
+
 	// TODO(adonovan): make go/types choose its default Sizes from
 	// build.Default or a specified *build.Context.
 	var wordSize int64 = 8
@@ -147,9 +150,9 @@ func doTestable(args []string) error {
 	}
 
 	//if !(*runFlag) {
-	wordSize = 4               // TARDIS Go addition to force default int size to 32 bits
-	conf.Build.GOARCH = "haxe" // TARDIS Go addition - 32-bit int
-	conf.Build.GOOS = "nacl"   // or haxe? TARDIS Go addition - simplest OS-specific code to emulate?
+	wordSize = 4                 // TARDIS Go addition to force default int size to 32 bits
+	conf.Build.GOARCH = langName // TARDIS Go addition - 32-bit int
+	conf.Build.GOOS = "nacl"     // TARDIS Go addition - simplest OS-specific code to emulate?
 	//}
 
 	conf.Build.BuildTags = strings.Split(*buidTags, " ")
@@ -220,17 +223,20 @@ func doTestable(args []string) error {
 		defer pprof.StopCPUProfile()
 	}
 
-	// TODO Eventually this might be better as an environment variable
 	//if !(*runFlag) {
 	if *tgoroot == "" {
 		if conf.Build.GOPATH == "" {
 			return fmt.Errorf("GOPATH must be set")
 		}
-		conf.Build.GOROOT = strings.Split(conf.Build.GOPATH, ":")[0] + "/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4"
+		if langName == "haxe" {
+			conf.Build.GOROOT = strings.Split(conf.Build.GOPATH, ":")[0] +
+				"/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4" // TODO very haxe specific
+		} else {
+			return fmt.Errorf("GOROOT must be set (hint: use -tgoroot flag)")
+		}
 	} else {
 		conf.Build.GOROOT = *tgoroot
 	}
-	//}
 	//fmt.Println("DEBUG GOPATH", conf.Build.GOPATH)
 	//fmt.Println("DEBUG GOROOT", conf.Build.GOROOT)
 
@@ -246,12 +252,16 @@ func doTestable(args []string) error {
 	}
 
 	// The interpreter needs the runtime package.
-	//if *runFlag {
-	conf.Import("runtime")
-	//} else {
-	// TARDIS GO additional line to add the language specific go runtime code
-	conf.Import(pogo.LanguageList[pogo.TargetLang].Goruntime) // TODO add code to set pogo.TargetLang when more than one of them
-	//}
+	if *runFlag {
+		conf.Import("runtime")
+	} else {
+		// TARDIS GO additional line to add the language specific go runtime code
+		l, e := pogo.FindTargetLang(langName)
+		if e != nil {
+			return e
+		}
+		conf.Import(pogo.LanguageList[l].Goruntime)
+	}
 
 	// Load, parse and type-check the whole program, including the type definitions.
 	iprog, err := conf.Load()
@@ -338,132 +348,126 @@ func doTestable(args []string) error {
 				return fmt.Errorf("no main package")
 			}
 		}
-		/*
-			if runtime.GOARCH != build.Default.GOARCH {
-				return fmt.Errorf("cross-interpretation is not yet supported (target has GOARCH %s, interpreter has %s)",
-					build.Default.GOARCH, runtime.GOARCH)
-			}
-
-			interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
-		*/
-		pogo.DebugFlag = *debugFlag
-		pogo.TraceFlag = *traceFlag
-		err = pogo.EntryPoint(main) // TARDIS Go entry point, returns an error
+		comp, err := pogo.EntryPoint(main, *debugFlag, *traceFlag, langName) // TARDIS Go entry point, returns an error
 		if err != nil {
 			return err
 		}
-		results := make(chan resChan)
-		switch *allFlag {
-		case "": // NoOp
-		case "all", "bench":
-			//for _, dir := range dirs {
-			//	err := os.RemoveAll(dir)
-			//	if err != nil {
-			//		fmt.Println("Error deleting existing '" + dir + "' directory: " + err.Error())
-			//	}
-			//}
+		comp.Recycle()
 
-			var targets [][][]string
-			if *allFlag == "bench" {
-				targets = allBenchmark // fast execution time
-			} else {
-				targets = allCompile // fast compile time
-			}
-			for _, cmd := range targets {
-				go doTarget(cmd, results)
-			}
-			for _ = range targets {
-				r := <-results
-				fmt.Println(r.output)
-				if (r.err != nil || len(strings.TrimSpace(r.output)) == 0) && *allFlag != "bench" {
-					os.Exit(1) // exit with an error if the test fails, but not for benchmarking
+		if langName == "haxe" {
+			results := make(chan resChan)
+			switch *allFlag {
+			case "": // NoOp
+			case "all", "bench":
+				//for _, dir := range dirs {
+				//	err := os.RemoveAll(dir)
+				//	if err != nil {
+				//		fmt.Println("Error deleting existing '" + dir + "' directory: " + err.Error())
+				//	}
+				//}
+
+				var targets [][][]string
+				if *allFlag == "bench" {
+					targets = allBenchmark // fast execution time
+				} else {
+					targets = allCompile // fast compile time
 				}
-				r.backChan <- true
-			}
+				for _, cmd := range targets {
+					go doTarget(cmd, results)
+				}
+				for _ = range targets {
+					r := <-results
+					fmt.Println(r.output)
+					if (r.err != nil || len(strings.TrimSpace(r.output)) == 0) && *allFlag != "bench" {
+						os.Exit(1) // exit with an error if the test fails, but not for benchmarking
+					}
+					r.backChan <- true
+				}
 
-		case "math": // which is faster for the test with correct math processing, cpp or js?
-			//err := os.RemoveAll("tardis/cpp")
-			//if err != nil {
-			//	fmt.Println("Error deleting existing '" + "tardis/cpp" + "' directory: " + err.Error())
-			//}
-			mathCmds := [][][]string{
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
-					[]string{"echo", `"CPP:"`},
-					[]string{"time", "./tardis/cpp/Go"},
-				},
-				[][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
-					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
-					[]string{"time", "node", "tardis/go-fu.js"},
-				},
-			}
-			for _, cmd := range mathCmds {
-				go doTarget(cmd, results)
-			}
-			for _ = range mathCmds {
+			case "math": // which is faster for the test with correct math processing, cpp or js?
+				//err := os.RemoveAll("tardis/cpp")
+				//if err != nil {
+				//	fmt.Println("Error deleting existing '" + "tardis/cpp" + "' directory: " + err.Error())
+				//}
+				mathCmds := [][][]string{
+					[][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
+						[]string{"echo", `"CPP:"`},
+						[]string{"time", "./tardis/cpp/Go"},
+					},
+					[][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+						[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
+						[]string{"time", "node", "tardis/go-fu.js"},
+					},
+				}
+				for _, cmd := range mathCmds {
+					go doTarget(cmd, results)
+				}
+				for _ = range mathCmds {
+					r := <-results
+					fmt.Println(r.output)
+					if r.err != nil {
+						os.Exit(1) // exit with an error if the test fails
+					}
+					r.backChan <- true
+				}
+
+			case "interp", "cpp", "cs", "js", "jsfu", "java", "flash": // for running tests
+				switch *allFlag {
+				case "interp":
+					go doTarget([][]string{
+						[]string{"echo", ``}, // Output from this line is ignored
+						[]string{"echo", `"Neko (haxe --interp):"`},
+						[]string{"time", "haxe", "-main", "tardis.Go", "-cp", "tardis", "--interp"},
+					}, results)
+				case "cpp":
+					go doTarget([][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
+						[]string{"echo", `"CPP:"`},
+						[]string{"time", "./tardis/cpp/Go"},
+					}, results)
+				case "cs":
+					go doTarget([][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cs", "tardis/cs"},
+						[]string{"echo", `"CS:"`},
+						[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
+					}, results)
+				case "js":
+					go doTarget([][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
+						[]string{"echo", `"Node/JS:"`},
+						[]string{"time", "node", "tardis/go.js"},
+					}, results)
+				case "jsfu":
+					go doTarget([][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
+						[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
+						[]string{"time", "node", "tardis/go-fu.js"},
+					}, results)
+				case "java":
+					go doTarget([][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-java", "tardis/java"},
+						[]string{"echo", `"Java:"`},
+						[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
+					}, results)
+				case "flash":
+					go doTarget([][]string{
+						[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-swf", "tardis/go.swf"},
+						[]string{"echo", `"Flash:"`},
+						[]string{"time", "open", "tardis/go.swf"},
+					}, results)
+				}
 				r := <-results
 				fmt.Println(r.output)
 				if r.err != nil {
 					os.Exit(1) // exit with an error if the test fails
 				}
 				r.backChan <- true
-			}
 
-		case "interp", "cpp", "cs", "js", "jsfu", "java", "flash": // for running tests
-			switch *allFlag {
-			case "interp":
-				go doTarget([][]string{
-					[]string{"echo", ``}, // Output from this line is ignored
-					[]string{"echo", `"Neko (haxe --interp):"`},
-					[]string{"time", "haxe", "-main", "tardis.Go", "-cp", "tardis", "--interp"},
-				}, results)
-			case "cpp":
-				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cpp", "tardis/cpp"},
-					[]string{"echo", `"CPP:"`},
-					[]string{"time", "./tardis/cpp/Go"},
-				}, results)
-			case "cs":
-				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-cs", "tardis/cs"},
-					[]string{"echo", `"CS:"`},
-					[]string{"time", "mono", "./tardis/cs/bin/Go.exe"},
-				}, results)
-			case "js":
-				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-js", "tardis/go.js"},
-					[]string{"echo", `"Node/JS:"`},
-					[]string{"time", "node", "tardis/go.js"},
-				}, results)
-			case "jsfu":
-				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-D", "uselocalfunctions", "-D", "fullunsafe", "-js", "tardis/go-fu.js"},
-					[]string{"echo", `"Node/JS using fullunsafe memory mode (js dataview):"`},
-					[]string{"time", "node", "tardis/go-fu.js"},
-				}, results)
-			case "java":
-				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-java", "tardis/java"},
-					[]string{"echo", `"Java:"`},
-					[]string{"time", "java", "-jar", "tardis/java/Go.jar"},
-				}, results)
-			case "flash":
-				go doTarget([][]string{
-					[]string{"haxe", "-main", "tardis.Go", "-cp", "tardis", "-dce", "full", "-D", "inlinepointers", "-swf", "tardis/go.swf"},
-					[]string{"echo", `"Flash:"`},
-					[]string{"time", "open", "tardis/go.swf"},
-				}, results)
+			default:
+				panic("invalid value for -haxe flag: " + *allFlag)
 			}
-			r := <-results
-			fmt.Println(r.output)
-			if r.err != nil {
-				os.Exit(1) // exit with an error if the test fails
-			}
-			r.backChan <- true
-
-		default:
-			panic("invalid value for -haxe flag: " + *allFlag)
 		}
 	}
 	return nil

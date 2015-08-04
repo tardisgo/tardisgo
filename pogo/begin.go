@@ -15,66 +15,71 @@ import (
 	"golang.org/x/tools/go/ssa"
 )
 
-// global variables to save having to pass them about (TODO these, and other, status vars should be in a structure)
-var rootProgram *ssa.Program // pointer to the root datastructure TODO make this state non-global
-var mainPackage *ssa.Package // pointer to the "main" package TODO make this state non-global
-
-// DebugFlag is used to signal if we are emitting debug information
-var DebugFlag bool
-
-// TraceFlag is used to signal if we are emitting trace information (big)
-var TraceFlag bool
+// Recycle the Compilation resources
+func (comp *Compilation) Recycle() { LanguageList[comp.TargetLang] = LanguageEntry{} }
 
 // EntryPoint provides the entry point for the pogo package, called from ssadump_copy.
-func EntryPoint(mainPkg *ssa.Package) error {
-	mainPackage = mainPkg
-	rootProgram = mainPkg.Prog
-
-	for k, v := range LanguageList {
-		//fmt.Println("DEBUG Language List[", k, "]=", v.LanguageName())
-		if v.LanguageName() == "haxe" {
-			TargetLang = k
-			//fmt.Println("DEBUG Target Language =", k)
-			break
-		}
+func EntryPoint(mainPkg *ssa.Package, debug, trace bool, langName string) (*Compilation, error) {
+	comp := &Compilation{
+		mainPackage: mainPkg,
+		rootProgram: mainPkg.Prog,
+		DebugFlag:   debug,
+		TraceFlag:   trace,
 	}
 
-	setupPosHash()
-	loadSpecialConsts()
-	emitFileStart()
-	emitFunctions()
-	emitGoClass(mainPackage)
-	emitTypeInfo()
-	emitFileEnd()
-	if hadErrors && stopOnError {
+	k, e := FindTargetLang(langName)
+	if e != nil {
+		return nil, e
+	}
+	// make a new language list entry for this compilation
+	newLang := LanguageList[k]
+	languageListAppendMutex.Lock()
+	LanguageList = append(LanguageList, newLang)
+	comp.TargetLang = len(LanguageList) - 1
+	languageListAppendMutex.Unlock()
+	LanguageList[comp.TargetLang].Language =
+		LanguageList[comp.TargetLang].Language.InitLang(comp.TargetLang,comp)
+	//fmt.Printf("DEBUG created TargetLang[%d]=%#v\n",
+	//	comp.TargetLang, LanguageList[comp.TargetLang])
+
+	comp.initErrors()
+	comp.initTypes()
+	comp.setupPosHash()
+	comp.loadSpecialConsts()
+	comp.emitFileStart()
+	comp.emitFunctions()
+	comp.emitGoClass(comp.mainPackage)
+	comp.emitTypeInfo()
+	comp.emitFileEnd()
+	if comp.hadErrors && comp.stopOnError {
 		err := fmt.Errorf("no output files generated")
-		LogError("", "pogo", err)
-		return err
+		comp.LogError("", "pogo", err)
+		return nil, err
 	}
-	writeFiles()
-	return nil
+	comp.writeFiles()
+	return comp, nil
 }
 
 // The main Go class contains those elements that don't fit in functions
-func emitGoClass(mainPkg *ssa.Package) {
-	emitGoClassStart()
-	emitNamedConstants()
-	emitGlobals()
-	emitGoClassEnd(mainPkg)
-	WriteAsClass("Go", "")
+func (comp *Compilation) emitGoClass(mainPkg *ssa.Package) {
+	comp.emitGoClassStart()
+	comp.emitNamedConstants()
+	comp.emitGlobals()
+	comp.emitGoClassEnd(mainPkg)
+	comp.WriteAsClass("Go", "")
 }
 
 // special constant name used in TARDIS Go to put text in the header of files
 const pogoHeader = "tardisgoHeader"
 const pogoLibList = "tardisgoLibList"
 
-func loadSpecialConsts() {
+func (comp *Compilation) loadSpecialConsts() {
 	hxPkg := ""
-	l := TargetLang
+	l := comp.TargetLang
 	ph := LanguageList[l].HeaderConstVarName
 	targetPackage := LanguageList[l].PackageConstVarName
 	header := ""
-	allPack := rootProgram.AllPackages()
+	allPack := comp.rootProgram.AllPackages()
 	sort.Sort(PackageSorter(allPack))
 	for _, pkg := range allPack {
 		allMem := MemberNamesSorted(pkg)
@@ -88,7 +93,7 @@ func loadSpecialConsts() {
 					case exact.String:
 						h, err := strconv.Unquote(lit.Value.String())
 						if err != nil {
-							LogError(CodePosition(lit.Pos())+"Special pogo header constant "+ph+" or "+pogoHeader,
+							comp.LogError(comp.CodePosition(lit.Pos())+"Special pogo header constant "+ph+" or "+pogoHeader,
 								"pogo", err)
 						} else {
 							header += h + "\n"
@@ -100,11 +105,11 @@ func loadSpecialConsts() {
 					case exact.String:
 						hp, err := strconv.Unquote(lit.Value.String())
 						if err != nil {
-							LogError(CodePosition(lit.Pos())+"Special targetPackage constant ", "pogo", err)
+							comp.LogError(comp.CodePosition(lit.Pos())+"Special targetPackage constant ", "pogo", err)
 						}
 						hxPkg = hp
 					default:
-						LogError(CodePosition(lit.Pos()), "pogo",
+						comp.LogError(comp.CodePosition(lit.Pos()), "pogo",
 							fmt.Errorf("special targetPackage constant not a string"))
 					}
 				case pogoLibList:
@@ -113,64 +118,61 @@ func loadSpecialConsts() {
 					case exact.String:
 						lrp, err := strconv.Unquote(lit.Value.String())
 						if err != nil {
-							LogError(CodePosition(lit.Pos())+"Special "+pogoLibList+" constant ", "pogo", err)
+							comp.LogError(comp.CodePosition(lit.Pos())+"Special "+pogoLibList+" constant ", "pogo", err)
 						}
-						LibListNoDCE = strings.Split(lrp, ",")
-						for lib := range LibListNoDCE {
-							LibListNoDCE[lib] = strings.TrimSpace(LibListNoDCE[lib])
+						comp.LibListNoDCE = strings.Split(lrp, ",")
+						for lib := range comp.LibListNoDCE {
+							comp.LibListNoDCE[lib] = strings.TrimSpace(comp.LibListNoDCE[lib])
 						}
 					default:
-						LogError(CodePosition(lit.Pos()), "pogo",
+						comp.LogError(comp.CodePosition(lit.Pos()), "pogo",
 							fmt.Errorf("special targetPackage constant not a string"))
 					}
 				}
 			}
 		}
 	}
-	hxPkgName = hxPkg
-	headerText = header
+	comp.hxPkgName = hxPkg
+	comp.headerText = header
 }
 
-var hxPkgName, headerText string
-var LibListNoDCE = []string{}
-
 // emit the standard file header for target language
-func emitFileStart() {
-	l := TargetLang
-	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FileStart(hxPkgName, headerText))
+func (c *Compilation) emitFileStart() {
+	l := c.TargetLang
+	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FileStart(c.hxPkgName, c.headerText))
 }
 
 // emit the tail of the required language file
-func emitFileEnd() {
-	l := TargetLang
+func (c *Compilation) emitFileEnd() {
+	l := c.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FileEnd())
-	for w := range warnings {
-		emitComment(warnings[w])
+	for w := range c.warnings {
+		c.emitComment(c.warnings[w])
 	}
-	emitComment("Package List:")
-	allPack := rootProgram.AllPackages()
+	c.emitComment("Package List:")
+	allPack := c.rootProgram.AllPackages()
 	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
-		emitComment(" " + allPack[pkgIdx].String())
+		c.emitComment(" " + allPack[pkgIdx].String())
 	}
 }
 
 // emit the start of the top level type definition for each language
-func emitGoClassStart() {
-	l := TargetLang
+func (c *Compilation) emitGoClassStart() {
+	l := c.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].GoClassStart())
 }
 
 // emit the end of the top level type definition for each language file
-func emitGoClassEnd(pak *ssa.Package) {
-	l := TargetLang
+func (c *Compilation) emitGoClassEnd(pak *ssa.Package) {
+	l := c.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].GoClassEnd(pak))
 }
 
-func UsingPackage(pkgName string) bool {
+func (c *Compilation) UsingPackage(pkgName string) bool {
 	//println("DEBUG UsingPackage() looking for: ", pkgName)
 	pkgName = "package " + pkgName
-	pkgs := rootProgram.AllPackages()
+	pkgs := c.rootProgram.AllPackages()
 	for p := range pkgs {
 		//println("DEBUG UsingPackage() considering pkg: ", pkgs[p].String())
 		if pkgs[p].String() == pkgName {

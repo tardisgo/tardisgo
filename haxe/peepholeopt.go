@@ -12,11 +12,7 @@ import (
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
-
-	"github.com/tardisgo/tardisgo/pogo"
 )
-
-var boPeep int
 
 type phiEntry struct{ reg, val string }
 
@@ -58,17 +54,17 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 				chainGang += fmt.Sprintf(`%d`, off)
 			}
 		}
-		if is1usePtr(code[len(code)-1]) {
-			ret += set1usePtr(code[len(code)-1].(ssa.Value), oneUsePtr{obj: basePointer + ".obj", off: chainGang + "+" + basePointer + ".off"})
-			ret += "// virtual oneUsePtr " + register + "=" + map1usePtr[code[len(code)-1].(ssa.Value)].obj + ":" + map1usePtr[code[len(code)-1].(ssa.Value)].off
+		if l.is1usePtr(code[len(code)-1]) {
+			ret += l.set1usePtr(code[len(code)-1].(ssa.Value), oneUsePtr{obj: basePointer + ".obj", off: chainGang + "+" + basePointer + ".off"})
+			ret += "// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[code[len(code)-1].(ssa.Value)].obj + ":" + l.hc.map1usePtr[code[len(code)-1].(ssa.Value)].off
 			ret += " PEEPHOLE OPTIMIZATION pointerChain\n"
 		} else {
 			ret += register + "="
-			if pogo.DebugFlag {
+			if l.PogoComp().DebugFlag {
 				ret += "Pointer.check("
 			}
 			ret += basePointer
-			if pogo.DebugFlag {
+			if l.PogoComp().DebugFlag {
 				ret += ")"
 			}
 			ret += ".addr(" + chainGang
@@ -115,8 +111,8 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 			//ret += fmt.Sprintf(".load%s); // PEEPHOLE OPTIMIZATION loadObject (Field)\n",
 			//	loadStoreSuffix(code[len(code)-1].(*ssa.Field).Type().Underlying(), false))
 		}
-		if is1usePtr(code[0].(*ssa.UnOp).X) {
-			oup, found := map1usePtr[code[0].(*ssa.UnOp).X]
+		if l.is1usePtr(code[0].(*ssa.UnOp).X) {
+			oup, found := l.hc.map1usePtr[code[0].(*ssa.UnOp).X]
 			if !found {
 				panic("unable to find virtual 1usePtr")
 			}
@@ -154,7 +150,7 @@ func (l langType) PhiCode(allTargets bool, targetPhi int, code []ssa.Instruction
 					opts[phiEntries[o]] = make([]phiEntry, 0)
 				}
 				valEntries[o] = l.IndirectValue(*operands[o], errorInfo)
-				if fnCanOptMap[thisReg] || len(*(cod.(*ssa.Phi).Referrers())) == 0 {
+				if l.hc.fnCanOptMap[thisReg] || len(*(cod.(*ssa.Phi).Referrers())) == 0 {
 					thisReg = ""
 				}
 				opts[phiEntries[o]] = append(opts[phiEntries[o]], phiEntry{thisReg, valEntries[o]})
@@ -197,7 +193,7 @@ func (l langType) PhiCode(allTargets bool, targetPhi int, code []ssa.Instruction
 			for _, ent := range opt {
 				if ent.reg != "" {
 					rn := "_" + ent.reg
-					if useRegisterArray {
+					if l.hc.useRegisterArray {
 						rn = rn[:2] + "[" + rn[2:] + "]"
 					}
 					if crossover {
@@ -297,9 +293,9 @@ func (l langType) inlineRegisterName(vi interface{}) string {
 		}
 		vp = &v
 	}
-	nm := strings.TrimSpace(pogo.RegisterName(*vp))
+	nm := strings.TrimSpace(l.PogoComp().RegisterName(*vp))
 	if l.CanInline(vi) {
-		code, found := pogo.InlineMap(nm)
+		code, found := l.PogoComp().InlineMap(nm)
 		if !found {
 			//for k, v := range pogo.InlineMap {
 			//	println("DEBUG dump pogo.InlineMap[", k, "] is ", v)
@@ -344,15 +340,13 @@ type oneUsePtr struct {
 	varObj, varOff             bool
 }
 
-var map1usePtr map[ssa.Value]oneUsePtr
-
-func reset1useMap() {
-	map1usePtr = make(map[ssa.Value]oneUsePtr)
+func (l langType) reset1useMap() {
+	l.hc.map1usePtr = make(map[ssa.Value]oneUsePtr)
 }
 
-func set1usePtr(v ssa.Value, oup oneUsePtr) string {
-	if useRegisterArray {
-		map1usePtr[v] = oneUsePtr{obj: oup.obj, off: oup.off}
+func (l langType) set1usePtr(v ssa.Value, oup oneUsePtr) string {
+	if l.hc.useRegisterArray {
+		l.hc.map1usePtr[v] = oneUsePtr{obj: oup.obj, off: oup.off}
 		return ""
 	}
 	nam := v.Name()
@@ -361,7 +355,7 @@ func set1usePtr(v ssa.Value, oup oneUsePtr) string {
 	ret := ""
 	madeVarObj := false
 	madeVarOff := false
-	for _, eoup := range map1usePtr { // TODO speed this up with another map or two
+	for _, eoup := range l.hc.map1usePtr { // TODO speed this up with another map or two
 		if oup.obj == eoup.objOrig && eoup.varObj {
 			newObj = eoup.obj
 		}
@@ -373,18 +367,18 @@ func set1usePtr(v ssa.Value, oup oneUsePtr) string {
 		ret += "var " + nam + "obj=" + oup.obj + ";\n"
 		newObj = nam + "obj"
 		madeVarObj = true
-		tempVarList = append(tempVarList, regToFree{nam + "obj", "Dynamic"})
+		l.hc.tempVarList = append(l.hc.tempVarList, regToFree{nam + "obj", "Dynamic"})
 	}
 	if newOff == "" {
 		ret += "var " + nam + "off=" + oup.off + ";\n"
 		newOff = nam + "off"
 		madeVarOff = true
 	}
-	map1usePtr[v] = oneUsePtr{newObj, newOff, oup.obj, oup.off, madeVarObj, madeVarOff}
+	l.hc.map1usePtr[v] = oneUsePtr{newObj, newOff, oup.obj, oup.off, madeVarObj, madeVarOff}
 	return ret
 }
 
-func is1usePtr(v interface{}) bool {
+func (lt langType) is1usePtr(v interface{}) bool {
 	var bl *ssa.BasicBlock
 	switch v.(type) {
 	case *ssa.FieldAddr:
@@ -395,7 +389,7 @@ func is1usePtr(v interface{}) bool {
 		return false
 	}
 	val := v.(ssa.Value)
-	if fnCanOptMap[val.Name()] {
+	if lt.hc.fnCanOptMap[val.Name()] {
 		switch val.Type().Underlying().(type) {
 		case *types.Pointer:
 			refs := val.Referrers()
@@ -403,7 +397,7 @@ func is1usePtr(v interface{}) bool {
 			//	l := 0
 			for l := range *refs {
 				if (*refs)[l].Block() == bl {
-					for _, i := range subFnInstrs {
+					for _, i := range lt.hc.subFnInstrs {
 						if i == (*refs)[l].(ssa.Instruction) {
 							goto foundInSubFn
 						}

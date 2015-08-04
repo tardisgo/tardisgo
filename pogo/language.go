@@ -6,13 +6,14 @@ package pogo
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"sync"
 	"unicode"
 
+	"github.com/tardisgo/tardisgo/tgossa"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
-
-	"github.com/tardisgo/tardisgo/tgossa"
 )
 
 // The Language interface enables multiple target languages for TARDIS Go.
@@ -85,11 +86,12 @@ type Language interface {
 	DebugRef(userName string, v interface{}, errorInfo string) string
 	CanInline(v interface{}) bool
 	PhiCode(allTargets bool, targetPhi int, code []ssa.Instruction, errorInfo string) string
+	InitLang(int, *Compilation) Language
 }
 
 // LanguageEntry holds the static infomation about each of the languages, expect this list to extend as more languages are added.
 type LanguageEntry struct {
-	Language                           // All of the interface functions.
+	Language                           // A type implementing all of the interface methods.
 	buffer                bytes.Buffer // Where the output is collected.
 	InstructionLimit      int          // How many instructions in a function before we need to split it up.
 	SubFnInstructionLimit int          // When we split up a function, how large can each sub-function be?
@@ -97,6 +99,10 @@ type LanguageEntry struct {
 	HeaderConstVarName    string       // The special constant name for a target-specific header.
 	Goruntime             string       // The location of the core implementation go runtime code for this target language.
 	TestFS                string       // the location of the test zipped file system, if present
+	LineCommentMark       string       // what marks the comment at the end of a line
+	StatementTerminator   string       // what marks the end of a statement, usually ";"
+	PseudoPkgPaths        []string     // paths of packages containing pseudo-functions
+	IgnorePrefixes        []string     // the prefixes to code to ignore during peephole optimization
 	files                 []FileOutput // files to write if no errors in compilation
 }
 
@@ -105,15 +111,23 @@ type FileOutput struct {
 	data     []byte
 }
 
-// LanguageList holds the languages that can be targeted.
-var LanguageList = make([]LanguageEntry, 0, 1)
+// LanguageList holds the languages that can be targeted, and compilation run data
+var LanguageList = make([]LanguageEntry, 0, 10)
+var languageListAppendMutex sync.Mutex
 
-// TargetLang holds the language currently being targeted, default is the first on the list, initially haxe.
-var TargetLang = 0
+func FindTargetLang(s string) (k int, e error) {
+	var v LanguageEntry
+	for k, v = range LanguageList {
+		if v.LanguageName() == s {
+			return
+		}
+	}
+	return -1, errors.New("Target Language Not Found: " + s)
+}
 
 // Utility comment emitter function.
-func emitComment(cmt string) {
-	l := TargetLang
+func (comp *Compilation) emitComment(cmt string) {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].Comment(cmt))
 }
 
@@ -144,9 +158,9 @@ func MakeID(s string) (r string) {
 
 // is there more than one package with this name?
 // TODO consider using this function in pogo.emitFunctions()
-func isDupPkg(pn string) bool {
+func (comp *Compilation) isDupPkg(pn string) bool {
 	pnCount := 0
-	ap := rootProgram.AllPackages()
+	ap := comp.rootProgram.AllPackages()
 	for p := range ap {
 		if pn == ap[p].Object.Name() {
 			pnCount++
@@ -157,10 +171,10 @@ func isDupPkg(pn string) bool {
 
 // FunctionName returns a unique function path and name.
 // TODO refactor this code and everywhere it is called to remove duplication.
-func FuncPathName(fn *ssa.Function) (path, name string) {
+func (comp *Compilation) FuncPathName(fn *ssa.Function) (path, name string) {
 	rx := fn.Signature.Recv()
-	pf := MakeID(rootProgram.Fset.Position(fn.Pos()).String()) //fmt.Sprintf("fn%d", fn.Pos())
-	if rx != nil {                                             // it is not the name of a normal function, but that of a method, so append the method description
+	pf := MakeID(comp.rootProgram.Fset.Position(fn.Pos()).String()) //fmt.Sprintf("fn%d", fn.Pos())
+	if rx != nil {                                                  // it is not the name of a normal function, but that of a method, so append the method description
 		pf = rx.Type().String() // NOTE no underlying()
 	} else {
 		if fn.Pkg != nil {

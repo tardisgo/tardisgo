@@ -15,34 +15,32 @@ import (
 )
 
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
-func RegisterName(val ssa.Value) string {
+func (comp *Compilation) RegisterName(val ssa.Value) string {
 	//NOTE the SSA code says that name() should not be relied on, so this code may need to alter
-	return LanguageList[TargetLang].RegisterName(val)
+	return LanguageList[comp.TargetLang].RegisterName(val)
 }
 
-var previousErrorInfo string // used to give some indication of the error's location, even if it is not given
-
 // Handle an individual instruction.
-func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFlag bool) {
-	l := TargetLang
+func (comp *Compilation) emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFlag bool) {
+	l := comp.TargetLang
 	emitPhiFlag = true
 	errorInfo := ""
 	_, isDebug := instruction.(*ssa.DebugRef)
 	if !isDebug { // Don't update the code position for debug refs
-		prev := LatestValidPosHash
-		MakePosHash(instruction.(ssa.Instruction).Pos()) // this so that we log the nearby position info
-		if prev != LatestValidPosHash {                  // new info, so put out an update
-			if DebugFlag { // but only in Debug mode
+		prev := comp.LatestValidPosHash
+		comp.MakePosHash(instruction.(ssa.Instruction).Pos()) // this so that we log the nearby position info
+		if prev != comp.LatestValidPosHash {                  // new info, so put out an update
+			if comp.DebugFlag { // but only in Debug mode
 				fmt.Fprintln(&LanguageList[l].buffer,
 					LanguageList[l].SetPosHash())
 			}
 		}
-		errorInfo = CodePosition(instruction.(ssa.Instruction).Pos())
+		errorInfo = comp.CodePosition(instruction.(ssa.Instruction).Pos())
 	}
 	if errorInfo == "" {
-		errorInfo = previousErrorInfo
+		errorInfo = comp.previousErrorInfo
 	} else {
-		previousErrorInfo = "near " + errorInfo
+		comp.previousErrorInfo = "near " + errorInfo
 		errorInfo = "@ " + errorInfo
 	}
 	errorInfo = reflect.TypeOf(instruction).String() + " " + errorInfo //TODO consider removing as for DEBUG only
@@ -50,7 +48,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 	register := ""
 	comment := ""
 	if hasVal {
-		register = RegisterName(instrVal)
+		register = comp.RegisterName(instrVal)
 		comment = fmt.Sprintf("%s = %+v %s", register, instruction, errorInfo)
 		//emitComment(comment)
 		switch len(*instruction.(ssa.Value).Referrers()) {
@@ -66,7 +64,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		default: //multiple usage of the register
 		}
 		if len(register) > 0 {
-			if LanguageList[TargetLang].LangType(instruction.(ssa.Value).Type(), false, errorInfo) == "" { // NOTE an empty type def makes a register useless too
+			if LanguageList[comp.TargetLang].LangType(instruction.(ssa.Value).Type(), false, errorInfo) == "" { // NOTE an empty type def makes a register useless too
 				register = ""
 			}
 		}
@@ -114,22 +112,22 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		if instruction.(*ssa.Call).Call.IsInvoke() {
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].EmitInvoke(register, getFnPath(instruction.(*ssa.Call).Parent()),
-					false, false, grMap[instruction.(*ssa.Call).Parent()],
+					false, false, comp.grMap[instruction.(*ssa.Call).Parent()],
 					instruction.(*ssa.Call).Call, errorInfo)+LanguageList[l].Comment(comment))
 		} else {
 			switch instruction.(*ssa.Call).Call.Value.(type) {
 			case *ssa.Builtin:
-				emitCall(true, false, false, grMap[instruction.(*ssa.Call).Parent()],
+				comp.emitCall(true, false, false, comp.grMap[instruction.(*ssa.Call).Parent()],
 					register, instruction.(*ssa.Call).Call, errorInfo, comment)
 			default:
-				emitCall(false, false, false, grMap[instruction.(*ssa.Call).Parent()],
+				comp.emitCall(false, false, false, comp.grMap[instruction.(*ssa.Call).Parent()],
 					register, instruction.(*ssa.Call).Call, errorInfo, comment)
 			}
 		}
 
 	case *ssa.Go:
 		if instruction.(*ssa.Go).Call.IsInvoke() {
-			if grMap[instruction.(*ssa.Go).Parent()] != true {
+			if comp.grMap[instruction.(*ssa.Go).Parent()] != true {
 				panic("attempt to Go a method, from a function that does not use goroutines at " + errorInfo)
 			}
 			fmt.Fprintln(&LanguageList[l].buffer,
@@ -139,12 +137,12 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		} else {
 			switch instruction.(*ssa.Go).Call.Value.(type) {
 			case *ssa.Builtin: // no builtin functions can be go'ed
-				LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be go'ed"))
+				comp.LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be go'ed"))
 			default:
-				if grMap[instruction.(*ssa.Go).Parent()] != true {
+				if comp.grMap[instruction.(*ssa.Go).Parent()] != true {
 					panic("attempt to Go a function, from a function does not use goroutines at " + errorInfo)
 				}
-				emitCall(false, true, false, true,
+				comp.emitCall(false, true, false, true,
 					register, instruction.(*ssa.Go).Call, errorInfo, comment)
 			}
 		}
@@ -154,7 +152,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].EmitInvoke(register,
 					getFnPath(instruction.(*ssa.Defer).Parent()),
-					false, true, grMap[instruction.(*ssa.Defer).Parent()],
+					false, true, comp.grMap[instruction.(*ssa.Defer).Parent()],
 					instruction.(*ssa.Defer).Call, errorInfo)+
 					LanguageList[l].Comment(comment))
 		} else {
@@ -163,13 +161,13 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 				switch instruction.(*ssa.Defer).Call.Value.(*ssa.Builtin).Name() {
 				case "close":
 					//LogError(errorInfo, "pogo", fmt.Errorf("builtin function close() cannot be defer'ed"))
-					emitCall(true, false, true, grMap[instruction.(*ssa.Defer).Parent()],
+					comp.emitCall(true, false, true, comp.grMap[instruction.(*ssa.Defer).Parent()],
 						register, instruction.(*ssa.Defer).Call, errorInfo, comment)
 				default:
-					LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be defer'ed"))
+					comp.LogError(errorInfo, "pogo", fmt.Errorf("builtin functions cannot be defer'ed"))
 				}
 			default:
-				emitCall(false, false, true, grMap[instruction.(*ssa.Defer).Parent()],
+				comp.emitCall(false, false, true, comp.grMap[instruction.(*ssa.Defer).Parent()],
 					register, instruction.(*ssa.Defer).Call, errorInfo, comment)
 			}
 		}
@@ -183,11 +181,11 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		emitPhiFlag = false
 		fmt.Fprintln(&LanguageList[l].buffer,
 			LanguageList[l].Panic(*operands[0], errorInfo,
-				grMap[instruction.(*ssa.Panic).Parent()])+LanguageList[l].Comment(comment))
+				comp.grMap[instruction.(*ssa.Panic).Parent()])+LanguageList[l].Comment(comment))
 
 	case *ssa.UnOp:
 		if register == "" && instruction.(*ssa.UnOp).Op.String() != "<-" {
-			emitComment(comment)
+			comp.emitComment(comment)
 		} else {
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].UnOp(register, instrVal.Type(), instruction.(*ssa.UnOp).Op.String(), *operands[0],
@@ -197,7 +195,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.BinOp:
 		if register == "" {
-			emitComment(comment)
+			comp.emitComment(comment)
 		} else {
 			op := instruction.(*ssa.BinOp).Op.String()
 			fmt.Fprintln(&LanguageList[l].buffer,
@@ -241,7 +239,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.RunDefers:
 		fmt.Fprintln(&LanguageList[l].buffer,
-			LanguageList[l].RunDefers(grMap[instruction.(*ssa.RunDefers).Parent()])+
+			LanguageList[l].RunDefers(comp.grMap[instruction.(*ssa.RunDefers).Parent()])+
 				LanguageList[l].Comment(comment))
 
 	case *ssa.Alloc:
@@ -298,7 +296,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.Extract:
 		if register == "" { // rquired here because of a "feature" in the generated SSA form
-			emitComment(comment)
+			comp.emitComment(comment)
 		} else {
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].Extract(register, *operands[0], instruction.(*ssa.Extract).Index, errorInfo)+
@@ -309,7 +307,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		// TODO see http://tip.golang.org/doc/go1.2#three_index
 		// TODO add third parameter when SSA code provides it to enable slice instructions to specify a capacity
 		if register == "" {
-			emitComment(comment)
+			comp.emitComment(comment)
 		} else {
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].Slice(register, instruction.(*ssa.Slice).X,
@@ -320,7 +318,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.Index:
 		if register == "" {
-			emitComment(comment)
+			comp.emitComment(comment)
 		} else {
 			doRangeCheck := true
 			aLen := 0
@@ -339,7 +337,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 					// this error handling is defensive, as the Go SSA code catches this error
 					index := instruction.(*ssa.Index).Index.(*ssa.Const).Int64()
 					if (index < 0) || (index >= int64(aLen)) {
-						LogError(errorInfo, "pogo", fmt.Errorf("index [%d] out of range: 0 to %d", index, aLen-1))
+						comp.LogError(errorInfo, "pogo", fmt.Errorf("index [%d] out of range: 0 to %d", index, aLen-1))
 					}
 					doRangeCheck = false
 				}
@@ -355,7 +353,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.IndexAddr:
 		if register == "" {
-			emitComment(comment)
+			comp.emitComment(comment)
 		} else {
 			doRangeCheck := true
 			aLen := 0
@@ -373,7 +371,7 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 				if indexIsConst {
 					index := instruction.(*ssa.IndexAddr).Index.(*ssa.Const).Int64()
 					if (index < 0) || (index >= int64(aLen)) {
-						LogError(errorInfo, "pogo", fmt.Errorf("index [%d] out of range: 0 to %d", index, aLen-1))
+						comp.LogError(errorInfo, "pogo", fmt.Errorf("index [%d] out of range: 0 to %d", index, aLen-1))
 					}
 					doRangeCheck = false
 				}
@@ -394,11 +392,11 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 
 	case *ssa.Field:
 		if register == "" {
-			emitComment(comment)
-		} else { // TODO review if Haxe stops using Array<Dynamic> for struct
+			comp.emitComment(comment)
+		} else {
 			st := instruction.(*ssa.Field).X.Type().Underlying().(*types.Struct)
 			fName := MakeID(st.Field(instruction.(*ssa.Field).Field).Name())
-			l := TargetLang
+			l := comp.TargetLang
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].Field(register, instruction.(*ssa.Field).X,
 					instruction.(*ssa.Field).Field, fName, errorInfo, false)+
@@ -430,8 +428,8 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 		fmt.Fprintln(&LanguageList[l].buffer, text+LanguageList[l].Comment(comment))
 
 	default:
-		emitComment(comment + " [NO CODE GENERATED]")
-		LogError(errorInfo, "pogo", fmt.Errorf("SSA instruction not implemented: %v", reflect.TypeOf(instruction)))
+		comp.emitComment(comment + " [NO CODE GENERATED]")
+		comp.LogError(errorInfo, "pogo", fmt.Errorf("SSA instruction not implemented: %v", reflect.TypeOf(instruction)))
 	}
 	if false { //TODO add instruction detail DEBUG FLAG
 		for o := range operands { // this loop for the creation of comments to show what is in the instructions
@@ -439,14 +437,14 @@ func emitInstruction(instruction interface{}, operands []*ssa.Value) (emitPhiFla
 			vip := valIsPointer(val)
 			if vip {
 				vipOut := showIndirectValue(val)
-				emitComment(fmt.Sprintf("Op[%d].VIP: %+v", o, vipOut))
+				comp.emitComment(fmt.Sprintf("Op[%d].VIP: %+v", o, vipOut))
 			} else {
 				var ic interface{} = *operands[o]
 				constVal, isConst := ic.(*ssa.Const)
 				if isConst {
-					emitComment(fmt.Sprintf("Op[%d]: Constant= %+v", o, constVal))
+					comp.emitComment(fmt.Sprintf("Op[%d]: Constant= %+v", o, constVal))
 				} else {
-					emitComment(fmt.Sprintf("Op[%d]: %v = %+v", o, (*operands[o]), val))
+					comp.emitComment(fmt.Sprintf("Op[%d]: %v = %+v", o, (*operands[o]), val))
 				}
 			}
 			// l := TargetLang

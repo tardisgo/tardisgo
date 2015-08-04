@@ -7,7 +7,6 @@ package haxe
 import (
 	"fmt"
 
-	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
 )
@@ -20,7 +19,7 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 	}
 	rt := l.LangType(regTyp.Underlying(), false, errorInfo)
 	if lt != rt && op != "<-" && op != "*" {
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): result type %s != source type %s", rt, lt))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): result type %s != source type %s", rt, lt))
 	}
 
 	// neko target platform requires special handling because in makes whole-number Float into Int without asking
@@ -28,7 +27,7 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 
 	switch op {
 	case "<-":
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): impossible to reach <- code"))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): impossible to reach <- code"))
 		return ""
 	case "*":
 		goTyp := v.(ssa.Value).Type().Underlying().(*types.Pointer).Elem().Underlying()
@@ -42,15 +41,15 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 		//if strings.HasPrefix(lt, "Pointer") {
 		//	return "({var _v:PointerIF=" + iVal + `.load(); _v;})` // Ensure Haxe can work out that it is a pointer being returned
 		//}
-		if is1usePtr(v) {
-			oup, found := map1usePtr[v.(ssa.Value)]
+		if l.is1usePtr(v) {
+			oup, found := l.hc.map1usePtr[v.(ssa.Value)]
 			if !found {
 				panic(fmt.Sprintf("pogo.UnOp can't find oneUsePtr: %#v %s val %s=%s",
-					map1usePtr, errorInfo, v.(ssa.Value).Name(), v.(ssa.Value).String()))
+					l.hc.map1usePtr, errorInfo, v.(ssa.Value).Name(), v.(ssa.Value).String()))
 			}
 			return oup.obj + ".get" + loadStoreSuffix(goTyp, true) + oup.off + ")"
 		}
-		if pogo.DebugFlag {
+		if l.PogoComp().DebugFlag {
 			iVal = "Pointer.check(" + iVal + ")"
 		}
 		return iVal + ".load" + loadStoreSuffix(goTyp, false) + ")" + fmt.Sprintf("/* %v */ ", goTyp)
@@ -70,7 +69,7 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 				return l.intTypeCoersion(v.(ssa.Value).Type().Underlying(),
 					"GOint64.xor("+l.IndirectValue(v, errorInfo)+",GOint64.make(-1,-1))", errorInfo)
 			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): unhandled Int64 un-op: %s", op))
+				l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeUnOp(): unhandled Int64 un-op: %s", op))
 				return ""
 			}
 		} else {
@@ -112,13 +111,13 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 	v1LangType := l.LangType(v1.(ssa.Value).Type().Underlying(), false, errorInfo)
 	v2LangType := l.LangType(v2.(ssa.Value).Type().Underlying(), false, errorInfo)
 	if v1LangType != v2LangType && !(v1LangType == "Int" && v2LangType == "GOint64") && !(op == "<<" || op == ">>") {
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): haxe types not equal: %s %s %s",
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): haxe types not equal: %s %s %s",
 			v1LangType, op, v2LangType))
 		return ""
 	}
 	rt := l.LangType(regTyp.Underlying(), false, errorInfo)
 	if v1LangType != rt && rt != "Bool" {
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): result type %s != 1st operand type %s",
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): result type %s != 1st operand type %s",
 			rt, v1LangType))
 	}
 
@@ -158,7 +157,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 		case "!=":
 			return "Complex.neq(" + v1string + "," + v2string + ")"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Complex op: %s", op))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Complex op: %s", op))
 			return ""
 		}
 
@@ -178,7 +177,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 		case "!=":
 			return "!Interface.isEqual(" + v1string + "," + v2string + ")"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Interface op: %s", op))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Interface op: %s", op))
 			return ""
 		}
 
@@ -189,7 +188,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 		case "!=":
 			return "!Pointer.isEqual(" + v1string + "," + v2string + ")"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Pointer op: %s", op))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Pointer op: %s", op))
 			return ""
 		}
 
@@ -200,7 +199,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 		case "!=":
 			return "!(" + v1string + ".isEqual(0," + v2string + ",0))"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Object op: %s", op))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled Object op: %s", op))
 			return ""
 		}
 
@@ -262,7 +261,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				}
 				ret = "(" + compFunc + v1string + "," + v2string + ")" + op + "0)"
 			default:
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled 64-bit op: %s", op))
+				l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled 64-bit op: %s", op))
 				return ""
 			}
 
@@ -336,7 +335,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				case types.UntypedFloat, types.Float32, types.Float64:
 					ret = "Force.floatDiv(" + v1string + "," + v2string + ")"
 				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
+					l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
 					ret = "(ERROR)"
 				}
 			case "%":
@@ -352,7 +351,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				case types.UntypedFloat, types.Float32, types.Float64:
 					ret = "Force.floatMod(" + v1string + "," + v2string + ")"
 				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
+					l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
 					ret = "(ERROR)"
 				}
 
@@ -369,7 +368,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				case types.UntypedFloat, types.Float32, types.Float64:
 					ret = "(" + v1string + "*" + v2string + ")"
 				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
+					l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("codeBinOp(): unhandled divide type"))
 					ret = "(ERROR)"
 				}
 

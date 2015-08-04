@@ -29,7 +29,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		//println("DEBUG fn: " + fn + "\nCode: " + code)
 		err := ioutil.WriteFile(fn, []byte(code), 0666)
 		if err != nil {
-			pogo.LogError(errorInfo, "Haxe", err)
+			l.PogoComp().LogError(errorInfo, "Haxe", err)
 		}
 		return ""
 	case "init":
@@ -61,11 +61,11 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 				}
 				con, ok := (*(goMI.Operands(nil)[0])).(*ssa.Const)
 				if ok {
-					return "new Interface(-1," + tgoString(l.IndirectValue(con, errorInfo), errorInfo) + ");"
+					return "new Interface(-1," + l.tgoString(l.IndirectValue(con, errorInfo), errorInfo) + ");"
 				}
 			}
 		}
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("hx.Func() argument is not a function constant"))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("hx.Func() argument is not a function constant"))
 		return ""
 	}
 
@@ -76,7 +76,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 
 	ifLogic := l.IndirectValue(args[0], errorInfo)
 	//fmt.Println("DEBUG:ifLogic=", ifLogic, "AT", errorInfo)
-	ifLogic = tgoString(ifLogic, errorInfo)
+	ifLogic = l.tgoString(ifLogic, errorInfo)
 	if len(ifLogic) > 0 {
 		wrapStart = " #if (" + ifLogic + ") "
 		defVal := "null"
@@ -119,7 +119,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 				goto codeOK
 			}
 		}
-		pogo.LogError(errorInfo, "Haxe",
+		l.PogoComp().LogError(errorInfo, "Haxe",
 			fmt.Errorf("hx.???() code is not a usable string constant: %s", args[argOff].String()))
 		return ""
 	codeOK:
@@ -134,7 +134,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 		strings.HasPrefix(fnToCall, "MMeth") || strings.HasPrefix(fnToCall, "NNew") {
 		argOff++
 		if strings.HasPrefix(fnToCall, "MMeth") {
-			haxeType := tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo)
+			haxeType := l.tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo)
 			if len(haxeType) > 0 {
 				code = "cast(" + code + "," + haxeType + ")"
 			}
@@ -175,17 +175,17 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	if strings.HasPrefix(fnToCall, "FFget") {
 		argOff++
 		if l.IndirectValue(args[argOff], errorInfo) != `""` {
-			code = "cast(" + code + "," + tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"
+			code = "cast(" + code + "," + l.tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"
 		}
-		code += "." + tgoString(l.IndirectValue(args[argOff+1], errorInfo), errorInfo) + "; "
+		code += "." + l.tgoString(l.IndirectValue(args[argOff+1], errorInfo), errorInfo) + "; "
 		usesArgs = false
 	}
 	if strings.HasPrefix(fnToCall, "FFset") {
 		argOff++
 		if l.IndirectValue(args[argOff], errorInfo) != `""` {
-			code = "cast(" + code + "," + tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"
+			code = "cast(" + code + "," + l.tgoString(l.IndirectValue(args[argOff], errorInfo), errorInfo) + ")"
 		}
-		code += "." + tgoString(l.IndirectValue(args[argOff+1], errorInfo), errorInfo) +
+		code += "." + l.tgoString(l.IndirectValue(args[argOff+1], errorInfo), errorInfo) +
 			"=Force.toHaxeParam(" + l.IndirectValue(args[argOff+2], errorInfo) + "); "
 		usesArgs = false
 	}
@@ -197,10 +197,10 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	return ret + wrapStart + code + wrapEnd + " }"
 }
 
-func tgoString(s, errorInfo string) string {
+func (l langType) tgoString(s, errorInfo string) string {
 	bits := strings.Split(s, `"`)
 	if len(bits) < 2 {
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("hx.() argument is not a usable string constant"))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("hx.() argument is not a usable string constant"))
 		return ""
 	}
 	return bits[1]

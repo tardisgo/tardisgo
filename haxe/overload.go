@@ -8,8 +8,6 @@ import (
 	"go/ast"
 
 	"golang.org/x/tools/go/ssa"
-
-	"github.com/tardisgo/tardisgo/pogo"
 )
 
 var builtinOverloadMap = map[string]string{
@@ -86,7 +84,7 @@ func (l langType) FuncName(fnx *ssa.Function) string {
 	if fnx.Signature.Recv() != nil {
 		pn = fnx.Signature.Recv().Type().String() // NOTE no use of underlying here
 	} else {
-		pn, _ = pogo.FuncPathName(fnx) //fmt.Sprintf("fn%d", fnx.Pos())
+		pn, _ = l.PogoComp().FuncPathName(fnx) //fmt.Sprintf("fn%d", fnx.Pos())
 		fn := ssa.EnclosingFunction(fnx.Package(), []ast.Node{fnx.Syntax()})
 		if fn == nil {
 			fn = fnx

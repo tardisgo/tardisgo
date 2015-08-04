@@ -8,8 +8,6 @@ import (
 
 	"golang.org/x/tools/go/types"
 	//"golang.org/x/tools/go/ssa"
-
-	"github.com/tardisgo/tardisgo/pogo"
 )
 
 const ( // from reflect package
@@ -18,22 +16,6 @@ const ( // from reflect package
 	kindNoPointers  = 1 << 7
 	kindMask        = (1 << 5) - 1
 )
-
-/*
-var tta []types.Type
-
-func typeHasMethodSet(typ types.Type) bool {
-	if len(tta) == 0 {
-		tta = pogo.TypesWithMethodSets() //[]types.Type
-	}
-	for m := range tta { // brute force search, TODO optimize
-		if typ == tta[m] {
-			return true
-		}
-	}
-	return false
-}
-*/
 
 func escapedTypeString(s string) string {
 	buf := []byte(s)
@@ -146,27 +128,27 @@ func GetTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
 	return
 }
 
-func BuildTypeHaxe() string {
+func (l langType) BuildTypeHaxe() string {
 
-	buildTBI()
-	for i, t := range typesByID {
+	l.buildTBI()
+	for i, t := range l.hc.typesByID {
 		if i > 0 {
 			synthTypesFor(t)
 		}
 	}
-	buildTBI()
+	l.buildTBI()
 
 	ret := "class Tgotypes {\n"
 
-	for i, t := range typesByID {
+	for i, t := range l.hc.typesByID {
 		if i > 0 {
-			ret += typeBuild(i, t)
+			ret += l.typeBuild(i, t)
 		}
 	}
 
 	ret += "public static function setup() {\nvar a=Go.haxegoruntime_TTypeTTable.load();\n"
 	ret += "var b=a.baseArray.obj;\nvar f=a.baseArray.off+a.itemOff(0);\nvar s=a.itemOff(1)-a.itemOff(0);\n"
-	for i := range typesByID {
+	for i := range l.hc.typesByID {
 		if i > 0 {
 			//fmt.Println("DEBUG setup",i,t)
 			ret += fmt.Sprintf(
@@ -177,14 +159,14 @@ func BuildTypeHaxe() string {
 
 	ret += "}\n" + "}\n"
 
-	pogo.WriteAsClass("Tgotypes", ret)
+	l.PogoComp().WriteAsClass("Tgotypes", ret)
 
 	//fmt.Println("DEBUG generated Haxe code:", ret)
 
 	return ret
 }
 
-func typeBuild(i int, t types.Type) string {
+func (l langType) typeBuild(i int, t types.Type) string {
 	sizes := &haxeStdSizes
 	ret := fmt.Sprintf( // sizeof largest struct (funcType) is 76
 		"private static var type%dptr:Pointer=null; // %s\npublic static function type%d():Pointer { if(type%dptr==null) { type%dptr=Pointer.make(Object.make(80));",
@@ -198,7 +180,7 @@ func typeBuild(i int, t types.Type) string {
 	if basic, isBasic := t.(*types.Basic); isBasic {
 		name = basic.Name()
 	}
-	rtype, kind := rtypeBuild(i, sizes, t, name)
+	rtype, kind := l.rtypeBuild(i, sizes, t, name)
 
 	switch t.(type) {
 	case *types.Named:
@@ -213,25 +195,25 @@ func typeBuild(i int, t types.Type) string {
 
 	case reflect.Ptr:
 		ret += fmt.Sprintf("Go_haxegoruntime_fillPPtrTType.callFromRT(0,type%dptr,\n/*rtype:*/ ", i) + rtype + ",\n"
-		if pte.At(t.(*types.Pointer).Elem()) == nil {
+		if l.hc.pte.At(t.(*types.Pointer).Elem()) == nil {
 			ret += fmt.Sprintf("/*elem:*/ nil,\n")
 		} else {
 			ret += fmt.Sprintf("/*elem:*/ type%d()\n",
-				pte.At(t.(*types.Pointer).Elem()).(int))
+				l.hc.pte.At(t.(*types.Pointer).Elem()).(int))
 		}
 		ret += ")"
 
 	case reflect.Array:
 		ret += fmt.Sprintf("Go_haxegoruntime_fillAArrayTType.callFromRT(0,type%dptr,\n/*rtype:*/ ", i) + rtype + ",\n"
 		ret += fmt.Sprintf("/*elem:*/ type%d(),\n",
-			pte.At(t.(*types.Array).Elem()).(int))
+			l.hc.pte.At(t.(*types.Array).Elem()).(int))
 		asl := "null" // slice type
-		for _, tt := range pte.Keys() {
+		for _, tt := range l.hc.pte.Keys() {
 			slt, isSlice := tt.(*types.Slice)
 			if isSlice {
-				if pte.At(slt.Elem()) == pte.At(t.(*types.Array).Elem()) {
+				if l.hc.pte.At(slt.Elem()) == l.hc.pte.At(t.(*types.Array).Elem()) {
 					asl = fmt.Sprintf("type%d()",
-						pte.At(slt).(int))
+						l.hc.pte.At(slt).(int))
 					break
 				}
 			}
@@ -243,7 +225,7 @@ func typeBuild(i int, t types.Type) string {
 
 	case reflect.Slice:
 		ret += fmt.Sprintf("Go_haxegoruntime_fillSSliceTType.callFromRT(0,type%dptr,\n/*rtype:*/ ", i) + rtype + ",\n"
-		ret += fmt.Sprintf("/*elem:*/ type%d()\n", pte.At(t.(*types.Slice).Elem()).(int))
+		ret += fmt.Sprintf("/*elem:*/ type%d()\n", l.hc.pte.At(t.(*types.Slice).Elem()).(int))
 		ret += ")"
 
 	case reflect.Struct:
@@ -273,7 +255,7 @@ func typeBuild(i int, t types.Type) string {
 			fret = "\tGo_haxegoruntime_addSStructFFieldSSlice.callFromRT(0," + fret + ","
 			fret += "\n\t\t/*name:*/ \"" + name + "\",\n"
 			fret += "\t\t/*pkgPath:*/ \"" + path + "\",\n"
-			fret += fmt.Sprintf("\t\t/*typ:*/ type%d(),// %s\n", pte.At(fldInfo.Type()), fldInfo.Type().String())
+			fret += fmt.Sprintf("\t\t/*typ:*/ type%d(),// %s\n", l.hc.pte.At(fldInfo.Type()), fldInfo.Type().String())
 			fret += "\t\t/*tag:*/ \"" + escapedTypeString(t.(*types.Struct).Tag(fld)) + "\", // " + t.(*types.Struct).Tag(fld) + "\n"
 			fret += fmt.Sprintf("\t\t/*offset:*/ %d\n", offs[fld])
 
@@ -295,7 +277,7 @@ func typeBuild(i int, t types.Type) string {
 			}
 			mret += "\t\t/*pkgPath:*/ " + path + ",\n"
 			typ := "null"
-			iface := pte.At(meth.Type())
+			iface := l.hc.pte.At(meth.Type())
 			if iface != interface{}(nil) {
 				typ = fmt.Sprintf("type%d()", iface.(int))
 			}
@@ -307,9 +289,9 @@ func typeBuild(i int, t types.Type) string {
 	case reflect.Map:
 		ret += fmt.Sprintf("Go_haxegoruntime_fillMMapTType.callFromRT(0,type%dptr,\n/*rtype:*/ ", i) + rtype + ",\n"
 		ret += fmt.Sprintf("/*key:*/ type%d(),\n",
-			pte.At(t.(*types.Map).Key()).(int))
+			l.hc.pte.At(t.(*types.Map).Key()).(int))
 		ret += fmt.Sprintf("/*elem:*/ type%d()\n",
-			pte.At(t.(*types.Map).Elem()).(int))
+			l.hc.pte.At(t.(*types.Map).Elem()).(int))
 		ret += ")"
 
 	case reflect.Func:
@@ -319,20 +301,20 @@ func typeBuild(i int, t types.Type) string {
 		iret := "Go_haxegoruntime_newPPtrTToRRtypeSSlice.callFromRT(0)"
 		for i := 0; i < t.(*types.Signature).Params().Len(); i++ {
 			iret = fmt.Sprintf("Go_haxegoruntime_addPPtrTToRRtypeSSlice.callFromRT(0,%s,\n\ttype%d())", iret,
-				pte.At((t.(*types.Signature).Params().At(i).Type())).(int))
+				l.hc.pte.At((t.(*types.Signature).Params().At(i).Type())).(int))
 		}
 		ret += iret + ",\n/*out:*/  "
 		oret := "Go_haxegoruntime_newPPtrTToRRtypeSSlice.callFromRT(0)"
 		for o := 0; o < t.(*types.Signature).Results().Len(); o++ {
 			oret = fmt.Sprintf("Go_haxegoruntime_addPPtrTToRRtypeSSlice.callFromRT(0,%s,\n\ttype%d())", oret,
-				pte.At((t.(*types.Signature).Results().At(o).Type())).(int))
+				l.hc.pte.At((t.(*types.Signature).Results().At(o).Type())).(int))
 		}
 		ret += oret + " )\n"
 
 	case reflect.Chan:
 		ret += fmt.Sprintf("Go_haxegoruntime_fillCChanTType.callFromRT(0,type%dptr,\n/*rtype:*/ ", i) + rtype + ",\n"
 		ret += fmt.Sprintf("/*elem:*/ type%d(),\n",
-			pte.At(t.(*types.Chan).Elem()).(int))
+			l.hc.pte.At(t.(*types.Chan).Elem()).(int))
 		reflectDir := reflect.ChanDir(0)
 		switch t.(*types.Chan).Dir() {
 		case types.SendRecv:
@@ -353,7 +335,7 @@ func typeBuild(i int, t types.Type) string {
 	ret += fmt.Sprintf("}; return type%dptr; }\n", i)
 	return ret
 }
-func rtypeBuild(i int, sizes types.Sizes, t types.Type, name string) (string, reflect.Kind) {
+func (l langType) rtypeBuild(i int, sizes types.Sizes, t types.Type, name string) (string, reflect.Kind) {
 	var kind reflect.Kind
 	kind, name = GetTypeInfo(t, name)
 	sof := int64(4)
@@ -374,12 +356,12 @@ func rtypeBuild(i int, sizes types.Sizes, t types.Type, name string) (string, re
 	}
 	ret += fmt.Sprintf("\t/*comprable:*/ %s,\n", alg) // TODO change this to be the actual function
 	ret += fmt.Sprintf("\t/*string:*/ \"%s\", // %s\n", escapedTypeString(t.String()), t.String())
-	ret += fmt.Sprintf("\t/*uncommonType:*/ %s,\n", uncommonBuild(i, sizes, name, t))
+	ret += fmt.Sprintf("\t/*uncommonType:*/ %s,\n", l.uncommonBuild(i, sizes, name, t))
 	ptt := "null"
-	for pti, pt := range typesByID {
+	for pti, pt := range l.hc.typesByID {
 		_, isPtr := pt.(*types.Pointer)
 		if isPtr {
-			ele := pte.At(pt.(*types.Pointer).Elem())
+			ele := l.hc.pte.At(pt.(*types.Pointer).Elem())
 			if ele != nil {
 				if i == ele.(int) {
 					ptt = fmt.Sprintf("type%d()", pti)
@@ -392,7 +374,7 @@ func rtypeBuild(i int, sizes types.Sizes, t types.Type, name string) (string, re
 	return ret, kind
 }
 
-func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
+func (l langType) uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 	pkgPath := ""
 	tt := t
 	switch tt.(type) {
@@ -415,7 +397,7 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 
 	var methods *types.MethodSet
 	numMethods := 0
-	methods = pogo.MethodSetFor(t)
+	methods = l.PogoComp().MethodSetFor(t)
 	numMethods = methods.Len()
 	if name != "" || numMethods > 0 {
 		ret := "Go_haxegoruntime_newPPtrTToUUncommonTType.callFromRT(0,\n"
@@ -427,12 +409,12 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 		//if !isIF {
 		for m := 0; m < numMethods; m++ {
 			sel := methods.At(m)
-			ssaFn := pogo.RootProgram().Method(sel)
-			if pogo.FnIsCalled(ssaFn) {
+			ssaFn := l.PogoComp().RootProgram().Method(sel)
+			if l.PogoComp().FnIsCalled(ssaFn) {
 				fn := "null"
 				fnToCall := "null"
 				var name, str, path string
-				fid, haveFn := pte.At(sel.Obj().Type()).(int)
+				fid, haveFn := l.hc.pte.At(sel.Obj().Type()).(int)
 				if haveFn {
 					fn = fmt.Sprintf("type%d()", fid)
 				}
@@ -445,7 +427,7 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 						pn = sel.Obj().Pkg().Name()
 						path = sel.Obj().Pkg().Path()
 					}
-					fnToCall = `Go_` + langType{}.LangName(
+					fnToCall = `Go_` + l.LangName(
 						pn+":"+sel.Recv().String(),
 						funcObj.Name())
 				}
@@ -464,7 +446,7 @@ func uncommonBuild(i int, sizes types.Sizes, name string, t types.Type) string {
 				meths += fmt.Sprintf("\t\t\t/*typ:*/ %s,\n", fn)
 				// add links to the functions ...
 
-				if funcNamesUsed[fnToCall] {
+				if l.hc.funcNamesUsed[fnToCall] {
 					fnToCall += ".call"
 				} else {
 					//println("DEBUG uncommonBuild function name not found: ", fnToCall)

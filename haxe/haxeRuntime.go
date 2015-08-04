@@ -4,8 +4,6 @@
 
 package haxe
 
-import "github.com/tardisgo/tardisgo/pogo"
-
 // Runtime Haxe code for Go, which may eventually become a haxe library when the system settles down.
 // TODO All runtime class names are currently carried through if the haxe code uses "import tardis.Go;" and some are too generic,
 // others, like Int64, will overload the Haxe standard library version for some platforms, which may cause other problems.
@@ -14,9 +12,9 @@ import "github.com/tardisgo/tardisgo/pogo"
 // However, there are references to Go->Haxe generated classes, like "Go", that would need to be managed somehow.
 // TODO consider merging and possibly renaming the Deep and Force classes as they both hold general utility code
 
-func haxeruntime() string {
+func (l langType) haxeruntime() string {
 
-	pogo.WriteAsClass("Console", `
+	l.PogoComp().WriteAsClass("Console", `
 
 class Console {
 	public static inline function naclWrite(v:String){
@@ -78,7 +76,7 @@ class Console {
 }
 
 `)
-	pogo.WriteAsClass("Force", `
+	l.PogoComp().WriteAsClass("Force", `
 // TODO: consider putting these go-compatibiliy classes into a separate library for general Haxe use when calling Go
 
 class Force { // TODO maybe this should not be a separate haxe class, as no non-Go code needs access to it
@@ -796,7 +794,7 @@ class Object {
 	public static function objBlit(src:Object,srcPos:Int,dest:Object,destPos:Int,size:Int):Void{
 		if(size>0&&src!=null) {
 `
-	if pogo.DebugFlag {
+	if l.PogoComp().DebugFlag {
 		objClass += `
 		#if !abstractobjects
 			if(!Std.is(src,Object)) { 
@@ -1247,7 +1245,7 @@ class Object {
 	}
 }
 `
-	pogo.WriteAsClass("Object", objClass)
+	l.PogoComp().WriteAsClass("Object", objClass)
 
 	ptrClass := `
 @:keep
@@ -1255,7 +1253,7 @@ class Pointer {
 	public var obj:Object; // reference to the object holding the value
 	public var off:Int; // the offset into the object, if any 
 `
-	if pogo.DebugFlag {
+	if l.PogoComp().DebugFlag {
 		ptrClass += `
 	public function new(from:Object,offset:Int){
 		if(from==null) Scheduler.panicFromHaxe("attempt to make a new Pointer from a nil object");
@@ -1279,7 +1277,7 @@ class Pointer {
 		return r;
 	}
 `
-	if pogo.DebugFlag {
+	if l.PogoComp().DebugFlag {
 		ptrClass += `	public static function check(p:Dynamic):Pointer {
 		if(p==null) {
 			Scheduler.panicFromHaxe("nil pointer de-reference");
@@ -1297,7 +1295,7 @@ class Pointer {
 			return p;
 		}`
 	}
-	pogo.WriteAsClass("Pointer", ptrClass+
+	l.PogoComp().WriteAsClass("Pointer", ptrClass+
 		`	public static function isEqual(p1:Pointer,p2:Pointer):Bool {
 		if(p1==p2) return true; // simple case of being the same haxe object
 		if(p1==null || p2==null) return false; // one of them is null (if above handles both null)
@@ -1584,7 +1582,7 @@ class Slice {
 		return capacity-start;
 	}
 `
-	if pogo.DebugFlag { // Normal range checking should cover this, so only in debug mode
+	if l.PogoComp().DebugFlag { // Normal range checking should cover this, so only in debug mode
 		sliceClass += `
 	public function itemAddr(idx:Int):Pointer {
 		if (idx<0 || idx>=len()) 
@@ -1621,8 +1619,8 @@ class Slice {
 	}
 }
 `
-	pogo.WriteAsClass("Slice", sliceClass)
-	pogo.WriteAsClass("Closure", `
+	l.PogoComp().WriteAsClass("Slice", sliceClass)
+	l.PogoComp().WriteAsClass("Closure", `
 
 @:keep
 class Closure { // "closure" is a keyword in PHP but solved using compiler flag  --php-prefix go  //TODO tidy names
@@ -1683,7 +1681,7 @@ class Closure { // "closure" is a keyword in PHP but solved using compiler flag 
 	}
 }
 `)
-	pogo.WriteAsClass("Interface", `
+	l.PogoComp().WriteAsClass("Interface", `
 
 class Interface { // "interface" is a keyword in PHP but solved using compiler flag  --php-prefix tgo //TODO tidy names 
 	public var typ:Int; // the possibly interface type that has been cast to
@@ -1833,7 +1831,7 @@ class Interface { // "interface" is a keyword in PHP but solved using compiler f
 	}
 }
 `)
-	pogo.WriteAsClass("Channel", `
+	l.PogoComp().WriteAsClass("Channel", `
 
 class Channel { // NOTE single-threaded implementation, no locking
 var entries:Array<Dynamic>;
@@ -1915,7 +1913,7 @@ public function toString():String{
 }
 }
 `)
-	pogo.WriteAsClass("Complex", `
+	l.PogoComp().WriteAsClass("Complex", `
 
 class Complex {
 	public var real:Float;
@@ -1958,7 +1956,7 @@ public static function toString(x:Complex):String {
 }
 
 `)
-	pogo.WriteAsClass("GOint64", `
+	l.PogoComp().WriteAsClass("GOint64", `
 
 #if ( neko || cpp || cs || java ) 
 	typedef HaxeInt64Typedef = haxe.Int64; // these implementations are using native types
@@ -2523,7 +2521,7 @@ class Int64 {
 //**************** END REWRITE of haxe.Int64 for php and to correct errors
 
 `)
-	pogo.WriteAsClass("StackFrameBasis", `
+	l.PogoComp().WriteAsClass("StackFrameBasis", `
 
 // GoRoutine 
 class StackFrameBasis
@@ -2751,7 +2749,7 @@ public function runDefers(){
 
 }
 `)
-	pogo.WriteAsClass("StackFrame", `
+	l.PogoComp().WriteAsClass("StackFrame", `
 
 interface StackFrame
 {
@@ -2772,7 +2770,7 @@ function nullOnExitSF():Void; // call this when exiting the function
 function setDebugVar(name:String,value:Dynamic):Void;
 }
 `)
-	pogo.WriteAsClass("Scheduler", `
+	l.PogoComp().WriteAsClass("Scheduler", `
 
 @:cppFileCode('extern "C" int tardisgo_timereventhandler(int rl) { tardis::Scheduler_obj::runLimit=rl; tardis::Scheduler_obj::timerEventHandler(0); return 0; }')
 
@@ -3092,7 +3090,7 @@ public static function wrapnilchk(p:Pointer):Pointer {
 }
 }
 `)
-	pogo.WriteAsClass("GOmap", `
+	l.PogoComp().WriteAsClass("GOmap", `
 
 class GOmap {
 	// TODO write a more sophisticated (and hopefully faster) version of this code 
@@ -3212,7 +3210,7 @@ class GOmap {
 
 }
 `)
-	pogo.WriteAsClass("GOmapRange", `
+	l.PogoComp().WriteAsClass("GOmapRange", `
 
 class GOmapRange {
 	private var k:Array<String>;
@@ -3237,7 +3235,7 @@ class GOmapRange {
 	}
 }
 `)
-	pogo.WriteAsClass("GOstringRange", `
+	l.PogoComp().WriteAsClass("GOstringRange", `
 
 class GOstringRange {
 	private var g:Int;

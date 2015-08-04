@@ -78,25 +78,25 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	pos := "public static function CPos(pos:Int):String {\nvar prefix:String=\"\";\n"
 	pos += fmt.Sprintf(`if (pos==%d) return "(pogo.NoPosHash)";`, pogo.NoPosHash) + "\n"
 	pos += "if (pos<0) { pos = -pos; prefix= \"near \";}\n"
-	for p := len(pogo.PosHashFileList) - 1; p >= 0; p-- {
+	for p := len(l.PogoComp().PosHashFileList) - 1; p >= 0; p-- {
 		pos += fmt.Sprintf(`if(pos>%d) return prefix+"%s:"+Std.string(pos-%d);`,
-			pogo.PosHashFileList[p].BasePosHash,
-			strings.Replace(pogo.PosHashFileList[p].FileName, "\\", "\\\\", -1),
-			pogo.PosHashFileList[p].BasePosHash) + "\n"
+			l.PogoComp().PosHashFileList[p].BasePosHash,
+			strings.Replace(l.PogoComp().PosHashFileList[p].FileName, "\\", "\\\\", -1),
+			l.PogoComp().PosHashFileList[p].BasePosHash) + "\n"
 	}
 	pos += "return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";\n}\n"
 
-	if pogo.DebugFlag {
+	if l.PogoComp().DebugFlag {
 		pos += "\npublic static function getStartCPos(s:String):Int {\n"
-		for p := len(pogo.PosHashFileList) - 1; p >= 0; p-- {
+		for p := len(l.PogoComp().PosHashFileList) - 1; p >= 0; p-- {
 			pos += "\t" + fmt.Sprintf(`if("%s".indexOf(s)!=-1) return %d;`,
-				strings.Replace(pogo.PosHashFileList[p].FileName, "\\", "\\\\", -1),
-				pogo.PosHashFileList[p].BasePosHash) + "\n"
+				strings.Replace(l.PogoComp().PosHashFileList[p].FileName, "\\", "\\\\", -1),
+				l.PogoComp().PosHashFileList[p].BasePosHash) + "\n"
 		}
 		pos += "\treturn -1;\n}\n"
 
 		pos += "\npublic static function getGlobal(s:String):String {\n"
-		globs := pogo.GlobalList()
+		globs := l.PogoComp().GlobalList()
 		for _, g := range globs {
 			goName := strings.Replace(g.Package+"."+g.Member, "\\", "\\\\", -1)
 			pos += "\t" + fmt.Sprintf(`if("%s".indexOf(s)!=-1) return "%s = "+%s.toString();`,
@@ -109,10 +109,10 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	return main + pos + "} // end Go class"
 }
 
-func haxeStringConst(sconst string, position string) string {
+func (l langType) haxeStringConst(sconst string, position string) string {
 	s, err := strconv.Unquote(sconst)
 	if err != nil {
-		pogo.LogError(position, "Haxe", errors.New(err.Error()+" : "+sconst))
+		l.PogoComp().LogError(position, "Haxe", errors.New(err.Error()+" : "+sconst))
 		return ""
 	}
 	ret0 := ""
@@ -161,7 +161,7 @@ func haxeStringConst(sconst string, position string) string {
 	return ` #if (cpp || neko || php) ` + ret0 + ` #else ` + ret + " #end "
 }
 
-func constFloat64(lit ssa.Const, bits int, position string) string {
+func (l langType) constFloat64(lit ssa.Const, bits int, position string) string {
 	var f float64
 	var f32 float32
 	f, _ /*f64ok*/ = exact.Float64Val(lit.Value)
@@ -169,7 +169,7 @@ func constFloat64(lit ssa.Const, bits int, position string) string {
 	if bits == 32 {
 		f = float64(f32)
 	}
-	haxeVal := pogo.FloatVal(lit.Value, bits, position)
+	haxeVal := l.PogoComp().FloatVal(lit.Value, bits, position)
 	switch {
 	case math.IsInf(f, +1):
 		haxeVal = "Math.POSITIVE_INFINITY"
@@ -183,7 +183,7 @@ func constFloat64(lit ssa.Const, bits int, position string) string {
 	return haxeVal
 }
 
-func (langType) Const(lit ssa.Const, position string) (typ, val string) {
+func (l langType) Const(lit ssa.Const, position string) (typ, val string) {
 	if lit.Value == nil {
 		return "Dynamic", "null"
 	}
@@ -195,78 +195,78 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 		// TODO check if conversion of some string constant declarations are required
 		switch lit.Type().Underlying().(type) {
 		case *types.Basic:
-			return "String", haxeStringConst(lit.Value.String(), position)
+			return "String", l.haxeStringConst(lit.Value.String(), position)
 		case *types.Slice:
-			return "Slice", "Force.toUTF8slice(this._goroutine," + haxeStringConst(lit.Value.String(), position) + ")"
+			return "Slice", "Force.toUTF8slice(this._goroutine," + l.haxeStringConst(lit.Value.String(), position) + ")"
 		default:
-			pogo.LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown string type"))
+			l.PogoComp().LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown string type"))
 		}
 	case exact.Float:
 		switch lit.Type().Underlying().(*types.Basic).Kind() {
 		case types.Float32:
-			return "Float", constFloat64(lit, 32, position)
+			return "Float", l.constFloat64(lit, 32, position)
 		case types.Float64, types.UntypedFloat:
-			return "Float", constFloat64(lit, 64, position)
+			return "Float", l.constFloat64(lit, 64, position)
 		case types.Complex64:
-			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.FloatVal(lit.Value, 32, position))
+			return "Complex", fmt.Sprintf("new Complex(%s,0)", l.PogoComp().FloatVal(lit.Value, 32, position))
 		case types.Complex128:
-			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.FloatVal(lit.Value, 64, position))
+			return "Complex", fmt.Sprintf("new Complex(%s,0)", l.PogoComp().FloatVal(lit.Value, 64, position))
 		}
 	case exact.Int:
-		h, l := pogo.IntVal(lit.Value, position)
+		hi, lo := l.PogoComp().IntVal(lit.Value, position)
 		switch lit.Type().Underlying().(*types.Basic).Kind() {
 		case types.Int64:
-			return "GOint64", fmt.Sprintf("Force.toInt64(GOint64.make(0x%x,0x%x))", uint32(h), uint32(l))
+			return "GOint64", fmt.Sprintf("Force.toInt64(GOint64.make(0x%x,0x%x))", uint32(hi), uint32(lo))
 		case types.Uint64:
-			return "GOint64", fmt.Sprintf("Force.toUint64(GOint64.make(0x%x,0x%x))", uint32(h), uint32(l))
+			return "GOint64", fmt.Sprintf("Force.toUint64(GOint64.make(0x%x,0x%x))", uint32(hi), uint32(lo))
 		case types.Float32:
-			return "Float", constFloat64(lit, 32, position)
+			return "Float", l.constFloat64(lit, 32, position)
 		case types.Float64, types.UntypedFloat:
-			return "Float", constFloat64(lit, 64, position)
+			return "Float", l.constFloat64(lit, 64, position)
 		case types.Complex64:
-			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.FloatVal(lit.Value, 32, position))
+			return "Complex", fmt.Sprintf("new Complex(%s,0)", l.PogoComp().FloatVal(lit.Value, 32, position))
 		case types.Complex128:
-			return "Complex", fmt.Sprintf("new Complex(%s,0)", pogo.FloatVal(lit.Value, 64, position))
+			return "Complex", fmt.Sprintf("new Complex(%s,0)", l.PogoComp().FloatVal(lit.Value, 64, position))
 		default:
-			if h != 0 && h != -1 {
-				pogo.LogWarning(position, "Haxe", fmt.Errorf("integer constant value > 32 bits : %v", lit.Value))
+			if hi != 0 && hi != -1 {
+				l.PogoComp().LogWarning(position, "Haxe", fmt.Errorf("integer constant value > 32 bits : %v", lit.Value))
 			}
 			ret := ""
 			switch lit.Type().Underlying().(*types.Basic).Kind() {
 			case types.Uint, types.Uint32, types.Uintptr:
-				q := uint32(l)
+				q := uint32(lo)
 				ret = fmt.Sprintf(
 					" #if js untyped __js__(\"0x%x\") #elseif php untyped __php__(\"0x%x\") #else 0x%x #end ",
 					q, q, q)
 			case types.Uint16:
-				q := uint16(l)
+				q := uint16(lo)
 				ret = fmt.Sprintf(" 0x%x ", q)
 			case types.Uint8: // types.Byte
-				q := uint8(l)
+				q := uint8(lo)
 				ret = fmt.Sprintf(" 0x%x ", q)
 			case types.Int, types.Int32, types.UntypedRune, types.UntypedInt: // types.Rune
-				if l < 0 {
-					ret = fmt.Sprintf("(%d)", int32(l))
+				if lo < 0 {
+					ret = fmt.Sprintf("(%d)", int32(lo))
 				} else {
-					ret = fmt.Sprintf("%d", int32(l))
+					ret = fmt.Sprintf("%d", int32(lo))
 				}
 			case types.Int16:
-				if l < 0 {
-					ret = fmt.Sprintf("(%d)", int16(l))
+				if lo < 0 {
+					ret = fmt.Sprintf("(%d)", int16(lo))
 				} else {
-					ret = fmt.Sprintf("%d", int16(l))
+					ret = fmt.Sprintf("%d", int16(lo))
 				}
 			case types.Int8:
-				if l < 0 {
-					ret = fmt.Sprintf("(%d)", int8(l))
+				if lo < 0 {
+					ret = fmt.Sprintf("(%d)", int8(lo))
 				} else {
-					ret = fmt.Sprintf("%d", int8(l))
+					ret = fmt.Sprintf("%d", int8(lo))
 				}
 			case types.UnsafePointer:
-				if l == 0 {
+				if lo == 0 {
 					return "Pointer", "null"
 				}
-				pogo.LogError(position, "Haxe", fmt.Errorf("unsafe pointers cannot be initialized in TARDISgo/Haxe to a non-zero value: %v", l))
+				l.PogoComp().LogError(position, "Haxe", fmt.Errorf("unsafe pointers cannot be initialized in TARDISgo/Haxe to a non-zero value: %v", lo))
 			default:
 				panic("haxe.Const() unhandled integer constant for: " +
 					lit.Type().Underlying().(*types.Basic).String())
@@ -285,7 +285,7 @@ func (langType) Const(lit ssa.Const, position string) (typ, val string) {
 			return "Complex", fmt.Sprintf("new Complex(%g,%g)", realV, imagV)
 		}
 	}
-	pogo.LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown constant type: %v", lit.Value.Kind()))
+	l.PogoComp().LogError(position, "Haxe", fmt.Errorf("haxe.Const() internal error, unknown constant type: %v", lit.Value.Kind()))
 	return "", ""
 }
 

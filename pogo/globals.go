@@ -7,10 +7,11 @@ package pogo
 import (
 	"fmt"
 	"go/token"
-	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 	"sort"
 	"unicode"
+
+	"golang.org/x/tools/go/ssa"
+	"golang.org/x/tools/go/types"
 )
 
 /* THIS SECTION ONLY REQUIRED IF GLOBALS ARE ADDRESSABLE USING OFFSETS RATTHER THAN PSEUDO-POINTERS
@@ -62,8 +63,8 @@ func scanGlobals() {
  END ADDRESSABLE GLOBALS SECTION */
 
 // Emit the Global declarations, run inside the Go class declaration output.
-func emitGlobals() {
-	allPack := rootProgram.AllPackages()
+func (comp *Compilation) emitGlobals() {
+	allPack := comp.rootProgram.AllPackages()
 	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
 		pkg := allPack[pkgIdx]
@@ -74,15 +75,16 @@ func emitGlobals() {
 				glob := mem.(*ssa.Global)
 				pName := glob.Pkg.Object.Path() // was .Name()
 				//println("DEBUG processing global:", pName, mName)
-				posStr := CodePosition(glob.Pos())
-				MakePosHash(glob.Pos()) // mark that we are dealing with this global
-				if IsValidInPogo(
+				posStr := comp.CodePosition(glob.Pos())
+				comp.MakePosHash(glob.Pos()) // mark that we are dealing with this global
+				if comp.IsValidInPogo(
 					glob.Type().(*types.Pointer).Elem(), // globals are always pointers to a global
 					"Global:"+pName+"."+mName+":"+posStr) {
-					if !hadErrors { // no point emitting code if we have already encounderd an error
+					if !comp.hadErrors { // no point emitting code if we have already encounderd an error
 						isPublic := unicode.IsUpper(rune(mName[0])) // Object value sometimes not available
-						l := TargetLang
-						fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].Global(pName, mName, *glob, posStr, isPublic))
+						l := comp.TargetLang
+						fmt.Fprintln(&LanguageList[l].buffer,
+							LanguageList[l].Global(pName, mName, *glob, posStr, isPublic))
 					}
 				}
 			}
@@ -97,9 +99,9 @@ type GlobalInfo struct {
 	Public  bool
 }
 
-func GlobalList() []GlobalInfo {
+func (comp *Compilation) GlobalList() []GlobalInfo {
 	var gi = make([]GlobalInfo, 0)
-	allPack := rootProgram.AllPackages()
+	allPack := comp.rootProgram.AllPackages()
 	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
 		pkg := allPack[pkgIdx]

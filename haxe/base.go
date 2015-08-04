@@ -53,16 +53,12 @@ func arrayOffsetCalc(ele types.Type) string {
 	return fmt.Sprintf("*%d", off)
 }
 
-func emitTrace(s string) string {
-	if pogo.TraceFlag {
+func (l langType) emitTrace(s string) string {
+	if l.PogoComp().TraceFlag {
 		return `trace(this._functionName,this._latestBlock,"TRACE ` + s + ` "` /* + ` "+Scheduler.stackDump()` */ + ");\n"
 	}
 	return ""
 }
-
-type langType struct{} // to give us a type to work from when building the interface for pogo
-
-var langIdx int // which entry is this language in pogo.LanguageList
 
 func init() {
 	var langVar langType
@@ -76,8 +72,11 @@ func init() {
 	langEntry.PackageConstVarName = "tardisgoHaxePackage"
 	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"
 	langEntry.Goruntime = "haxegoruntime" // a string containing the location of the core language runtime functions delivered in Go
+	langEntry.PseudoPkgPaths = []string{"github.com/tardisgo/tardisgo/haxe/hx"}
+	langEntry.LineCommentMark = "//"
+	langEntry.StatementTerminator = ";"
+	langEntry.IgnorePrefixes = []string{"this.setPH("}
 
-	langIdx = len(pogo.LanguageList)
 	pogo.LanguageList = append(pogo.LanguageList, langEntry)
 }
 
@@ -85,8 +84,8 @@ func (langType) LanguageName() string   { return "haxe" }
 func (langType) FileTypeSuffix() string { return ".hx" }
 
 // make a comment
-func (langType) Comment(c string) string {
-	if c != "" && pogo.DebugFlag { // only comment if something to say and in debug mode
+func (l langType) Comment(c string) string {
+	if c != "" && l.PogoComp().DebugFlag { // only comment if something to say and in debug mode
 		return " // " + c
 	}
 	return ""
@@ -108,15 +107,15 @@ func (langType) FileStart(haxePackageName, headerText string) string {
 }
 
 // TODO rename
-func (langType) FileEnd() string {
-	return haxeruntime() // this deals with the individual runtime class files
+func (l langType) FileEnd() string {
+	return l.haxeruntime() // this deals with the individual runtime class files
 }
 
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
-func (langType) RegisterName(val ssa.Value) string {
+func (l langType) RegisterName(val ssa.Value) string {
 	//NOTE the SSA code says that name() should not be relied on, so this code may need to alter
 
-	if useRegisterArray { // we must use a register array when there are too many registers declared at class level for C++/Java to handle
+	if l.hc.useRegisterArray { // we must use a register array when there are too many registers declared at class level for C++/Java to handle
 		reg := val.Name()
 		if reg[0] != 't' {
 			panic("Register Name does not begin with t: " + reg)
@@ -145,46 +144,29 @@ func recycle(list []regToFree) string {
 	return strings.Join(ret, "\n") + "\n"
 }
 
-var useRegisterArray bool // should we use an array rather than individual register vars
-
-var nextReturnAddress int       // what number is the next pseudo block return address?
-var hadReturn bool              // has there been a return statement in this function?
-var hadBlockReturn bool         // has there been a return in this block?
-var pseudoNextReturnAddress int // what is the next pseudo block to emit/or limit of what's been emitted
-var pseudoBlockNext int         // what is the next pseudo block we should have emitted?
-var currentfn *ssa.Function     // what we are currently working on
-var currentfnName string        // the Haxe name of what we are currently working on
-var fnUsesGr bool               // does the current function use Goroutines?
-var fnTracksPhi bool            // does the current function track Phi?
-
-var funcNamesUsed = make(map[string]bool)
-var fnCanOptMap map[string]bool
-var reconstructInstrs []tgossa.BlockFormat
-var elseStack []string
-
 func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, blks []*ssa.BasicBlock, position string, isPublic, trackPhi, usesGr bool, canOptMap map[string]bool, reconstruct []tgossa.BlockFormat) string {
 
 	//fmt.Println("DEBUG: HAXE FuncStart: ", packageName, ".", objectName, usesGr)
 
-	nextReturnAddress = -1
-	hadReturn = false
-	hadBlockReturn = false
-	pseudoBlockNext = -1
-	currentfn = fn
-	currentfnName = "Go_" + l.LangName(packageName, objectName)
-	funcNamesUsed[currentfnName] = true
-	fnUsesGr = usesGr
-	fnTracksPhi = trackPhi
-	fnCanOptMap = canOptMap
+	l.hc.nextReturnAddress = -1
+	l.hc.hadReturn = false
+	l.hc.hadBlockReturn = false
+	l.hc.pseudoBlockNext = -1
+	l.hc.currentfn = fn
+	l.hc.currentfnName = "Go_" + l.LangName(packageName, objectName)
+	l.hc.funcNamesUsed[l.hc.currentfnName] = true
+	l.hc.fnUsesGr = usesGr
+	l.hc.fnTracksPhi = trackPhi
+	l.hc.fnCanOptMap = canOptMap
 	nullOnExitList := []regToFree{} // names to set to null before we exit the function
-	reset1useMap()
+	l.reset1useMap()
 
-	if pogo.DebugFlag {
-		reconstructInstrs = nil
+	if l.PogoComp().DebugFlag {
+		l.hc.reconstructInstrs = nil
 	} else {
-		reconstructInstrs = reconstruct
+		l.hc.reconstructInstrs = reconstruct
 	}
-	elseStack = []string{}
+	l.hc.elseStack = []string{}
 
 	ret := ""
 
@@ -196,7 +178,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		//	ret += "#if (!php) private #end " // for some reason making classes private is a problem in php
 	}
 	ret += fmt.Sprintf("class %s extends StackFrameBasis implements StackFrame { %s\n",
-		currentfnName, l.Comment(position))
+		l.hc.currentfnName, l.Comment(position))
 
 	//Create the stack frame variables
 	hadBlank := false
@@ -225,7 +207,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		p_typ := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 		ret += p_nam + " : " + p_typ
 	}
-	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
+	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", l.PogoComp().LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
 	hadBlank = false
 	for p := range fn.Params {
 		prefix := "this.p_"
@@ -233,7 +215,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 			prefix += fmt.Sprintf("%d", p)
 		}
 		ret += prefix + pogo.MakeID(fn.Params[p].Name()) + "=p_" + pogo.MakeID(fn.Params[p].Name()) + ";\n"
-		if pogo.DebugFlag {
+		if l.PogoComp().DebugFlag {
 			ret += `this.setDebugVar("` + fn.Params[p].Name() + `",p_` + pogo.MakeID(fn.Params[p].Name()) + ");\n"
 		}
 		if fn.Params[p].Name() == "_" {
@@ -249,7 +231,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		//}
 		ret += fmt.Sprintf("this._recoverNext=%d;\n", fn.Recover.Index)
 	}
-	ret += emitTrace(`New:` + l.LangName(packageName, objectName))
+	ret += l.emitTrace(`New:` + l.LangName(packageName, objectName))
 	ret += "Scheduler.push(gr,this);\n}\n"
 
 	rTyp := ""
@@ -401,7 +383,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "}\n"
 
 	if !usesGr {
-		if reconstructInstrs != nil {
+		if l.hc.reconstructInstrs != nil {
 			ret += l.runFunctionCode(packageName, objectName, "[ RECONSTRUCTED NON-GOROUTINE FUNCTION ]")
 		} else {
 			ret += l.runFunctionCode(packageName, objectName, "[ UN-RECONSTRUCTED NON-GOROUTINE FUNCTION ]")
@@ -420,15 +402,15 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 
 	regCount := 0
 	regDefs := ""
-	useRegisterArray = false
+	l.hc.useRegisterArray = false
 
-	pseudoNextReturnAddress = -1
+	l.hc.pseudoNextReturnAddress = -1
 	for b := range blks {
 		for i := range blks[b].Instrs {
 			in := blks[b].Instrs[i]
 			if !l.CanInline(in) {
 
-				reg := l.Value(in, pogo.CodePosition(in.Pos()))
+				reg := l.Value(in, l.PogoComp().CodePosition(in.Pos()))
 
 				switch in.(type) {
 				case *ssa.Call:
@@ -437,14 +419,14 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 						//NoOp
 					default:
 						// Optimise here not to declare Stack Frames for pseudo-functions used when calling Haxe code direct
-						pp := getPackagePath(in.(*ssa.Call).Common())
+						pp := l.getPackagePath(in.(*ssa.Call).Common())
 						ppBits := strings.Split(pp, "/")
 						if ppBits[len(ppBits)-1] != "hx" && !strings.HasPrefix(ppBits[len(ppBits)-1], "_") {
 							//if usesGr {
 							//	ret += "private "
 							//}
-							ret += fmt.Sprintf("var _SF%d:StackFrame", -pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
-							nullOnExitList = append(nullOnExitList, regToFree{fmt.Sprintf("_SF%d", -pseudoNextReturnAddress), "StackFrame"})
+							ret += fmt.Sprintf("var _SF%d:StackFrame", -l.hc.pseudoNextReturnAddress) //TODO set correct type, or let Haxe determine
+							nullOnExitList = append(nullOnExitList, regToFree{fmt.Sprintf("_SF%d", -l.hc.pseudoNextReturnAddress), "StackFrame"})
 							if usesGr {
 								ret += " #if jsinit =null #end " // v8 opt
 								ret += ";\n"
@@ -457,20 +439,20 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 								//}
 							}
 						}
-						pseudoNextReturnAddress--
+						l.hc.pseudoNextReturnAddress--
 					}
 				case *ssa.Send, *ssa.Select, *ssa.RunDefers, *ssa.Panic:
-					pseudoNextReturnAddress--
+					l.hc.pseudoNextReturnAddress--
 				case *ssa.UnOp:
 					if in.(*ssa.UnOp).Op == token.ARROW {
-						pseudoNextReturnAddress--
+						l.hc.pseudoNextReturnAddress--
 					}
 				case *ssa.Alloc:
 					if !in.(*ssa.Alloc).Heap { // allocate space on the stack if possible
 						//fmt.Println("DEBUG allocate stack space for", reg, "at", position)
 						if reg != "" {
 							reg = strings.TrimSuffix(reg, "inline()") // if there is one
-							ret += haxeVar(reg+"_stackalloc", "Object", "="+allocNewObject(in.(*ssa.Alloc).Type()), position, "FuncStart()") + "\n"
+							ret += l.haxeVar(reg+"_stackalloc", "Object", "="+allocNewObject(in.(*ssa.Alloc).Type()), position, "FuncStart()") + "\n"
 						}
 					}
 				}
@@ -500,7 +482,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 								if init == "null" {
 									nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 								}
-								if init == "null" && reconstructInstrs != nil {
+								if init == "null" && l.hc.reconstructInstrs != nil {
 									init = " #if jsinit = null #end "
 								} else {
 									init = " = " + init + " " // when not using goroutines, sadly they all need initializing because the Haxe compiler objects
@@ -510,7 +492,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 							case "String", "GOint64":
 								nullOnExitList = append(nullOnExitList, regToFree{reg, typ})
 							}
-							hv := haxeVar(reg, typ, init, position, "FuncStart()") + "\n"
+							hv := l.haxeVar(reg, typ, init, position, "FuncStart()") + "\n"
 							regDefs += hv
 							regCount++
 						}
@@ -520,13 +502,13 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		}
 	}
 
-	if regCount > pogo.LanguageList[langIdx].InstructionLimit { // should only affect very large init() fns
+	if regCount > pogo.LanguageList[l.hc.langListEntry].InstructionLimit { // should only affect very large init() fns
 		//fmt.Println("DEBUG regCount", currentfnName, regCount)
-		useRegisterArray = true
+		l.hc.useRegisterArray = true
 		ret += "var _t=new Array<Dynamic>();\n"
 		ret += "inline function nullOnExit(){_t=null;};\n"
 	} else {
-		useRegisterArray = false
+		l.hc.useRegisterArray = false
 		ret += regDefs
 		ret += "inline function nullOnExit(){\n"
 		ret += "#if nulltempvars\n"
@@ -548,21 +530,21 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 
 func (l langType) runFunctionCode(packageName, objectName, msg string) string {
 	ret := "public function run():Go_" + l.LangName(packageName, objectName) + " { //" + msg + "\n"
-	ret += emitTrace(`Run: ` + l.LangName(packageName, objectName) + " " + msg)
+	ret += l.emitTrace(`Run: ` + l.LangName(packageName, objectName) + " " + msg)
 	return ret
 }
 
 func (l langType) whileCaseCode() string {
 	// NOTE this rather odd arrangement improves JS V8 optimization
 	ret := "#if uselocalfunctions\n"
-	ret += "function " + currentfnName + "_loop():" + currentfnName + "{\n"
-	ret += "\tvar retVal:" + currentfnName + "=null;\n"
+	ret += "function " + l.hc.currentfnName + "_loop():" + l.hc.currentfnName + "{\n"
+	ret += "\tvar retVal:" + l.hc.currentfnName + "=null;\n"
 
 	ret += "\twhile(retVal==null) \n"
 
-	if fnUsesGr {
+	if l.hc.fnUsesGr {
 		ret += "\t\tswitch(_Next){\n"
-		for k, v := range localFunctionMap {
+		for k, v := range l.hc.localFunctionMap {
 			ret += fmt.Sprintf("\t\t\tcase %d: retVal=%s();\n", k, v)
 		}
 		ret += "\t\t}\n"
@@ -572,8 +554,8 @@ func (l langType) whileCaseCode() string {
 	}
 	ret += "\treturn retVal;\n"
 	ret += "}\n"
-	if !fnUsesGr {
-		ret += "return " + currentfnName + "_loop();\n"
+	if !l.hc.fnUsesGr {
+		ret += "return " + l.hc.currentfnName + "_loop();\n"
 	}
 	ret += "#else\n"
 	ret += "\tdefault: Scheduler.bbi();\n}\n"
@@ -590,18 +572,18 @@ func (l langType) whileCaseCode() string {
 func (l langType) RunEnd(fn *ssa.Function) string {
 	// TODO reoptimize if blocks >0 and no calls that create synthetic block entries
 	ret := ""
-	if reconstructInstrs == nil {
-		ret += emitUnseenPseudoBlocks()
+	if l.hc.reconstructInstrs == nil {
+		ret += l.emitUnseenPseudoBlocks()
 		ret += l.whileCaseCode()
-		if fnUsesGr {
+		if l.hc.fnUsesGr {
 			ret += "\n#if !uselocalfunctions return this; } #end\n"
 		} else {
 			ret += "\n#if !uselocalfunctions return this; #end\n}\n"
 		}
 	} else {
 		ret += "// Func code all emitted (handle extra reconstruction block for function)\n"
-		thisBlock++
-		ret += reconstructBlock()
+		l.hc.thisBlock++
+		ret += l.reconstructBlock()
 
 		//for b := thisBlock; b < len(reconstructInstrs); b++ {
 		//	for i := 0; i < reconstructInstrs[b].EndBracketCount; i++ {
@@ -622,14 +604,14 @@ return this;
 }
 func (l langType) FuncEnd(fn *ssa.Function) string {
 	// actually, the end of the class for that Go function
-	pogo.WriteAsClass(currentfnName, "}\n")
+	l.PogoComp().WriteAsClass(l.hc.currentfnName, "}\n")
 	return ``
 }
 
 // utiltiy to set-up a haxe variable
-func haxeVar(reg, typ, init, position, errorStart string) string {
+func (l langType) haxeVar(reg, typ, init, position, errorStart string) string {
 	if typ == "" {
-		pogo.LogError(position, "Haxe", fmt.Errorf(errorStart+" unhandled initialisation for empty type"))
+		l.PogoComp().LogError(position, "Haxe", fmt.Errorf(errorStart+" unhandled initialisation for empty type"))
 		return ""
 	}
 	ret := "var " + reg + ":" + typ
@@ -640,17 +622,14 @@ func haxeVar(reg, typ, init, position, errorStart string) string {
 }
 
 func (l langType) SetPosHash() string {
-	return "this.setPH(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + ");"
+	return "this.setPH(" + fmt.Sprintf("%d", l.PogoComp().LatestValidPosHash) + ");"
 }
 
-var localFunctionMap map[int]string
-var thisBlock int
-
 func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) string {
-	rangeChecks = make(map[string]struct{})
-	thisBlock = num
-	tempVarList = []regToFree{}
-	hadBlockReturn = false
+	l.hc.rangeChecks = make(map[string]struct{})
+	l.hc.thisBlock = num
+	l.hc.tempVarList = []regToFree{}
+	l.hc.hadBlockReturn = false
 	// TODO optimise is only 1 block AND no calls
 	// TODO if len(block) > 1 { // no need for a case statement if only one block
 	ret := ""
@@ -658,10 +637,10 @@ func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) str
 	ret += fmt.Sprintf("// BlockID: %d Idom: %v Dominees: %v Successors: %v\n",
 		block[num].Index, block[num].Idom(), block[num].Dominees(), block[num].Succs)
 
-	if reconstructInstrs == nil { // Normal unreconstructed code
+	if l.hc.reconstructInstrs == nil { // Normal unreconstructed code
 
 		if num == 0 {
-			localFunctionMap = make(map[int]string)
+			l.hc.localFunctionMap = make(map[int]string)
 			ret += `
 #if !uselocalfunctions
 	#if js
@@ -672,37 +651,37 @@ func (l langType) BlockStart(block []*ssa.BasicBlock, num int, emitPhi bool) str
 #end
 `
 			ret += "#if uselocalfunctions "
-			if fnUsesGr {
-				ret += "return " + currentfnName + "_loop(); } "
+			if l.hc.fnUsesGr {
+				ret += "return " + l.hc.currentfnName + "_loop(); } "
 			} else {
-				ret += "var fnMap=new Map<Int,Void->" + currentfnName + ">(); "
+				ret += "var fnMap=new Map<Int,Void->" + l.hc.currentfnName + ">(); "
 			}
 			ret += "#end\n"
 		}
 		ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end", block[num].Index) + l.Comment(block[num].Comment) + "\n"
-		if fnUsesGr {
-			fn := fmt.Sprintf(currentfnName+"_%d", block[num].Index)
-			localFunctionMap[block[num].Index] = fn
-			ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+		if l.hc.fnUsesGr {
+			fn := fmt.Sprintf(l.hc.currentfnName+"_%d", block[num].Index)
+			l.hc.localFunctionMap[block[num].Index] = fn
+			ret += "#if uselocalfunctions function " + fn + "():" + l.hc.currentfnName + " { #end\n"
 		} else {
-			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"_%d():"+currentfnName+" { #end\n",
+			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+l.hc.currentfnName+"_%d():"+l.hc.currentfnName+" { #end\n",
 				block[num].Index, block[num].Index)
 		}
-		ret += emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), block[num].Index))
-		if pogo.DebugFlag {
-			ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", block[num].Index) + ");\n"
+		ret += l.emitTrace(fmt.Sprintf("Function: %s Block:%d", block[num].Parent(), block[num].Index))
+		if l.PogoComp().DebugFlag {
+			ret += "this.setLatest(" + fmt.Sprintf("%d", l.PogoComp().LatestValidPosHash) + "," + fmt.Sprintf("%d", block[num].Index) + ");\n"
 		}
 
 	} else { // reconstruct
-		ret += reconstructBlock()
+		ret += l.reconstructBlock()
 	}
 	return ret
 }
 
-func reconstructBlock() string {
+func (l langType) reconstructBlock() string {
 	ret := ""
-	for reconstructInstrs[thisBlock].Stack.Len() > 0 {
-		action, seq, idx, ok := reconstructInstrs[thisBlock].Stack.Pop()
+	for l.hc.reconstructInstrs[l.hc.thisBlock].Stack.Len() > 0 {
+		action, seq, idx, ok := l.hc.reconstructInstrs[l.hc.thisBlock].Stack.Pop()
 		if !ok {
 			msg := "haxe.reconstructBlock internal error blockStack is empty "
 			panic(msg)
@@ -719,13 +698,13 @@ func reconstructBlock() string {
 		}
 		switch action {
 		case tgossa.NotElse, tgossa.IsElse:
-			if len(elseStack) == 0 {
+			if len(l.hc.elseStack) == 0 {
 				msg := "haxe.reconstructBlock internal error elseStack is empty "
 				panic(msg)
 				//ret += " // DEBUG HELP! " + msg + "\n"
 			} else {
-				ret += elseStack[len(elseStack)-1]
-				elseStack = elseStack[0 : len(elseStack)-1] // pop the stack
+				ret += l.hc.elseStack[len(l.hc.elseStack)-1]
+				l.hc.elseStack = l.hc.elseStack[0 : len(l.hc.elseStack)-1] // pop the stack
 			}
 		}
 		switch action {
@@ -733,7 +712,7 @@ func reconstructBlock() string {
 			ret += " /*end NotElse*/ } \n"
 		}
 	}
-	if reconstructInstrs[thisBlock].IsWhileCandidate {
+	if l.hc.reconstructInstrs[l.hc.thisBlock].IsWhileCandidate {
 		ret += "\nwhile(true){\n"
 	}
 	return ret
@@ -741,12 +720,12 @@ func reconstructBlock() string {
 
 func (l langType) BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) string {
 	ret := ""
-	if reconstructInstrs == nil { // Normal unreconstructed code
-		if !hadBlockReturn {
+	if l.hc.reconstructInstrs == nil { // Normal unreconstructed code
+		if !l.hc.hadBlockReturn {
 			ret += "#if uselocalfunctions return null; #end\n"
 		}
-		hadBlockReturn = true
-		if fnUsesGr {
+		l.hc.hadBlockReturn = true
+		if l.hc.fnUsesGr {
 			ret += "#if uselocalfunctions } #end\n"
 		} else {
 			ret += "#if uselocalfunctions }); #end\n"
@@ -764,17 +743,17 @@ func (l langType) BlockEnd(block []*ssa.BasicBlock, num int, emitPhi bool) strin
 
 func (l langType) Jump(block int, phi int, code string) string {
 
-	ret := nullTempVars()
+	ret := l.nullTempVars()
 
-	if reconstructInstrs == nil { // Normal unreconstructed code
+	if l.hc.reconstructInstrs == nil { // Normal unreconstructed code
 		// use tail-calls for backward jumps where we definately know the function name
 		return ret + code + fmt.Sprintf("_Next=%d;", block) + "\n#if uselocalfunctions return null; #end "
 	} else { // reconstruct
 		ret += fmt.Sprintf("// Jump to ID %d\n", block) + code
-		for _, ri := range reconstructInstrs { // TODO pull reconstruct lookup map through
+		for _, ri := range l.hc.reconstructInstrs { // TODO pull reconstruct lookup map through
 			if ri.Index == block {
-				if ri.Seq != thisBlock+1 {
-					if ri.Seq < thisBlock {
+				if ri.Seq != l.hc.thisBlock+1 {
+					if ri.Seq < l.hc.thisBlock {
 						ret += "continue;\n"
 					} else {
 						//ret += "break;\n"
@@ -788,7 +767,7 @@ func (l langType) Jump(block int, phi int, code string) string {
 }
 
 func (l langType) If(v interface{}, trueNext, falseNext, phi int, trueCode, falseCode, errorInfo string) string {
-	if reconstructInstrs == nil { // Normal unreconstructed code
+	if l.hc.reconstructInstrs == nil { // Normal unreconstructed code
 		ret := "if(" + l.IndirectValue(v, errorInfo) + "){\n"
 		ret += l.Jump(trueNext, phi, trueCode)
 		ret += "\n}else{\n"
@@ -803,18 +782,18 @@ func (l langType) If(v interface{}, trueNext, falseNext, phi int, trueCode, fals
 		//} else {
 		ret += "if("
 		//}
-		if reconstructInstrs[thisBlock].ReversePolarity {
+		if l.hc.reconstructInstrs[l.hc.thisBlock].ReversePolarity {
 			ret += "!(" + l.IndirectValue(v, errorInfo) + ")"
 		} else {
 			ret += l.IndirectValue(v, errorInfo)
 		}
 		ret += "){\n"
-		if reconstructInstrs[thisBlock].ReversePolarity {
+		if l.hc.reconstructInstrs[l.hc.thisBlock].ReversePolarity {
 			ret += l.Jump(falseNext, phi, falseCode)
-			elseStack = append(elseStack, l.Jump(trueNext, phi, trueCode))
+			l.hc.elseStack = append(l.hc.elseStack, l.Jump(trueNext, phi, trueCode))
 		} else { // as you would expect
 			ret += l.Jump(trueNext, phi, trueCode)
-			elseStack = append(elseStack, l.Jump(falseNext, phi, falseCode))
+			l.hc.elseStack = append(l.hc.elseStack, l.Jump(falseNext, phi, falseCode))
 		}
 		return ret
 	}
@@ -851,16 +830,16 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	case *ssa.Parameter:
 		return "p_" + pogo.MakeID(v.(*ssa.Parameter).Name())
 	case *ssa.FreeVar:
-		for n := 0; n < len(currentfn.FreeVars); n++ {
-			if currentfn.FreeVars[n].Name() == v.(*ssa.FreeVar).Name() {
+		for n := 0; n < len(l.hc.currentfn.FreeVars); n++ {
+			if l.hc.currentfn.FreeVars[n].Name() == v.(*ssa.FreeVar).Name() {
 				return fmt.Sprintf(`_bds[%d /*%s*/]`, n, v.(*ssa.FreeVar).Name())
 			}
 		}
 		panic(fmt.Sprintf("unable to find FreeVar %s in function %s with freeVars %v",
-			v.(*ssa.FreeVar).Name(), currentfn, currentfn.FreeVars))
+			v.(*ssa.FreeVar).Name(), l.hc.currentfn, l.hc.currentfn.FreeVars))
 	case *ssa.Function:
-		pk, _ := pogo.FuncPathName(v.(*ssa.Function))  //fmt.Sprintf("fn%d", v.(*ssa.Function).Pos())
-		if v.(*ssa.Function).Signature.Recv() != nil { // it's a method
+		pk, _ := l.PogoComp().FuncPathName(v.(*ssa.Function)) //fmt.Sprintf("fn%d", v.(*ssa.Function).Pos())
+		if v.(*ssa.Function).Signature.Recv() != nil {        // it's a method
 			pn := v.(*ssa.Function).Signature.Recv().Pkg().Path() // was .Name()
 			pk = pn + "." + v.(*ssa.Function).Signature.Recv().Name()
 		} else {
@@ -876,12 +855,12 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		// function has no implementation
 		// TODO maybe put a list of over-loaded functions here and only error if not found
 		// NOTE the reflect package comes through this path TODO fix!
-		pogo.LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
+		l.PogoComp().LogWarning(errorInfo, "Haxe", fmt.Errorf("haxe.Value(): *ssa.Function has no implementation: %s", v.(*ssa.Function).Name()))
 		return "new Closure(null,null)" // Should fail at runtime if it is used...
 	case *ssa.UnOp:
 		switch v.(*ssa.UnOp).Op {
 		case token.ARROW, token.MUL:
-			return pogo.RegisterName(val)
+			return l.PogoComp().RegisterName(val)
 		}
 		return l.inlineRegisterName(v.(*ssa.UnOp))
 	case *ssa.BinOp:
@@ -897,31 +876,31 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 			return l.inlineRegisterName(v.(*ssa.IndexAddr)) // NOTE doing this means that it's pointer leaks, but it does give a speed-up
 	*/
 	default:
-		return pogo.RegisterName(val)
+		return l.PogoComp().RegisterName(val)
 	}
 }
 func (l langType) FieldAddr(register string, v interface{}, errorInfo string) string {
 	if register != "" {
 		ptr := l.IndirectValue(v.(*ssa.FieldAddr).X, errorInfo)
-		if pogo.DebugFlag {
+		if l.PogoComp().DebugFlag {
 			ptr = "Pointer.check(" + ptr + ")"
 		}
 		fld := v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct).Field(v.(*ssa.FieldAddr).Field)
 		off := fieldOffset(v.(*ssa.FieldAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Struct), v.(*ssa.FieldAddr).Field)
 		if off == 0 {
-			if is1usePtr(v) {
-				return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
-					"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+			if l.is1usePtr(v) {
+				return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
+					"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
 			} else {
 				return fmt.Sprintf(`%s=%s; // .fieldAddr( /*%d : %s */ %d )`, register,
 					ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
 			}
 		}
-		if is1usePtr(v) {
-			return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: fmt.Sprintf("%d", off) + "+" + ptr + ".off"}) +
-				"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+		if l.is1usePtr(v) {
+			return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: fmt.Sprintf("%d", off) + "+" + ptr + ".off"}) +
+				"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
 		} else {
-			return deDupAssign(register, fmt.Sprintf(`%s.fieldAddr( /*%d : %s */ %d );`,
+			return l.deDupAssign(register, fmt.Sprintf(`%s.fieldAddr( /*%d : %s */ %d );`,
 				ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off))
 		}
 	}
@@ -949,36 +928,36 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 	switch v.(*ssa.IndexAddr).X.Type().Underlying().(type) {
 	case *types.Pointer:
 		ptr := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
-		if pogo.DebugFlag {
+		if l.PogoComp().DebugFlag {
 			ptr = "Pointer.check(" + ptr + ")"
 		}
 		ele := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
 		if idxString == "0" {
-			if is1usePtr(v) {
-				return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
-					"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+			if l.is1usePtr(v) {
+				return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
+					"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
 			} else {
 				return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
 			}
 		}
 		idxString += arrayOffsetCalc(ele)
-		if is1usePtr(v) {
-			return set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: "(" + idxString + ")+" + ptr + ".off"}) +
-				"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+		if l.is1usePtr(v) {
+			return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: "(" + idxString + ")+" + ptr + ".off"}) +
+				"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
 		} else {
-			return deDupAssign(register, fmt.Sprintf(`%s.addr(%s);`, ptr, idxString))
+			return l.deDupAssign(register, fmt.Sprintf(`%s.addr(%s);`, ptr, idxString))
 		}
 	case *types.Slice:
 		x := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
-		if is1usePtr(v) {
-			return set1usePtr(v.(ssa.Value), oneUsePtr{obj: x + ".baseArray.obj", off: x + ".itemOff(" + idxString + ")+" + x + ".baseArray.off"}) +
-				"// virtual oneUsePtr " + register + "=" + map1usePtr[v.(ssa.Value)].obj + ":" + map1usePtr[v.(ssa.Value)].off
+		if l.is1usePtr(v) {
+			return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: x + ".baseArray.obj", off: x + ".itemOff(" + idxString + ")+" + x + ".baseArray.off"}) +
+				"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
 		} else {
 			code := fmt.Sprintf(`%s.itemAddr(%s);`, x, idxString)
-			return deDupAssign(register, code)
+			return l.deDupAssign(register, code)
 		}
 	default:
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
 		return ""
 	}
 }
@@ -1008,30 +987,30 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 		case types.Uint64:
 			return "Force.toUint64(" + v + ")"
 		case types.UntypedInt, types.UntypedRune:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion(): unhandled types.UntypedInt or types.UntypedRune"))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion(): unhandled types.UntypedInt or types.UntypedRune"))
 			return ""
 		case types.Float32:
 			return "Force.toFloat32(" + v + ")"
 		case types.Float64, types.Bool:
 			return v
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled basic kind %s",
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled basic kind %s",
 				t.Underlying().(*types.Basic).Kind()))
 			return v
 		}
 	default:
-		pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled type %T", t.Underlying()))
+		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled type %T", t.Underlying()))
 		return v
 	}
 }
 
 func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
 	ptr := l.IndirectValue(v1, errorInfo)
-	if pogo.DebugFlag {
+	if l.PogoComp().DebugFlag {
 		ptr = "Pointer.check(" + ptr + ")"
 	}
-	if is1usePtr(v1) {
-		oup, found := map1usePtr[v1.(ssa.Value)]
+	if l.is1usePtr(v1) {
+		oup, found := l.hc.map1usePtr[v1.(ssa.Value)]
 		if !found {
 			panic("pogo.Store can't find oneUsePtr " + v1.(ssa.Value).Name() + "=" + v1.(ssa.Value).String())
 		}
@@ -1045,84 +1024,84 @@ func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
 }
 
 func (l langType) Send(v1, v2 interface{}, errorInfo string) string {
-	ret := fmt.Sprintf("_Next=%d;\n", nextReturnAddress)
+	ret := fmt.Sprintf("_Next=%d;\n", l.hc.nextReturnAddress)
 	ret += "return this;\n"
-	if fnUsesGr {
+	if l.hc.fnUsesGr {
 		ret += "#if uselocalfunctions } #end\n"
 	} else {
 		ret += "#if uselocalfunctions }); #end\n"
 	}
-	ret += emitUnseenPseudoBlocks()
-	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", nextReturnAddress)
-	if fnUsesGr {
-		fn := fmt.Sprintf(currentfnName+"__%d", -nextReturnAddress)
-		localFunctionMap[nextReturnAddress] = fn
-		ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+	ret += l.emitUnseenPseudoBlocks()
+	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", l.hc.nextReturnAddress)
+	if l.hc.fnUsesGr {
+		fn := fmt.Sprintf(l.hc.currentfnName+"__%d", -l.hc.nextReturnAddress)
+		l.hc.localFunctionMap[l.hc.nextReturnAddress] = fn
+		ret += "#if uselocalfunctions function " + fn + "():" + l.hc.currentfnName + " { #end\n"
 	} else {
-		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"__%d():"+currentfnName+" { #end\n",
-			nextReturnAddress, -nextReturnAddress)
+		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+l.hc.currentfnName+"__%d():"+l.hc.currentfnName+" { #end\n",
+			l.hc.nextReturnAddress, -l.hc.nextReturnAddress)
 	}
 	//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d(){ #end\n", -nextReturnAddress)
-	if pogo.DebugFlag {
-		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	if l.PogoComp().DebugFlag {
+		ret += "this.setLatest(" + fmt.Sprintf("%d", l.PogoComp().LatestValidPosHash) + "," + fmt.Sprintf("%d", l.hc.nextReturnAddress) + ");\n"
 	}
-	ret += emitTrace(fmt.Sprintf("Block:%d", nextReturnAddress))
+	ret += l.emitTrace(fmt.Sprintf("Block:%d", l.hc.nextReturnAddress))
 	// TODO panic if the chanel is null
 	ret += "if(!Channel.hasSpace(" + l.IndirectValue(v1, errorInfo) + "))return this;\n" // go round the loop again and wait if not OK
 	ret += l.IndirectValue(v1, errorInfo) + ".send(" + l.IndirectValue(v2, errorInfo) + ");"
-	nextReturnAddress-- // decrement to set new return address for next code generation
-	hadBlockReturn = false
+	l.hc.nextReturnAddress-- // decrement to set new return address for next code generation
+	l.hc.hadBlockReturn = false
 	return ret
 }
 
-func emitReturnHere() string {
+func (l langType) emitReturnHere() string {
 	ret := ""
-	ret += fmt.Sprintf("_Next=%d;\n", nextReturnAddress)
+	ret += fmt.Sprintf("_Next=%d;\n", l.hc.nextReturnAddress)
 	ret += "return this;\n"
-	if fnUsesGr {
+	if l.hc.fnUsesGr {
 		ret += "#if uselocalfunctions } #end\n"
 	} else {
 		ret += "#if uselocalfunctions }); #end\n"
 	}
-	ret += emitUnseenPseudoBlocks()
-	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", nextReturnAddress)
-	if fnUsesGr {
-		fn := fmt.Sprintf(currentfnName+"__%d", -nextReturnAddress)
-		localFunctionMap[nextReturnAddress] = fn
-		ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+	ret += l.emitUnseenPseudoBlocks()
+	ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", l.hc.nextReturnAddress)
+	if l.hc.fnUsesGr {
+		fn := fmt.Sprintf(l.hc.currentfnName+"__%d", -l.hc.nextReturnAddress)
+		l.hc.localFunctionMap[l.hc.nextReturnAddress] = fn
+		ret += "#if uselocalfunctions function " + fn + "():" + l.hc.currentfnName + " { #end\n"
 	} else {
-		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"__%d():"+currentfnName+" { #end\n",
-			nextReturnAddress, -nextReturnAddress)
+		ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+l.hc.currentfnName+"__%d():"+l.hc.currentfnName+" { #end\n",
+			l.hc.nextReturnAddress, -l.hc.nextReturnAddress)
 	}
 	//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d(){ #end\n", -nextReturnAddress)
-	if pogo.DebugFlag {
-		ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+	if l.PogoComp().DebugFlag {
+		ret += "this.setLatest(" + fmt.Sprintf("%d", l.PogoComp().LatestValidPosHash) + "," + fmt.Sprintf("%d", l.hc.nextReturnAddress) + ");\n"
 	}
-	ret += emitTrace(fmt.Sprintf("Block:%d", nextReturnAddress))
-	hadBlockReturn = false
+	ret += l.emitTrace(fmt.Sprintf("Block:%d", l.hc.nextReturnAddress))
+	l.hc.hadBlockReturn = false
 	return ret
 }
 
-func emitUnseenPseudoBlocks() string {
+func (l langType) emitUnseenPseudoBlocks() string {
 	ret := ""
-	if nextReturnAddress == pseudoBlockNext {
-		pseudoBlockNext = nextReturnAddress - 1
+	if l.hc.nextReturnAddress == l.hc.pseudoBlockNext {
+		l.hc.pseudoBlockNext = l.hc.nextReturnAddress - 1
 		return ret
 	}
 	// we've missed some
-	for pseudoBlockNext > nextReturnAddress {
-		if fnUsesGr {
-			fn := fmt.Sprintf(currentfnName+"__%d", -pseudoBlockNext)
-			localFunctionMap[pseudoBlockNext] = fn
-			ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " {return null;}  #end\n"
+	for l.hc.pseudoBlockNext > l.hc.nextReturnAddress {
+		if l.hc.fnUsesGr {
+			fn := fmt.Sprintf(l.hc.currentfnName+"__%d", -l.hc.pseudoBlockNext)
+			l.hc.localFunctionMap[l.hc.pseudoBlockNext] = fn
+			ret += "#if uselocalfunctions function " + fn + "():" + l.hc.currentfnName + " {return null;}  #end\n"
 		} else {
-			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"_dummy_%d():"+currentfnName+" {return null;}); #end\n",
-				pseudoBlockNext, -pseudoBlockNext)
+			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+l.hc.currentfnName+"_dummy_%d():"+l.hc.currentfnName+" {return null;}); #end\n",
+				l.hc.pseudoBlockNext, -l.hc.pseudoBlockNext)
 		}
 		//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d():Dynamic{return null;} #end\n", -pseudoBlockNext)
-		pseudoBlockNext--
+		l.hc.pseudoBlockNext--
 	}
-	pseudoBlockNext = nextReturnAddress - 1
+	l.hc.pseudoBlockNext = l.hc.nextReturnAddress - 1
 	return ret
 }
 
@@ -1150,11 +1129,11 @@ The second component of the triple, recvOk, is a boolean whose value is true iff
 the selected operation was a receive and the receive successfully yielded a value.
 */
 func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK bool, errorInfo string) string {
-	ret := emitReturnHere() // even if we are in a non-blocking select, we need to give the other goroutines a chance!
+	ret := l.emitReturnHere() // even if we are in a non-blocking select, we need to give the other goroutines a chance!
 	if isSelect {
 		sel := v.(*ssa.Select)
 		if register == "" {
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has no register"))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("select statement has no register"))
 			return ""
 		}
 		ret += register + "=" + l.LangType(v.(ssa.Value).Type(), true, errorInfo) + ";\n" //initialize
@@ -1174,7 +1153,7 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 					ch := l.IndirectValue(sel.States[s].Chan, errorInfo)
 					ret += fmt.Sprintf("_states[%d]=Channel.hasContents(%s);\n", s, ch)
 				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
+					l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
 					return ""
 				}
 			}
@@ -1197,7 +1176,7 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 					rxIdx++
 					ret += register + ".r1= _v.r1; }\n"
 				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
+					l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("select statement has invalid ChanDir"))
 					return ""
 				}
 			}
@@ -1221,7 +1200,7 @@ func (l langType) Select(isSelect bool, register string, v interface{}, CommaOK 
 		}
 		ret += ";"
 	}
-	nextReturnAddress-- // decrement to set new return address for next code generation
+	l.hc.nextReturnAddress-- // decrement to set new return address for next code generation
 	return ret
 }
 func (l langType) RegEq(r string) string {
@@ -1229,18 +1208,18 @@ func (l langType) RegEq(r string) string {
 }
 
 func (l langType) Ret(values []*ssa.Value, errorInfo string) string {
-	hadReturn = true
+	l.hc.hadReturn = true
 	_BlockEnd := "this._incomplete=false;\nScheduler.pop(this._goroutine);\n"
-	hadBlockReturn = true
+	l.hc.hadBlockReturn = true
 	//_BlockEnd += nullTempVars()
 	_BlockEnd += "nullOnExit();\nreturn this;\n"
 	switch len(values) {
 	case 0:
-		return emitTrace("Ret0") + _BlockEnd
+		return l.emitTrace("Ret0") + _BlockEnd
 	case 1:
-		return emitTrace("Ret1") + "_res= " + l.IndirectValue(*values[0], errorInfo) + ";\n" + _BlockEnd
+		return l.emitTrace("Ret1") + "_res= " + l.IndirectValue(*values[0], errorInfo) + ";\n" + _BlockEnd
 	default:
-		ret := emitTrace("RetN") + "_res= {"
+		ret := l.emitTrace("RetN") + "_res= {"
 		for r := range values {
 			if r != 0 {
 				ret += ","
@@ -1261,11 +1240,11 @@ func (l langType) Panic(v1 interface{}, errorInfo string, usesGr bool) string {
 	return ret
 }
 
-func getPackagePath(cc *ssa.CallCommon) string {
+func (l langType) getPackagePath(cc *ssa.CallCommon) string {
 	// This code to find the package name
 	var pn string = "UNKNOWN" // package name
 	if cc.StaticCallee() != nil {
-		pn, _ = pogo.FuncPathName(cc.StaticCallee()) // was =fmt.Sprintf("fn%d", cc.StaticCallee().Pos())
+		pn, _ = l.PogoComp().FuncPathName(cc.StaticCallee()) // was =fmt.Sprintf("fn%d", cc.StaticCallee().Pos())
 	}
 	if cc != nil {
 		if cc.Method != nil {
@@ -1322,21 +1301,21 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				return register + "Force.toUTF8length(this._goroutine," + l.IndirectValue(args[0], errorInfo /*, false*/) + ");"
 			default: // TODO handle other types?
 				// TODO error on string?
-				pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Call() - unhandled len/cap type: %s",
+				l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Call() - unhandled len/cap type: %s",
 					reflect.TypeOf(args[0].Type().Underlying())))
 				return register + `null;`
 			}
 		case "print", "println":
 			ret += "Console." + fnToCall + "(["
 			/* DEBUG if we want to know where all the prints happen
-			ret	+= fmt.Sprintf("Go.CPos(%d)", pogo.LatestValidPosHash)
+			ret	+= fmt.Sprintf("Go.CPos(%d)", l.PogoComp().LatestValidPosHash)
 			if len(args) > 0 {                  // if there are more arguments to pass, add a comma
 				ret += ","
 			}
 			*/
 		case "delete":
 			return register + l.IndirectValue(args[0], errorInfo) + ".remove(" +
-				serializeKey(l.IndirectValue(args[1], errorInfo),
+				l.serializeKey(l.IndirectValue(args[1], errorInfo),
 					l.LangType(args[1].Type().Underlying(), false, errorInfo)) + ");"
 		case "append":
 			return register + l.append(args, errorInfo) + ";"
@@ -1355,7 +1334,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		case "ssa:wrapnilchk":
 			return register + "Scheduler.wrapnilchk(" + l.IndirectValue(args[0], errorInfo) + ");"
 		default:
-			pogo.LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Call() - Unhandled builtin function: %s", fnToCall))
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.Call() - Unhandled builtin function: %s", fnToCall))
 			ret = "MISSING_BUILTIN("
 		}
 	} else {
@@ -1365,12 +1344,12 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 		// Go library complex function rewriting
 		//
 		case "runtime_BBreakpoint":
-			nextReturnAddress-- //decrement to set new return address for next call generation
+			l.hc.nextReturnAddress-- //decrement to set new return address for next call generation
 			return "this.breakpoint();"
 		case "runtime_UUnzipTTestFFSS":
-			nextReturnAddress-- //decrement to set new return address for next call generation
-			if pogo.LanguageList[langIdx].TestFS != "" {
-				return `Go_syscall_UUnzipFFSS.callFromRT(0,"` + pogo.LanguageList[langIdx].TestFS + `");`
+			l.hc.nextReturnAddress-- //decrement to set new return address for next call generation
+			if pogo.LanguageList[l.hc.langListEntry].TestFS != "" {
+				return `Go_syscall_UUnzipFFSS.callFromRT(0,"` + pogo.LanguageList[l.hc.langListEntry].TestFS + `");`
 			}
 			return ""
 		//case "math_Inf":
@@ -1382,14 +1361,14 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			// haxe interface pseudo-function re-writing
 			//
 			if strings.HasPrefix(fnToCall, pseudoFnPrefix) {
-				nextReturnAddress-- //decrement to set new return address for next call generation
+				l.hc.nextReturnAddress-- //decrement to set new return address for next call generation
 				if register != "" {
 					register += "="
 				}
 				return register + l.hxPseudoFuncs(fnToCall, args, errorInfo)
 			}
 
-			pn := getPackagePath(&cc)
+			pn := l.getPackagePath(&cc)
 			pnSplit := strings.Split(pn, "/")
 			pn = pnSplit[len(pnSplit)-1]
 			//fmt.Println("DEBUG package name", pn)
@@ -1415,7 +1394,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 				}
 				fnToCall = ftc // fnToCall does not now contain doubled uppercase chars
 
-				nextReturnAddress--                     // decrement to set new return address for next call generation
+				l.hc.nextReturnAddress--                // decrement to set new return address for next call generation
 				isBuiltin = true                        // pretend we are in a builtin function to avoid passing 1st param as bindings
 				isHaxeAPI = true                        // we are calling a Haxe native function
 				bits := strings.Split(fnToCall, "_47_") // split the parts of the string separated by /
@@ -1457,7 +1436,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 					}
 					fallthrough
 				default:
-					pogo.LogError(errorInfo, "Haxe", fmt.Errorf("call to function %s unknown Haxe API first letter %v of %v",
+					l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("call to function %s unknown Haxe API first letter %v of %v",
 						fnToCall, bits[0][0:1], bits))
 				}
 				bits[0] = bits[0][1:] // discard the magic letter from the front of the function name
@@ -1551,7 +1530,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			} else {
 				olv, ok := fnToVarOverloadMap[fnToCall]
 				if ok { // replace the function call with a variable
-					nextReturnAddress-- //decrement to set new return address for next call generation
+					l.hc.nextReturnAddress-- //decrement to set new return address for next call generation
 					if register == "" {
 						return ""
 					}
@@ -1564,8 +1543,8 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 					olf, ok := builtinOverloadMap[fnToCall]
 					if ok { // replace a go function with a haxe one
 						targetFunc = olf
-						nextReturnAddress-- //decrement to set new return address for next call generation
-						isBuiltin = true    // pretend we are in a builtin function to avoid passing 1st param as bindings or waiting for completion
+						l.hc.nextReturnAddress-- //decrement to set new return address for next call generation
+						isBuiltin = true         // pretend we are in a builtin function to avoid passing 1st param as bindings or waiting for completion
 					} else {
 						// TODO at this point the package-level overloading could occur, but I cannot make it reliable, so code removed
 					}
@@ -1641,7 +1620,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 	}
 	if isBuiltin {
 		if isGo || isDefer {
-			pogo.LogError(errorInfo, "Haxe",
+			l.PogoComp().LogError(errorInfo, "Haxe",
 				fmt.Errorf("calling a builtin function (%s) via 'go' or 'defer' is not supported",
 					fnToCall))
 		}
@@ -1668,7 +1647,7 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 	}
 	if isGo {
 		if isDefer {
-			pogo.LogError(errorInfo, "Haxe",
+			l.PogoComp().LogError(errorInfo, "Haxe",
 				fmt.Errorf("calling a function (%s) using both 'go' and 'defer' is not supported",
 					fnToCall))
 		}
@@ -1687,47 +1666,48 @@ func (l langType) RunDefers(usesGr bool) string {
 func (l langType) doCall(register string, tuple *types.Tuple, callCode string, usesGr bool) string {
 	ret := ""
 	if register != "" {
-		ret += fmt.Sprintf("_SF%d=", -nextReturnAddress)
+		ret += fmt.Sprintf("_SF%d=", -l.hc.nextReturnAddress)
 	}
 	if usesGr {
 		ret += callCode
 		//await completion
-		ret += fmt.Sprintf("_Next = %d;\n", nextReturnAddress) // where to come back to
-		hadBlockReturn = false
+		ret += fmt.Sprintf("_Next = %d;\n", l.hc.nextReturnAddress) // where to come back to
+		l.hc.hadBlockReturn = false
 		ret += "return this;\n"
-		if fnUsesGr {
+		if l.hc.fnUsesGr {
 			ret += "#if uselocalfunctions } #end"
 		} else {
 			ret += "#if uselocalfunctions }); #end\n"
 		}
-		ret += emitUnseenPseudoBlocks()
-		ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", nextReturnAddress) // emit code to come back to
-		if fnUsesGr {
-			fn := fmt.Sprintf(currentfnName+"__%d", -nextReturnAddress)
-			localFunctionMap[nextReturnAddress] = fn
-			ret += "#if uselocalfunctions function " + fn + "():" + currentfnName + " { #end\n"
+		ret += l.emitUnseenPseudoBlocks()
+		ret += fmt.Sprintf("#if !uselocalfunctions case %d: #end\n", l.hc.nextReturnAddress) // emit code to come back to
+		if l.hc.fnUsesGr {
+			fn := fmt.Sprintf(l.hc.currentfnName+"__%d", -l.hc.nextReturnAddress)
+			l.hc.localFunctionMap[l.hc.nextReturnAddress] = fn
+			ret += "#if uselocalfunctions function " + fn + "():" + l.hc.currentfnName + " { #end\n"
 		} else {
-			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+currentfnName+"__%d():"+currentfnName+" { #end\n",
-				nextReturnAddress, -nextReturnAddress)
+			ret += fmt.Sprintf("#if uselocalfunctions fnMap.set(%d,function "+l.hc.currentfnName+"__%d():"+l.hc.currentfnName+" { #end\n",
+				l.hc.nextReturnAddress, -l.hc.nextReturnAddress)
 		}
 		//ret += fmt.Sprintf("#if uselocalfunctions function _Block_%d(){ #end\n",
 		//	-nextReturnAddress) // optimize JS with closure to allow V8 to optimize big funcs
-		if pogo.DebugFlag {
-			ret += "this.setLatest(" + fmt.Sprintf("%d", pogo.LatestValidPosHash) + "," + fmt.Sprintf("%d", nextReturnAddress) + ");\n"
+		if l.PogoComp().DebugFlag {
+			ret += "this.setLatest(" + fmt.Sprintf("%d", l.PogoComp().LatestValidPosHash) +
+				"," + fmt.Sprintf("%d", l.hc.nextReturnAddress) + ");\n"
 		}
-		ret += emitTrace(fmt.Sprintf("Block:%d", nextReturnAddress))
+		ret += l.emitTrace(fmt.Sprintf("Block:%d", l.hc.nextReturnAddress))
 	} else {
 		callCode = strings.TrimSpace(callCode)
 		if register != "" {
 			ret += callCode
-			ret += emitTrace(`OPTIMIZED CALL (via stack frame)`)
-			ret += fmt.Sprintf("_SF%d.run();\n", -nextReturnAddress)
+			ret += l.emitTrace(`OPTIMIZED CALL (via stack frame)`)
+			ret += fmt.Sprintf("_SF%d.run();\n", -l.hc.nextReturnAddress)
 		} else {
 			if strings.HasSuffix(callCode, ";") {
-				ret += emitTrace(`OPTIMIZED CALL (no stack frame)`)
+				ret += l.emitTrace(`OPTIMIZED CALL (no stack frame)`)
 				ret += fmt.Sprintf("%s.run();\n", strings.TrimSuffix(callCode, ";"))
 			} else {
-				ret += emitTrace(`OPTIMIZED CALL (via scheduler)`)
+				ret += l.emitTrace(`OPTIMIZED CALL (via scheduler)`)
 				ret += fmt.Sprintf("Scheduler.run1();\n")
 				//was: ret += "Scheduler.run1(this._goroutine);\n"
 			}
@@ -1746,10 +1726,10 @@ func (l langType) doCall(register string, tuple *types.Tuple, callCode string, u
 			//ret += fmt.Sprintf("%s=(_SF%d==null)?%s:_SF%d.res();\n", // goroutine of -1 => null closure
 			//	register, -nextReturnAddress, registerZero, -nextReturnAddress)
 			ret += fmt.Sprintf("%s=_SF%d.res();\n", // will fail if _SF is null
-				register, -nextReturnAddress)
+				register, -l.hc.nextReturnAddress)
 		}
 	}
-	nextReturnAddress-- //decrement to set new return address for next call generation
+	l.hc.nextReturnAddress-- //decrement to set new return address for next call generation
 	return ret
 }
 
@@ -1803,7 +1783,7 @@ func (l langType) Alloc(reg string, heap bool, v interface{}, errorInfo string) 
 		case *types.Struct:
 			typ = typ.(*types.Struct).Underlying()
 		default:
-			pogo.LogError(errorInfo, "Haxe",
+			l.PogoComp().LogError(errorInfo, "Haxe",
 				fmt.Errorf("haxe.Alloc() - unhandled type: %v", reflect.TypeOf(typ)))
 			return ""
 		}
@@ -1872,7 +1852,7 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 		}
 		return register + "= ({var _lvs=" + lvString + ";(" + xString + ").substr(_lvs," + hvString + "-_lvs) ;});"
 	default:
-		pogo.LogError(errorInfo, "Haxe",
+		l.PogoComp().LogError(errorInfo, "Haxe",
 			fmt.Errorf("haxe.Slice() - unhandled type: %v", reflect.TypeOf(x.(ssa.Value).Type().Underlying())))
 		return ""
 	}
@@ -1913,8 +1893,6 @@ func (l langType) Field(register string, v interface{}, fNum int, fName, errorIn
 	return ""
 }
 
-var rangeChecks map[string]struct{}
-
 // TODO error on 64-bit indexes
 func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) string {
 	chk := ""
@@ -1945,10 +1923,10 @@ func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) str
 		chk = fmt.Sprintf("Scheduler.wraprangechk(%s,%d);", iStr, length)
 	}
 	ret := ""
-	_, hadIt := rangeChecks[chk]
+	_, hadIt := l.hc.rangeChecks[chk]
 	if !hadIt { // de-dupe
 		ret = chk
-		rangeChecks[chk] = struct{}{}
+		l.hc.rangeChecks[chk] = struct{}{}
 	}
 	return ret
 }
@@ -1960,19 +1938,19 @@ func (l langType) MakeMap(reg string, v interface{}, errorInfo string) string {
 	return reg + "=" + l.LangType(v.(*ssa.MakeMap).Type().Underlying(), true, errorInfo) + `;`
 }
 
-func serializeKey(val, haxeTyp string) string { // can the key be serialized?
+func (l langType) serializeKey(val, haxeTyp string) string { // can the key be serialized?
 	switch haxeTyp {
 	case "String", "Int", "Float", "Bool",
 		"Pointer", "Object", "GOint64", "Complex", "Interface", "Channel", "Slice":
 		return val
 	default:
-		pogo.LogError("serializeKey", "haxe", errors.New("unsupported map key type: "+haxeTyp))
+		l.PogoComp().LogError("serializeKey", "haxe", errors.New("unsupported map key type: "+haxeTyp))
 		return ""
 	}
 }
 
 func (l langType) MapUpdate(Map, Key, Value interface{}, errorInfo string) string {
-	skey := serializeKey(l.IndirectValue(Key, errorInfo),
+	skey := l.serializeKey(l.IndirectValue(Key, errorInfo),
 		l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 	ret := l.IndirectValue(Map, errorInfo) + ".set("
 	ret += skey + "," //+ l.IndirectValue(Key, errorInfo) + ","
@@ -1999,7 +1977,7 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 		//	"{Scheduler.ioor();0;}:Std.int(" + valueCode + ");"
 	}
 	// assume it is a Map
-	keyString = serializeKey(keyString, l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
+	keyString = l.serializeKey(keyString, l.LangType(Key.(ssa.Value).Type().Underlying(), false, errorInfo))
 
 	isNull := l.IndirectValue(Map, errorInfo) + ";var _ks=" + keyString + ";_map==null?"
 
@@ -2022,7 +2000,7 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 
 func (l langType) Extract(reg string, tuple interface{}, index int, errorInfo string) string {
 	tp := l.IndirectValue(tuple, errorInfo)
-	if pogo.DebugFlag {
+	if l.PogoComp().DebugFlag {
 		tp = "Force.checkTuple(" + tp + ")"
 	}
 	return reg + "=" + tp + ".r" + fmt.Sprintf("%d", index) + ";"
@@ -2103,14 +2081,14 @@ func (l langType) EmitInvoke(register, path string, isGo, isDefer, usesGr bool, 
 	val := callCommon.(ssa.CallCommon).Value
 	meth := callCommon.(ssa.CallCommon).Method.Name()
 	ret := ""
-	if pogo.DebugFlag {
+	if l.PogoComp().DebugFlag {
 		ret += l.IndirectValue(val, errorInfo) + "==null?Scheduler.unt():"
 	}
 	ret += "Interface.invoke(" + l.IndirectValue(val, errorInfo) + `,"` +
 		path + `"` + `,"` + meth + `",[`
 	if isGo {
 		if isDefer {
-			pogo.LogError(errorInfo, "Haxe",
+			l.PogoComp().LogError(errorInfo, "Haxe",
 				fmt.Errorf("calling a method (%s) using both 'go' and 'defer' is not supported",
 					meth))
 		}
@@ -2142,15 +2120,13 @@ func (l langType) EmitInvoke(register, path string, isGo, isDefer, usesGr bool, 
 	return l.doCall(register, cc.Signature().Results(), ret+"]);", usesGr)
 }
 
-var deDupRHS map[string]string
-
-func deDupAssign(register, code string) string {
-	if deDupRHS != nil {
-		prevReg, found := deDupRHS[code]
+func (l langType) deDupAssign(register, code string) string {
+	if l.hc.deDupRHS != nil {
+		prevReg, found := l.hc.deDupRHS[code]
 		if found {
 			code = prevReg
 		} else {
-			deDupRHS[code] = register + "; // DE-DUP: " + code
+			l.hc.deDupRHS[code] = register + "; // DE-DUP: " + code
 		}
 	}
 	return register + "=" + code
@@ -2158,35 +2134,31 @@ func deDupAssign(register, code string) string {
 
 const alwaysStackdump = false
 
-var inMustSplitSubFn = false
-
-var subFnInstrs []ssa.Instruction
-
 func (l langType) SubFnStart(id int, mustSplitCode bool, ins []ssa.Instruction) string {
-	reset1useMap()
-	subFnInstrs = ins
-	deDupRHS = make(map[string]string)
-	tempVarList = []regToFree{}
+	l.reset1useMap()
+	l.hc.subFnInstrs = ins
+	l.hc.deDupRHS = make(map[string]string)
+	l.hc.tempVarList = []regToFree{}
 	if mustSplitCode {
-		inMustSplitSubFn = true
+		l.hc.inMustSplitSubFn = true
 	} else {
-		if alwaysStackdump || pogo.DebugFlag {
+		if alwaysStackdump || l.PogoComp().DebugFlag {
 			return "try {"
 		}
 		return ""
 	}
-	if alwaysStackdump || pogo.DebugFlag {
+	if alwaysStackdump || l.PogoComp().DebugFlag {
 		return fmt.Sprintf("private "+"function SubFn%d():Void { try {", id)
 	}
 	return fmt.Sprintf("private "+"function SubFn%d():Void { ", id)
 }
 
 func (l langType) SubFnEnd(id, pos int, mustSplitCode bool) string {
-	deDupRHS = nil
-	inMustSplitSubFn = false
+	l.hc.deDupRHS = nil
+	l.hc.inMustSplitSubFn = false
 	ret := ""
-	ret += nullTempVars()
-	if alwaysStackdump || pogo.DebugFlag {
+	ret += l.nullTempVars()
+	if alwaysStackdump || l.PogoComp().DebugFlag {
 		ret += fmt.Sprintf("} catch (c:Dynamic) {Scheduler.htc(c,%d);}", pos)
 	}
 	if mustSplitCode {
@@ -2199,16 +2171,14 @@ func (l langType) SubFnCall(id int) string {
 	return fmt.Sprintf("SubFn%d();", id)
 }
 
-var tempVarList []regToFree
-
 func (l langType) DeclareTempVar(v ssa.Value) string {
-	if useRegisterArray {
+	if l.hc.useRegisterArray {
 		return ""
 	}
 	if len(*(v.Referrers())) == 0 {
 		return ""
 	}
-	if is1usePtr(v) {
+	if l.is1usePtr(v) {
 		return "" // "// virtual oneUsePtr _" + v.Name()
 	}
 	typ := l.LangType(v.Type(), false, "temp var declaration")
@@ -2216,7 +2186,7 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 		return ""
 	}
 	if typ == "String" {
-		tempVarList = append(tempVarList, regToFree{"_" + v.Name(), typ})
+		l.hc.tempVarList = append(l.hc.tempVarList, regToFree{"_" + v.Name(), typ})
 	}
 	init := l.LangType(v.Type(), true, "temp var declaration")
 	if init == "null" ||
@@ -2226,16 +2196,16 @@ func (l langType) DeclareTempVar(v ssa.Value) string {
 		strings.HasPrefix(init, "Pointer.make") ||
 		strings.HasPrefix(init, "GOint64") {
 		init = "null"
-		tempVarList = append(tempVarList, regToFree{"_" + v.Name(), typ})
+		l.hc.tempVarList = append(l.hc.tempVarList, regToFree{"_" + v.Name(), typ})
 	}
 	init = "#if jsinit =" + init + " #end " // to allow V8 optimisation?
 	return "var _" + v.Name() + ":" + typ + " " + init + ";"
 }
 
-func nullTempVars() string {
+func (l langType) nullTempVars() string {
 	ret := " #if nulltempvars\n"
-	ret += recycle(tempVarList) // NOTE this helps GC for all targets, especially C++
+	ret += recycle(l.hc.tempVarList) // NOTE this helps GC for all targets, especially C++
 	ret += " #end\n"
-	tempVarList = []regToFree{}
+	l.hc.tempVarList = []regToFree{}
 	return ret
 }
