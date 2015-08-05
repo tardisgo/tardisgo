@@ -76,6 +76,7 @@ func init() {
 	langEntry.LineCommentMark = "//"
 	langEntry.StatementTerminator = ";"
 	langEntry.IgnorePrefixes = []string{"this.setPH("}
+	langEntry.GOROOT = "/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4"
 
 	pogo.LanguageList = append(pogo.LanguageList, langEntry)
 }

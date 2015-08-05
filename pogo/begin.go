@@ -18,8 +18,9 @@ import (
 // Recycle the Compilation resources
 func (comp *Compilation) Recycle() { LanguageList[comp.TargetLang] = LanguageEntry{} }
 
-// EntryPoint provides the entry point for the pogo package, called from ssadump_copy.
-func EntryPoint(mainPkg *ssa.Package, debug, trace bool, langName string) (*Compilation, error) {
+// Compile provides the entry point for the pogo package,
+// returning a pogo.Compilation structure and error
+func Compile(mainPkg *ssa.Package, debug, trace bool, langName,testFSname string) (*Compilation, error) {
 	comp := &Compilation{
 		mainPackage: mainPkg,
 		rootProgram: mainPkg.Prog,
@@ -39,6 +40,7 @@ func EntryPoint(mainPkg *ssa.Package, debug, trace bool, langName string) (*Comp
 	languageListAppendMutex.Unlock()
 	LanguageList[comp.TargetLang].Language =
 		LanguageList[comp.TargetLang].Language.InitLang(comp.TargetLang,comp)
+	LanguageList[comp.TargetLang].TestFS = testFSname
 	//fmt.Printf("DEBUG created TargetLang[%d]=%#v\n",
 	//	comp.TargetLang, LanguageList[comp.TargetLang])
 

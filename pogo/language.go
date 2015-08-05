@@ -104,6 +104,7 @@ type LanguageEntry struct {
 	PseudoPkgPaths        []string     // paths of packages containing pseudo-functions
 	IgnorePrefixes        []string     // the prefixes to code to ignore during peephole optimization
 	files                 []FileOutput // files to write if no errors in compilation
+	GOROOT                string       // static part of the GOROOT path
 }
 
 type FileOutput struct {
