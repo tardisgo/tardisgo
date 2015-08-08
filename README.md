@@ -8,7 +8,7 @@
 
 ## Project status: a working curiosity, currently on-ice, libraries frozen at Go 1.4
 
-### The advent of Go 1.5, with support for both iOS and Android, together with [GopherJS](http://www.gopherjs.org/), mean that the cross-platform UI objectives of this project are likely to soon be redundant, as libraries to achieve this can now be written directly in Go. [The author](https://github.com/elliott5) has therefore paused development of the project (but see "Future Plans" below). 
+### The advent of Go 1.5, with support for both iOS and Android, together with [GopherJS](http://www.gopherjs.org/), mean that the cross-platform UI objectives of this project are likely to soon be redundant, as libraries to achieve this can now be written directly in Go. [The author](https://github.com/elliott5) has therefore paused development of the Haxe aspect of this project, freezing the runtime at Go 1.4. 
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
@@ -20,7 +20,7 @@ The GOOS for TARDISgo is ['nacl'](https://github.com/golang/go/wiki/NativeClient
 
 A start has been made on the automated integration with Haxe libraries, but this is incomplete and the API unstable, see the haxe/hx directory and gohaxelib repository for the story so far. 
 
-The code is developed and tested on OS X 10.10.2, using Go 1.5beta3 and Haxe 3.2.0. The short CI test runs on 64-bit Ubuntu. No other platforms are currently regression tested. 
+The code is developed and tested on OS X 10.10.2, using Go 1.5rc1 and Haxe 3.2.0. The short CI test runs on 64-bit Ubuntu. No other platforms are currently regression tested. 
 
 Please note that the Haxe compiler may require in excess of 2Gb of memory to compile a non-trivial program to Java or C#.
 

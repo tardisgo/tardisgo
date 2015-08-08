@@ -7,12 +7,14 @@ import (
 	"golang.org/x/tools/go/types"
 )
 
+// PackageSorter is a type to allow packages to be sorted by name
 type PackageSorter []*ssa.Package
 
 func (a PackageSorter) Len() int           { return len(a) }
 func (a PackageSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a PackageSorter) Less(i, j int) bool { return a[i].String() < a[j].String() }
 
+// MemberNamesSorted provides a sorted list of package member names
 func MemberNamesSorted(pkg *ssa.Package) []string {
 	allMem := []string{}
 	for mName := range pkg.Members {
@@ -37,6 +39,7 @@ func (comp *Compilation) fnMapSorted() []*ssa.Function {
 	return []*ssa.Function(fms)
 }
 
+// TypeSorter is a type to allow types to be sorted
 type TypeSorter []types.Type
 
 func (a TypeSorter) Len() int           { return len(a) }

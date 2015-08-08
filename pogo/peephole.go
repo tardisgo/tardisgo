@@ -13,6 +13,7 @@ import (
 	"golang.org/x/tools/go/types"
 )
 
+// InlineMap reads the value of a key, tracking if it has been seen
 func (comp *Compilation) InlineMap(key string) (val string, ok bool) {
 	val, ok = comp.inlineMap[key]
 	count, seen := comp.keysSeen[key]

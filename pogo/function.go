@@ -21,6 +21,7 @@ import (
 	"golang.org/x/tools/go/pointer"
 	*/)
 
+// FnIsCalled tells if the function is called
 func (comp *Compilation) FnIsCalled(fn *ssa.Function) bool {
 	return comp.fnMap[fn]
 }
@@ -200,6 +201,7 @@ func (comp *Compilation) emitFunctions() {
 	}
 }
 
+// IsOverloaded reports if a function reference should be replaced
 func (comp *Compilation) IsOverloaded(f *ssa.Function) bool {
 	pn := "unknown" // Defensive, as some synthetic or other edge-case functions may not have a valid package name
 	rx := f.Signature.Recv()
@@ -481,6 +483,7 @@ func (comp *Compilation) emitSubFn(fn *ssa.Function, blks []*ssa.BasicBlock, sub
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].SubFnEnd(sf, int(comp.LatestValidPosHash), mustSplitCode))
 }
 
+// GetFnNameParts gets the elements of the function's name
 func (comp *Compilation) GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 	mName := fn.Name()
 	pName, _ := comp.FuncPathName(fn) //fmt.Sprintf("fn%d", fn.Pos()) //uintptr(unsafe.Pointer(fn)))

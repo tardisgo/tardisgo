@@ -211,7 +211,7 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 			}
 
 			if op == "<<" || op == ">>" {
-				v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				v2string = wrapForceToUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 			}
 
 			switch op { // roughly in the order of the GOint64 api spec
@@ -273,11 +273,11 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 					if (v1.(ssa.Value).Type().Underlying().(*types.Basic).Info() & types.IsUnsigned) != 0 {
 						if v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() == types.Uintptr {
 							// could be comparing pointers cast to uintptr, so force to uint
-							v1string = wrapForce_toUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+							v1string = wrapForceToUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 						}
 						if v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind() == types.Uintptr {
 							// could be comparing pointers cast to uintptr, so force to uint
-							v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+							v2string = wrapForceToUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 						}
 						ret = "(Force.uintCompare(" + v1string + "," + v2string + ")" + op + "0)"
 					} else {
@@ -297,8 +297,8 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 					ret = "(" + v1string + op + v2string + ")"
 				}
 			case ">>", "<<":
-				//v1string = wrapForce_toUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
-				v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				//v1string = wrapForceToUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				v2string = wrapForceToUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 				switch v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind() {
 				case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uintptr: // unsigned bit shift
 					if op == ">>" {
@@ -377,8 +377,8 @@ func (l langType) codeBinOp(regTyp types.Type, op string, v1, v2 interface{}, er
 				ret = "((" + v1string + ")&((" + v2string + ")^0xffffffff))"
 
 			case "&", "|", "^":
-				//v1string = wrapForce_toUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
-				//v2string = wrapForce_toUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				//v1string = wrapForceToUInt(v1string, v1.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+				//v2string = wrapForceToUInt(v2string, v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 				ret = "((" + v1string + ")" + op + "(" + v2string + "))"
 
 			case "+", "-":

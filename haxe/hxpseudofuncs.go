@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/exact"
 	"golang.org/x/tools/go/ssa"
+
+	"github.com/tardisgo/tardisgo/pogo"
 )
 
 const pseudoFnPrefix = "github_dot_com_47_tardisgo_47_tardisgo_47_haxe_47_hx_"
@@ -21,7 +22,8 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	switch fnToCall {
 	case "SSource":
 		fn := strings.Trim(args[0].(*ssa.Const).Value.String(), "\"")
-		fn = pogo.TgtDir + string(os.PathSeparator) + fn + ".hx"
+		fn = pogo.LanguageList[l.PogoComp().TargetLang].TgtDir +
+			string(os.PathSeparator) + fn + ".hx"
 		code := strings.Trim(args[1].(*ssa.Const).Value.String(), "\"")
 		code = strings.Replace(code, "\\n", "\n", -1)
 		code = strings.Replace(code, "\\t", "\t", -1)

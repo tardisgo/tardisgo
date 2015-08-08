@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// RunHaxe runs the operating system commands to compile and run haxe code for testing
 func RunHaxe(allFlag *string, LoadTestZipFS bool, TestFS string) {
 	results := make(chan resChan)
 	switch *allFlag {

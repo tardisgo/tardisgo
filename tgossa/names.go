@@ -22,7 +22,7 @@ func CheckNames(f *ssa.Function) error {
 				val, found := names[register]
 				if found {
 					if val != &f.Blocks[blk].Instrs[ins] {
-						return fmt.Errorf("Internal error, ssa register names not unique in function %s var name %s",
+						return fmt.Errorf("internal error, ssa register names not unique in function %s var name %s",
 							f.String(), register)
 					}
 				} else {

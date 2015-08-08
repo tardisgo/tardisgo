@@ -92,6 +92,7 @@ func (comp *Compilation) emitGlobals() {
 	}
 }
 
+// GlobalInfo holds the description of an individual global declaration
 type GlobalInfo struct {
 	Package string
 	Member  string
@@ -99,6 +100,7 @@ type GlobalInfo struct {
 	Public  bool
 }
 
+// GlobalList returns all of the globals in the Compilation
 func (comp *Compilation) GlobalList() []GlobalInfo {
 	var gi = make([]GlobalInfo, 0)
 	allPack := comp.rootProgram.AllPackages()

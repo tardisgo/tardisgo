@@ -105,8 +105,10 @@ type LanguageEntry struct {
 	IgnorePrefixes        []string     // the prefixes to code to ignore during peephole optimization
 	files                 []FileOutput // files to write if no errors in compilation
 	GOROOT                string       // static part of the GOROOT path
+	TgtDir                string       // Target directory to write to
 }
 
+// FileOutput provides temporary storage of output file data, pending correct compilation
 type FileOutput struct {
 	filename string
 	data     []byte
@@ -116,6 +118,7 @@ type FileOutput struct {
 var LanguageList = make([]LanguageEntry, 0, 10)
 var languageListAppendMutex sync.Mutex
 
+// FindTargetLang returns the 1st LanguageList entry for the given language
 func FindTargetLang(s string) (k int, e error) {
 	var v LanguageEntry
 	for k, v = range LanguageList {
@@ -170,8 +173,7 @@ func (comp *Compilation) isDupPkg(pn string) bool {
 	return pnCount > 1
 }
 
-// FunctionName returns a unique function path and name.
-// TODO refactor this code and everywhere it is called to remove duplication.
+// FuncPathName returns a unique function path and name.
 func (comp *Compilation) FuncPathName(fn *ssa.Function) (path, name string) {
 	rx := fn.Signature.Recv()
 	pf := MakeID(comp.rootProgram.Fset.Position(fn.Pos()).String()) //fmt.Sprintf("fn%d", fn.Pos())

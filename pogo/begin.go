@@ -20,7 +20,7 @@ func (comp *Compilation) Recycle() { LanguageList[comp.TargetLang] = LanguageEnt
 
 // Compile provides the entry point for the pogo package,
 // returning a pogo.Compilation structure and error
-func Compile(mainPkg *ssa.Package, debug, trace bool, langName,testFSname string) (*Compilation, error) {
+func Compile(mainPkg *ssa.Package, debug, trace bool, langName, testFSname string) (*Compilation, error) {
 	comp := &Compilation{
 		mainPackage: mainPkg,
 		rootProgram: mainPkg.Prog,
@@ -39,7 +39,7 @@ func Compile(mainPkg *ssa.Package, debug, trace bool, langName,testFSname string
 	comp.TargetLang = len(LanguageList) - 1
 	languageListAppendMutex.Unlock()
 	LanguageList[comp.TargetLang].Language =
-		LanguageList[comp.TargetLang].Language.InitLang(comp.TargetLang,comp)
+		LanguageList[comp.TargetLang].Language.InitLang(comp.TargetLang, comp)
 	LanguageList[comp.TargetLang].TestFS = testFSname
 	//fmt.Printf("DEBUG created TargetLang[%d]=%#v\n",
 	//	comp.TargetLang, LanguageList[comp.TargetLang])
@@ -139,42 +139,44 @@ func (comp *Compilation) loadSpecialConsts() {
 }
 
 // emit the standard file header for target language
-func (c *Compilation) emitFileStart() {
-	l := c.TargetLang
-	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FileStart(c.hxPkgName, c.headerText))
+func (comp *Compilation) emitFileStart() {
+	l := comp.TargetLang
+	fmt.Fprintln(&LanguageList[l].buffer,
+		LanguageList[l].FileStart(comp.hxPkgName, comp.headerText))
 }
 
 // emit the tail of the required language file
-func (c *Compilation) emitFileEnd() {
-	l := c.TargetLang
+func (comp *Compilation) emitFileEnd() {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].FileEnd())
-	for w := range c.warnings {
-		c.emitComment(c.warnings[w])
+	for w := range comp.warnings {
+		comp.emitComment(comp.warnings[w])
 	}
-	c.emitComment("Package List:")
-	allPack := c.rootProgram.AllPackages()
+	comp.emitComment("Package List:")
+	allPack := comp.rootProgram.AllPackages()
 	sort.Sort(PackageSorter(allPack))
 	for pkgIdx := range allPack {
-		c.emitComment(" " + allPack[pkgIdx].String())
+		comp.emitComment(" " + allPack[pkgIdx].String())
 	}
 }
 
 // emit the start of the top level type definition for each language
-func (c *Compilation) emitGoClassStart() {
-	l := c.TargetLang
+func (comp *Compilation) emitGoClassStart() {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].GoClassStart())
 }
 
 // emit the end of the top level type definition for each language file
-func (c *Compilation) emitGoClassEnd(pak *ssa.Package) {
-	l := c.TargetLang
+func (comp *Compilation) emitGoClassEnd(pak *ssa.Package) {
+	l := comp.TargetLang
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].GoClassEnd(pak))
 }
 
-func (c *Compilation) UsingPackage(pkgName string) bool {
+/*
+func (comp *Compilation) UsingPackage(pkgName string) bool {
 	//println("DEBUG UsingPackage() looking for: ", pkgName)
 	pkgName = "package " + pkgName
-	pkgs := c.rootProgram.AllPackages()
+	pkgs := comp.rootProgram.AllPackages()
 	for p := range pkgs {
 		//println("DEBUG UsingPackage() considering pkg: ", pkgs[p].String())
 		if pkgs[p].String() == pkgName {
@@ -185,3 +187,4 @@ func (c *Compilation) UsingPackage(pkgName string) bool {
 	//println("DEBUG UsingPackage()  ", pkgName, " =false")
 	return false
 }
+*/

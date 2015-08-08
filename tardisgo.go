@@ -50,9 +50,9 @@ N	build [N]aive SSA form: don't replace local loads/stores with registers.
 */
 
 var testFlag = flag.Bool("test", false, "Loads test code (*_test.go) for imported packages.")
-var LoadTestZipFS = false
+var loadTestZipFS = false
 
-const TestFS = "tgotestfs.zip"
+const testFS = "tgotestfs.zip"
 
 var runFlag = flag.Bool("run", false, "Invokes the SSA interpreter on the program.")
 
@@ -296,11 +296,11 @@ func doTestable(args []string) error {
 		if main == nil {
 			return fmt.Errorf("no tests")
 		}
-		fd, err := os.Open(TestFS)
-		fd.Close()
-		if err == nil {
-			LoadTestZipFS = true
-			testFSname = TestFS
+		fd, openErr := os.Open(testFS)
+		closeErr := fd.Close()
+		if openErr == nil && closeErr == nil {
+			loadTestZipFS = true
+			testFSname = testFS
 		}
 	} else {
 		// Otherwise, run main.main.
@@ -329,7 +329,7 @@ func doTestable(args []string) error {
 
 		switch langName {
 		case "haxe":
-			haxe.RunHaxe(allFlag, LoadTestZipFS, TestFS)
+			haxe.RunHaxe(allFlag, loadTestZipFS, testFSname)
 		}
 	}
 	return nil

@@ -20,65 +20,11 @@ import (
 	"github.com/tardisgo/tardisgo/tgossa"
 )
 
-var haxeStdSizes = types.StdSizes{
-	WordSize: 4, // word size in bytes - must be >= 4 (32bits)
-	MaxAlign: 8, // maximum alignment in bytes - must be >= 1
-}
-
-func fieldOffset(str *types.Struct, fldNum int) int64 {
-	fieldList := make([]*types.Var, str.NumFields())
-	for f := 0; f < str.NumFields(); f++ {
-		fieldList[f] = str.Field(f)
-	}
-	return haxeStdSizes.Offsetsof(fieldList)[fldNum]
-}
-
-func arrayOffsetCalc(ele types.Type) string {
-	ent := types.NewVar(0, nil, "___temp", ele)
-	fieldList := []*types.Var{ent, ent}
-	off := haxeStdSizes.Offsetsof(fieldList)[1] // to allow for word alignment
-	//off := haxeStdSizes.Sizeof(ele) // ?? or should it be the code above ?
-	if off == 1 {
-		return ""
-	}
-	for ls := uint(1); ls < 31; ls++ {
-		target := int64(1 << ls)
-		if off == target {
-			return fmt.Sprintf("<<%d", ls)
-		}
-		if off < target {
-			break // no point in looking any further
-		}
-	}
-	return fmt.Sprintf("*%d", off)
-}
-
 func (l langType) emitTrace(s string) string {
 	if l.PogoComp().TraceFlag {
 		return `trace(this._functionName,this._latestBlock,"TRACE ` + s + ` "` /* + ` "+Scheduler.stackDump()` */ + ");\n"
 	}
 	return ""
-}
-
-func init() {
-	var langVar langType
-	var langEntry pogo.LanguageEntry
-	langEntry.Language = langVar
-
-	il := 1024 // 1024 is an internal C# limit (`lvregs_len < 1024')
-
-	langEntry.InstructionLimit = il      /* size before we make subfns - java is the most sensitive to this value, was 512 */
-	langEntry.SubFnInstructionLimit = il /* 256 required for php, was 256 */
-	langEntry.PackageConstVarName = "tardisgoHaxePackage"
-	langEntry.HeaderConstVarName = "tardisgoHaxeHeader"
-	langEntry.Goruntime = "haxegoruntime" // a string containing the location of the core language runtime functions delivered in Go
-	langEntry.PseudoPkgPaths = []string{"github.com/tardisgo/tardisgo/haxe/hx"}
-	langEntry.LineCommentMark = "//"
-	langEntry.StatementTerminator = ";"
-	langEntry.IgnorePrefixes = []string{"this.setPH("}
-	langEntry.GOROOT = "/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4"
-
-	pogo.LanguageList = append(pogo.LanguageList, langEntry)
 }
 
 func (langType) LanguageName() string   { return "haxe" }
@@ -122,9 +68,8 @@ func (l langType) RegisterName(val ssa.Value) string {
 			panic("Register Name does not begin with t: " + reg)
 		}
 		return "_t[" + reg[1:] + "]"
-	} else {
-		return "_" + val.Name()
 	}
+	return "_" + val.Name()
 }
 
 type regToFree struct {
@@ -188,13 +133,13 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		if hadBlank && fn.Params[p].Name() == "_" {
 			prefix += fmt.Sprintf("%d", p)
 		}
-		p_nam := prefix + pogo.MakeID(fn.Params[p].Name())
-		p_typ := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
-		ret += "private var " + p_nam + ":" + p_typ + ";\n"
-		switch p_typ {
+		pnam := prefix + pogo.MakeID(fn.Params[p].Name())
+		ptyp := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		ret += "private var " + pnam + ":" + ptyp + ";\n"
+		switch ptyp {
 		case "Int", "Float", "Bool": // not objects
 		default:
-			nullOnExitList = append(nullOnExitList, regToFree{p_nam, p_typ})
+			nullOnExitList = append(nullOnExitList, regToFree{pnam, ptyp})
 		}
 		if fn.Params[p].Name() == "_" {
 			hadBlank = true
@@ -204,9 +149,9 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "_bds:Array<Dynamic>" //bindings
 	for p := range fn.Params {
 		ret += ", "
-		p_nam := "p_" + pogo.MakeID(fn.Params[p].Name())
-		p_typ := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
-		ret += p_nam + " : " + p_typ
+		pnam := "p_" + pogo.MakeID(fn.Params[p].Name())
+		ptyp := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		ret += pnam + " : " + ptyp
 	}
 	ret += ") {\nsuper(gr," + fmt.Sprintf("%d", l.PogoComp().LatestValidPosHash) + ",\"Go_" + l.LangName(packageName, objectName) + "\");\nthis._bds=_bds;\n"
 	hadBlank = false
@@ -749,22 +694,22 @@ func (l langType) Jump(block int, phi int, code string) string {
 	if l.hc.reconstructInstrs == nil { // Normal unreconstructed code
 		// use tail-calls for backward jumps where we definately know the function name
 		return ret + code + fmt.Sprintf("_Next=%d;", block) + "\n#if uselocalfunctions return null; #end "
-	} else { // reconstruct
-		ret += fmt.Sprintf("// Jump to ID %d\n", block) + code
-		for _, ri := range l.hc.reconstructInstrs { // TODO pull reconstruct lookup map through
-			if ri.Index == block {
-				if ri.Seq != l.hc.thisBlock+1 {
-					if ri.Seq < l.hc.thisBlock {
-						ret += "continue;\n"
-					} else {
-						//ret += "break;\n"
-					}
-				}
-				break
-			}
-		}
-		return ret
 	}
+	// reconstruct
+	ret += fmt.Sprintf("// Jump to ID %d\n", block) + code
+	for _, ri := range l.hc.reconstructInstrs { // TODO pull reconstruct lookup map through
+		if ri.Index == block {
+			if ri.Seq != l.hc.thisBlock+1 {
+				if ri.Seq < l.hc.thisBlock {
+					ret += "continue;\n"
+				} else {
+					//ret += "break;\n"
+				}
+			}
+			break
+		}
+	}
+	return ret
 }
 
 func (l langType) If(v interface{}, trueNext, falseNext, phi int, trueCode, falseCode, errorInfo string) string {
@@ -774,40 +719,42 @@ func (l langType) If(v interface{}, trueNext, falseNext, phi int, trueCode, fals
 		ret += "\n}else{\n"
 		ret += l.Jump(falseNext, phi, falseCode)
 		return ret + "\n}\n"
-	} else { // reconstruct
-		ret := ""
-		//if reconstructInstrs[thisBlock].IsWhile {
-		//	ret += fmt.Sprintf(
-		//		" #if jsX if(_wh%d==null) _wh%d = function():Dynamic { #end /*DEBUG-isWhile*/ while(",
-		//		phi, phi)
-		//} else {
-		ret += "if("
-		//}
-		if l.hc.reconstructInstrs[l.hc.thisBlock].ReversePolarity {
-			ret += "!(" + l.IndirectValue(v, errorInfo) + ")"
-		} else {
-			ret += l.IndirectValue(v, errorInfo)
-		}
-		ret += "){\n"
-		if l.hc.reconstructInstrs[l.hc.thisBlock].ReversePolarity {
-			ret += l.Jump(falseNext, phi, falseCode)
-			l.hc.elseStack = append(l.hc.elseStack, l.Jump(trueNext, phi, trueCode))
-		} else { // as you would expect
-			ret += l.Jump(trueNext, phi, trueCode)
-			l.hc.elseStack = append(l.hc.elseStack, l.Jump(falseNext, phi, falseCode))
-		}
-		return ret
 	}
+	// reconstruct
+	ret := ""
+	//if reconstructInstrs[thisBlock].IsWhile {
+	//	ret += fmt.Sprintf(
+	//		" #if jsX if(_wh%d==null) _wh%d = function():Dynamic { #end /*DEBUG-isWhile*/ while(",
+	//		phi, phi)
+	//} else {
+	ret += "if("
+	//}
+	if l.hc.reconstructInstrs[l.hc.thisBlock].ReversePolarity {
+		ret += "!(" + l.IndirectValue(v, errorInfo) + ")"
+	} else {
+		ret += l.IndirectValue(v, errorInfo)
+	}
+	ret += "){\n"
+	if l.hc.reconstructInstrs[l.hc.thisBlock].ReversePolarity {
+		ret += l.Jump(falseNext, phi, falseCode)
+		l.hc.elseStack = append(l.hc.elseStack, l.Jump(trueNext, phi, trueCode))
+	} else { // as you would expect
+		ret += l.Jump(trueNext, phi, trueCode)
+		l.hc.elseStack = append(l.hc.elseStack, l.Jump(falseNext, phi, falseCode))
+	}
+	return ret
 }
 
 func (l langType) Phi(register string, phiEntries []int, valEntries []interface{}, defaultValue, errorInfo string) string {
 	panic("haxe.Phi() should never be called")
-	ret := register + "=("
-	for e := range phiEntries {
-		val := l.IndirectValue(valEntries[e], errorInfo)
-		ret += fmt.Sprintf("(_Phi==%d)?%s:", phiEntries[e], val)
-	}
-	return ret + defaultValue + ");"
+	/*
+		ret := register + "=("
+		for e := range phiEntries {
+			val := l.IndirectValue(valEntries[e], errorInfo)
+			ret += fmt.Sprintf("(_Phi==%d)?%s:", phiEntries[e], val)
+		}
+		return ret + defaultValue + ");"
+	*/
 }
 
 func (l langType) LangName(p, o string) string {
@@ -892,23 +839,21 @@ func (l langType) FieldAddr(register string, v interface{}, errorInfo string) st
 			if l.is1usePtr(v) {
 				return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
 					"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
-			} else {
-				return fmt.Sprintf(`%s=%s; // .fieldAddr( /*%d : %s */ %d )`, register,
-					ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
 			}
+			return fmt.Sprintf(`%s=%s; // .fieldAddr( /*%d : %s */ %d )`, register,
+				ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off)
 		}
 		if l.is1usePtr(v) {
 			return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: fmt.Sprintf("%d", off) + "+" + ptr + ".off"}) +
 				"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
-		} else {
-			return l.deDupAssign(register, fmt.Sprintf(`%s.fieldAddr( /*%d : %s */ %d );`,
-				ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off))
 		}
+		return l.deDupAssign(register, fmt.Sprintf(`%s.fieldAddr( /*%d : %s */ %d );`,
+			ptr, v.(*ssa.FieldAddr).Field, fixKeyWds(fld.Name()), off))
 	}
 	return ""
 }
 
-func wrapForce_toUInt(v string, k types.BasicKind) string {
+func wrapForceToUInt(v string, k types.BasicKind) string {
 	switch k {
 	case types.Uintptr:
 		return "Force.toUint32(Force.toInt(" + v + "))"
@@ -924,7 +869,7 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 	if register == "" {
 		return "" // we can't make an address if there is nowhere to put it...
 	}
-	idxString := wrapForce_toUInt(l.IndirectValue(v.(*ssa.IndexAddr).Index, errorInfo),
+	idxString := wrapForceToUInt(l.IndirectValue(v.(*ssa.IndexAddr).Index, errorInfo),
 		v.(*ssa.IndexAddr).Index.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	switch v.(*ssa.IndexAddr).X.Type().Underlying().(type) {
 	case *types.Pointer:
@@ -937,26 +882,23 @@ func (l langType) IndexAddr(register string, v interface{}, errorInfo string) st
 			if l.is1usePtr(v) {
 				return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: ptr + ".off"}) +
 					"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
-			} else {
-				return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
 			}
+			return fmt.Sprintf(`%s=%s; // .addr(0)`, register, ptr)
 		}
 		idxString += arrayOffsetCalc(ele)
 		if l.is1usePtr(v) {
 			return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: ptr + ".obj", off: "(" + idxString + ")+" + ptr + ".off"}) +
 				"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
-		} else {
-			return l.deDupAssign(register, fmt.Sprintf(`%s.addr(%s);`, ptr, idxString))
 		}
+		return l.deDupAssign(register, fmt.Sprintf(`%s.addr(%s);`, ptr, idxString))
 	case *types.Slice:
 		x := l.IndirectValue(v.(*ssa.IndexAddr).X, errorInfo)
 		if l.is1usePtr(v) {
 			return l.set1usePtr(v.(ssa.Value), oneUsePtr{obj: x + ".baseArray.obj", off: x + ".itemOff(" + idxString + ")+" + x + ".baseArray.off"}) +
 				"// virtual oneUsePtr " + register + "=" + l.hc.map1usePtr[v.(ssa.Value)].obj + ":" + l.hc.map1usePtr[v.(ssa.Value)].off
-		} else {
-			code := fmt.Sprintf(`%s.itemAddr(%s);`, x, idxString)
-			return l.deDupAssign(register, code)
 		}
+		code := fmt.Sprintf(`%s.itemAddr(%s);`, x, idxString)
+		return l.deDupAssign(register, code)
 	default:
 		l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.IndirectValue():IndexAddr unknown operand type"))
 		return ""
@@ -995,7 +937,7 @@ func (l langType) intTypeCoersion(t types.Type, v, errorInfo string) string {
 		case types.Float64, types.Bool:
 			return v
 		default:
-			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled basic kind %s",
+			l.PogoComp().LogError(errorInfo, "Haxe", fmt.Errorf("haxe.intTypeCoersion():unhandled basic kind %v",
 				t.Underlying().(*types.Basic).Kind()))
 			return v
 		}
@@ -1243,7 +1185,7 @@ func (l langType) Panic(v1 interface{}, errorInfo string, usesGr bool) string {
 
 func (l langType) getPackagePath(cc *ssa.CallCommon) string {
 	// This code to find the package name
-	var pn string = "UNKNOWN" // package name
+	pn := "UNKNOWN" // package name
 	if cc.StaticCallee() != nil {
 		pn, _ = l.PogoComp().FuncPathName(cc.StaticCallee()) // was =fmt.Sprintf("fn%d", cc.StaticCallee().Pos())
 	}
@@ -1814,9 +1756,9 @@ func newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize stri
 func (l langType) MakeSlice(reg string, v interface{}, errorInfo string) string {
 	typeElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), false, errorInfo)
 	initElem := l.LangType(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying(), true, errorInfo)
-	length := wrapForce_toUInt(l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo),
+	length := wrapForceToUInt(l.IndirectValue(v.(*ssa.MakeSlice).Len, errorInfo),
 		v.(*ssa.MakeSlice).Len.Type().Underlying().(*types.Basic).Kind()) // lengths can't be 64 bit
-	capacity := wrapForce_toUInt(l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo),
+	capacity := wrapForceToUInt(l.IndirectValue(v.(*ssa.MakeSlice).Cap, errorInfo),
 		v.(*ssa.MakeSlice).Cap.Type().Underlying().(*types.Basic).Kind()) // capacities can't be 64 bit
 	itemSize := "1" + arrayOffsetCalc(v.(*ssa.MakeSlice).Type().Underlying().(*types.Slice).Elem().Underlying())
 	return reg + "=" + newSliceCode(typeElem, initElem, capacity, length, errorInfo, itemSize) + `;`
@@ -1831,12 +1773,12 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 	}
 	lvString := "0"
 	if lv != nil {
-		lvString = wrapForce_toUInt(l.IndirectValue(lv, errorInfo),
+		lvString = wrapForceToUInt(l.IndirectValue(lv, errorInfo),
 			lv.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	}
 	hvString := "-1"
 	if hv != nil {
-		hvString = wrapForce_toUInt(l.IndirectValue(hv, errorInfo),
+		hvString = wrapForceToUInt(l.IndirectValue(hv, errorInfo),
 			hv.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	}
 	switch x.(ssa.Value).Type().Underlying().(type) {
@@ -1860,7 +1802,7 @@ func (l langType) Slice(register string, x, lv, hv interface{}, errorInfo string
 }
 
 func (l langType) Index(register string, v1, v2 interface{}, errorInfo string) string {
-	keyString := wrapForce_toUInt(l.IndirectValue(v2, errorInfo),
+	keyString := wrapForceToUInt(l.IndirectValue(v2, errorInfo),
 		v2.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 	typ := v1.(ssa.Value).Type().Underlying().(*types.Array).Elem().Underlying()
 	return register + "=" + //l.IndirectValue(v1, errorInfo) + "[" + l.IndirectValue(v2, errorInfo) + "];" + // assign value
@@ -1966,7 +1908,7 @@ func (l langType) Lookup(reg string, Map, Key interface{}, commaOk bool, errorIn
 	keyString := l.IndirectValue(Key, errorInfo)
 	// check if we are looking up in a string
 	if l.LangType(Map.(ssa.Value).Type().Underlying(), false, errorInfo) == "String" {
-		keyString = wrapForce_toUInt(keyString, Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
+		keyString = wrapForceToUInt(keyString, Key.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 		valueCode := l.IndirectValue(Map, errorInfo) //+ ".charCodeAt(" + keyString + ")"
 		if commaOk {
 			return reg + "=Force.stringAtOK(" + valueCode + "," + keyString + ");"

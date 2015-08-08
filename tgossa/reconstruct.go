@@ -6,13 +6,18 @@ func rPrintf(s string, args ...interface{}) {
 	//fmt.Printf(s, args...)
 }
 
+// BlockAction keeps track of what action a block has when it is reconstructed
 type BlockAction int
 
 const (
 	unset BlockAction = iota
+	// IsElse is an else block to an if statement
 	IsElse
+	// NotElse is when the if statement does not have an else block
 	NotElse
+	// EndElseBracket shows where to put the end-bracket of an else
 	EndElseBracket
+	// EndWhile shows where to put the end-bracket of a while
 	EndWhile
 )
 
@@ -31,19 +36,24 @@ func (ba BlockAction) String() string {
 	}
 }
 
+// BlockStackEntry holds the action and where it should be done
 type BlockStackEntry struct {
 	action     BlockAction
 	seq, index int
 }
 
+// BlockStack keeps track of the block reconstructions for a function
 type BlockStack struct {
 	bse []BlockStackEntry
 }
 
+// Len returns the size of the stack
 func (bs *BlockStack) Len() int {
 	//rPrintf("DEBUG BlockStack.len=%d\n", len(bs.bse))
 	return len(bs.bse)
 }
+
+// Push onto the BlockStack
 func (bs *BlockStack) Push(action BlockAction, seq, index int) bool {
 	item := BlockStackEntry{action, seq, index}
 	for _, bb := range bs.bse { // TODO remove these belt-and-braces tests
@@ -56,6 +66,8 @@ func (bs *BlockStack) Push(action BlockAction, seq, index int) bool {
 	//rPrintf("DEBUG Push %#v\n", item)
 	return true
 }
+
+// Pop a value from the BlockStack
 func (bs *BlockStack) Pop() (action BlockAction, seq, index int, ok bool) {
 	l := bs.Len()
 	if l == 0 {
@@ -71,6 +83,7 @@ func (bs *BlockStack) Pop() (action BlockAction, seq, index int, ok bool) {
 	return
 }
 
+// BlockFormat holds how to reconstruct an individual block
 type BlockFormat struct {
 	Seq, Index        int
 	Stack             *BlockStack

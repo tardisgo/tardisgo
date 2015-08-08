@@ -28,7 +28,7 @@ func escapedTypeString(s string) string {
 
 func synthTypesFor(t types.Type) {}
 
-func GetTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
+func getTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
 	if t == nil {
 		return reflect.Invalid, ""
 	}
@@ -79,7 +79,7 @@ func GetTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
 			types.UntypedNil, types.UntypedRune, types.UntypedString, types.Invalid:
 			kind = reflect.Invalid
 		default:
-			panic(fmt.Sprintf("haxe.GetTypeinfo() unhandled basic kind: %s", tb.String()))
+			panic(fmt.Sprintf("haxe.getTypeinfo() unhandled basic kind: %s", tb.String()))
 		}
 
 	case *types.Array:
@@ -102,11 +102,11 @@ func GetTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
 		if tname == "" {
 			tname = t.(*types.Named).Obj().Name() // only do this for the top-level type name
 		}
-		return GetTypeInfo(t.Underlying(), tname)
+		return getTypeInfo(t.Underlying(), tname)
 	case *types.Tuple:
 		kind = reflect.Invalid
 	default:
-		panic(fmt.Sprintf("haxe.GetTypeinfo() unhandled type: %T", t))
+		panic(fmt.Sprintf("haxe.getTypeinfo() unhandled type: %T", t))
 
 	}
 
@@ -337,7 +337,7 @@ func (l langType) typeBuild(i int, t types.Type) string {
 }
 func (l langType) rtypeBuild(i int, sizes types.Sizes, t types.Type, name string) (string, reflect.Kind) {
 	var kind reflect.Kind
-	kind, name = GetTypeInfo(t, name)
+	kind, name = getTypeInfo(t, name)
 	sof := int64(4)
 	aof := int64(4)
 	if kind != reflect.Invalid {

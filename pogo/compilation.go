@@ -5,7 +5,7 @@ import (
 	"golang.org/x/tools/go/types/typeutil"
 )
 
-// Pogo contains global variables for an individual pogo run
+// Compilation contains global variables for an individual pogo run
 type Compilation struct {
 	rootProgram *ssa.Program // pointer to the root datastructure
 	mainPackage *ssa.Package // pointer to the "main" package

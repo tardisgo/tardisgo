@@ -8,6 +8,7 @@ import (
 	"golang.org/x/tools/go/types/typeutil"
 )
 
+// haxeContext contains the context of a haxe code generation run
 type haxeContext struct {
 	pogoComp *pogo.Compilation // the host compilation context
 

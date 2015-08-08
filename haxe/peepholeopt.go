@@ -45,7 +45,7 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 			}
 			switch cod.(type) {
 			case *ssa.IndexAddr:
-				idxString := wrapForce_toUInt(l.IndirectValue(cod.(*ssa.IndexAddr).Index, errorInfo),
+				idxString := wrapForceToUInt(l.IndirectValue(cod.(*ssa.IndexAddr).Index, errorInfo),
 					cod.(*ssa.IndexAddr).Index.(ssa.Value).Type().Underlying().(*types.Basic).Kind())
 				ele := cod.(*ssa.IndexAddr).X.Type().Underlying().(*types.Pointer).Elem().Underlying().(*types.Array).Elem().Underlying()
 				chainGang += "(" + idxString + arrayOffsetCalc(ele) + ")"
@@ -85,7 +85,7 @@ func (l langType) PeepholeOpt(opt, register string, code []ssa.Instruction, erro
 		for _, cod := range code[1:] {
 			switch cod.(type) {
 			case *ssa.Index:
-				idx = wrapForce_toUInt(l.IndirectValue(cod.(*ssa.Index).Index, errorInfo),
+				idx = wrapForceToUInt(l.IndirectValue(cod.(*ssa.Index).Index, errorInfo),
 					cod.(*ssa.Index).Index.Type().Underlying().(*types.Basic).Kind())
 				//if idx != "0" {
 				//	ret += fmt.Sprintf(".addr(%s%s)",
@@ -378,7 +378,7 @@ func (l langType) set1usePtr(v ssa.Value, oup oneUsePtr) string {
 	return ret
 }
 
-func (lt langType) is1usePtr(v interface{}) bool {
+func (l langType) is1usePtr(v interface{}) bool {
 	var bl *ssa.BasicBlock
 	switch v.(type) {
 	case *ssa.FieldAddr:
@@ -389,28 +389,26 @@ func (lt langType) is1usePtr(v interface{}) bool {
 		return false
 	}
 	val := v.(ssa.Value)
-	if lt.hc.fnCanOptMap[val.Name()] {
+	if l.hc.fnCanOptMap[val.Name()] {
 		switch val.Type().Underlying().(type) {
 		case *types.Pointer:
 			refs := val.Referrers()
-			//if len(*refs) == 1 {
-			//	l := 0
-			for l := range *refs {
-				if (*refs)[l].Block() == bl {
-					for _, i := range lt.hc.subFnInstrs {
-						if i == (*refs)[l].(ssa.Instruction) {
+			for ll := range *refs {
+				if (*refs)[ll].Block() == bl {
+					for _, i := range l.hc.subFnInstrs {
+						if i == (*refs)[ll].(ssa.Instruction) {
 							goto foundInSubFn
 						}
 					}
 					return false
 				foundInSubFn:
-					switch (*refs)[l].(type) {
+					switch (*refs)[ll].(type) {
 					case *ssa.Store:
-						if (*refs)[l].(*ssa.Store).Addr == val {
+						if (*refs)[ll].(*ssa.Store).Addr == val {
 							return true
 						}
 					case *ssa.UnOp:
-						if (*refs)[l].(*ssa.UnOp).Op.String() == "*" {
+						if (*refs)[ll].(*ssa.UnOp).Op.String() == "*" {
 							return true
 						}
 					default: // something we don't know how to handle!

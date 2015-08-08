@@ -76,10 +76,12 @@ func (comp *Compilation) TypesWithMethodSets() (sets []types.Type) {
 	return sets
 }
 
+// MethodSetFor is a conveniance function
 func (comp *Compilation) MethodSetFor(T types.Type) *types.MethodSet {
 	return comp.rootProgram.MethodSets.MethodSet(T)
 }
 
+// RootProgram is a conveniance function
 func (comp *Compilation) RootProgram() *ssa.Program {
 	return comp.rootProgram
 }

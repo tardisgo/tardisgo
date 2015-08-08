@@ -445,10 +445,6 @@ func preprocessTypeName(v string) string {
 	return s
 }
 
-func getTypeInfo(t types.Type, tname string) (kind reflect.Kind, name string) {
-	return GetTypeInfo(t, tname)
-}
-
 func notInterface(t types.Type) bool {
 	isNamed := false
 	tt := t
