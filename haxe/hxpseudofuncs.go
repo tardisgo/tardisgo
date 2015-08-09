@@ -10,10 +10,10 @@ import (
 	"golang.org/x/tools/go/exact"
 	"golang.org/x/tools/go/ssa"
 
-	"github.com/tardisgo/tardisgo/pogo"
+	"github.com/tardisgo/tardisgo/tgoutil"
 )
 
-const pseudoFnPrefix = "github_dot_com_47_tardisgo_47_tardisgo_47_haxe_47_hx_"
+var pseudoFnPrefix = tgoutil.MakeID("github.com/tardisgo/tardisgo/haxe/hx_")
 
 func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo string) string {
 	//fmt.Println("DEBUG l.hxPseudoFuncs()", fnToCall, args, errorInfo)
@@ -22,8 +22,7 @@ func (l langType) hxPseudoFuncs(fnToCall string, args []ssa.Value, errorInfo str
 	switch fnToCall {
 	case "SSource":
 		fn := strings.Trim(args[0].(*ssa.Const).Value.String(), "\"")
-		fn = pogo.LanguageList[l.PogoComp().TargetLang].TgtDir +
-			string(os.PathSeparator) + fn + ".hx"
+		fn = l.hc.langEntry.TgtDir + string(os.PathSeparator) + fn + ".hx"
 		code := strings.Trim(args[1].(*ssa.Const).Value.String(), "\"")
 		code = strings.Replace(code, "\\n", "\n", -1)
 		code = strings.Replace(code, "\\t", "\t", -1)

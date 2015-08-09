@@ -214,7 +214,7 @@ func (l langType) PhiCode(allTargets bool, targetPhi int, code []ssa.Instruction
 }
 
 func (l langType) CanInline(vi interface{}) bool {
-	//if pogo.DebugFlag {
+	//if l.PogoComp.DebugFlag {
 	//   return false
 	//}
 	val, isVal := vi.(ssa.Value)
@@ -263,9 +263,6 @@ func (l langType) CanInline(vi interface{}) bool {
 	if thisBlock == nil {
 		return false
 	}
-	//if len(thisBlock.Instrs) >= pogo.LanguageList[langIdx].InstructionLimit {
-	//	return false
-	//}
 	if len(*refs) != 1 {
 		return false
 	}
@@ -275,12 +272,6 @@ func (l langType) CanInline(vi interface{}) bool {
 	if blockContainsBreaks((*refs)[0].Block(), vi.(ssa.Instruction), (*refs)[0]) {
 		return false
 	}
-	/*
-		ia, is := vi.(*ssa.IndexAddr)
-		if is {
-			println("DEBUG CanInline found candidate IndexAddr:", ia.String())
-		}
-	*/
 	return true
 }
 
@@ -297,10 +288,6 @@ func (l langType) inlineRegisterName(vi interface{}) string {
 	if l.CanInline(vi) {
 		code, found := l.PogoComp().InlineMap(nm)
 		if !found {
-			//for k, v := range pogo.InlineMap {
-			//	println("DEBUG dump pogo.InlineMap[", k, "] is ", v)
-			//}
-			//pogo.LogError(vi.(ssa.Instruction).Parent().String(), "haxe", errors.New("internal error - cannot find "+nm+" in pogo.InlineMap"))
 			return nm
 		}
 		return code

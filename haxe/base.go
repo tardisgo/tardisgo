@@ -13,11 +13,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/tardisgo/tardisgo/pogo"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
 
 	"github.com/tardisgo/tardisgo/tgossa"
+	"github.com/tardisgo/tardisgo/tgoutil"
 )
 
 func (l langType) emitTrace(s string) string {
@@ -133,7 +133,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		if hadBlank && fn.Params[p].Name() == "_" {
 			prefix += fmt.Sprintf("%d", p)
 		}
-		pnam := prefix + pogo.MakeID(fn.Params[p].Name())
+		pnam := prefix + tgoutil.MakeID(fn.Params[p].Name())
 		ptyp := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 		ret += "private var " + pnam + ":" + ptyp + ";\n"
 		switch ptyp {
@@ -149,7 +149,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "_bds:Array<Dynamic>" //bindings
 	for p := range fn.Params {
 		ret += ", "
-		pnam := "p_" + pogo.MakeID(fn.Params[p].Name())
+		pnam := "p_" + tgoutil.MakeID(fn.Params[p].Name())
 		ptyp := l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 		ret += pnam + " : " + ptyp
 	}
@@ -160,9 +160,9 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		if hadBlank && fn.Params[p].Name() == "_" {
 			prefix += fmt.Sprintf("%d", p)
 		}
-		ret += prefix + pogo.MakeID(fn.Params[p].Name()) + "=p_" + pogo.MakeID(fn.Params[p].Name()) + ";\n"
+		ret += prefix + tgoutil.MakeID(fn.Params[p].Name()) + "=p_" + tgoutil.MakeID(fn.Params[p].Name()) + ";\n"
 		if l.PogoComp().DebugFlag {
-			ret += `this.setDebugVar("` + fn.Params[p].Name() + `",p_` + pogo.MakeID(fn.Params[p].Name()) + ");\n"
+			ret += `this.setDebugVar("` + fn.Params[p].Name() + `",p_` + tgoutil.MakeID(fn.Params[p].Name()) + ");\n"
 		}
 		if fn.Params[p].Name() == "_" {
 			hadBlank = true
@@ -215,7 +215,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		if p != 0 {
 			ret += ", "
 		}
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		ret += "p_" + tgoutil.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") : "
 	switch fn.Signature.Results().Len() {
@@ -242,7 +242,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		if fn.Params[p].Type().Underlying().String() == "string" {
 			ret += "Force.fromHaxeString("
 		}
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
+		ret += "p_" + tgoutil.MakeID(fn.Params[p].Name())
 		if fn.Params[p].Type().Underlying().String() == "string" {
 			ret += ")"
 		}
@@ -276,7 +276,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		//if p != 0 {
 		ret += ", "
 		//}
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		ret += "p_" + tgoutil.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") : "
 	switch fn.Signature.Results().Len() {
@@ -299,7 +299,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "(_gr,null" //  use the given Goroutine
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
+		ret += "p_" + tgoutil.MakeID(fn.Params[p].Name())
 	}
 	ret += ").run(); \n"
 	if usesGr {
@@ -315,7 +315,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "_bds:Array<Dynamic>"                  //bindings
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
+		ret += "p_" + tgoutil.MakeID(fn.Params[p].Name()) + " : " + l.LangType(fn.Params[p].Type() /*.Underlying()*/, false, fn.Params[p].Name()+position)
 	}
 	ret += ") : Go_" + l.LangName(packageName, objectName)
 	ret += "\n{" + ""
@@ -323,7 +323,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 	ret += "new Go_" + l.LangName(packageName, objectName) + "(gr,_bds"
 	for p := range fn.Params {
 		ret += ", "
-		ret += "p_" + pogo.MakeID(fn.Params[p].Name())
+		ret += "p_" + tgoutil.MakeID(fn.Params[p].Name())
 	}
 	ret += ");\n"
 	ret += "}\n"
@@ -448,7 +448,7 @@ func (l langType) FuncStart(packageName, objectName string, fn *ssa.Function, bl
 		}
 	}
 
-	if regCount > pogo.LanguageList[l.hc.langListEntry].InstructionLimit { // should only affect very large init() fns
+	if regCount > l.hc.langEntry.InstructionLimit { // should only affect very large init() fns
 		//fmt.Println("DEBUG regCount", currentfnName, regCount)
 		l.hc.useRegisterArray = true
 		ret += "var _t=new Array<Dynamic>();\n"
@@ -758,7 +758,7 @@ func (l langType) Phi(register string, phiEntries []int, valEntries []interface{
 }
 
 func (l langType) LangName(p, o string) string {
-	return pogo.MakeID(p) + "_" + pogo.MakeID(o)
+	return tgoutil.MakeID(p) + "_" + tgoutil.MakeID(o)
 }
 
 // Returns the textual version of Value, possibly emmitting an error
@@ -776,7 +776,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		_, c := l.Const(*ci, errorInfo)
 		return c
 	case *ssa.Parameter:
-		return "p_" + pogo.MakeID(v.(*ssa.Parameter).Name())
+		return "p_" + tgoutil.MakeID(v.(*ssa.Parameter).Name())
 	case *ssa.FreeVar:
 		for n := 0; n < len(l.hc.currentfn.FreeVars); n++ {
 			if l.hc.currentfn.FreeVars[n].Name() == v.(*ssa.FreeVar).Name() {
@@ -815,14 +815,6 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 		return l.inlineRegisterName(v.(*ssa.BinOp))
 	case *ssa.Convert:
 		return l.inlineRegisterName(v.(*ssa.Convert))
-	/*
-		case *ssa.IndexAddr:
-			_, isSlice := v.(*ssa.IndexAddr).X.Type().Underlying().(*types.Slice)
-			if !isSlice {
-				return pogo.RegisterName(val) // only slices handled by peephole general loop
-			}
-			return l.inlineRegisterName(v.(*ssa.IndexAddr)) // NOTE doing this means that it's pointer leaks, but it does give a speed-up
-	*/
 	default:
 		return l.PogoComp().RegisterName(val)
 	}
@@ -955,7 +947,7 @@ func (l langType) Store(v1, v2 interface{}, errorInfo string) string {
 	if l.is1usePtr(v1) {
 		oup, found := l.hc.map1usePtr[v1.(ssa.Value)]
 		if !found {
-			panic("pogo.Store can't find oneUsePtr " + v1.(ssa.Value).Name() + "=" + v1.(ssa.Value).String())
+			panic("haxe.Store can't find oneUsePtr " + v1.(ssa.Value).Name() + "=" + v1.(ssa.Value).String())
 		}
 		return oup.obj + ".set" + loadStoreSuffix(v2.(ssa.Value).Type().Underlying(), true) + oup.off + "," +
 			l.IndirectValue(v2, errorInfo) + ");" +
@@ -1291,8 +1283,8 @@ func (l langType) Call(register string, cc ssa.CallCommon, args []ssa.Value, isB
 			return "this.breakpoint();"
 		case "runtime_UUnzipTTestFFSS":
 			l.hc.nextReturnAddress-- //decrement to set new return address for next call generation
-			if pogo.LanguageList[l.hc.langListEntry].TestFS != "" {
-				return `Go_syscall_UUnzipFFSS.callFromRT(0,"` + pogo.LanguageList[l.hc.langListEntry].TestFS + `");`
+			if l.hc.langEntry.TestFS != "" {
+				return `Go_syscall_UUnzipFFSS.callFromRT(0,"` + l.hc.langEntry.TestFS + `");`
 			}
 			return ""
 		//case "math_Inf":
@@ -1813,14 +1805,8 @@ func (l langType) Index(register string, v1, v2 interface{}, errorInfo string) s
 			arrayOffsetCalc(typ)) + ";"
 }
 
-//TODO review parameters required
 func (l langType) codeField(v interface{}, fNum int, fName, errorInfo string, isFunctionName bool) string {
-	//iv := l.IndirectValue(v, errorInfo)
-	//r := fmt.Sprintf("%s[%d] /* %s */ ", iv, fNum, fixKeyWds(fName))
 	str := v.(ssa.Value).Type().Underlying().(*types.Struct)
-	//if pogo.DebugFlag {
-	//	r = "{if(" + iv + "==null) { Scheduler.ioor(); null; } else " + r + ";}"
-	//}
 	//return fmt.Sprintf(" /* %d */ ", fieldOffset(str, fNum)) +
 	return fmt.Sprintf("%s.get%s%d)",
 		l.IndirectValue(v, errorInfo),
@@ -1828,7 +1814,7 @@ func (l langType) codeField(v interface{}, fNum int, fName, errorInfo string, is
 		fieldOffset(str, fNum))
 }
 
-//TODO review parameters required
+// Field emits the code to load a field value into a register
 func (l langType) Field(register string, v interface{}, fNum int, fName, errorInfo string, isFunctionName bool) string {
 	if register != "" {
 		return register + "=" + l.codeField(v, fNum, fName, errorInfo, isFunctionName) + ";"
@@ -1836,7 +1822,7 @@ func (l langType) Field(register string, v interface{}, fNum int, fName, errorIn
 	return ""
 }
 
-// TODO error on 64-bit indexes
+// RangeCheck emits range check code
 func (l langType) RangeCheck(x, i interface{}, length int, errorInfo string) string {
 	chk := ""
 	iStr := ""

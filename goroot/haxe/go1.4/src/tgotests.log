@@ -1,10 +1,13 @@
 Target cpp ignored
 
 0 passes, 0 failures.
-Target cs ignored
+Target cpp ignored
 
 0 passes, 0 failures.
 Target java ignored
+
+0 passes, 0 failures.
+Target cs ignored
 
 0 passes, 0 failures.
 Target cpp ignored
@@ -13,16 +16,13 @@ Target cpp ignored
 Target cs ignored
 
 0 passes, 0 failures.
-Target java ignored
-
-0 passes, 0 failures.
-Target cpp ignored
-
-0 passes, 0 failures.
-Target java ignored
-
-0 passes, 0 failures.
 Target cs ignored
+
+0 passes, 0 failures.
+Target java ignored
+
+0 passes, 0 failures.
+Target java ignored
 
 0 passes, 0 failures.
 Target cs ignored
@@ -69,7 +69,7 @@ Console.hx:22:
 Executing test: TestRemove 
 Console.hx:22: 
 Executing test: TestZeroList 
-        1.28 real         1.09 user         0.11 sys
+        1.33 real         1.09 user         0.12 sys
 
 
 
@@ -105,7 +105,7 @@ Console.hx:22:
 Executing test: TestNew 
 Console.hx:22: 
 Executing test: TestUnlink 
-        2.07 real         1.69 user         0.12 sys
+        2.30 real         1.70 user         0.13 sys
 
 
 
@@ -139,7 +139,7 @@ Console.hx:22:
 Executing test: TestRemove1 
 Console.hx:22: 
 Executing test: TestRemove2 
-        1.60 real         1.27 user         0.12 sys
+        1.88 real         1.25 user         0.13 sys
 
 
 
@@ -181,7 +181,7 @@ Console.hx:22:
 Executing test: TestTd 
 Console.hx:22: 
 Executing test: TestTe 
-        3.31 real         2.94 user         0.14 sys
+        3.29 real         2.94 user         0.16 sys
 
 
 
@@ -329,7 +329,7 @@ Console.hx:22:
 Executing test: TestUnreadRuneError 
 Console.hx:22: 
 Executing test: TestWriteTo 
-        5.41 real         4.56 user         0.24 sys
+        5.50 real         4.59 user         0.25 sys
 
 
 
@@ -463,7 +463,7 @@ Console.hx:22:
 Executing test: TestWriterReset 
 Console.hx:22: 
 Executing test: TestZeroReader 
-       16.35 real        13.24 user         0.27 sys
+       16.27 real        13.03 user         0.27 sys
 
 
 
@@ -521,7 +521,7 @@ Console.hx:22:
 Executing test: TestVariablePlaintextKnownAnswer 
 Console.hx:22: 
 Executing test: TestWeakKeys 
-        6.22 real         4.57 user         0.29 sys
+        6.03 real         4.53 user         0.23 sys
 
 
 
@@ -559,7 +559,7 @@ Console.hx:22:
 Executing test: TestOFB 
 Console.hx:22: 
 Executing test: TestXOR 
-        4.70 real         2.73 user         0.26 sys
+        3.01 real         2.63 user         0.25 sys
 
 
 
@@ -583,7 +583,7 @@ Console.hx:22:
 Executing test: TestEqual 
 Console.hx:22: 
 Executing test: TestHMAC 
-        3.27 real         1.99 user         0.18 sys
+        2.73 real         1.94 user         0.15 sys
 
 
 
@@ -609,7 +609,7 @@ Console.hx:22:
 Executing test: TestSignAndVerify 
 Console.hx:22: 
 Executing test: TestVectors 
-       14.14 real         9.11 user         0.35 sys
+       13.68 real         9.16 user         0.30 sys
 
 
 
@@ -639,7 +639,7 @@ Console.hx:15: skipping parameter generation test in short mode
 
 Console.hx:22: 
 Executing test: TestSignAndVerify 
-       44.47 real        26.75 user         0.55 sys
+       41.59 real        26.32 user         0.43 sys
 
 
 
@@ -665,7 +665,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestLarge 
-        4.95 real         2.97 user         0.28 sys
+        5.08 real         3.01 user         0.26 sys
 
 
 
@@ -703,7 +703,7 @@ Console.hx:22:
 Executing test: TestP256Mult 
 Console.hx:22: 
 Executing test: TestToFromBig 
-       28.62 real        17.33 user         0.45 sys
+       29.12 real        17.79 user         0.37 sys
 
 
 
@@ -737,7 +737,7 @@ Console.hx:22:
 Executing test: TestRead 
 Console.hx:22: 
 Executing test: TestReadEmpty 
-        6.88 real         4.65 user         0.31 sys
+        6.19 real         4.37 user         0.27 sys
 
 
 
@@ -763,7 +763,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        1.98 real         1.79 user         0.15 sys
+        2.73 real         1.85 user         0.15 sys
 
 
 
@@ -789,7 +789,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        2.62 real         1.97 user         0.15 sys
+        3.71 real         2.06 user         0.15 sys
 
 
 
@@ -811,7 +811,7 @@ Console.hx:15: testing.Main
 
 Console.hx:22: 
 Executing test: TestValueConverters 
-        1.25 real         1.11 user         0.13 sys
+        2.68 real         1.19 user         0.13 sys
 
 
 
@@ -837,7 +837,7 @@ Console.hx:22:
 Executing test: TestBlockGeneric 
 Console.hx:22: 
 Executing test: TestGolden 
-       16.16 real        13.32 user         0.28 sys
+       24.51 real        14.21 user         0.25 sys
 
 
 
@@ -865,7 +865,7 @@ Console.hx:22:
 Executing test: TestGolden 
 Console.hx:22: 
 Executing test: TestSize 
-        2.61 real         2.41 user         0.24 sys
+        4.21 real         2.72 user         0.25 sys
 
 
 
@@ -895,7 +895,7 @@ Console.hx:22:
 Executing test: TestConstantTimeEq 
 Console.hx:22: 
 Executing test: TestConstantTimeLessOrEq 
-        4.47 real         3.73 user         0.24 sys
+        8.75 real         4.24 user         0.25 sys
 
 
 
@@ -909,32 +909,6 @@ Target cs ignored
 Target java ignored
 
 20 passes, 0 failures.
-=========================================
-Unit Test ( via  js ) :  debug/gosym
-=========================================
-"Node/JS:"
-Console.hx:15: testing.Main
-
-Console.hx:22: 
-Executing test: TestLineAline 
-Console.hx:22: 
-Executing test: TestLineFromAline 
-Console.hx:22: 
-Executing test: TestPCLine 
-        2.46 real         1.80 user         0.24 sys
-
-
-
-21 passes, 0 failures.
-Target cpp ignored
-
-21 passes, 0 failures.
-Target cs ignored
-
-21 passes, 0 failures.
-Target java ignored
-
-21 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  encoding/ascii85
 =========================================
@@ -959,7 +933,33 @@ Console.hx:22:
 Executing test: TestEncoder 
 Console.hx:22: 
 Executing test: TestEncoderBuffering 
-        2.35 real         1.68 user         0.19 sys
+        4.22 real         1.89 user         0.22 sys
+
+
+
+21 passes, 0 failures.
+Target cpp ignored
+
+21 passes, 0 failures.
+Target cs ignored
+
+21 passes, 0 failures.
+Target java ignored
+
+21 passes, 0 failures.
+=========================================
+Unit Test ( via  js ) :  debug/gosym
+=========================================
+"Node/JS:"
+Console.hx:15: testing.Main
+
+Console.hx:22: 
+Executing test: TestLineAline 
+Console.hx:22: 
+Executing test: TestLineFromAline 
+Console.hx:22: 
+Executing test: TestPCLine 
+        4.85 real         1.97 user         0.26 sys
 
 
 
@@ -999,7 +999,7 @@ Console.hx:22:
 Executing test: TestEncoderBuffering 
 Console.hx:22: 
 Executing test: TestNewLineCharacters 
-        1.80 real         1.58 user         0.17 sys
+        4.01 real         2.07 user         0.22 sys
 
 
 
@@ -1063,7 +1063,7 @@ Console.hx:22:
 Executing test: TestUTCTime 
 Console.hx:22: 
 Executing test: TestUnmarshal 
-        3.40 real         3.18 user         0.28 sys
+        6.42 real         3.94 user         0.33 sys
 
 
 
@@ -1121,7 +1121,7 @@ Console.hx:22:
 Executing test: TestWriteSlice 
 Console.hx:22: 
 Executing test: TestWriteT 
-        2.87 real         2.40 user         0.22 sys
+        5.46 real         3.08 user         0.26 sys
 
 
 
@@ -1165,7 +1165,7 @@ Console.hx:22:
 Executing test: TestEncoderBuffering 
 Console.hx:22: 
 Executing test: TestNewLineCharacters 
-        2.21 real         1.64 user         0.17 sys
+        3.71 real         2.17 user         0.24 sys
 
 
 
@@ -1191,7 +1191,7 @@ Console.hx:22:
 Executing test: TestRead 
 Console.hx:22: 
 Executing test: TestWrite 
-        2.42 real         1.94 user         0.20 sys
+        4.27 real         2.38 user         0.26 sys
 
 
 
@@ -1227,7 +1227,7 @@ Console.hx:22:
 Executing test: TestInvalidErr 
 Console.hx:22: 
 Executing test: TestInvalidStringErr 
-        1.67 real         1.47 user         0.17 sys
+        3.44 real         1.97 user         0.23 sys
 
 
 
@@ -1251,7 +1251,7 @@ Console.hx:22:
 Executing test: TestErrorMethod 
 Console.hx:22: 
 Executing test: TestNewEqual 
-        1.13 real         0.93 user         0.12 sys
+        1.90 real         1.11 user         0.14 sys
 
 
 
@@ -1279,7 +1279,7 @@ Console.hx:22:
 Executing test: TestGetLine 
 Console.hx:22: 
 Executing test: TestLineBreaker 
-        2.73 real         2.19 user         0.22 sys
+        5.03 real         2.61 user         0.25 sys
 
 
 
@@ -1389,7 +1389,7 @@ Console.hx:22:
 Executing test: TestUnquotedAttrs 
 Console.hx:22: 
 Executing test: TestValuelessAttrs 
-        6.83 real         6.32 user         0.33 sys
+        9.98 real         7.34 user         0.38 sys
 
 
 
@@ -1439,7 +1439,7 @@ Console.hx:15:   -b=0: usage
 
 Console.hx:22: 
 Executing test: TestUserDefinedForCommandLine 
-        1.91 real         1.65 user         0.18 sys
+        3.85 real         2.22 user         0.22 sys
 
 
 
@@ -1471,7 +1471,7 @@ Console.hx:22:
 Executing test: TestSemis 
 Console.hx:22: 
 Executing test: TestStdErrorHander 
-        2.15 real         2.19 user         0.20 sys
+        3.24 real         2.68 user         0.24 sys
 
 
 
@@ -1583,7 +1583,7 @@ Console.hx:22:
 Executing test: TestUnreadRuneWithBufio 
 Console.hx:22: 
 Executing test: TestWidthAndPrecision 
-       10.77 real        10.90 user         0.33 sys
+       14.79 real        12.85 user         0.38 sys
 
 
 
@@ -1611,7 +1611,7 @@ Console.hx:22:
 Executing test: TestFilterDuplicates 
 Console.hx:22: 
 Executing test: TestPrint 
-        2.99 real         2.60 user         0.25 sys
+        4.88 real         3.09 user         0.30 sys
 
 
 
@@ -1633,7 +1633,7 @@ Console.hx:15: testing.Main
 
 Console.hx:22: 
 Executing test: TestGolden 
-        1.69 real         1.48 user         0.18 sys
+        3.02 real         1.85 user         0.21 sys
 
 
 
@@ -1655,7 +1655,7 @@ Console.hx:15: testing.Main
 
 Console.hx:22: 
 Executing test: TestGolden 
-        1.10 real         0.82 user         0.11 sys
+        1.29 real         1.01 user         0.12 sys
 
 
 
@@ -1677,7 +1677,7 @@ Console.hx:15: testing.Main
 
 Console.hx:22: 
 Executing test: TestGolden 
-        1.28 real         0.93 user         0.12 sys
+        1.53 real         0.98 user         0.12 sys
 
 
 
@@ -1715,7 +1715,7 @@ Console.hx:22:
 Executing test: TestPositions 
 Console.hx:22: 
 Executing test: TestSerialization 
-       11.61 real         9.94 user         0.35 sys
+       12.13 real         9.72 user         0.34 sys
 
 
 
@@ -1737,7 +1737,7 @@ Console.hx:15: testing.Main
 
 Console.hx:22: 
 Executing test: TestRoundtrip 
-        3.17 real         2.91 user         0.15 sys
+        2.75 real         2.56 user         0.13 sys
 
 
 
@@ -1773,7 +1773,7 @@ Console.hx:22:
 Executing test: TestIntegrity64 
 Console.hx:22: 
 Executing test: TestIntegrity64a 
-        2.08 real         1.48 user         0.18 sys
+        1.90 real         1.33 user         0.17 sys
 
 
 
@@ -1799,7 +1799,7 @@ Console.hx:22:
 Executing test: TestUnescape 
 Console.hx:22: 
 Executing test: TestUnescapeEscape 
-        2.27 real         1.47 user         0.19 sys
+        1.93 real         1.37 user         0.17 sys
 
 
 
@@ -1941,7 +1941,7 @@ Console.hx:22:
 Executing test: TestY1 
 Console.hx:22: 
 Executing test: TestYn 
-        2.08 real         2.03 user         0.15 sys
+        1.87 real         1.85 user         0.15 sys
 
 
 
@@ -2017,7 +2017,7 @@ Console.hx:22:
 Executing test: TestWriteEmpty 
 Console.hx:22: 
 Executing test: TestWriteNil 
-        1.78 real         1.55 user         0.16 sys
+        1.73 real         1.52 user         0.17 sys
 
 
 
@@ -2039,7 +2039,7 @@ Console.hx:15: testing.Main
 
 Console.hx:22: 
 Executing test: TestIndex 
-        3.96 real         3.75 user         0.23 sys
+        4.00 real         3.78 user         0.25 sys
 
 
 
@@ -2053,32 +2053,6 @@ Target cs ignored
 Target java ignored
 
 45 passes, 0 failures.
-=========================================
-Unit Test ( via  js ) :  log
-=========================================
-"Node/JS:"
-Console.hx:15: testing.Main
-
-Console.hx:22: 
-Executing test: TestAll 
-Console.hx:22: 
-Executing test: TestFlagAndPrefixSetting 
-Console.hx:22: 
-Executing test: TestOutput 
-        2.68 real         2.65 user         0.22 sys
-
-
-
-46 passes, 0 failures.
-Target cpp ignored
-
-46 passes, 0 failures.
-Target cs ignored
-
-46 passes, 0 failures.
-Target java ignored
-
-46 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  html/template
 =========================================
@@ -2157,7 +2131,33 @@ Console.hx:22:
 Executing test: TestURLFilters 
 Console.hx:22: 
 Executing test: TestURLNormalizer 
-       11.98 real        10.30 user         0.39 sys
+       11.23 real        10.15 user         0.36 sys
+
+
+
+46 passes, 0 failures.
+Target cpp ignored
+
+46 passes, 0 failures.
+Target cs ignored
+
+46 passes, 0 failures.
+Target java ignored
+
+46 passes, 0 failures.
+=========================================
+Unit Test ( via  js ) :  log
+=========================================
+"Node/JS:"
+Console.hx:15: testing.Main
+
+Console.hx:22: 
+Executing test: TestAll 
+Console.hx:22: 
+Executing test: TestFlagAndPrefixSetting 
+Console.hx:22: 
+Executing test: TestOutput 
+        3.76 real         2.85 user         0.23 sys
 
 
 
@@ -2221,7 +2221,7 @@ Console.hx:22:
 Executing test: TestTan 
 Console.hx:22: 
 Executing test: TestTanh 
-        1.32 real         1.12 user         0.13 sys
+        1.18 real         1.03 user         0.11 sys
 
 
 
@@ -2255,7 +2255,7 @@ Console.hx:15: skipping in short mode
 
 Console.hx:22: 
 Executing test: TestParseHexUint 
-        1.77 real         1.70 user         0.18 sys
+        1.78 real         1.72 user         0.19 sys
 
 
 
@@ -2301,7 +2301,7 @@ Console.hx:22:
 Executing test: TestURLString 
 Console.hx:22: 
 Executing test: TestUnescape 
-        2.06 real         2.11 user         0.19 sys
+        1.99 real         2.02 user         0.20 sys
 
 
 
@@ -2315,36 +2315,6 @@ Target cs ignored
 Target java ignored
 
 50 passes, 0 failures.
-=========================================
-Unit Test ( via  js ) :  net/mail
-=========================================
-"Node/JS:"
-Console.hx:15: testing.Main
-
-Console.hx:22: 
-Executing test: TestAddressFormatting 
-Console.hx:22: 
-Executing test: TestAddressParsing 
-Console.hx:22: 
-Executing test: TestAddressParsingError 
-Console.hx:22: 
-Executing test: TestDateParsing 
-Console.hx:22: 
-Executing test: TestParsing 
-        2.29 real         2.04 user         0.23 sys
-
-
-
-51 passes, 0 failures.
-Target cpp ignored
-
-51 passes, 0 failures.
-Target cs ignored
-
-51 passes, 0 failures.
-Target java ignored
-
-51 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  net/textproto
 =========================================
@@ -2379,7 +2349,37 @@ Console.hx:22:
 Executing test: TestReadMIMEHeaderNonCompliant 
 Console.hx:22: 
 Executing test: TestReadMIMEHeaderSingle 
-        2.13 real         1.86 user         0.21 sys
+        1.92 real         1.76 user         0.21 sys
+
+
+
+51 passes, 0 failures.
+Target cpp ignored
+
+51 passes, 0 failures.
+Target cs ignored
+
+51 passes, 0 failures.
+Target java ignored
+
+51 passes, 0 failures.
+=========================================
+Unit Test ( via  js ) :  net/mail
+=========================================
+"Node/JS:"
+Console.hx:15: testing.Main
+
+Console.hx:22: 
+Executing test: TestAddressFormatting 
+Console.hx:22: 
+Executing test: TestAddressParsing 
+Console.hx:22: 
+Executing test: TestAddressParsingError 
+Console.hx:22: 
+Executing test: TestDateParsing 
+Console.hx:22: 
+Executing test: TestParsing 
+        2.49 real         2.09 user         0.22 sys
 
 
 
@@ -2423,7 +2423,7 @@ Console.hx:22:
 Executing test: TestMatch 
 Console.hx:22: 
 Executing test: TestSplit 
-        1.81 real         1.51 user         0.18 sys
+        1.63 real         1.46 user         0.18 sys
 
 
 
@@ -2553,7 +2553,7 @@ Console.hx:22:
 Executing test: TestStableInts 
 Console.hx:22: 
 Executing test: TestStrings 
-       17.40 real        17.48 user         0.21 sys
+       17.40 real        17.43 user         0.21 sys
 
 
 
@@ -2659,7 +2659,7 @@ Console.hx:22:
 Executing test: TestWriteStringError 
 Console.hx:22: 
 Executing test: TestWriteTo 
-        2.55 real         2.40 user         0.21 sys
+        2.53 real         2.46 user         0.21 sys
 
 
 
@@ -2723,7 +2723,7 @@ Console.hx:22:
 Executing test: TestSingleBucketMapStringKeys_DupLen 
 Console.hx:22: 
 Executing test: TestSingleBucketMapStringKeys_NoDupLen 
-       34.92 real        31.96 user         0.30 sys
+       34.72 real        32.21 user         0.27 sys
 
 
 
@@ -2765,7 +2765,7 @@ Console.hx:22:
 Executing test: TestScanWhitespace 
 Console.hx:22: 
 Executing test: TestScanZeroMode 
-        2.36 real         2.41 user         0.20 sys
+        2.85 real         2.57 user         0.22 sys
 
 
 
@@ -2791,7 +2791,7 @@ Console.hx:22:
 Executing test: TestPanicDuringFlush 
 Console.hx:22: 
 Executing test: TestPanicDuringWrite 
-        1.79 real         1.84 user         0.17 sys
+        1.88 real         1.85 user         0.20 sys
 
 
 
@@ -2910,7 +2910,7 @@ Console.hx:22:
 Executing test: TestValueLarge 
 Console.hx:22: 
 Executing test: TestValuePanic 
-       33.84 real        31.55 user         0.29 sys
+       37.10 real        33.54 user         0.31 sys
 
 
 
@@ -2948,7 +2948,7 @@ Console.hx:22:
 Executing test: TestParseCopy 
 Console.hx:22: 
 Executing test: TestPos 
-        3.54 real         3.45 user         0.24 sys
+        3.50 real         3.45 user         0.24 sys
 
 
 
@@ -3022,7 +3022,7 @@ Console.hx:22:
 Executing test: TestToUpperCase 
 Console.hx:22: 
 Executing test: TestTurkishCase 
-        1.79 real         1.70 user         0.18 sys
+        1.91 real         1.59 user         0.16 sys
 
 
 
@@ -3054,7 +3054,7 @@ Console.hx:22:
 Executing test: TestEncodeRune 
 Console.hx:22: 
 Executing test: TestIsSurrogate 
-        1.93 real         1.71 user         0.21 sys
+        1.54 real         1.35 user         0.15 sys
 
 
 
@@ -3098,7 +3098,7 @@ Console.hx:22:
 Executing test: TestValid 
 Console.hx:22: 
 Executing test: TestValidRune 
-        2.20 real         2.01 user         0.22 sys
+        2.23 real         1.75 user         0.19 sys
 
 
 
@@ -3144,7 +3144,7 @@ Console.hx:22:
 Executing test: TestRandomData2 
 Console.hx:22: 
 Executing test: TestRandomData3 
-        4.63 real         3.93 user         0.45 sys
+        3.46 real         3.37 user         0.35 sys
 
 
 
@@ -3195,7 +3195,7 @@ Console.hx:22:
 Executing test: TestWriterFlush 
 Console.hx:22: 
 Executing test: TestWriterReset 
-        3.88 real         3.03 user         0.40 sys
+        2.62 real         2.49 user         0.25 sys
 
 
 
@@ -3237,7 +3237,7 @@ Console.hx:22:
 Executing test: TestSimplify 
 Console.hx:22: 
 Executing test: TestToStringEquivalentParse 
-      243.56 real       210.33 user         2.58 sys
+      211.00 real       192.87 user         0.84 sys
 
 
 
@@ -3271,7 +3271,7 @@ Console.hx:22:
 Executing test: TestWriter 
 Console.hx:22: 
 Executing test: TestWriterReturnValues 
-       19.42 real        19.08 user         0.29 sys
+       21.45 real        20.97 user         0.35 sys
 
 
 
@@ -3356,7 +3356,7 @@ Console.hx:22: DEBUG writing file header number  61440
 Console.hx:22: DEBUG writing file header number  65536 
 Console.hx:22: DEBUG Close... 
 Console.hx:22: DEBUG Closed buffer len: 7191458 
-Console.hx:15: DEBUG NewReader complete, took: 1m15.30099988s
+Console.hx:15: DEBUG NewReader complete, took: 1m17.814000129s
 
 Console.hx:22: DEBUG reading file number  0 
 Console.hx:22: DEBUG reading file number  4096 
@@ -3394,7 +3394,7 @@ Console.hx:15: Skip /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/ha
 
 Console.hx:15: slow test; skipping
 
-      126.95 real       107.73 user         7.81 sys
+      116.99 real       104.45 user         7.37 sys
 
 
 
@@ -4995,7 +4995,7 @@ Console.hx:22:
 Console.hx:15: Logf /Users/elliott/go/src/github.com/tardisgo/tardisgo/goroot/haxe/go1.4/src/compress/flate/deflate_haxe_test.go 468
 
 Console.hx:15: got 49 bytes
-      117.21 real       106.13 user         2.06 sys
+      115.39 real       109.20 user         1.40 sys
 
 
 
@@ -5009,6 +5009,42 @@ Target cs ignored
 Target java ignored
 
 69 passes, 0 failures.
+=========================================
+Unit Test ( via  js ) :  debug/dwarf
+=========================================
+"Node/JS:"
+Console.hx:15: testing.Main
+
+Console.hx:22: syscall.unzip() file: testdata/
+ 
+Console.hx:22: syscall.unzip() file: testdata/typedef.c
+ 
+Console.hx:22: syscall.unzip() file: testdata/typedef.elf
+ 
+Console.hx:22: syscall.unzip() file: testdata/typedef.elf4
+ 
+Console.hx:22: syscall.unzip() file: testdata/typedef.macho
+ 
+Console.hx:22: 
+Executing test: TestTypedefsELF 
+Console.hx:22: 
+Executing test: TestTypedefsELFDwarf4 
+Console.hx:22: 
+Executing test: TestTypedefsMachO 
+        3.44 real         3.73 user         0.26 sys
+
+
+
+70 passes, 0 failures.
+Target cpp ignored
+
+70 passes, 0 failures.
+Target cs ignored
+
+70 passes, 0 failures.
+Target java ignored
+
+70 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  debug/macho
 =========================================
@@ -5035,43 +5071,7 @@ Console.hx:22:
 Executing test: TestOpenFat 
 Console.hx:22: 
 Executing test: TestOpenFatFailure 
-        2.52 real         2.70 user         0.21 sys
-
-
-
-70 passes, 0 failures.
-Target cpp ignored
-
-70 passes, 0 failures.
-Target cs ignored
-
-70 passes, 0 failures.
-Target java ignored
-
-70 passes, 0 failures.
-=========================================
-Unit Test ( via  js ) :  debug/dwarf
-=========================================
-"Node/JS:"
-Console.hx:15: testing.Main
-
-Console.hx:22: syscall.unzip() file: testdata/
- 
-Console.hx:22: syscall.unzip() file: testdata/typedef.c
- 
-Console.hx:22: syscall.unzip() file: testdata/typedef.elf
- 
-Console.hx:22: syscall.unzip() file: testdata/typedef.elf4
- 
-Console.hx:22: syscall.unzip() file: testdata/typedef.macho
- 
-Console.hx:22: 
-Executing test: TestTypedefsELF 
-Console.hx:22: 
-Executing test: TestTypedefsELFDwarf4 
-Console.hx:22: 
-Executing test: TestTypedefsMachO 
-        3.43 real         3.44 user         0.23 sys
+        3.05 real         3.12 user         0.24 sys
 
 
 
@@ -5103,7 +5103,7 @@ Console.hx:22:
 Executing test: TestOpen 
 Console.hx:22: 
 Executing test: TestOpenFailure 
-        1.58 real         1.57 user         0.14 sys
+        1.83 real         1.81 user         0.16 sys
 
 
 
@@ -5139,7 +5139,7 @@ Console.hx:22:
 Executing test: TestOpen 
 Console.hx:22: 
 Executing test: TestOpenFailure 
-        5.27 real         5.12 user         0.21 sys
+        5.67 real         5.71 user         0.21 sys
 
 
 
@@ -5167,7 +5167,7 @@ Console.hx:22:
 Executing test: TestPartial 
 Console.hx:22: 
 Executing test: TestSource 
-        4.33 real         4.92 user         0.31 sys
+        4.70 real         5.22 user         0.35 sys
 
 
 
@@ -5231,7 +5231,7 @@ Console.hx:22:
 Executing test: TestValid 
 Console.hx:22: 
 Executing test: TestVarScope 
-        9.88 real         9.68 user         0.40 sys
+       10.87 real        10.44 user         0.41 sys
 
 
 
@@ -5271,7 +5271,7 @@ Console.hx:22:
 Executing test: TestWriterDictIsUsed 
 Console.hx:22: 
 Executing test: TestWriterReset 
-      177.64 real       164.76 user         1.07 sys
+      204.99 real       188.70 user         1.27 sys
 
 
 
@@ -5345,7 +5345,7 @@ Console.hx:22:
 Executing test: TestImage 
 Console.hx:22: 
 Executing test: TestYCbCr 
-       11.94 real        12.27 user         0.36 sys
+       12.52 real        12.87 user         0.38 sys
 
 
 
@@ -5391,7 +5391,7 @@ Console.hx:22:
 Executing test: TestNonZeroSrcPt 
 Console.hx:22: 
 Executing test: TestPaletted 
-       18.09 real        17.33 user         0.36 sys
+       18.46 real        17.74 user         0.36 sys
 
 
 
@@ -5473,7 +5473,7 @@ Console.hx:22:
 Executing test: TestStmtLists 
 Console.hx:22: 
 Executing test: TestX 
-      103.06 real       100.94 user         0.87 sys
+      110.28 real       107.25 user         0.95 sys
 
 
 
@@ -5557,7 +5557,7 @@ Console.hx:22:
 Executing test: TestTransparentIndex 
 Console.hx:22: 
 Executing test: TestWriter 
-       20.73 real        20.44 user         0.37 sys
+       22.70 real        22.14 user         0.43 sys
 
 
 
@@ -5641,7 +5641,7 @@ Console.hx:22:
 Executing test: TestWriter 
 Console.hx:22: 
 Executing test: TestZigUnzig 
-       31.62 real        30.63 user         0.52 sys
+       34.51 real        33.34 user         0.59 sys
 
 
 
@@ -5655,6 +5655,50 @@ Target cs ignored
 Target java ignored
 
 81 passes, 0 failures.
+=========================================
+Unit Test ( via  js ) :  mime
+=========================================
+"Node/JS:"
+Console.hx:15: testing.Main
+
+Console.hx:22: syscall.unzip() file: testdata/
+ 
+Console.hx:22: syscall.unzip() file: testdata/test.types
+ 
+Console.hx:22: syscall.unzip() file: testdata/test.types.plan9
+ 
+Console.hx:22: 
+Executing test: TestConsumeMediaParam 
+Console.hx:22: 
+Executing test: TestConsumeToken 
+Console.hx:22: 
+Executing test: TestConsumeValue 
+Console.hx:22: 
+Executing test: TestFormatMediaType 
+Console.hx:22: 
+Executing test: TestLookupMallocs 
+Console.hx:22: 
+Executing test: TestParseMediaType 
+Console.hx:22: 
+Executing test: TestParseMediaTypeBogus 
+Console.hx:22: 
+Executing test: TestTypeByExtension 
+Console.hx:22: 
+Executing test: TestTypeByExtensionCase 
+        2.50 real         2.30 user         0.27 sys
+
+
+
+82 passes, 0 failures.
+Target cpp ignored
+
+82 passes, 0 failures.
+Target cs ignored
+
+82 passes, 0 failures.
+Target java ignored
+
+82 passes, 0 failures.
 =========================================
 Unit Test ( via  js ) :  io/ioutil
 =========================================
@@ -5691,51 +5735,7 @@ Console.hx:22:
 Executing test: TestTempFile 
 Console.hx:22: 
 Executing test: TestWriteFile 
-        2.47 real         2.23 user         0.25 sys
-
-
-
-82 passes, 0 failures.
-Target cpp ignored
-
-82 passes, 0 failures.
-Target cs ignored
-
-82 passes, 0 failures.
-Target java ignored
-
-82 passes, 0 failures.
-=========================================
-Unit Test ( via  js ) :  mime
-=========================================
-"Node/JS:"
-Console.hx:15: testing.Main
-
-Console.hx:22: syscall.unzip() file: testdata/
- 
-Console.hx:22: syscall.unzip() file: testdata/test.types
- 
-Console.hx:22: syscall.unzip() file: testdata/test.types.plan9
- 
-Console.hx:22: 
-Executing test: TestConsumeMediaParam 
-Console.hx:22: 
-Executing test: TestConsumeToken 
-Console.hx:22: 
-Executing test: TestConsumeValue 
-Console.hx:22: 
-Executing test: TestFormatMediaType 
-Console.hx:22: 
-Executing test: TestLookupMallocs 
-Console.hx:22: 
-Executing test: TestParseMediaType 
-Console.hx:22: 
-Executing test: TestParseMediaTypeBogus 
-Console.hx:22: 
-Executing test: TestTypeByExtension 
-Console.hx:22: 
-Executing test: TestTypeByExtensionCase 
-        2.40 real         2.13 user         0.23 sys
+        3.18 real         2.51 user         0.28 sys
 
 
 
@@ -5815,7 +5815,7 @@ Console.hx:22:
 Executing test: TestWalk 
 Console.hx:22: 
 Executing test: TestWalkFileError 
-        2.22 real         2.16 user         0.25 sys
+        2.28 real         2.17 user         0.26 sys
 
 
 
@@ -5982,7 +5982,7 @@ Console.hx:22:
 Executing test: TestSplit 
 Console.hx:22: 
 Executing test: TestSubexp 
-       26.18 real        27.37 user         0.50 sys
+       27.34 real        28.85 user         0.51 sys
 
 
 
@@ -6175,7 +6175,7 @@ Console.hx:22:
 Executing test: TestUnsetenv 
 Console.hx:22: 
 Executing test: TestWriteAt 
-       68.18 real        64.89 user         0.47 sys
+       66.21 real        62.27 user         0.53 sys
 
 
 
@@ -6281,7 +6281,7 @@ Console.hx:22:
 Executing test: TestValidTypeflagWithPAXHeader 
 Console.hx:22: 
 Executing test: TestWriter 
-        3.92 real         4.25 user         0.30 sys
+        3.95 real         4.33 user         0.30 sys
 
 
 
@@ -6379,7 +6379,7 @@ Console.hx:22:
 Executing test: TestUitoa 
 Console.hx:22: 
 Executing test: TestUnquote 
-       95.86 real        92.13 user         0.59 sys
+      105.26 real        99.17 user         0.70 sys
 
 
 
@@ -6422,7 +6422,7 @@ Console.hx:22:
 Executing test: TestOpen 
 Console.hx:22: 
 Executing test: TestSymbols 
-        5.79 real         6.24 user         0.39 sys
+        6.21 real         6.57 user         0.40 sys
 
 
 
@@ -6549,7 +6549,7 @@ Console.hx:22:
 Executing test: TestSynopsis 
 Console.hx:22: 
 Executing test: TestToText 
-       14.46 real        17.36 user         0.53 sys
+       19.08 real        21.43 user         0.64 sys
 
 
 
@@ -6723,7 +6723,7 @@ Console.hx:22:
 Executing test: TestZeroTimerStopPanics 
 Console.hx:22: 
 Executing test: TestZoneData 
-      141.79 real       134.89 user         0.87 sys
+      143.48 real       136.82 user         1.05 sys
 
 
 
@@ -6908,7 +6908,7 @@ Console.hx:22:
 Executing test: TestWordBitLen 
 Console.hx:22: 
 Executing test: TestZeroRat 
-     1584.78 real      1505.87 user         6.28 sys
+     1614.68 real      1542.69 user         5.55 sys
 
 
 
@@ -6959,7 +6959,7 @@ Console.hx:22:
 Executing test: TestUnpaddedSignature 
 Console.hx:22: 
 Executing test: TestVerifyPKCS1v15 
-     1622.65 real      1583.02 user         3.34 sys
+     1733.66 real      1688.78 user         4.79 sys
 
 
 

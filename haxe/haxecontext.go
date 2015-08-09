@@ -12,7 +12,6 @@ import (
 type haxeContext struct {
 	pogoComp *pogo.Compilation // the host compilation context
 
-	langListEntry    int  // which entry is this language in pogo.LanguageList
 	useRegisterArray bool // should we use an array rather than individual register vars
 
 	nextReturnAddress       int           // what number is the next pseudo block return address?
@@ -46,16 +45,18 @@ type haxeContext struct {
 	typesByID []types.Type
 	pte       typeutil.Map
 	pteKeys   []types.Type
+
+	langEntry *pogo.LanguageEntry
 }
 
 type langType struct {
 	hc *haxeContext
 }
 
-func (l langType) InitLang(i int, comp *pogo.Compilation) pogo.Language {
+func (l langType) InitLang(comp *pogo.Compilation, langEnt *pogo.LanguageEntry) pogo.Language {
 	ret := langType{hc: &haxeContext{
-		langListEntry: i,
-		pogoComp:      comp,
+		pogoComp:  comp,
+		langEntry: langEnt,
 	}}
 	ret.hc.funcNamesUsed = make(map[string]bool)
 	return ret

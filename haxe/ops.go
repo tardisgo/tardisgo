@@ -44,7 +44,7 @@ func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK 
 		if l.is1usePtr(v) {
 			oup, found := l.hc.map1usePtr[v.(ssa.Value)]
 			if !found {
-				panic(fmt.Sprintf("pogo.UnOp can't find oneUsePtr: %#v %s val %s=%s",
+				panic(fmt.Sprintf("haxe.codeUnOp can't find oneUsePtr: %#v %s val %s=%s",
 					l.hc.map1usePtr, errorInfo, v.(ssa.Value).Name(), v.(ssa.Value).String()))
 			}
 			return oup.obj + ".get" + loadStoreSuffix(goTyp, true) + oup.off + ")"

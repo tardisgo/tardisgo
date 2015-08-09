@@ -6,12 +6,13 @@ package pogo
 
 import (
 	"fmt"
-	"reflect"
-
 	"go/ast"
+	"reflect"
 
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
+
+	"github.com/tardisgo/tardisgo/tgoutil"
 )
 
 // RegisterName returns the name of an ssa.Value, a utility function in case it needs to be altered.
@@ -395,7 +396,7 @@ func (comp *Compilation) emitInstruction(instruction interface{}, operands []*ss
 			comp.emitComment(comment)
 		} else {
 			st := instruction.(*ssa.Field).X.Type().Underlying().(*types.Struct)
-			fName := MakeID(st.Field(instruction.(*ssa.Field).Field).Name())
+			fName := tgoutil.MakeID(st.Field(instruction.(*ssa.Field).Field).Name())
 			l := comp.TargetLang
 			fmt.Fprintln(&LanguageList[l].buffer,
 				LanguageList[l].Field(register, instruction.(*ssa.Field).X,

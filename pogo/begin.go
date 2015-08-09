@@ -39,7 +39,8 @@ func Compile(mainPkg *ssa.Package, debug, trace bool, langName, testFSname strin
 	comp.TargetLang = len(LanguageList) - 1
 	languageListAppendMutex.Unlock()
 	LanguageList[comp.TargetLang].Language =
-		LanguageList[comp.TargetLang].Language.InitLang(comp.TargetLang, comp)
+		LanguageList[comp.TargetLang].Language.InitLang(
+			comp, &LanguageList[comp.TargetLang])
 	LanguageList[comp.TargetLang].TestFS = testFSname
 	//fmt.Printf("DEBUG created TargetLang[%d]=%#v\n",
 	//	comp.TargetLang, LanguageList[comp.TargetLang])

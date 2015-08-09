@@ -76,7 +76,7 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 	main += "}\n"
 
 	pos := "public static function CPos(pos:Int):String {\nvar prefix:String=\"\";\n"
-	pos += fmt.Sprintf(`if (pos==%d) return "(pogo.NoPosHash)";`, pogo.NoPosHash) + "\n"
+	pos += fmt.Sprintf(`if (pos==%d) return "(No File Position Hash)";`, pogo.NoPosHash) + "\n"
 	pos += "if (pos<0) { pos = -pos; prefix= \"near \";}\n"
 	for p := len(l.PogoComp().PosHashFileList) - 1; p >= 0; p-- {
 		pos += fmt.Sprintf(`if(pos>%d) return prefix+"%s:"+Std.string(pos-%d);`,
@@ -84,7 +84,7 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 			strings.Replace(l.PogoComp().PosHashFileList[p].FileName, "\\", "\\\\", -1),
 			l.PogoComp().PosHashFileList[p].BasePosHash) + "\n"
 	}
-	pos += "return \"(invalid pogo.PosHash:\"+Std.string(pos)+\")\";\n}\n"
+	pos += "return \"(invalid File Position Hash:\"+Std.string(pos)+\")\";\n}\n"
 
 	if l.PogoComp().DebugFlag {
 		pos += "\npublic static function getStartCPos(s:String):Int {\n"

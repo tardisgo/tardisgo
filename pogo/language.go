@@ -8,10 +8,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"sync"
-	"unicode"
 
 	"github.com/tardisgo/tardisgo/tgossa"
+	"github.com/tardisgo/tardisgo/tgoutil"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/types"
 )
@@ -86,7 +88,7 @@ type Language interface {
 	DebugRef(userName string, v interface{}, errorInfo string) string
 	CanInline(v interface{}) bool
 	PhiCode(allTargets bool, targetPhi int, code []ssa.Instruction, errorInfo string) string
-	InitLang(int, *Compilation) Language
+	InitLang(*Compilation, *LanguageEntry) Language
 }
 
 // LanguageEntry holds the static infomation about each of the languages, expect this list to extend as more languages are added.
@@ -135,31 +137,6 @@ func (comp *Compilation) emitComment(cmt string) {
 	fmt.Fprintln(&LanguageList[l].buffer, LanguageList[l].Comment(cmt))
 }
 
-// MakeID cleans-up Go names to replace characters outside (_,0-9,a-z,A-Z) with a decimal value surrounded by underlines, with special handling of '.' and '*'.
-// It also doubles-up uppercase letters, because file names are made from these names and OSX is case insensitive.
-func MakeID(s string) (r string) {
-	var b []rune
-	b = []rune(s)
-	for i := range b {
-		if b[i] == '_' || ((b[i] >= 'a') && (b[i] <= 'z')) || ((b[i] >= 'A') && (b[i] <= 'Z')) || ((b[i] >= '0') && (b[i] <= '9')) {
-			r += string(b[i])
-			if unicode.IsUpper(b[i]) {
-				r += string(b[i])
-			}
-		} else {
-			switch b[i] {
-			case '.':
-				r += "_dot_"
-			case '*':
-				r += "_star_"
-			default:
-				r += fmt.Sprintf("_%d_", b[i])
-			}
-		}
-	}
-	return r
-}
-
 // is there more than one package with this name?
 // TODO consider using this function in pogo.emitFunctions()
 func (comp *Compilation) isDupPkg(pn string) bool {
@@ -176,12 +153,18 @@ func (comp *Compilation) isDupPkg(pn string) bool {
 // FuncPathName returns a unique function path and name.
 func (comp *Compilation) FuncPathName(fn *ssa.Function) (path, name string) {
 	rx := fn.Signature.Recv()
-	pf := MakeID(comp.rootProgram.Fset.Position(fn.Pos()).String()) //fmt.Sprintf("fn%d", fn.Pos())
-	if rx != nil {                                                  // it is not the name of a normal function, but that of a method, so append the method description
+	pf := tgoutil.MakeID(comp.rootProgram.Fset.Position(fn.Pos()).String()) //fmt.Sprintf("fn%d", fn.Pos())
+	if rx != nil {                                                          // it is not the name of a normal function, but that of a method, so append the method description
 		pf = rx.Type().String() // NOTE no underlying()
 	} else {
 		if fn.Pkg != nil {
 			pf = fn.Pkg.Object.Path() // was .Name(), but not unique
+		} else {
+			goroot := tgoutil.MakeID(LanguageList[comp.TargetLang].GOROOT + string(os.PathSeparator))
+			pf1 := strings.Split(pf, goroot) // make auto-generated names shorter
+			if len(pf1) == 2 {
+				pf = pf1[1]
+			} // TODO use GOPATH for names not in std pkgs
 		}
 	}
 	return pf, fn.Name()
