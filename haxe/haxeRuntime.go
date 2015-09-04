@@ -729,28 +729,6 @@ class Object {
 				var a:Dynamic=this.get(i+off);
 				var b:Dynamic=target.get(i+tgtOff);
 				if(!Force.isEqualDynamic(a,b)) return false;
-				/* code like that below all now in isEqualDynamic
-				if(a!=b){
-					if(Reflect.isObject(a)&&Reflect.isObject(b)) { // also deals with one being null
-						if(Std.is(a,Pointer)&&Std.is(b,Pointer)) {
-							if(!Pointer.isEqual(a,b) )
-								return false;
-						} else {
-							if(Std.is(a,Interface)&&Std.is(b,Interface)){
-								if(!Interface.isEqual(a,b))
-									return false;
-							} else {
-								if(Std.is(a,GOmap)||Std.is(b,GOmap))
-									return false; //maps are never equal
-								else
-									if(GOint64.compare(a,b)!=0) // Assume Goint64
-										return false;
-							}
-						}
-					} else
-						return false;
-				}
-				*/
 			}
  			#if fullunsafe
 				if(this.get_uint8(i+off)!=target.get_uint8(i+tgtOff))
