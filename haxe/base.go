@@ -770,7 +770,7 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 	}
 	switch v.(type) {
 	case *ssa.Global:
-		return "Go." + l.LangName(v.(*ssa.Global).Pkg.Object.Path() /* was .Name()*/, v.(*ssa.Global).Name())
+		return "Go." + l.LangName(v.(*ssa.Global).Pkg.Pkg.Path() /* was .Name()*/, v.(*ssa.Global).Name())
 	case *ssa.Const:
 		ci := v.(*ssa.Const)
 		_, c := l.Const(*ci, errorInfo)
@@ -792,8 +792,8 @@ func (l langType) Value(v interface{}, errorInfo string) string {
 			pk = pn + "." + v.(*ssa.Function).Signature.Recv().Name()
 		} else {
 			if v.(*ssa.Function).Pkg != nil {
-				if v.(*ssa.Function).Pkg.Object != nil {
-					pk = v.(*ssa.Function).Pkg.Object.Path() // was .Name()
+				if v.(*ssa.Function).Pkg.Pkg != nil {
+					pk = v.(*ssa.Function).Pkg.Pkg.Path() // was .Name()
 				}
 			}
 		}

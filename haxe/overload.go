@@ -90,8 +90,8 @@ func (l langType) FuncName(fnx *ssa.Function) string {
 			fn = fnx
 		}
 		if fn.Pkg != nil {
-			if fn.Pkg.Object != nil {
-				pn = fn.Pkg.Object.Path() // was .Name()
+			if fn.Pkg.Pkg != nil {
+				pn = fn.Pkg.Pkg.Path() // was .Name()
 			}
 		} else {
 			if fn.Object() != nil {

@@ -409,7 +409,7 @@ func (l langType) uncommonBuild(i int, sizes types.Sizes, name string, t types.T
 		//if !isIF {
 		for m := 0; m < numMethods; m++ {
 			sel := methods.At(m)
-			ssaFn := l.PogoComp().RootProgram().Method(sel)
+			ssaFn := l.PogoComp().RootProgram().MethodValue(sel)
 			if l.PogoComp().FnIsCalled(ssaFn) {
 				fn := "null"
 				fnToCall := "null"

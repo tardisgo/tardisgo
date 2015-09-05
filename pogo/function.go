@@ -166,7 +166,7 @@ func (comp *Compilation) emitFunctions() {
 	// Remove virtual functions
 	for _, pkg := range comp.rootProgram.AllPackages() {
 		for _, vf := range LanguageList[comp.TargetLang].PseudoPkgPaths {
-			if pkg.Object.Path() == vf {
+			if pkg.Pkg.Path() == vf {
 				for _, mem := range pkg.Members {
 					fn, ok := mem.(*ssa.Function)
 					if ok {
@@ -207,8 +207,8 @@ func (comp *Compilation) IsOverloaded(f *ssa.Function) bool {
 	rx := f.Signature.Recv()
 	if rx == nil { // ordinary function
 		if f.Pkg != nil {
-			if f.Pkg.Object != nil {
-				pn = f.Pkg.Object.Path() //was .Name()
+			if f.Pkg.Pkg != nil {
+				pn = f.Pkg.Pkg.Path() //was .Name()
 			}
 		} else {
 			if f.Object() != nil {
@@ -488,8 +488,8 @@ func (comp *Compilation) GetFnNameParts(fn *ssa.Function) (pack, nam string) {
 	mName := fn.Name()
 	pName, _ := comp.FuncPathName(fn) //fmt.Sprintf("fn%d", fn.Pos()) //uintptr(unsafe.Pointer(fn)))
 	if fn.Pkg != nil {
-		if fn.Pkg.Object != nil {
-			pName = fn.Pkg.Object.Path() // was .Name()
+		if fn.Pkg.Pkg != nil {
+			pName = fn.Pkg.Pkg.Path() // was .Name()
 		}
 	}
 	if fn.Signature.Recv() != nil { // we have a method
@@ -548,7 +548,7 @@ func (comp *Compilation) emitCall(isBuiltin, isGo, isDefer, usesGr bool, registe
 		} else {
 			pkg := callInfo.StaticCallee().Package()
 			if pkg != nil {
-				pName = pkg.Object.Path() // was .Name()
+				pName = pkg.Pkg.Path() // was .Name()
 			}
 		}
 		fnToCall = LanguageList[l].LangName(pName, callInfo.StaticCallee().Name())

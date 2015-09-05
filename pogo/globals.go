@@ -73,7 +73,7 @@ func (comp *Compilation) emitGlobals() {
 			mem := pkg.Members[mName]
 			if mem.Token() == token.VAR {
 				glob := mem.(*ssa.Global)
-				pName := glob.Pkg.Object.Path() // was .Name()
+				pName := glob.Pkg.Pkg.Path() // was .Name()
 				//println("DEBUG processing global:", pName, mName)
 				posStr := comp.CodePosition(glob.Pos())
 				comp.MakePosHash(glob.Pos()) // mark that we are dealing with this global
@@ -112,7 +112,7 @@ func (comp *Compilation) GlobalList() []GlobalInfo {
 			mem := pkg.Members[mName]
 			if mem.Token() == token.VAR {
 				glob := mem.(*ssa.Global)
-				pName := glob.Pkg.Object.Path()             // was .Name()
+				pName := glob.Pkg.Pkg.Path()                // was .Name()
 				isPublic := unicode.IsUpper(rune(mName[0])) // Object value sometimes not available
 				gi = append(gi, GlobalInfo{pName, mName, glob, isPublic})
 			}

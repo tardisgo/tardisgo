@@ -143,7 +143,7 @@ func (comp *Compilation) isDupPkg(pn string) bool {
 	pnCount := 0
 	ap := comp.rootProgram.AllPackages()
 	for p := range ap {
-		if pn == ap[p].Object.Name() {
+		if pn == ap[p].Pkg.Name() {
 			pnCount++
 		}
 	}
@@ -158,7 +158,7 @@ func (comp *Compilation) FuncPathName(fn *ssa.Function) (path, name string) {
 		pf = rx.Type().String() // NOTE no underlying()
 	} else {
 		if fn.Pkg != nil {
-			pf = fn.Pkg.Object.Path() // was .Name(), but not unique
+			pf = fn.Pkg.Pkg.Path() // was .Name(), but not unique
 		} else {
 			goroot := tgoutil.MakeID(LanguageList[comp.TargetLang].GOROOT + string(os.PathSeparator))
 			pf1 := strings.Split(pf, goroot) // make auto-generated names shorter

@@ -73,7 +73,7 @@ func (visit *visitor) program(isOvl isOverloaded) {
 	for _, T := range visit.prog.RuntimeTypes() {
 		mset := visit.prog.MethodSets.MethodSet(T)
 		for i, n := 0, mset.Len(); i < n; i++ {
-			mf := visit.prog.Method(mset.At(i))
+			mf := visit.prog.MethodValue(mset.At(i))
 			visit.function(mf, isOvl)
 			// ??? conservatively mark every method as requiring goroutines, in order to simplify method calls?
 			// visit.usesGR[mf] = true

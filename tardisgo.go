@@ -281,7 +281,7 @@ func doTestable(args []string) error {
 	*modeFlag |= mode | ssa.SanityCheckFunctions
 	prog := ssautil.CreateProgram(iprog, *modeFlag)
 
-	prog.BuildAll()
+	prog.Build()
 
 	var main *ssa.Package
 	pkgs := prog.AllPackages()
@@ -305,7 +305,7 @@ func doTestable(args []string) error {
 	} else {
 		// Otherwise, run main.main.
 		for _, pkg := range pkgs {
-			if pkg.Object.Name() == "main" {
+			if pkg.Pkg.Name() == "main" {
 				main = pkg
 				if main.Func("main") == nil {
 					return fmt.Errorf("no func main() in main package")
@@ -319,7 +319,7 @@ func doTestable(args []string) error {
 	}
 
 	if *runFlag { // Run the golang.org/x/tools/go/ssa/interp interpreter.
-		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Object.Path(), args)
+		interp.Interpret(main, interpMode, conf.TypeChecker.Sizes, main.Pkg.Path(), args)
 	} else {
 		comp, err := pogo.Compile(main, *debugFlag, *traceFlag, langName, testFSname) // TARDIS Go entry point, returns an error
 		if err != nil {
