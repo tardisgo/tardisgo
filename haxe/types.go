@@ -424,6 +424,7 @@ func getHaxeClass(fullname string) string { // NOTE capital letter de-doubling n
 	return ""
 }
 
+/*
 func preprocessTypeName(v string) string {
 	s := ""
 	hadbackslash := false
@@ -470,6 +471,7 @@ func notInterface(t types.Type) bool {
 	}
 	return false
 }
+*/
 
 func (l langType) buildTBI() {
 	l.hc.pte = l.PogoComp().TypesEncountered

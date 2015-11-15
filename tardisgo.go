@@ -88,6 +88,8 @@ Then to compile the tardis/Go.hx file generated, type the command line: "haxe -m
 
 Use -help to display other options.
 `
+
+/*
 const ignore = `
 Use -help flag to display options.
 
@@ -101,7 +103,7 @@ When -run is specified, ssadump will find the first package that
 defines a main function and run it in the interpreter.
 If none is found, the tests of each package will be run instead.
 `
-
+*/
 // end TARDIS Go modification
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

@@ -11,11 +11,6 @@ import (
 	"golang.org/x/tools/go/types"
 )
 
-// This function in case special handing is required for pointers.
-func scanForPointers() {
-	return //NoOp TODO consider removing function
-}
-
 // is this value a pointer?
 func valIsPointer(v interface{}) bool {
 	switch v.(type) {
