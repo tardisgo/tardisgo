@@ -1,10 +1,12 @@
 language: haxe
 
 install: 
+  - go version
   - ./goinstall.sh
   - export GOPATH=~/gopath
   - source ~/.bashrc
   - sudo chmod 777 $GOPATH
+  - go version
   - go get -d -v . 
 
 script: 
