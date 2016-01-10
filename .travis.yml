@@ -6,7 +6,7 @@ install:
   - export GOPATH=~/gopath
   - source ~/.bashrc
   - sudo chmod 777 $GOPATH
-  - go version
+  - go env
   - go get -d -v . 
 
 script: 

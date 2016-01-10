@@ -1,8 +1,7 @@
 # extract from: https://gist.github.com/einthusan/f72c6dc7e0eff88b8bfe
 
 echo "Remove existing go installation"
-sudo mv /usr/local/go /usr/local/go1.4
-ls -l /usr/local/go1.4
+sudo apt-get purge golang -y
 echo "Download and install Go, as well as create GOPATH directory"
 cd ~
 wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz 
