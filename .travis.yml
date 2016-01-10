@@ -2,7 +2,7 @@ language: haxe
 
 install: 
   - ./goinstall.sh
-  - export GOROOT=/usr/local/go
+  - export GOROOT=/usr/lib/go
   - export GOPATH=~/gopath
   - source ~/.bashrc
   - sudo chmod 777 $GOPATH
