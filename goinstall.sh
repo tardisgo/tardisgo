@@ -11,8 +11,8 @@ echo "set enviornment variables required for Go"
 export GOPATH=~/gopath
 cat <<EOF >> ~/.bashrc
 export GOPATH=~/gopath
-export GOROOT=/usr/lib/go
-export GOTOOLDIR=/usr/lib/go/pkg/tool/linux_amd64
+export GOROOT=/usr/local/go
+export GOTOOLDIR=/usr/local/go/pkg/tool/linux_amd64
 export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
 export GORACE=log_path=/usr/local/go/racereport
 export w=$GOPATH/src/github.com
