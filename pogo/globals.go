@@ -7,11 +7,11 @@ package pogo
 import (
 	"fmt"
 	"go/token"
+	"go/types"
 	"sort"
 	"unicode"
 
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 )
 
 /* THIS SECTION ONLY REQUIRED IF GLOBALS ARE ADDRESSABLE USING OFFSETS RATTHER THAN PSEUDO-POINTERS

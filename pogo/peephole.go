@@ -7,10 +7,10 @@ package pogo
 import (
 	"fmt"
 	"go/token"
+	"go/types"
 	"strings"
 
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 )
 
 // InlineMap reads the value of a key, tracking if it has been seen

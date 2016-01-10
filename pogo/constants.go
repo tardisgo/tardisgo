@@ -6,11 +6,11 @@ package pogo
 
 import (
 	"fmt"
+	"go/constant"
 	"go/token"
 	"sort"
 	"strconv"
 
-	"golang.org/x/tools/go/exact"
 	"golang.org/x/tools/go/ssa"
 )
 
@@ -28,7 +28,7 @@ func (comp *Compilation) emitNamedConstants() {
 				posStr := comp.CodePosition(lit.Pos())
 				pName := mem.(*ssa.NamedConst).Object().Pkg().Path() // was .Name()
 				switch lit.Value.Kind() {                            // non language specific validation
-				case exact.Bool, exact.String, exact.Float, exact.Int, exact.Complex: //OK
+				case constant.Bool, constant.String, constant.Float, constant.Int, constant.Complex: //OK
 					isPublic := mem.Object().Exported()
 					if isPublic { // constants will be inserted inline, these declarations of public constants are for exteral use in target language
 						l := comp.TargetLang
@@ -43,9 +43,9 @@ func (comp *Compilation) emitNamedConstants() {
 	}
 }
 
-// FloatVal is a utility function returns a string constant value from an exact.Value.
-func (comp *Compilation) FloatVal(eVal exact.Value, bits int, posStr string) string {
-	fVal, isExact := exact.Float64Val(eVal)
+// FloatVal is a utility function returns a string constant value from a constant.Value.
+func (comp *Compilation) FloatVal(eVal constant.Value, bits int, posStr string) string {
+	fVal, isExact := constant.Float64Val(eVal)
 	if !isExact {
 		comp.LogWarning(posStr, "inexact", fmt.Errorf("constant value %g cannot be accurately represented in float64", fVal))
 	}
@@ -56,9 +56,9 @@ func (comp *Compilation) FloatVal(eVal exact.Value, bits int, posStr string) str
 	return ret
 }
 
-// IntVal is a utility function returns an int64 constant value from an exact.Value, split into high and low int32.
-func (comp *Compilation) IntVal(eVal exact.Value, posStr string) (high, low int32) {
-	iVal, isExact := exact.Int64Val(eVal)
+// IntVal is a utility function returns an int64 constant value from a constant.Value, split into high and low int32.
+func (comp *Compilation) IntVal(eVal constant.Value, posStr string) (high, low int32) {
+	iVal, isExact := constant.Int64Val(eVal)
 	if !isExact {
 		comp.LogWarning(posStr, "inexact", fmt.Errorf("constant value %d cannot be accurately represented in int64", iVal))
 	}

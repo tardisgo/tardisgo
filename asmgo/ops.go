@@ -2,13 +2,13 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-package haxe
+package asmgo
 
 import (
 	"fmt"
-	"go/types"
 
 	"golang.org/x/tools/go/ssa"
+	"go/types"
 )
 
 func (l langType) codeUnOp(regTyp types.Type, op string, v interface{}, CommaOK bool, errorInfo string) string {

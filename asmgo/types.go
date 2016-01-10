@@ -2,7 +2,7 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-package haxe
+package asmgo
 
 import (
 	"fmt"
@@ -15,8 +15,8 @@ import (
 	"github.com/tardisgo/tardisgo/pogo"
 	"github.com/tardisgo/tardisgo/tgoutil"
 
-	"go/types"
 	"golang.org/x/tools/go/ssa"
+	"go/types"
 	//"golang.org/x/tools/go/types/typeutil"
 )
 

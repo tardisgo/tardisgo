@@ -7,6 +7,7 @@ package pogo
 import (
 	"fmt"
 	"go/token"
+	"go/types"
 	"strings"
 	"unicode"
 	"unsafe"
@@ -14,7 +15,6 @@ import (
 	"github.com/tardisgo/tardisgo/tgossa"
 
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 
 	/* for DCE tests
 	"golang.org/x/tools/go/callgraph"

@@ -10,7 +10,7 @@ func rPrintf(s string, args ...interface{}) {
 type BlockAction int
 
 const (
-	unset BlockAction = iota
+	_ BlockAction = iota
 	// IsElse is an else block to an if statement
 	IsElse
 	// NotElse is when the if statement does not have an else block
@@ -87,10 +87,10 @@ func (bs *BlockStack) Pop() (action BlockAction, seq, index int, ok bool) {
 type BlockFormat struct {
 	Seq, Index        int
 	Stack             *BlockStack
-	IsWhileCandidate  bool
 	WhileCandidateEnd int
 	IfCandidate       BlockAction
 	ReversePolarity   bool
+	IsWhileCandidate  bool
 }
 
 // Reconstruct builds instructions for reconstructing SSA form into a High Level Language
@@ -199,9 +199,9 @@ func reconstruct(blocks []*ssa.BasicBlock, formats []BlockFormat, mapIdxToSeq ma
 						rPrintf("DEBUG jump back to non-while block\n")
 						return nil
 					}
-					for target := lower; target > targetSeq; target-- {
-						if formats[target].IsWhileCandidate &&
-							formats[target].WhileCandidateEnd >= lower {
+					for target2 := lower; target2 > targetSeq; target2-- {
+						if formats[target2].IsWhileCandidate &&
+							formats[target2].WhileCandidateEnd >= lower {
 							rPrintf("DEBUG jump back has while before target while\n")
 							return nil
 						}

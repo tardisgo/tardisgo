@@ -23,15 +23,18 @@ import (
 	"runtime/pprof"
 	"strings"
 
+	"go/types"
+
 	"golang.org/x/tools/go/loader"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/interp"
 	"golang.org/x/tools/go/ssa/ssautil"
-	"golang.org/x/tools/go/types"
 
 	// TARDIS Go additions
 
-	"github.com/tardisgo/tardisgo/haxe" // TARDIS Go addition
+	_ "github.com/tardisgo/tardisgo/asmgo" // TARDIS Go addition
+	"github.com/tardisgo/tardisgo/haxe"    // TARDIS Go addition
+	// TARDIS Go addition
 	"github.com/tardisgo/tardisgo/pogo"
 )
 

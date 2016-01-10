@@ -7,10 +7,10 @@ package pogo
 import (
 	"fmt"
 	"go/ast"
+	"go/types"
 	"reflect"
 
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 
 	"github.com/tardisgo/tardisgo/tgoutil"
 )

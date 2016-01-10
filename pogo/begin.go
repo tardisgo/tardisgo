@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/tools/go/exact"
+	"go/constant"
 	"golang.org/x/tools/go/ssa"
 )
 
-// Recycle the Compilation resources
+// Recycle the Compilation resources.
 func (comp *Compilation) Recycle() { LanguageList[comp.TargetLang] = LanguageEntry{} }
 
 // Compile provides the entry point for the pogo package,
@@ -93,7 +93,7 @@ func (comp *Compilation) loadSpecialConsts() {
 				case ph, pogoHeader: // either the language-specific constant, or the standard one
 					lit := mem.(*ssa.NamedConst).Value
 					switch lit.Value.Kind() {
-					case exact.String:
+					case constant.String:
 						h, err := strconv.Unquote(lit.Value.String())
 						if err != nil {
 							comp.LogError(comp.CodePosition(lit.Pos())+"Special pogo header constant "+ph+" or "+pogoHeader,
@@ -105,7 +105,7 @@ func (comp *Compilation) loadSpecialConsts() {
 				case targetPackage:
 					lit := mem.(*ssa.NamedConst).Value
 					switch lit.Value.Kind() {
-					case exact.String:
+					case constant.String:
 						hp, err := strconv.Unquote(lit.Value.String())
 						if err != nil {
 							comp.LogError(comp.CodePosition(lit.Pos())+"Special targetPackage constant ", "pogo", err)
@@ -118,7 +118,7 @@ func (comp *Compilation) loadSpecialConsts() {
 				case pogoLibList:
 					lit := mem.(*ssa.NamedConst).Value
 					switch lit.Value.Kind() {
-					case exact.String:
+					case constant.String:
 						lrp, err := strconv.Unquote(lit.Value.String())
 						if err != nil {
 							comp.LogError(comp.CodePosition(lit.Pos())+"Special "+pogoLibList+" constant ", "pogo", err)

@@ -6,9 +6,9 @@ package pogo
 
 import (
 	"fmt"
+	"go/types"
 
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 )
 
 // is this value a pointer?

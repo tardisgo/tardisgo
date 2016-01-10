@@ -6,11 +6,11 @@ package pogo
 
 import (
 	"fmt"
+	"go/types"
 	"reflect"
 	"sort"
 
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 )
 
 // IsValidInPogo exists to screen out any types that the system does not handle correctly.

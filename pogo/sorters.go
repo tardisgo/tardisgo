@@ -1,10 +1,10 @@
 package pogo
 
 import (
+	"go/types"
 	"sort"
 
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 )
 
 // PackageSorter is a type to allow packages to be sorted by name

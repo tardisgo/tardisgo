@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"go/types"
 	"os"
 	"strings"
 	"sync"
@@ -15,7 +16,6 @@ import (
 	"github.com/tardisgo/tardisgo/tgossa"
 	"github.com/tardisgo/tardisgo/tgoutil"
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 )
 
 // The Language interface enables multiple target languages for TARDIS Go.

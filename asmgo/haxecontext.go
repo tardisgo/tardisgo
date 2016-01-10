@@ -1,4 +1,4 @@
-package haxe
+package asmgo
 
 import (
 	"go/types"

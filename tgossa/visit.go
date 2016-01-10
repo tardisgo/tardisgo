@@ -8,8 +8,9 @@
 package tgossa // was ssautil
 
 import (
+	"go/types"
+
 	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/types"
 )
 
 func vprintln(args ...interface{}) {
@@ -83,6 +84,7 @@ func (visit *visitor) program(isOvl isOverloaded) {
 			}
 		}
 	}
+
 }
 
 func (visit *visitor) refsUseGR(refs *[]ssa.Instruction, refed map[*ssa.Function]bool) {
@@ -103,7 +105,7 @@ func (visit *visitor) function(fn *ssa.Function, isOvl isOverloaded) {
 		vprintln("DEBUG 1st visit to: ", fn.String())
 		visit.seen[fn] = true
 		visit.usesGR[fn] = false
-		if isOvl(fn) {
+		if isOvl != nil && isOvl(fn) {
 			vprintln("DEBUG overloaded: ", fn.String())
 			return
 		}

@@ -2,19 +2,19 @@
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-package haxe
+package asmgo
 
 import (
 	"errors"
 	"fmt"
 	"go/token"
-	"go/types"
 	"reflect"
 	"sort"
 	"strings"
 	"unicode"
 
 	"golang.org/x/tools/go/ssa"
+	"go/types"
 
 	"github.com/tardisgo/tardisgo/tgossa"
 	"github.com/tardisgo/tardisgo/tgoutil"
@@ -27,8 +27,8 @@ func (l langType) emitTrace(s string) string {
 	return ""
 }
 
-func (langType) LanguageName() string   { return "haxe" }
-func (langType) FileTypeSuffix() string { return ".hx" }
+func (langType) LanguageName() string   { return "asmgo" }
+func (langType) FileTypeSuffix() string { return ".go" }
 
 // make a comment
 func (l langType) Comment(c string) string {
