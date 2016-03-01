@@ -6,9 +6,9 @@
 [![GoDoc](https://godoc.org/github.com/tardisgo/tardisgo?status.png)](https://godoc.org/github.com/tardisgo/tardisgo)
 [![status](https://sourcegraph.com/api/repos/github.com/tardisgo/tardisgo/badges/status.png)](https://sourcegraph.com/github.com/tardisgo/tardisgo)
 
-## Project status: a working curiosity, Haxe development currently on-ice, other targets pending
+## Project status: a non-working curiosity, development currently on-ice
 
-### The advent of Go 1.5, with support for both iOS and Android, together with [GopherJS](http://www.gopherjs.org/), mean that the cross-platform UI objectives of this project are likely to soon be redundant, as libraries to achieve this can now be written directly in Go. [The author](https://github.com/elliott5) has therefore paused development of the Haxe aspect of this project, freezing the runtime at Go 1.4. However the author plans to restructure the code to make it easier to target other languages, and then do so ... so please "[watch this space](https://groups.google.com/d/msg/tardisgo/NJIHawyBQgY/8DYn9IAmEwAJ)".
+### The advent of Go 1.5, with support for both iOS and Android, together with [GopherJS](http://www.gopherjs.org/), mean that the cross-platform UI objectives of this project are likely to soon be redundant, as libraries to achieve this can now be written directly in Go. [The author](https://github.com/elliott5) has therefore paused development of the Haxe aspect of this project, freezing the runtime at Go 1.4. With the advent of Go 1.6, the code compiles but the tests no-longer pass.
 
 All of the core [Go language specification](http://golang.org/ref/spec) is implemented, including single-threaded goroutines and channels. However the package "reflect", which is mentioned in the core specification, is not yet fully supported. 
 
