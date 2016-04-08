@@ -73,7 +73,10 @@ var traceFlag = flag.Bool("trace", false, "Output trace information for every bl
 var buidTags = flag.String("tags", "", "build tags separated by spaces")
 var tgoroot = flag.String("tgoroot", "", "set goroot to the given value")
 
-var modeFlag = ssa.BuilderModeFlag(flag.CommandLine, "build", 0)
+//var modeFlag = ssa.BuilderModeFlag(flag.CommandLine, "build", 0)
+var modeFlag = ssa.BuilderMode(0)
+
+func init() { flag.Var(&modeFlag, "build", ssa.BuilderModeDoc) }
 
 // TODO
 //var traceFlag = flag.Bool("v", false, "Verbose compiler mode (including files written)")
@@ -283,8 +286,8 @@ func doTestable(args []string) error {
 	}
 
 	// Create and build SSA-form program representation.
-	*modeFlag |= mode | ssa.SanityCheckFunctions
-	prog := ssautil.CreateProgram(iprog, *modeFlag)
+	modeFlag |= mode | ssa.SanityCheckFunctions
+	prog := ssautil.CreateProgram(iprog, modeFlag)
 
 	prog.Build()
 
