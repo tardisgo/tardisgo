@@ -299,7 +299,7 @@ func doTestable(args []string) error {
 	if *testFlag {
 		// If -test, run all packages' tests.
 		if len(pkgs) > 0 {
-			main = prog.CreateTestMainPackage(pkgs...)
+			main = prog.CreateTestMainPackage(pkgs[0])
 		}
 		if main == nil {
 			return fmt.Errorf("no tests")
