@@ -5,7 +5,6 @@
 package haxe
 
 import (
-	"errors"
 	"fmt"
 	"go/types"
 	"math"
@@ -113,8 +112,9 @@ func (l langType) GoClassEnd(pkg *ssa.Package) string {
 func (l langType) haxeStringConst(sconst string, position string) string {
 	s, err := strconv.Unquote(sconst)
 	if err != nil {
-		l.PogoComp().LogError(position, "Haxe", errors.New(err.Error()+" : "+sconst))
-		return ""
+		//l.PogoComp().LogError(position, "Haxe", errors.New(err.Error()+" : "+sconst))
+		//return ""
+		s = sconst // assume not quoted
 	}
 	ret0 := ""
 	hadEsc := false

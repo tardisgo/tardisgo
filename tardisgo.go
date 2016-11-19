@@ -298,8 +298,10 @@ func doTestable(args []string) error {
 	testFSname := ""
 	if *testFlag {
 		// If -test, run all packages' tests.
-		if len(pkgs) > 0 {
-			main = prog.CreateTestMainPackage(pkgs...)
+		if len(pkgs) == 1 {
+			main = prog.CreateTestMainPackage(pkgs[0]) // as per #51
+		} else {
+			return fmt.Errorf("only one package can be tested at a time")
 		}
 		if main == nil {
 			return fmt.Errorf("no tests")
